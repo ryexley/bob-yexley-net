@@ -1,5 +1,3 @@
-import { format } from 'date-fns'
-
 export default {
   name: 'blip',
   type: 'document',
@@ -9,6 +7,18 @@ export default {
       name: 'body',
       type: 'markdown',
       title: 'Body'
+    }
+  ],
+  orderings: [
+    {
+      name: 'createdDateAsc',
+      title: 'Created date new –> old',
+      by: [
+        {
+          field: '_createdAt',
+          direction: 'desc'
+        }
+      ]
     }
   ]
 }
