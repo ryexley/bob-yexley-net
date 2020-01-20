@@ -26,8 +26,8 @@ const CategoryTemplate = props => {
           <Article theme={theme}>
             <header>
               <Headline theme={theme}>
-                <span>Posts in category</span> <FaTag />
-                {category}
+                <span>Posts in category</span>
+                <span className="category-name"><FaTag /> {category}</span>
               </Headline>
               <p className="meta">
                 There {totalCount > 1 ? "are" : "is"} <strong>{totalCount}</strong> post{totalCount >
@@ -38,6 +38,12 @@ const CategoryTemplate = props => {
               </p>
               <List edges={edges} theme={theme} />
             </header>
+            <style jsx>{`
+              .category-name {
+                font-size: 2.5rem;
+                text-transform: capitalize;
+              }
+            `}</style>
           </Article>
         )}
       </ThemeContext.Consumer>

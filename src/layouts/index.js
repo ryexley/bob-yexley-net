@@ -27,8 +27,8 @@ class Layout extends React.Component {
     };
 
     if (typeof window !== `undefined`) {
-      this.loadFont("font400", "Open Sans", 400);
-      this.loadFont("font600", "Open Sans", 600);
+      this.loadFont("font400", "Cabin", 400);
+      this.loadFont("font600", "Cabin", 600);
     }
   }
 
@@ -66,7 +66,6 @@ class Layout extends React.Component {
 
     font.load(null, 10000).then(
       () => {
-        console.log(`${name} is available`);
         this.setState({ [`${name}loaded`]: true });
       },
       () => {
@@ -142,7 +141,7 @@ class Layout extends React.Component {
                       }
                       body {
                         font-family: ${this.state.font400loaded
-                          ? "'Open Sans', sans-serif;"
+                          ? "Cabin, sans-serif;"
                           : "Arial, sans-serif;"};
                       }
                       h1,
@@ -150,11 +149,7 @@ class Layout extends React.Component {
                       h3 {
                         font-weight: ${this.state.font600loaded ? 600 : 400};
                         line-height: 1.1;
-                        letter-spacing: -0.03em;
                         margin: 0;
-                      }
-                      h1 {
-                        letter-spacing: -0.04em;
                       }
                       p {
                         margin: 0;
@@ -170,6 +165,30 @@ class Layout extends React.Component {
                         width: auto;
                         display: block;
                       }
+                      hr {
+                        background: transparent;
+                        border-top: 0;
+                        border-left: 0;
+                        border-right: 0;
+                        border-bottom: 1px solid #eee;
+                        color: transparent;
+                        margin: 2rem 0;
+                      }
+                      /*
+                      hr:after {
+                        background: #fff;
+                        bottom: -1.65625rem;
+                        color: #eee;
+                        content: "\\272A";
+                        display: block;
+                        font-size: 1.5rem;
+                        height: 1.625rem;
+                        padding: 5px 0 0 4px;
+                        position: absolute;
+                        left: 50%;
+                        width: 1.625rem;
+                      }
+                      */
                     `}</style>
                   </React.Fragment>
                 </ScreenWidthContext.Provider>

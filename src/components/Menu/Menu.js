@@ -10,6 +10,8 @@ import { FaTag } from "react-icons/fa/";
 import Item from "./Item";
 import Expand from "./Expand";
 
+const HIDE_AT = 1024
+
 class Menu extends React.Component {
   constructor(props) {
     super(props);
@@ -71,7 +73,7 @@ class Menu extends React.Component {
   };
 
   hideOverflowedMenuItems = () => {
-    const PADDING_AND_SPACE_FOR_MORELINK = this.props.screenWidth >= 1024 ? 60 : 0;
+    const PADDING_AND_SPACE_FOR_MORELINK = this.props.screenWidth >= HIDE_AT ? 60 : 0;
 
     const itemsContainer = this.itemList.current;
     const maxWidth = itemsContainer.offsetWidth - PADDING_AND_SPACE_FOR_MORELINK;
@@ -107,7 +109,7 @@ class Menu extends React.Component {
   toggleMenu = e => {
     e.preventDefault();
 
-    if (this.props.screenWidth < 1024) {
+    if (this.props.screenWidth < HIDE_AT) {
       this.renderedItems.map(item => {
         const oldClass = this.state.open ? "showItem" : "hideItem";
         const newClass = this.state.open ? "hideItem" : "showItem";
@@ -127,7 +129,7 @@ class Menu extends React.Component {
 
     if (this.state.open) {
       this.setState({ open: false });
-      if (this.props.screenWidth < 1024) {
+      if (this.props.screenWidth < HIDE_AT) {
         this.renderedItems.map(item => {
           if (item.classList.contains("showItem")) {
             item.classList.add("hideItem");
@@ -152,7 +154,7 @@ class Menu extends React.Component {
           </ul>
           {this.state.hiddenItems.length > 0 && <Expand onClick={this.toggleMenu} theme={theme} />}
           {open &&
-            screenWidth >= 1024 && (
+            screenWidth >= HIDE_AT && (
               <ul className="hiddenItemList">
                 {this.state.hiddenItems.map(item => (
                   <Item item={item} key={item.label} hiddenItem theme={theme} />
@@ -198,7 +200,7 @@ class Menu extends React.Component {
                 right: ${theme.space.m};
                 top: 0;
                 height: 1px;
-                background: ${theme.color.brand.primary};
+                background: ${theme.color.neutral.gray.d};
               }
 
               &.open {

@@ -16,7 +16,6 @@ const Item = props => {
       frontmatter: {
         title,
         category,
-        author,
         cover: {
           children: [{ fluid }]
         }
@@ -34,19 +33,6 @@ const Item = props => {
           <h1>
             {title} <FaArrowRight className="arrow" />
           </h1>
-          <p className="meta">
-            <span>
-              <FaCalendar size={18} /> {prefix}
-            </span>
-            <span>
-              <FaUser size={18} /> {author}
-            </span>
-            {category && (
-              <span>
-                <FaTag size={18} /> {category}
-              </span>
-            )}
-          </p>
           <p>{excerpt}</p>
         </Link>
       </li>
@@ -136,6 +122,7 @@ const Item = props => {
         }
 
         p {
+          font-size: 1.25rem;
           line-height: 1.5;
           padding: 0 ${theme.space.s};
           text-remove-gap: both;
@@ -159,6 +146,7 @@ const Item = props => {
 
           h1 {
             font-size: ${`calc(${theme.blog.h1.size} * 1.2)`};
+            margin-bottom: 2rem;
             padding: ${`calc(${theme.space.default} * 1.5) ${theme.space.default} 0`};
             transition: all 0.5s;
           }
@@ -215,7 +203,7 @@ const Item = props => {
               }
               :global(.arrow) {
                 opacity: 1;
-                stroke: ${theme.color.special.attention};
+                stroke: ${theme.color.neutral.gray.c};
                 transform: translateX(0);
               }
             }
@@ -224,8 +212,8 @@ const Item = props => {
             }
             :global(.arrow) {
               display: inline-block;
-              fill: ${theme.color.special.attention};
-              stroke: ${theme.color.special.attention};
+              fill: ${theme.color.neutral.gray.c};
+              stroke: ${theme.color.neutral.gray.c};
               stroke-width: 40;
               stroke-linecap: round;
               opacity: 0;

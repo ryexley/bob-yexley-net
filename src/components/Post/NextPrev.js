@@ -21,24 +21,23 @@ const NextPrev = props => {
   return (
     <React.Fragment>
       <div className="links">
-        {nextSlug && (
-          <Link to={nextSlug}>
-            <FaArrowRight />
-            <h4>
-              {nextTitle} <time>{nextPrefix} </time>
-            </h4>
-          </Link>
-        )}
         {prevSlug && (
           <Link to={prevSlug}>
-            <FaArrowLeft />
+            <FaArrowRight />
             <h4>
               {prevTitle} <time>{prevPrefix}</time>
             </h4>
           </Link>
         )}
+        {nextSlug && (
+          <Link to={nextSlug}>
+            <FaArrowLeft />
+            <h4>
+              {nextTitle} <time>{nextPrefix} </time>
+            </h4>
+          </Link>
+        )}
       </div>
-
       {/* --- STYLES --- */}
       <style jsx>{`
         .links {

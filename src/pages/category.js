@@ -47,7 +47,7 @@ const CategoryPage = props => {
         {theme => (
           <Article theme={theme}>
             <header>
-              <Headline title="Posts by categories" theme={theme} />
+              <Headline title="Posts by Category" theme={theme} />
             </header>
             {categoryList.map(item => (
               <section key={item[0]}>
@@ -61,6 +61,7 @@ const CategoryPage = props => {
             <style jsx>{`
               h2 {
                 margin: 0 0 0.5em;
+                text-transform: capitalize;
               }
               h2 :global(svg) {
                 height: 0.8em;
@@ -99,7 +100,6 @@ export const query = graphql`
           frontmatter {
             title
             category
-            author
             cover {
               children {
                 ... on ImageSharp {

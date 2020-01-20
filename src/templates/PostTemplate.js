@@ -1,7 +1,7 @@
 import PropTypes from "prop-types";
 import React from "react";
 import { graphql } from "gatsby";
-require("prismjs/themes/prism-okaidia.css");
+require("prismjs/themes/prism.css");
 
 import Seo from "../components/Seo";
 import Article from "../components/Article";
@@ -61,7 +61,6 @@ export const postQuery = graphql`
       }
       frontmatter {
         title
-        author
         category
         cover {
           childImageSharp {
