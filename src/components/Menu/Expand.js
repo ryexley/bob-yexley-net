@@ -20,7 +20,7 @@ const Expand = props => {
         @below desktop {
           .more {
             background: ${theme.color.neutral.white};
-            border: 1px solid ${theme.color.brand.primary};
+            border: 1px solid ${theme.color.neutral.gray.d};
             border-radius: ${theme.size.radius.small} ${theme.size.radius.small} 0 0;
             border-bottom: none;
             position: absolute;
@@ -43,7 +43,7 @@ const Expand = props => {
             :global(svg) {
               transition: all 0.5s;
               transform: rotateZ(180deg);
-              fill: ${theme.color.special.attention};
+              fill: ${theme.color.brand.primary};
             }
 
             :global(.open) & :global(svg) {

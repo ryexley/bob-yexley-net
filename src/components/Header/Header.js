@@ -92,7 +92,7 @@ class Header extends React.Component {
 
             &.homepage {
               position: absolute;
-              background-color: transparent;
+              background-color: rgba(0, 0, 0, 0.25);
               height: ${theme.header.height.homepage};
             }
           }
@@ -180,7 +180,7 @@ class Header extends React.Component {
 
               &.fixed {
                 height: ${theme.header.height.fixed};
-                background-color: ${theme.color.neutral.white};
+                background-color: rgba(255, 255, 255, 0.9);
                 left: 0;
                 padding: 0 ${theme.space.m};
                 position: fixed;

@@ -1,7 +1,7 @@
 import React from "react";
 import PropTypes from "prop-types";
-
 import { FaArrowDown } from "react-icons/fa/";
+import config from '../../../content/meta/config'
 
 const Hero = props => {
   const { scrollToContent, backgrounds, theme } = props;
@@ -9,9 +9,7 @@ const Hero = props => {
   return (
     <React.Fragment>
       <section className="hero">
-        <h1>
-          This is a demo site of&nbsp;the <strong>heroBlog</strong> GatsbyJS starter
-        </h1>
+        <h1>{ config.siteDescription }</h1>
         <button onClick={scrollToContent} aria-label="scroll">
           <FaArrowDown />
         </button>
@@ -40,7 +38,7 @@ const Hero = props => {
           margin: ${theme.space.stack.l};
           color: ${theme.hero.h1.color};
           line-height: ${theme.hero.h1.lineHeight};
-          text-remove-gap: both 0 "Open Sans";
+          text-remove-gap: both 0 "Cabin";
 
           :global(strong) {
             position: relative;
@@ -60,7 +58,7 @@ const Hero = props => {
         }
 
         button {
-          background: ${theme.background.color.brand};
+          background: rgba(0, 0, 0, 0.25); /* ${theme.background.color.brand}; */
           border: 0;
           border-radius: 50%;
           font-size: ${theme.font.size.m};
@@ -116,6 +114,8 @@ const Hero = props => {
         @from-width desktop {
           .hero {
             background-image: url(${backgrounds.desktop});
+            background-position: center center;
+            background-size: cover;
           }
 
           h1 {

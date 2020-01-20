@@ -2,4 +2,4 @@
 title: author
 ---
 
-**Mr. Gatsby** Proin ornare ligula eu tellus tempus elementum. Aenean [bibendum](/) iaculis mi, nec blandit lacus interdum vitae. Vestibulum non nibh risus, a scelerisque purus. Blandit lacus interdum vitae. Vestibulum non nibh risus, a scelerisque purus.
+**Bob Yexley** ↟ Disciple of Jesus, husband of Crystal, father of Phoenix, Hunter and Charis, patriot, software developer, outdoorsman…that's about all I have time for.

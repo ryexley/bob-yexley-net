@@ -54,20 +54,20 @@ color:
       k: '#2b2826'
     black: '#000000'
   brand:
-    primary: &color-brand-primary '#709425'
-    primaryActive: '#709425'
-    light: '#709425'
-    lightActive: '#709425'
-    dark: '#709425'
-    darkActive: '#709425'
+    primary: &color-brand-primary '#09f'
+    primaryActive: '#09f'
+    light: '#09f'
+    lightActive: '#09f'
+    dark: '#09f'
+    darkActive: '#09f'
   special:
-    attention: &color-special-attention orange
+    attention: &color-special-attention '#9f0'
 # FONT
 font:
   # font options
   family:
     initial: 'Arial, sans-serif'
-    target: &font-family-target 'Open Sans'
+    target: &font-family-target 'Cabin'
   weight:
     standard: 400
     bold: 600
@@ -127,13 +127,13 @@ heading:
 line:
   color: *color-gray-3
 icon:
-  color: *color-brand-primary
+  color: *color-gray-3
 
 
 # COMPONENT TOKENS
 hero:
   h1:
-    size: *font-size-xxl
+    size: *font-size-xl
     color: *color-white
     lineHeight: *font-line-height-xs
   background: 'linear-gradient(0deg, #E0306E, #6438B5)'
@@ -147,4 +147,3 @@ header:
     default: 80px
     fixed: 50px;
     homepage: 100px;
-
