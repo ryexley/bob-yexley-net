@@ -90,9 +90,10 @@ const Item = props => {
         }
 
         h1 {
-          padding: ${theme.space.m} ${theme.space.s} 0;
-          line-height: ${theme.blog.h1.lineHeight};
           font-size: ${theme.blog.h1.size};
+          line-height: ${theme.blog.h1.lineHeight};
+          margin-bottom: 1.5rem;
+          padding: ${theme.space.m} ${theme.space.s} 0;
           text-remove-gap: both;
 
           :global(.arrow) {

@@ -59,11 +59,10 @@ const Contact = props => {
         {theme => (
           <div className="form">
             <Form
-              name="contact"
+              name="contact-form"
               onSubmit={handleSubmit}
               data-netlify="true"
-              data-netlify-honeypot="bot-field"
-            >
+              data-netlify-honeypot="bot-field">
               <FormItem label="Name">
                 {getFieldDecorator("name", {
                   rules: [

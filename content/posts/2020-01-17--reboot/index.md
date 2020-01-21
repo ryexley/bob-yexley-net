@@ -1,6 +1,6 @@
 ---
 title: Reboot
-cover: aspens.png
+cover: version-history.jpg
 category: miscellaneous
 ---
 
