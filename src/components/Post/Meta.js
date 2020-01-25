@@ -33,11 +33,16 @@ const Meta = props => {
             fill: ${theme.icon.color};
             margin: ${theme.space.inline.xs};
           }
+
           span {
             align-items: center;
             display: flex;
             text-transform: uppercase;
             margin: ${theme.space.xs} ${theme.space.s} ${theme.space.xs} 0;
+          }
+
+          :global(a) {
+            border-bottom: 1px solid transparent;
           }
         }
         @from-width tablet {

@@ -48,6 +48,7 @@ const NextPrev = props => {
           margin: ${theme.space.stack.l};
 
           :global(a) {
+            border-bottom: 1px solid transparent;
             display: flex;
           }
 

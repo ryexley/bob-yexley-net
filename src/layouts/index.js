@@ -74,6 +74,112 @@ class Layout extends React.Component {
     );
   };
 
+  renderStyle = () => <style jsx="true">{`
+    main {
+      min-height: 80vh;
+    }
+  `}</style>
+
+  renderGlobalStyle = () => <style jsx="true">{`
+    html {
+      box-sizing: border-box;
+    }
+
+    *,
+    *:after,
+    *:before {
+      box-sizing: inherit;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: ${
+        this.state.font400loaded ?
+          "Cabin, sans-serif;" :
+          "Helvetica, Arial, sans-serif;"
+        };
+    }
+
+    h1,
+    h2,
+    h3 {
+      font-weight: ${this.state.font600loaded ? 600 : 400};
+      line-height: 1.1;
+      margin: 0;
+    }
+
+    p {
+      margin: 0;
+    }
+
+    strong {
+      font-weight: ${this.state.font600loaded ? 600 : 400};
+    }
+
+    a {
+      border-bottom: 1px solid ${this.state.theme.color.brand.primary};
+      color: #666;
+      text-decoration: none;
+      transition: all 250ms ease-in-out;
+    }
+
+    a:hover {
+      border-bottom: 1px solid transparent;
+    }
+
+    a[href^="http"] {
+      margin: 0 0.1rem 0 0;
+    }
+
+    a[href^="http"]:after {
+      content: "⧉";
+      display: inline-block;
+      font-size: 0.85rem;
+      margin: 0 0 0 0.25rem;
+      position: relative;
+      top: -0.25rem;
+      transform: rotate(90deg);
+      vertical-align: baseline;
+      transition: all 250ms ease-in-out;
+    }
+
+    a[href^="http"]:hover:after {
+      transform: rotate(90deg) scale(1.2);
+    }
+
+    main {
+      width: auto;
+      display: block;
+    }
+
+    hr {
+      background: transparent;
+      border-top: 0;
+      border-left: 0;
+      border-right: 0;
+      border-bottom: 1px solid #eee;
+      color: transparent;
+      margin: 2rem 0;
+    }
+
+    /*
+    hr:after {
+      background: #fff;
+      bottom: -1.65625rem;
+      color: #eee;
+      content: "\\272A";
+      display: block;
+      font-size: 1.5rem;
+      height: 1.625rem;
+      padding: 5px 0 0 4px;
+      position: absolute;
+      left: 50%;
+      width: 1.625rem;
+    }
+    */
+  `}</style>
+
   render() {
     return (
       <StaticQuery
@@ -123,73 +229,8 @@ class Layout extends React.Component {
                     <Footer html={footnoteHTML} theme={this.state.theme} />
 
                     {/* --- STYLES --- */}
-                    <style jsx>{`
-                      main {
-                        min-height: 80vh;
-                      }
-                    `}</style>
-                    <style jsx global>{`
-                      html {
-                        box-sizing: border-box;
-                      }
-                      *,
-                      *:after,
-                      *:before {
-                        box-sizing: inherit;
-                        margin: 0;
-                        padding: 0;
-                      }
-                      body {
-                        font-family: ${this.state.font400loaded
-                          ? "Cabin, sans-serif;"
-                          : "Arial, sans-serif;"};
-                      }
-                      h1,
-                      h2,
-                      h3 {
-                        font-weight: ${this.state.font600loaded ? 600 : 400};
-                        line-height: 1.1;
-                        margin: 0;
-                      }
-                      p {
-                        margin: 0;
-                      }
-                      strong {
-                        font-weight: ${this.state.font600loaded ? 600 : 400};
-                      }
-                      a {
-                        text-decoration: none;
-                        color: #666;
-                      }
-                      main {
-                        width: auto;
-                        display: block;
-                      }
-                      hr {
-                        background: transparent;
-                        border-top: 0;
-                        border-left: 0;
-                        border-right: 0;
-                        border-bottom: 1px solid #eee;
-                        color: transparent;
-                        margin: 2rem 0;
-                      }
-                      /*
-                      hr:after {
-                        background: #fff;
-                        bottom: -1.65625rem;
-                        color: #eee;
-                        content: "\\272A";
-                        display: block;
-                        font-size: 1.5rem;
-                        height: 1.625rem;
-                        padding: 5px 0 0 4px;
-                        position: absolute;
-                        left: 50%;
-                        width: 1.625rem;
-                      }
-                      */
-                    `}</style>
+                    { this.renderStyle() }
+                    { this.renderGlobalStyle() }
                   </React.Fragment>
                 </ScreenWidthContext.Provider>
               </FontLoadedContext.Provider>
@@ -208,33 +249,3 @@ Layout.propTypes = {
 };
 
 export default Layout;
-
-//eslint-disable-next-line no-undef
-/*
-export const postQuery = graphql`
-  query LayoutQuery {
-    pages: allMarkdownRemark(
-      filter: { fileAbsolutePath: { regex: "//pages//" }, fields: { prefix: { regex: "/^\\d+$/" } } }
-      sort: { fields: [fields___prefix], order: ASC }
-    ) {
-      edges {
-        node {
-          fields {
-            slug
-            prefix
-          }
-          frontmatter {
-            title
-            menuTitle
-          }
-        }
-      }
-    }
-    footnote: markdownRemark(fileAbsolutePath: { regex: "/footnote/" }) {
-      id
-      html
-    }
-  }
-`;
-
-*/

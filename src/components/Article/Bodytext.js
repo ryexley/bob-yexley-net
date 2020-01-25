@@ -46,9 +46,9 @@ const Bodytext = props => {
           }
 
           :global(a) {
-            font-weight: ${theme.font.weight.bold};
+            font-weight: ${theme.font.weight.standard};
             color: ${theme.color.brand.primary};
-            text-decoration: underline;
+            text-decoration: none;
           }
 
           :global(blockquote) {

@@ -79,6 +79,10 @@ class Header extends React.Component {
             width: 100%;
             align-items: center;
 
+            :global(a) {
+              border-bottom: 1px solid transparent;
+            }
+
             :global(a.logoType) {
               align-items: center;
               display: flex;

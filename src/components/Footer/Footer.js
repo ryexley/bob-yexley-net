@@ -28,11 +28,16 @@ const Footer = props => {
               position: relative;
               display: inline-block;
 
+              :global(a) {
+                border-bottom: 1px solid transparent;
+              }
+
               &::after {
-                content: "•";
+                content: "◦";
                 position: absolute;
                 right: ${`calc(${theme.space.xs} * -1)`};
               }
+
               &:last-child::after {
                 content: "";
               }
