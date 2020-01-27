@@ -1,5 +1,5 @@
 ---
-title: First backcountry backpacking elk hunt, lessons learned
+title: "First backcountry backpacking elk hunt, lessons learned: Intro"
 cover: me-and-jd.png
 category: hunting
 ---
@@ -14,7 +14,7 @@ This article is _long overdue_, to the point where I hope it's not too late. My 
 
 These are the things that I plan to cover through the course of this series. Some of these will be things that worked out well for us, some are things that didn't work well at all for us, and a handful of them are just simple observations that were really neither good or bad, but feel worth mentioning.
 
-* Backpacks _(up next)_
+* [Backpacks](/first-backpacking-elk-hunt-lessons-learned-backpacks)
 * Tents _(coming soon)_
 * Sleep System _(coming soon)_
 * Water Filtration System(s) _(coming soon)_

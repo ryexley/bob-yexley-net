@@ -208,6 +208,7 @@ class Layout extends React.Component {
             }
           }
         `}
+
         render={data => {
           const { children } = this.props;
           const {
@@ -223,12 +224,9 @@ class Layout extends React.Component {
                     <Header
                       path={this.props.location.pathname}
                       pages={pages}
-                      theme={this.state.theme}
-                    />
+                      theme={this.state.theme} />
                     <main>{children}</main>
                     <Footer html={footnoteHTML} theme={this.state.theme} />
-
-                    {/* --- STYLES --- */}
                     { this.renderStyle() }
                     { this.renderGlobalStyle() }
                   </React.Fragment>

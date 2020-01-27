@@ -1,5 +1,5 @@
 ---
-title: "First backcountry backpacking elk hunt, lessons learned: backpacks"
+title: "First backcountry backpacking elk hunt, lessons learned: Backpacks"
 cover: backpacks-and-bows.jpg
 category: hunting
 ---
