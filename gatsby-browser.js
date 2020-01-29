@@ -16,6 +16,28 @@ function openExternalLinksInNewWindow() {
   }
 }
 
+/*
+function renderImageCaptions() {
+  const contentImages = document.querySelectorAll(".bodytext img")
+  // console.log({ contentImages })
+  contentImages.forEach(image => {
+    console.log({ image })
+    const imageAlt = image.getAttribute("alt")
+    const imageTitle = image.getAttribute("title")
+    const div = document.createElement("div")
+    const figure = document.createElement("figure")
+    const figCaption = document.createElement("figcaption")
+
+    figCaption.innerText = (imageTitle || imageAlt)
+    div.appendChild(image)
+    figure.appendChild(div)
+    figure.appendChild(figCaption)
+    console.log('img parent?', figure)
+    // image.parentElement.innerHTML = figure
+  })
+}
+*/
+
 function renderDomUpdates() {
   openExternalLinksInNewWindow()
 }
