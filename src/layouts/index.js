@@ -190,7 +190,7 @@ class Layout extends React.Component {
       <StaticQuery
         query={graphql`
           query LayoutQuery {
-            pages: allMarkdownRemark(
+            pages: allMdx(
               filter: { fileAbsolutePath: {
                 regex: "//pages//"
               },
@@ -215,7 +215,7 @@ class Layout extends React.Component {
                 }
               }
             }
-            footnote: markdownRemark(fileAbsolutePath: {
+            footnote: mdx(fileAbsolutePath: {
               regex: "/footnote/"
             }) {
               id
@@ -225,10 +225,10 @@ class Layout extends React.Component {
         `}
 
         render={data => {
-          const {children} = this.props
+          const { children } = this.props
           const {
-            footnote: {html: footnoteHTML},
-            pages: {edges: pages}
+            footnote: { html: footnoteHTML },
+            pages: { edges: pages }
           } = data
 
           return (

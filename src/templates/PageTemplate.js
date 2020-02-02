@@ -1,17 +1,17 @@
 import React from "react"
 import PropTypes from "prop-types"
-import {graphql} from "gatsby"
+import { graphql } from "gatsby"
 import Seo from "../components/Seo"
 import Article from "../components/Article"
 import Page from "../components/Page"
-import {ThemeContext} from "../layouts"
+import { ThemeContext } from "../layouts"
 
 const PageTemplate = props => {
   const {
     data: {
       page,
       site: {
-        siteMetadata: {facebook}
+        siteMetadata: { facebook }
       }
     }
   } = props
@@ -40,7 +40,7 @@ export default PageTemplate
 // eslint-disable-next-line no-undef
 export const pageQuery = graphql`
   query PageByPath($slug: String!) {
-    page: markdownRemark(fields: { slug: { eq: $slug } }) {
+    page: mdx(fields: { slug: { eq: $slug } }) {
       id
       html
       frontmatter {

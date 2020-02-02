@@ -27,6 +27,7 @@
     "arrow-parens": ["error", "as-needed"],
     "comma-dangle": ["error", "never"],
     "indent": ["error", 2, { "FunctionDeclaration": {"body": 1, "parameters": 2} }],
+    "object-curly-spacing": ["error", "always"],
     "global-require": "warn",
     "import/no-dynamic-require": "warn",
     "import/no-extraneous-dependencies": "off",

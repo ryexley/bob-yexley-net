@@ -1,27 +1,28 @@
 import PropTypes from "prop-types"
-import React from "react"
-import {graphql} from "gatsby"
+import React, { Fragment } from "react"
+import { MDXRenderer } from "gatsby-plugin-mdx"
+import { graphql } from "gatsby"
 require("prismjs/themes/prism-coy.css")
 
 import Seo from "../components/Seo"
 import Article from "../components/Article"
 import Post from "../components/Post"
-import {ThemeContext} from "../layouts"
+import { ThemeContext } from "../layouts"
 
 const PostTemplate = props => {
   const {
     data: {
       post,
-      authornote: {html: authorNote},
+      authornote: { body: authorNote },
       site: {
-        siteMetadata: {facebook}
+        siteMetadata: { facebook }
       }
     },
-    pageContext: {next, prev}
+    pageContext: { next, prev }
   } = props
 
   return (
-    <React.Fragment>
+    <Fragment>
       <ThemeContext.Consumer>
         {theme => (
           <Article theme={theme}>
@@ -38,7 +39,7 @@ const PostTemplate = props => {
       </ThemeContext.Consumer>
 
       <Seo data={post} facebook={facebook} />
-    </React.Fragment>
+    </Fragment>
   )
 }
 
@@ -52,9 +53,9 @@ export default PostTemplate
 // eslint-disable-next-line no-undef
 export const postQuery = graphql`
   query PostBySlug($slug: String!) {
-    post: markdownRemark(fields: { slug: { eq: $slug } }) {
+    post: mdx(fields: { slug: { eq: $slug } }) {
       id
-      html
+      body
       fields {
         slug
         prefix
@@ -71,9 +72,9 @@ export const postQuery = graphql`
         }
       }
     }
-    authornote: markdownRemark(fileAbsolutePath: { regex: "/author/" }) {
+    authornote: mdx(fileAbsolutePath: { regex: "/author/" }) {
       id
-      html
+      body
     }
     site {
       siteMetadata {
