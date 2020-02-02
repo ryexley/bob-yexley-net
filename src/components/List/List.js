@@ -1,12 +1,12 @@
-import React from "react";
-import PropTypes from "prop-types";
-import { Link } from "gatsby";
+import React, { Fragment } from "react"
+import PropTypes from "prop-types"
+import { Link } from "gatsby"
 
 const List = props => {
-  const { edges, theme } = props;
+  const { edges, theme } = props
 
   return (
-    <React.Fragment>
+    <Fragment>
       <ul>
         {edges.map(edge => {
           const {
@@ -14,13 +14,13 @@ const List = props => {
               frontmatter: { title },
               fields: { slug }
             }
-          } = edge;
+          } = edge
 
           return (
             <li key={slug}>
               <Link to={slug}>{title}</Link>
             </li>
-          );
+          )
         })}
       </ul>
 
@@ -37,13 +37,13 @@ const List = props => {
           line-height: ${theme.font.lineHeight.l};
         }
       `}</style>
-    </React.Fragment>
-  );
-};
+    </Fragment>
+  )
+}
 
 List.propTypes = {
   edges: PropTypes.array.isRequired,
   theme: PropTypes.object.isRequired
-};
+}
 
-export default List;
+export default List

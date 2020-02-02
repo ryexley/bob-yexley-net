@@ -1,7 +1,7 @@
 import PropTypes from "prop-types"
 import React from "react"
-import {graphql} from "gatsby"
-import {ThemeContext} from "../layouts"
+import { graphql } from "gatsby"
+import { ThemeContext } from "../layouts"
 import Blog from "../components/Blog"
 import Hero from "../components/Hero"
 import Seo from "../components/Seo"
@@ -10,24 +10,24 @@ class IndexPage extends React.Component {
   separator = React.createRef();
 
   scrollToContent = e => {
-    this.separator.current.scrollIntoView({block: "start", behavior: "smooth"})
+    this.separator.current.scrollIntoView({ block: "start", behavior: "smooth" })
   };
 
   render() {
     const {
       data: {
-        posts: {edges: posts = []},
+        posts: { edges: posts = [] },
         bgDesktop: {
-          resize: {src: desktop}
+          resize: { src: desktop }
         },
         bgTablet: {
-          resize: {src: tablet}
+          resize: { src: tablet }
         },
         bgMobile: {
-          resize: {src: mobile}
+          resize: { src: mobile }
         },
         site: {
-          siteMetadata: {facebook}
+          siteMetadata: { facebook }
         }
       }
     } = this.props

@@ -1,7 +1,7 @@
 import PropTypes from "prop-types"
 import React from "react"
-import {graphql} from "gatsby"
-import {ThemeContext} from "../layouts"
+import { graphql } from "gatsby"
+import { ThemeContext } from "../layouts"
 import Article from "../components/Article"
 import Contact from "../components/Contact"
 import Headline from "../components/Article/Headline"
@@ -11,7 +11,7 @@ const ContactPage = props => {
   const {
     data: {
       site: {
-        siteMetadata: {facebook}
+        siteMetadata: { facebook }
       }
     }
   } = props

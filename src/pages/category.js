@@ -1,8 +1,8 @@
-import {FaTag} from "react-icons/fa/"
+import { FaTag } from "react-icons/fa/"
 import PropTypes from "prop-types"
-import React from "react"
-import {graphql} from "gatsby"
-import {ThemeContext} from "../layouts"
+import React, { Fragment } from "react"
+import { graphql } from "gatsby"
+import { ThemeContext } from "../layouts"
 import Article from "../components/Article/"
 import Headline from "../components/Article/Headline"
 import List from "../components/List"
@@ -11,9 +11,9 @@ import Seo from "../components/Seo"
 const CategoryPage = props => {
   const {
     data: {
-      posts: {edges: posts},
+      posts: { edges: posts },
       site: {
-        siteMetadata: {facebook}
+        siteMetadata: { facebook }
       }
     }
   } = props
@@ -24,7 +24,7 @@ const CategoryPage = props => {
   posts.forEach(edge => {
     const {
       node: {
-        frontmatter: {category}
+        frontmatter: { category }
       }
     } = edge
 
@@ -36,12 +36,12 @@ const CategoryPage = props => {
     }
   })
 
-  const categoryList = categories.map(c => {
-    return [c, categories[c]]
+  const categoryList = Object.keys(categories).map(key => {
+    return [key, categories[key]]
   })
 
   return (
-    <React.Fragment>
+    <Fragment>
       <ThemeContext.Consumer>
         {theme => (
           <Article theme={theme}>
@@ -72,7 +72,7 @@ const CategoryPage = props => {
       </ThemeContext.Consumer>
 
       <Seo facebook={facebook} />
-    </React.Fragment>
+    </Fragment>
   )
 }
 

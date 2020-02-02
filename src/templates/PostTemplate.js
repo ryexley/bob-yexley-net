@@ -1,23 +1,23 @@
 import PropTypes from "prop-types"
 import React from "react"
-import {graphql} from "gatsby"
+import { graphql } from "gatsby"
 require("prismjs/themes/prism-coy.css")
 
 import Seo from "../components/Seo"
 import Article from "../components/Article"
 import Post from "../components/Post"
-import {ThemeContext} from "../layouts"
+import { ThemeContext } from "../layouts"
 
 const PostTemplate = props => {
   const {
     data: {
       post,
-      authornote: {html: authorNote},
+      authornote: { html: authorNote },
       site: {
-        siteMetadata: {facebook}
+        siteMetadata: { facebook }
       }
     },
-    pageContext: {next, prev}
+    pageContext: { next, prev }
   } = props
 
   return (
