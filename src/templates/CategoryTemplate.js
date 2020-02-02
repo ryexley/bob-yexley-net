@@ -1,20 +1,20 @@
-import {FaTag} from "react-icons/fa/"
+import { FaTag } from "react-icons/fa/"
 import PropTypes from "prop-types"
 import React from "react"
-import {graphql} from "gatsby"
+import { graphql } from "gatsby"
 import Seo from "../components/Seo"
-import {ThemeContext} from "../layouts"
+import { ThemeContext } from "../layouts"
 import Article from "../components/Article"
 import Headline from "../components/Article/Headline"
 import List from "../components/List"
 
 const CategoryTemplate = props => {
   const {
-    pageContext: {category},
+    pageContext: { category },
     data: {
-      allMdx: {totalCount, edges},
+      allMdx: { totalCount, edges },
       site: {
-        siteMetadata: {facebook}
+        siteMetadata: { facebook }
       }
     }
   } = props

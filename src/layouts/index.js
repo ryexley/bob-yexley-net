@@ -2,9 +2,9 @@ import "typeface-open-sans"
 import FontFaceObserver from "fontfaceobserver"
 import PropTypes from "prop-types"
 import React from "react"
-import {graphql, StaticQuery} from "gatsby"
+import { graphql, StaticQuery } from "gatsby"
 
-import {getScreenWidth, timeoutThrottlerHandler} from "../utils/helpers"
+import { getScreenWidth, timeoutThrottlerHandler } from "../utils/helpers"
 import Footer from "../components/Footer/"
 import Header from "../components/Header"
 
@@ -53,7 +53,7 @@ class Layout extends React.Component {
   };
 
   resizeHandler = () => {
-    this.setState({screenWidth: getScreenWidth()})
+    this.setState({ screenWidth: getScreenWidth() })
   };
 
   isHomePage = () => {
@@ -71,7 +71,7 @@ class Layout extends React.Component {
 
     font.load(null, 10000).then(
       () => {
-        this.setState({[`${name}loaded`]: true})
+        this.setState({ [`${name}loaded`]: true })
       },
       () => {
         console.log(`${name} is not available`)
