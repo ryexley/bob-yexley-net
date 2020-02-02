@@ -1,22 +1,22 @@
-import "typeface-open-sans";
-import FontFaceObserver from "fontfaceobserver";
-import PropTypes from "prop-types";
-import React from "react";
-import { graphql, StaticQuery } from "gatsby";
+import "typeface-open-sans"
+import FontFaceObserver from "fontfaceobserver"
+import PropTypes from "prop-types"
+import React from "react"
+import {graphql, StaticQuery} from "gatsby"
 
-import { getScreenWidth, timeoutThrottlerHandler } from "../utils/helpers";
-import Footer from "../components/Footer/";
-import Header from "../components/Header";
+import {getScreenWidth, timeoutThrottlerHandler} from "../utils/helpers"
+import Footer from "../components/Footer/"
+import Header from "../components/Header"
 
-export const ThemeContext = React.createContext(null);
-export const ScreenWidthContext = React.createContext(0);
-export const FontLoadedContext = React.createContext(false);
+export const ThemeContext = React.createContext(null)
+export const ScreenWidthContext = React.createContext(0)
+export const FontLoadedContext = React.createContext(false)
 
-import themeObjectFromYaml from "../theme/theme.yaml";
+import themeObjectFromYaml from "../theme/theme.yaml"
 
 class Layout extends React.Component {
   constructor() {
-    super();
+    super()
 
     this.state = {
       font400loaded: false,
@@ -24,11 +24,11 @@ class Layout extends React.Component {
       screenWidth: 0,
       headerMinimized: false,
       theme: themeObjectFromYaml
-    };
+    }
 
-    if (typeof window !== `undefined`) {
-      this.loadFont("font400", "Cabin", 400);
-      this.loadFont("font600", "Cabin", 600);
+    if (typeof window !== "undefined") {
+      this.loadFont("font400", "Cabin", 400)
+      this.loadFont("font600", "Cabin", 600)
     }
   }
 
@@ -37,41 +37,46 @@ class Layout extends React.Component {
   componentDidMount() {
     this.setState({
       screenWidth: getScreenWidth()
-    });
+    })
     if (typeof window !== "undefined") {
-      window.addEventListener("resize", this.resizeThrottler, false);
+      window.addEventListener("resize", this.resizeThrottler, false)
     }
   }
 
   resizeThrottler = () => {
-    return timeoutThrottlerHandler(this.timeouts, "resize", 100, this.resizeHandler);
+    return timeoutThrottlerHandler(
+      this.timeouts,
+      "resize",
+      100,
+      this.resizeHandler
+    )
   };
 
   resizeHandler = () => {
-    this.setState({ screenWidth: getScreenWidth() });
+    this.setState({screenWidth: getScreenWidth()})
   };
 
   isHomePage = () => {
     if (this.props.location.pathname === "/") {
-      return true;
+      return true
     }
 
-    return false;
+    return false
   };
 
   loadFont = (name, family, weight) => {
     const font = new FontFaceObserver(family, {
-      weight: weight
-    });
+      weight
+    })
 
     font.load(null, 10000).then(
       () => {
-        this.setState({ [`${name}loaded`]: true });
+        this.setState({[`${name}loaded`]: true})
       },
       () => {
-        console.log(`${name} is not available`);
+        console.log(`${name} is not available`)
       }
-    );
+    )
   };
 
   renderStyle = () => <style jsx="true">{`
@@ -186,7 +191,15 @@ class Layout extends React.Component {
         query={graphql`
           query LayoutQuery {
             pages: allMarkdownRemark(
-              filter: { fileAbsolutePath: { regex: "//pages//" }, fields: { prefix: { regex: "/^\\d+$/" } } }
+              filter: { fileAbsolutePath: {
+                regex: "//pages//"
+              },
+              fields: {
+                prefix: {
+                  regex: "/^\\d+$/"
+                }
+              }
+            }
               sort: { fields: [fields___prefix], order: ASC }
             ) {
               edges {
@@ -202,7 +215,9 @@ class Layout extends React.Component {
                 }
               }
             }
-            footnote: markdownRemark(fileAbsolutePath: { regex: "/footnote/" }) {
+            footnote: markdownRemark(fileAbsolutePath: {
+              regex: "/footnote/"
+            }) {
               id
               html
             }
@@ -210,11 +225,11 @@ class Layout extends React.Component {
         `}
 
         render={data => {
-          const { children } = this.props;
+          const {children} = this.props
           const {
-            footnote: { html: footnoteHTML },
-            pages: { edges: pages }
-          } = data;
+            footnote: {html: footnoteHTML},
+            pages: {edges: pages}
+          } = data
 
           return (
             <ThemeContext.Provider value={this.state.theme}>
@@ -233,10 +248,10 @@ class Layout extends React.Component {
                 </ScreenWidthContext.Provider>
               </FontLoadedContext.Provider>
             </ThemeContext.Provider>
-          );
+          )
         }}
       />
-    );
+    )
   }
 }
 
@@ -244,6 +259,6 @@ Layout.propTypes = {
   children: PropTypes.object.isRequired,
   data: PropTypes.object.isRequired,
   location: PropTypes.object.isRequired
-};
+}
 
-export default Layout;
+export default Layout

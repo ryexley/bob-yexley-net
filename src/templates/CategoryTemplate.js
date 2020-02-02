@@ -1,23 +1,35 @@
-import { FaTag } from "react-icons/fa/";
-import PropTypes from "prop-types";
-import React from "react";
-import { graphql } from "gatsby";
-import Seo from "../components/Seo";
-import { ThemeContext } from "../layouts";
-import Article from "../components/Article";
-import Headline from "../components/Article/Headline";
-import List from "../components/List";
+import {FaTag} from "react-icons/fa/"
+import PropTypes from "prop-types"
+import React from "react"
+import {graphql} from "gatsby"
+import Seo from "../components/Seo"
+import {ThemeContext} from "../layouts"
+import Article from "../components/Article"
+import Headline from "../components/Article/Headline"
+import List from "../components/List"
 
 const CategoryTemplate = props => {
   const {
-    pageContext: { category },
+    pageContext: {category},
     data: {
-      allMarkdownRemark: { totalCount, edges },
+      allMarkdownRemark: {totalCount, edges},
       site: {
-        siteMetadata: { facebook }
+        siteMetadata: {facebook}
       }
     }
-  } = props;
+  } = props
+
+  const renderPostCountMeta = () => {
+    const multiplePosts = (totalCount > 1)
+    const tense = multiplePosts ? "are" : "is"
+    const noun = `post${multiplePosts ? "s" : ""}`
+
+    return (
+      <p className="meta">
+        There {tense} <strong>{totalCount}</strong> {noun} in the category.
+      </p>
+    )
+  }
 
   return (
     <React.Fragment>
@@ -29,13 +41,7 @@ const CategoryTemplate = props => {
                 <span>Posts in category</span>
                 <span className="category-name"><FaTag /> {category}</span>
               </Headline>
-              <p className="meta">
-                There {totalCount > 1 ? "are" : "is"} <strong>{totalCount}</strong> post{totalCount >
-                1
-                  ? "s"
-                  : ""}{" "}
-                in the category.
-              </p>
+              { renderPostCountMeta() }
               <List edges={edges} theme={theme} />
             </header>
             <style jsx>{`
@@ -50,15 +56,15 @@ const CategoryTemplate = props => {
 
       <Seo facebook={facebook} />
     </React.Fragment>
-  );
-};
+  )
+}
 
 CategoryTemplate.propTypes = {
   data: PropTypes.object.isRequired,
   pageContext: PropTypes.object.isRequired
-};
+}
 
-export default CategoryTemplate;
+export default CategoryTemplate
 
 // eslint-disable-next-line no-undef
 export const categoryQuery = graphql`
@@ -91,4 +97,4 @@ export const categoryQuery = graphql`
       }
     }
   }
-`;
+`

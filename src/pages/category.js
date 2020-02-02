@@ -1,45 +1,44 @@
-import { FaTag } from "react-icons/fa/";
-import PropTypes from "prop-types";
-import React from "react";
-import { graphql } from "gatsby";
-import { ThemeContext } from "../layouts";
-import Article from "../components/Article/";
-import Headline from "../components/Article/Headline";
-import List from "../components/List";
-import Seo from "../components/Seo";
+import {FaTag} from "react-icons/fa/"
+import PropTypes from "prop-types"
+import React from "react"
+import {graphql} from "gatsby"
+import {ThemeContext} from "../layouts"
+import Article from "../components/Article/"
+import Headline from "../components/Article/Headline"
+import List from "../components/List"
+import Seo from "../components/Seo"
 
 const CategoryPage = props => {
   const {
     data: {
-      posts: { edges: posts },
+      posts: {edges: posts},
       site: {
-        siteMetadata: { facebook }
+        siteMetadata: {facebook}
       }
     }
-  } = props;
+  } = props
 
   // Create category list
-  const categories = {};
+  const categories = {}
+
   posts.forEach(edge => {
     const {
       node: {
-        frontmatter: { category }
+        frontmatter: {category}
       }
-    } = edge;
+    } = edge
 
     if (category && category != null) {
       if (!categories[category]) {
-        categories[category] = [];
+        categories[category] = []
       }
-      categories[category].push(edge);
+      categories[category].push(edge)
     }
-  });
+  })
 
-  const categoryList = [];
-
-  for (var key in categories) {
-    categoryList.push([key, categories[key]]);
-  }
+  const categoryList = categories.map(c => {
+    return [c, categories[c]]
+  })
 
   return (
     <React.Fragment>
@@ -74,16 +73,16 @@ const CategoryPage = props => {
 
       <Seo facebook={facebook} />
     </React.Fragment>
-  );
-};
+  )
+}
 
 CategoryPage.propTypes = {
   data: PropTypes.object.isRequired
-};
+}
 
-export default CategoryPage;
+export default CategoryPage
 
-//eslint-disable-next-line no-undef
+// eslint-disable-next-line no-undef
 export const query = graphql`
   query PostsQuery {
     posts: allMarkdownRemark(
@@ -121,4 +120,4 @@ export const query = graphql`
       }
     }
   }
-`;
+`

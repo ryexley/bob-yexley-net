@@ -6,7 +6,7 @@
     "plugin:react/recommended"
   ],
   "parserOptions": {
-    "ecmaVersion": 2016,
+    "ecmaVersion": 10,
     "sourceType": "module",
     "ecmaFeatures": {
       "jsx": true
@@ -19,9 +19,14 @@
     "node": true
   },
   "rules": {
+    "semi": ["error", "never"],
+    "quotes": ["error", "double"],
     "arrow-body-style": "off",
     "camelcase": "warn",
     "func-names": "off",
+    "arrow-parens": ["error", "as-needed"],
+    "comma-dangle": ["error", "never"],
+    "indent": ["error", 2, { "FunctionDeclaration": {"body": 1, "parameters": 2} }],
     "global-require": "warn",
     "import/no-dynamic-require": "warn",
     "import/no-extraneous-dependencies": "off",
@@ -34,7 +39,10 @@
     "no-unused-expressions": ["error", { "allowShortCircuit": true, "allowTernary": true }],
     "no-nested-ternary": "off",
     "no-unused-vars": "warn",
-    "prefer-destructuring": "off"
+    "no-invalid-this": "off",
+    "prefer-destructuring": "off",
+    "require-jsdoc": "off",
+    "valid-jsdoc": "off"
   },
   "overrides": [
     {
