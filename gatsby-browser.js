@@ -6,11 +6,14 @@
 function openExternalLinksInNewWindow() {
   if (window) {
     const host = window.location.hostname
-    const externalLinks = [].slice.call(document.links).filter(l => !l.href.includes(host))
+    const externalLinks = [].slice.call(document.links).filter(
+      l => !l.href.includes(host)
+    )
 
     externalLinks.forEach(link => {
       link.setAttribute("target", "_blank")
       link.setAttribute("rel", "noopener noreferrer")
+      /* eslint-disable-next-line max-len */
       link.setAttribute("title", "This is an external link, and will open in a new window")
     })
   }

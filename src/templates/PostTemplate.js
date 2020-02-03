@@ -1,7 +1,9 @@
 import PropTypes from "prop-types"
 import React from "react"
 import { graphql } from "gatsby"
+
 require("prismjs/themes/prism-coy.css")
+require("prismjs/plugins/line-numbers/prism-line-numbers.css")
 
 import Seo from "../components/Seo"
 import Article from "../components/Article"
