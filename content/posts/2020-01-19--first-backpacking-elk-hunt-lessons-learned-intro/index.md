@@ -2,6 +2,7 @@
 title: "First Backcountry Backpacking Elk Hunt, Lessons Learned: Intro"
 cover: me-and-jd.png
 category: hunting
+tags: ["elk", "hunting", "backpacking"]
 ---
 
 ![me and JD](me-and-jd.png)

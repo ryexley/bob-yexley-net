@@ -24,13 +24,13 @@ const List = props => {
         })}
       </ul>
 
-      {/* --- STYLES --- */}
       <style jsx>{`
         ul {
           margin: ${theme.space.stack.m};
           padding: ${theme.space.m};
           list-style: circle;
         }
+
         li {
           padding: ${theme.space.xs} 0;
           font-size: ${theme.font.size.s};

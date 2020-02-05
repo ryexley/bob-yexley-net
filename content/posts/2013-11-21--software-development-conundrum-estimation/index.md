@@ -2,6 +2,7 @@
 title: The Software Development Conundrum, Estimation
 cover: tire-swing-analysis-illustration.jpg
 category: software development
+tags: ["software development"]
 ---
 
 [![](dilbert-software-estimate.gif)](http://dilbert.com/strips/comic/2007-12-09/)

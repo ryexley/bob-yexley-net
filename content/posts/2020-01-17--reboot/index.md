@@ -2,6 +2,7 @@
 title: Reboot
 cover: version-history.jpg
 category: miscellaneous
+tags: ["web", "gatsby"]
 ---
 
 feat: reboot

@@ -2,6 +2,7 @@
 title: Impress Your Friends with a Custom Animated Gif Search
 cover: chrome-settings-search-engines.png
 category: miscellaneous
+tags: ["miscellaneous", "howto", "gifs", "fun"]
 ---
 
 For a long time, text-based communications have used emoticons to express various emotions. More recently, at least in the nerd community in which I work, the use of animated gifs has become a popular means of going beyond emoticons.

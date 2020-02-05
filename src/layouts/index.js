@@ -141,6 +141,7 @@ class Layout extends React.Component {
       content: "⧉";
       display: inline-block;
       font-size: 0.85rem;
+      font-style: normal;
       margin: 0 0 0 0.25rem;
       position: relative;
       top: -0.25rem;

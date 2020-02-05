@@ -51,6 +51,12 @@
       "rules": {
         "no-unused-expressions": "off"
       }
+    },
+    {
+      "files": ["gatsby-node.js"],
+      "rules": {
+        "max-len": "off"
+      }
     }
   ]
 }

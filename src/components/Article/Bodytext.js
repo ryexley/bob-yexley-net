@@ -1,8 +1,8 @@
-import React from "react";
-import PropTypes from "prop-types";
+import React from "react"
+import PropTypes from "prop-types"
 
 const Bodytext = props => {
-  const { html, theme } = props;
+  const { html, theme } = props
 
   return (
     <React.Fragment>
@@ -84,12 +84,12 @@ const Bodytext = props => {
         }
       `}</style>
     </React.Fragment>
-  );
-};
+  )
+}
 
 Bodytext.propTypes = {
   html: PropTypes.string.isRequired,
   theme: PropTypes.object.isRequired
-};
+}
 
-export default Bodytext;
+export default Bodytext

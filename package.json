@@ -8,7 +8,7 @@
     "dev": "gatsby develop --port 7117",
     "devhost": "gatsby develop --host 192.168.0.112",
     "lint-errors": "eslint src/**/*.{js,jsx} --quiet",
-    "lint": "eslint src/**/*.js",
+    "lint": "eslint ./src/**/*.js",
     "lint:fix": "yarn run lint --fix",
     "stylelint": "stylelint src/**/*.js",
     "generate-app-icons": "sh ./scripts/generate-app-icons.sh",

@@ -2,6 +2,7 @@
 title: "First Backcountry Backpacking Elk Hunt, Lessons Learned: Tents"
 cover: tents-setup-messy-camp.jpg
 category: hunting
+tags: ["elk", "hunting", "backpacking"]
 ---
 
 _This is the third post in a series on lessons I learned on my first backcountry backpacking elk hunt. [The previous post, which focused on backpacks, can be found here](/first-backpacking-elk-hunt-lessons-learned-backpacks)._

@@ -2,6 +2,7 @@
 title: "First Backcountry Backpacking Elk Hunt, Lessons Learned: Backpacks"
 cover: backpacks-and-bows.jpg
 category: hunting
+tags: ["elk", "hunting", "backpacking"]
 ---
 
 _This is the second post in a series on lessons I learned on my first backcountry backpacking elk hunt. [The previous post, which was the intro to the series, can be found here](/first-backpacking-elk-hunt-lessons-learned-intro). [The next post after this, which focused on tents, can be found here](/first-backcountry-backpacking-elk-hunt-lessons-learned-tents)._

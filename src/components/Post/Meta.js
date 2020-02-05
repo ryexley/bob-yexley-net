@@ -1,26 +1,46 @@
-import React from "react";
-import PropTypes from "prop-types";
-import { Link } from "gatsby";
+import React from "react"
+import PropTypes from "prop-types"
+import kebabCase from "lodash/kebabCase"
+import { Link } from "gatsby"
+import { format } from "date-fns"
 
-import { FaCalendar } from "react-icons/fa/";
-import { FaTag } from "react-icons/fa/";
+import { IoMdCalendar as CalendarIcon } from "react-icons/io/"
+import { IoMdFiling as CategoryIcon } from "react-icons/io/"
+import { IoMdPricetags as TagsIcon } from "react-icons/io/"
 
 const Meta = props => {
-  const { prefix, category, theme } = props;
+  const { prefix, category, tags, theme } = props
+  const renderTags = (tags && (tags.length > 0))
+
+  const TagLinks = () => tags.map(tag => (
+    <Link
+      to={`/tag/${kebabCase(tag)}`} key={tag}
+      title={`see other posts tagged with "${tag}"`}>
+      {tag}
+    </Link>
+  ))
 
   return (
     <p className="meta">
-      <span>
-        <FaCalendar size={18} /> {prefix}
+      <span className="date">
+        <CalendarIcon size={18} /> {format(new Date(prefix), "MMMM do, yyyy")}
       </span>
       {category && (
         <span>
-          <FaTag size={18} />
-          <Link to={`/category/${category.split(" ").join("-")}`}>{category}</Link>
+          <CategoryIcon size={18} />
+          <Link
+            to={`/category/${kebabCase(category)}`}
+            title={`see other posts in the "${category}" category`}>
+            {category}
+          </Link>
         </span>
       )}
-
-      {/* --- STYLES --- */}
+      {renderTags && (
+        <span className="tag-links">
+          <TagsIcon size={18} />
+          <TagLinks />
+        </span>
+      )}
       <style jsx>{`
         .meta {
           display: flex;
@@ -39,12 +59,37 @@ const Meta = props => {
             display: flex;
             text-transform: uppercase;
             margin: ${theme.space.xs} ${theme.space.s} ${theme.space.xs} 0;
+
+            :global(a) {
+            }
+          }
+
+          .date {
+            color: ${theme.color.neutral.gray.f};
+          }
+
+          .tag-links {
+            :global(a) {
+              margin-right: 0.25rem;
+            }
+
+            :global(a:not(:last-child)) {
+              &:after {
+                content: ", ";
+              }
+            }
           }
 
           :global(a) {
-            border-bottom: 1px solid transparent;
+            border-bottom: 1px solid ${theme.color.neutral.gray.f};
+
+            &:hover {
+              color: ${theme.color.brand.primary};
+              border-bottom: 1px solid ${theme.color.brand.primary};
+            }
           }
         }
+
         @from-width tablet {
           .meta {
             margin: ${`calc(${theme.space.m} * 1.5) 0 ${theme.space.m}`};
@@ -52,13 +97,14 @@ const Meta = props => {
         }
       `}</style>
     </p>
-  );
-};
+  )
+}
 
 Meta.propTypes = {
   prefix: PropTypes.string.isRequired,
   category: PropTypes.string,
+  tags: PropTypes.arrayOf(PropTypes.string),
   theme: PropTypes.object.isRequired
-};
+}
 
-export default Meta;
+export default Meta

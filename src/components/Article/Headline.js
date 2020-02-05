@@ -1,14 +1,13 @@
-import React from "react";
-import PropTypes from "prop-types";
+import React from "react"
+import PropTypes from "prop-types"
 
 const Headline = props => {
-  const { title, children, theme } = props;
+  const { title, children, theme } = props
 
   return (
     <React.Fragment>
       {title ? <h1>{title}</h1> : <h1>{children}</h1>}
 
-      {/* --- STYLES --- */}
       <style jsx>{`
         h1 {
           font-size: ${theme.font.size.xxl};
@@ -16,12 +15,10 @@ const Headline = props => {
           animation-name: headlineEntry;
           animation-duration: ${theme.time.duration.long};
 
-          :global(span) {
+          :global(div) {
             font-weight: ${theme.font.weight.standard};
-            display: block;
             font-size: 0.5em;
             letter-spacing: 0;
-            margin: ${theme.space.stack.xs};
           }
 
           :global(svg) {
@@ -52,13 +49,13 @@ const Headline = props => {
         }
       `}</style>
     </React.Fragment>
-  );
-};
+  )
+}
 
 Headline.propTypes = {
   title: PropTypes.string,
   children: PropTypes.node,
   theme: PropTypes.object.isRequired
-};
+}
 
-export default Headline;
+export default Headline

@@ -1,6 +1,6 @@
-import { FaTag } from "react-icons/fa/"
-import PropTypes from "prop-types"
 import React, { Fragment } from "react"
+import PropTypes from "prop-types"
+import { IoMdPricetag as TagIcon } from "react-icons/io/"
 import { graphql } from "gatsby"
 import Seo from "../components/Seo"
 import { ThemeContext } from "../layouts"
@@ -8,28 +8,10 @@ import Article from "../components/Article"
 import Headline from "../components/Article/Headline"
 import List from "../components/List"
 
-const CategoryTemplate = props => {
-  const {
-    pageContext: { category },
-    data: {
-      allMarkdownRemark: { totalCount, edges },
-      site: {
-        siteMetadata: { facebook }
-      }
-    }
-  } = props
-
-  const renderPostCountMeta = () => {
-    const multiplePosts = (totalCount > 1)
-    const tense = multiplePosts ? "are" : "is"
-    const noun = `post${multiplePosts ? "s" : ""}`
-
-    return (
-      <p className="meta">
-        There {tense} <strong>{totalCount}</strong> {noun} in the category.
-      </p>
-    )
-  }
+const TagTemplate = ({ pageContext, data }) => {
+  const { tag } = pageContext
+  const { edges } = data.allMarkdownRemark
+  const { siteMetadata: { facebook } } = data.site
 
   return (
     <Fragment>
@@ -38,14 +20,13 @@ const CategoryTemplate = props => {
           <Article theme={theme}>
             <header>
               <Headline theme={theme}>
-                <div>Posts in category</div>
-                <div className="category-name"><FaTag /> {category}</div>
+                <div>Posts tagged with</div>
+                <div className="tag-name"><TagIcon /> {tag}</div>
               </Headline>
-              { renderPostCountMeta() }
             </header>
             <List edges={edges} theme={theme} />
             <style jsx>{`
-              .category-name {
+              .tag-name {
                 font-size: 2.5rem;
                 margin-top: 1rem;
                 text-transform: capitalize;
@@ -73,20 +54,20 @@ const CategoryTemplate = props => {
   )
 }
 
-CategoryTemplate.propTypes = {
+TagTemplate.propTypes = {
   data: PropTypes.object.isRequired,
   pageContext: PropTypes.object.isRequired
 }
 
-export default CategoryTemplate
+export default TagTemplate
 
 // eslint-disable-next-line no-undef
-export const categoryQuery = graphql`
-  query PostsByCategory($category: String) {
+export const tagQuery = graphql`
+  query PostsByTag($tag: String) {
     allMarkdownRemark(
-      limit: 1000
+      limit: 2000
       sort: { fields: [fields___prefix], order: DESC }
-      filter: { frontmatter: { category: { eq: $category } } }
+      filter: { frontmatter: { tags: { in: [$tag] } } }
     ) {
       totalCount
       edges {
@@ -94,11 +75,8 @@ export const categoryQuery = graphql`
           fields {
             slug
           }
-          excerpt
-          timeToRead
           frontmatter {
             title
-            category
           }
         }
       }
