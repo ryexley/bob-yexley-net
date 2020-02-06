@@ -1,48 +1,57 @@
-import { Link } from "gatsby";
-import PropTypes from "prop-types";
-import React from "react";
-import VisibilitySensor from "react-visibility-sensor";
+import { Link } from "gatsby"
+import PropTypes from "prop-types"
+import React, { Component, Fragment } from "react"
+import classnames from "classnames"
+import VisibilitySensor from "react-visibility-sensor"
 
-import { ScreenWidthContext, FontLoadedContext } from "../../layouts";
-import config from "../../../content/meta/config";
-import Menu from "../Menu";
+import { ScreenWidthContext, FontLoadedContext } from "../../layouts"
+import config from "../../../content/meta/config"
+import Menu from "../Menu"
 
-import avatar from "../../images/jpg/avatar.jpg";
+import avatar from "../../images/jpg/avatar.jpg"
 
-class Header extends React.Component {
-  state = {
-    fixed: false
-  };
+class Header extends Component {
+  state = { fixed: false }
 
   visibilitySensorChange = val => {
     if (val) {
-      this.setState({ fixed: false });
+      this.setState({ fixed: false })
     } else {
-      this.setState({ fixed: true });
+      this.setState({ fixed: true })
     }
-  };
-
-  getHeaderSize = () => {
-    const fixed = this.state.fixed ? "fixed" : "";
-    const homepage = this.props.path === "/" ? "homepage" : "";
-
-    return `${fixed} ${homepage}`;
-  };
+  }
 
   render() {
-    const { pages, path, theme } = this.props;
-    const { fixed } = this.state;
+    const { pages, path, theme } = this.props
+    const { fixed } = this.state
+
+    const {
+      gravatarImgMd5,
+      siteTitle,
+      headerTitle,
+      headerSubTitle
+    } = config
+
+    const logoImageSource = gravatarImgMd5 == "" ? avatar : gravatarImgMd5
+
+    const classes = classnames("header", {
+      fixed: this.state.fixed,
+      homepage: this.props.path === "/",
+      subpage: this.props.path !== "/"
+    })
 
     return (
-      <React.Fragment>
-        <header className={`header ${this.getHeaderSize()}`}>
+      <Fragment>
+        <header className={classes}>
           <Link to="/" className="logoType">
             <div className="logo">
-              <img src={config.gravatarImgMd5=="" ? avatar : config.gravatarImgMd5 } alt={config.siteTitle} />
+              <img
+                src={logoImageSource}
+                alt={siteTitle} />
             </div>
             <div className="type">
-              <h1>{config.headerTitle}</h1>
-              <h2>{config.headerSubTitle}</h2>
+              <h1>{headerTitle}</h1>
+              <h2>{headerSubTitle}</h2>
             </div>
           </Link>
           <FontLoadedContext.Consumer>
@@ -66,18 +75,18 @@ class Header extends React.Component {
           <div className="sensor" />
         </VisibilitySensor>
 
-        {/* --- STYLES --- */}
         <style jsx>{`
           .header {
             align-items: center;
             justify-content: center;
-            background-color: ${theme.color.neutral.white};
+            background-color: rgba(255, 255, 255, 0.9);
             display: flex;
             height: ${theme.header.height.default};
             position: relative;
             top: 0;
             width: 100%;
             align-items: center;
+            transition: all 500ms ease-in-out;
 
             :global(a) {
               border-bottom: 1px solid transparent;
@@ -98,6 +107,10 @@ class Header extends React.Component {
               position: absolute;
               background-color: rgba(0, 0, 0, 0.25);
               height: ${theme.header.height.homepage};
+            }
+
+            &.subpage {
+              background-color: rgba(0, 0, 0, 0.5);
             }
           }
 
@@ -156,15 +169,17 @@ class Header extends React.Component {
           }
 
           @below desktop {
-            .header.homepage {
+            .header.homepage, .header.subpage {
               .logo {
                 border: none;
               }
 
               :global(a.logoType),
+
               h1 {
                 color: ${theme.color.neutral.white};
               }
+
               h2 {
                 color: ${theme.color.neutral.gray.d};
               }
@@ -174,7 +189,7 @@ class Header extends React.Component {
           @from-width desktop {
             .header {
               align-items: center;
-              background-color: ${theme.color.neutral.white};
+              background-color: rgba(255, 255, 255, 0.9);
               display: flex;
               position: absolute;
               top: 0;
@@ -189,6 +204,7 @@ class Header extends React.Component {
                 padding: 0 ${theme.space.m};
                 position: fixed;
                 top: 0;
+                transition: all 500ms ease-in-out;
                 width: 100%;
                 z-index: 1;
 
@@ -203,9 +219,23 @@ class Header extends React.Component {
 
               &.homepage:not(.fixed) {
                 :global(a.logoType),
+
                 h1 {
                   color: ${theme.color.neutral.white};
                 }
+
+                h2 {
+                  color: ${theme.color.neutral.gray.d};
+                }
+              }
+
+              &.subpage:not(.fixed) {
+                :global(a.logoType),
+
+                h1 {
+                  color: ${theme.color.neutral.white};
+                }
+
                 h2 {
                   color: ${theme.color.neutral.gray.d};
                 }
@@ -230,6 +260,10 @@ class Header extends React.Component {
               .header.homepage:not(.fixed) & {
                 border: none;
               }
+
+              .header.subpage:not(.fixed) & {
+                border: none;
+              }
             }
 
             h2 {
@@ -247,8 +281,8 @@ class Header extends React.Component {
             }
           }
         `}</style>
-      </React.Fragment>
-    );
+      </Fragment>
+    )
   }
 }
 
@@ -256,6 +290,6 @@ Header.propTypes = {
   pages: PropTypes.array.isRequired,
   path: PropTypes.string.isRequired,
   theme: PropTypes.object.isRequired
-};
+}
 
-export default Header;
+export default Header

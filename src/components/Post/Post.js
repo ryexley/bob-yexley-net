@@ -1,6 +1,5 @@
-import React from "react"
+import React, { Fragment } from "react"
 import PropTypes from "prop-types"
-import "prismjs/themes/prism-okaidia.css"
 
 import asyncComponent from "../AsyncComponent"
 import Headline from "../Article/Headline"
@@ -32,9 +31,8 @@ const Post = props => {
   } = props
 
   return (
-    <React.Fragment>
+    <Fragment>
       <header>
-        <Headline title={title} theme={theme} />
         <Meta prefix={prefix} category={category} tags={tags} theme={theme} />
       </header>
       <Bodytext html={html} theme={theme} />
@@ -43,7 +41,7 @@ const Post = props => {
         <Author note={authornote} theme={theme} />
         <NextPrev next={nextPost} prev={prevPost} theme={theme} />
       </footer>
-    </React.Fragment>
+    </Fragment>
   )
 }
 

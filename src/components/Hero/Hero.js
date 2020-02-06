@@ -1,21 +1,20 @@
-import React from "react";
-import PropTypes from "prop-types";
-import { FaArrowDown } from "react-icons/fa/";
-import config from '../../../content/meta/config'
+import React, { Fragment } from "react"
+import PropTypes from "prop-types"
+import { IoIosArrowDown as DownArrowIcon } from "react-icons/io/"
+import config from "../../../content/meta/config"
 
 const Hero = props => {
-  const { scrollToContent, backgrounds, theme } = props;
+  const { scrollToContent, backgrounds, theme } = props
 
   return (
-    <React.Fragment>
+    <Fragment>
       <section className="hero">
         <h1>{ config.siteDescription }</h1>
         <button onClick={scrollToContent} aria-label="scroll">
-          <FaArrowDown />
+          <DownArrowIcon />
         </button>
       </section>
 
-      {/* --- STYLES --- */}
       <style jsx>{`
         .hero {
           align-items: center;
@@ -128,14 +127,14 @@ const Hero = props => {
           }
         }
       `}</style>
-    </React.Fragment>
-  );
-};
+    </Fragment>
+  )
+}
 
 Hero.propTypes = {
   scrollToContent: PropTypes.func.isRequired,
   backgrounds: PropTypes.object.isRequired,
   theme: PropTypes.object.isRequired
-};
+}
 
-export default Hero;
+export default Hero

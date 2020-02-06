@@ -10,8 +10,11 @@ class IndexPage extends React.Component {
   separator = React.createRef();
 
   scrollToContent = e => {
-    this.separator.current.scrollIntoView({ block: "start", behavior: "smooth" })
-  };
+    this.separator.current.scrollIntoView({
+      block: "start",
+      behavior: "smooth"
+    })
+  }
 
   render() {
     const {

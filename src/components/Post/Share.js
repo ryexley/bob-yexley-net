@@ -1,14 +1,14 @@
-import React from "react";
-import PropTypes from "prop-types";
+import React, { Fragment } from "react"
+import PropTypes from "prop-types"
 import {
   FacebookShareButton,
   TwitterShareButton,
   FacebookShareCount,
   FacebookIcon,
   TwitterIcon
-} from "react-share";
+} from "react-share"
 
-import config from "../../../content/meta/config";
+import config from "../../../content/meta/config"
 
 const PostShare = props => {
   const {
@@ -18,15 +18,17 @@ const PostShare = props => {
       excerpt
     },
     theme
-  } = props;
+  } = props
 
-  const url = config.siteUrl + config.pathPrefix + slug;
+  const url = config.siteUrl + config.pathPrefix + slug
 
-  const iconSize = 36;
-  const filter = count => (count > 0 ? count : "");
+  const iconSize = 36
+  const filter = count => (count > 0 ? count : "")
 
-  return (
-    <React.Fragment>
+  const dev = process.env.NODE_ENV === "development"
+
+  return !dev ? (
+    <Fragment>
       <div className="share">
         <span className="label">SHARE</span>
         <div className="links">
@@ -88,13 +90,13 @@ const PostShare = props => {
           }
         }
       `}</style>
-    </React.Fragment>
-  );
-};
+    </Fragment>
+  ) : null
+}
 
 PostShare.propTypes = {
   post: PropTypes.object.isRequired,
   theme: PropTypes.object.isRequired
-};
+}
 
-export default PostShare;
+export default PostShare

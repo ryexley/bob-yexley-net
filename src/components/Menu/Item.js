@@ -1,24 +1,25 @@
-import React from "react";
-import PropTypes from "prop-types";
-import { Link } from "gatsby";
+import React, { Fragment } from "react"
+import PropTypes from "prop-types"
+import classnames from "classnames"
+import { Link } from "gatsby"
 
 const Item = props => {
-  const { theme, item: { label, to, icon: Icon } = {}, onClick } = props;
+  const { theme, item: { label, to, icon: Icon } = {}, onClick } = props
+  const listItemClasses = "hiddenItem" in props ? "hiddenItem" : "item"
+  const linkClasses = classnames({ inHiddenItem: "hiddenItem" in props })
 
   return (
-    <React.Fragment>
-      <li className={"hiddenItem" in props ? "hiddenItem" : "item"} key={label}>
+    <Fragment>
+      <li className={listItemClasses} key={label}>
         <Link
           to={to}
-          className={"hiddenItem" in props ? "inHiddenItem" : ""}
+          className={linkClasses}
           onClick={onClick}
-          data-slug={to}
-        >
+          data-slug={to}>
           {Icon && <Icon />} {label}
         </Link>
       </li>
 
-      {/* --- STYLES --- */}
       <style jsx>{`
         .item,
         .showItem {
@@ -53,6 +54,10 @@ const Item = props => {
             }
 
             :global(.homepage):not(.fixed) & :global(a) {
+              color: ${theme.color.neutral.white};
+            }
+
+            :global(.subpage):not(.fixed) & :global(a) {
               color: ${theme.color.neutral.white};
             }
 
@@ -92,9 +97,9 @@ const Item = props => {
           }
         }
       `}</style>
-    </React.Fragment>
-  );
-};
+    </Fragment>
+  )
+}
 
 Item.propTypes = {
   item: PropTypes.object,
@@ -102,6 +107,6 @@ Item.propTypes = {
   onClick: PropTypes.func,
   icon: PropTypes.func,
   theme: PropTypes.object.isRequired
-};
+}
 
-export default Item;
+export default Item

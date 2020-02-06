@@ -78,7 +78,7 @@ const Expand = props => {
               transition: all ${theme.time.duration.default};
             }
 
-            :global(.homepage) & {
+            :global(.homepage) &, :global(.subpage) & {
               border: 1px solid transparent;
               background-color: color(white alpha(-90%));
 
