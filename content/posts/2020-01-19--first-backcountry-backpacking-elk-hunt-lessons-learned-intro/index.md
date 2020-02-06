@@ -15,10 +15,10 @@ This article is _long overdue_, to the point where I hope it's not too late. My 
 
 These are the things that I plan to cover through the course of this series. Some of these will be things that worked out well for us, some are things that didn't work well at all for us, and a handful of them are just simple observations that were really neither good or bad, but feel worth mentioning.
 
-* [Backpacks](/first-backpacking-elk-hunt-lessons-learned-backpacks)
+* [Backpacks](/first-backcountry-backpacking-elk-hunt-lessons-learned-backpacks)
 * [Tents](/first-backcountry-backpacking-elk-hunt-lessons-learned-tents)
-* Sleep System _(up next)_
-* Water Filtration System(s) _(coming soon)_
+* [Sleep System](/first-backcountry-backpacking-elk-hunt-lessons-learned-sleep-system)
+* Water Filtration System(s) _(up next)_
 * Electronics / Software / Mapping _(coming soon)_
 * Reading Maps and Electronic Scouting _(coming soon)_
 * Food _(coming soon)_
