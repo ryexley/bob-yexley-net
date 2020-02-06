@@ -22,14 +22,38 @@ module.exports = function(plop) {
           "software development",
           "miscellaneous"
         ]
+      },
+      {
+        type: "checkbox",
+        name: "tags",
+        message: "Tags",
+        choices: [
+          "miscellaneous",
+          "family",
+          "faith",
+          "hunting",
+          "elk",
+          "fishing",
+          "backpacking",
+          "software development",
+          "howto",
+          "web development",
+          "javascript",
+          "html",
+          "css"
+        ]
       }
     ],
-    actions: [
-      {
-        type: "add",
-        path: "./content/posts/{{timestamp}}--{{dashCase title}}/index.md",
-        templateFile: "./generator-templates/blog-post.hbs"
-      }
-    ]
+    actions: data => {
+      data.tags = data.tags.map(tag => decodeURI(`"${tag}"`)).join(", ")
+
+      return [
+        {
+          type: "add",
+          path: "./content/posts/{{timestamp}}--{{dashCase title}}/index.md",
+          templateFile: "./generator-templates/blog-post.hbs"
+        }
+      ]
+    }
   })
 }
