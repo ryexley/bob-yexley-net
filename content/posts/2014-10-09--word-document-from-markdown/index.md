@@ -1,6 +1,6 @@
 ---
 title: Generate a Word Document from Markdown on OS X
-cover: markdown-to-word-screenshot.png
+cover: laptop-with-code.jpg
 category: miscellaneous
 tags: ["howto", "productivity", "office", "markdown"]
 ---

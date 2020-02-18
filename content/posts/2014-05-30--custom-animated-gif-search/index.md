@@ -1,6 +1,6 @@
 ---
 title: Impress Your Friends with a Custom Animated Gif Search
-cover: chrome-settings-search-engines.png
+cover: guys-laughing-at-computer-screen.jpg
 category: miscellaneous
 tags: ["miscellaneous", "howto", "gifs", "fun"]
 ---

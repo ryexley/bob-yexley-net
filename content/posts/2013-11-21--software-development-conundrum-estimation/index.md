@@ -1,6 +1,6 @@
 ---
 title: The Software Development Conundrum, Estimation
-cover: tire-swing-analysis-illustration.jpg
+cover: developer-frustrated-at-laptop.jpg
 category: software development
 tags: ["software development"]
 ---
