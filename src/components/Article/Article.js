@@ -10,7 +10,7 @@ const Article = props => {
     [className]: isNotEmpty(className)
   })
 
-  const tabletPadding = `calc(${themePadding}) calc(${themePadding} * 2)`
+  const tabletPadding = `0 calc(${themePadding} * 2) calc(${themePadding} * 2) calc(${themePadding} * 2)`
   const desktopPadding = `calc(${themePadding} * 2 + 90px) 0 calc(${themePadding} * 2)`
 
   return (

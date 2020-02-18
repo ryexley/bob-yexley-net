@@ -84,6 +84,7 @@ class Hero extends Component {
 
           .post-hero-title {
             color: ${theme.color.neutral.white};
+            margin: 0 2rem;
           }
 
           @from-width tablet {
@@ -94,6 +95,7 @@ class Hero extends Component {
             h1 {
               font-size: ${`calc(${theme.font.size.xl} * 1.2)`};
               margin: 0 5rem;
+              max-width: ${theme.text.maxWidth.tablet};
             }
           }
 
@@ -106,6 +108,7 @@ class Hero extends Component {
               font-size: ${`calc(${theme.font.size.xl} * 1.4)`};
               margin: 0 10rem;
               margin-top: 2.5rem;
+              max-width: ${theme.text.maxWidth.desktop};
             }
           }
         `}</style>

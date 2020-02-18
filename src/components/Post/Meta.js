@@ -21,12 +21,12 @@ const Meta = props => {
   ))
 
   return (
-    <p className="meta">
+    <div className="meta">
       <span className="date">
         <CalendarIcon size={18} /> {format(new Date(prefix), "MMMM do, yyyy")}
       </span>
       {category && (
-        <span>
+        <span className="category">
           <CategoryIcon size={18} />
           <Link
             to={`/category/${kebabCase(category)}`}
@@ -60,12 +60,19 @@ const Meta = props => {
             text-transform: uppercase;
             margin: ${theme.space.xs} ${theme.space.s} ${theme.space.xs} 0;
 
-            :global(a) {
+            :global(a) {}
+
+            &:last-child {
+              margin-right: 0;
             }
           }
 
           .date {
             color: ${theme.color.neutral.gray.f};
+          }
+
+          .category {
+            margin-left: auto;
           }
 
           .tag-links {
@@ -92,11 +99,11 @@ const Meta = props => {
 
         @from-width tablet {
           .meta {
-            margin: ${`calc(${theme.space.m} * 1.5) 0 ${theme.space.m}`};
+            margin: ${`${theme.space.m} 0 ${theme.space.m}`};
           }
         }
       `}</style>
-    </p>
+    </div>
   )
 }
 
