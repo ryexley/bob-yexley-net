@@ -1,0 +1,50 @@
+{
+  "skillProficiencyCollections": [
+    {
+      "title": "Web Development (Advanced)",
+      "skillsProficiencies": [
+        { "name": "JavaScript", "url": "https://developer.mozilla.org/en-US/docs/Web/javascript" },
+        { "name": "HTML", "url": "https://developer.mozilla.org/en-US/docs/Web/HTML" },
+        { "name": "CSS", "url": "https://developer.mozilla.org/en-US/docs/Web/CSS" },
+        { "name": "node.js", "url": "https://nodejs.org" },
+        { "name": "React", "url": "https://reactjs.org/" },
+        { "name": "Redux", "url": "https://redux.js.org/" },
+        { "name": "Vue.js", "url": "https://vuejs.org/" },
+        { "name": "Vuex", "url": "https://vuex.vuejs.org/" },
+        { "name": "Svelte", "url": "https://svelte.dev/" },
+        { "name": "Webpack", "url": "https://webpack.js.org/" }
+      ]
+    },
+    {
+      "title": "Architecture and Backend (Intermediate)",
+      "skillsProficiencies": [
+        { "name": "REST", "url": "" },
+        { "name": "Hypermedia", "url": "" },
+        { "name": "node.js", "url": "https://nodejs.org" },
+        { "name": "Express JS", "url": "https://expressjs.com/" },
+        { "name": "SQL", "url": "" },
+        { "name": "NoSQL", "url": "" }
+      ]
+    },
+    {
+      "title": "Developer Tools (Advanced)",
+      "skillsProficiencies": [
+        { "name": "Sublime Text", "url": "" },
+        { "name": "Git", "url": "" },
+        { "name": "GitHub", "url": "" },
+        { "name": "Terminal/Command Line", "url": "" }
+      ]
+    }
+  ],
+  "workHistory": [
+    {
+      "employer": "Amplify Exchange",
+      "employerUrl": "https://amplifyexchange.com",
+      "startDate": "February 2019",
+      "endDate": "Current",
+      "positionTitle": "Software Developer",
+      "description": "",
+      "highlights": [""]
+    }
+  ]
+}

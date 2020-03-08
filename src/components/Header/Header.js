@@ -37,6 +37,7 @@ class Header extends Component {
     const classes = classnames("header", {
       fixed: this.state.fixed,
       homepage: this.props.path === "/",
+      resume: this.props.path === "/resume",
       subpage: this.props.path !== "/"
     })
 
@@ -74,7 +75,6 @@ class Header extends Component {
         <VisibilitySensor onChange={this.visibilitySensorChange}>
           <div className="sensor" />
         </VisibilitySensor>
-
         <style jsx>{`
           .header {
             align-items: center;
@@ -103,7 +103,7 @@ class Header extends Component {
               }
             }
 
-            &.homepage {
+            &.homepage, &.resume {
               position: absolute;
               background-color: rgba(0, 0, 0, 0.25);
               height: ${theme.header.height.homepage};

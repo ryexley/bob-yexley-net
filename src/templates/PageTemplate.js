@@ -25,7 +25,6 @@ const PageTemplate = props => {
           </Article>
         )}
       </ThemeContext.Consumer>
-
       <Seo data={page} facebook={facebook} />
     </React.Fragment>
   )

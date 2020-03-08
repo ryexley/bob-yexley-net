@@ -94,6 +94,14 @@ module.exports = {
         path: `${__dirname}/content/parts/`
       }
     },
+    "gatsby-transformer-json",
+    {
+      resolve: "gatsby-source-filesystem",
+      options: {
+        name: "contentData",
+        path: `${__dirname}/content/data/`
+      }
+    },
     {
       resolve: `gatsby-transformer-remark`,
       options: {
