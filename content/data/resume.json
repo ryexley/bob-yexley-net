@@ -1,38 +1,76 @@
 {
+  "toolsAndSkills": [
+    { "key": "js", "name": "JavaScript", "url": "https://developer.mozilla.org/en-US/docs/Web/javascript" },
+    { "key": "html", "name": "HTML", "url": "https://developer.mozilla.org/en-US/docs/Web/HTML" },
+    { "key": "css", "name": "CSS", "url": "https://developer.mozilla.org/en-US/docs/Web/CSS" },
+    { "key": "nodejs", "name": "node.js", "url": "https://nodejs.org" },
+    { "key": "react", "name": "React", "url": "https://reactjs.org/" },
+    { "key": "redux", "name": "Redux", "url": "https://redux.js.org/" },
+    { "key": "vue", "name": "Vue.js", "url": "https://vuejs.org/" },
+    { "key": "vuex", "name": "Vuex", "url": "https://vuex.vuejs.org/" },
+    { "key": "svelte", "name": "Svelte", "url": "https://svelte.dev/" },
+    { "key": "sapper", "name": "Sapper", "url": "https://sapper.svelte.dev/" },
+    { "key": "webpack", "name": "Webpack", "url": "https://webpack.js.org/" },
+    { "key": "mocha", "name": "Mocha", "url": "https://mochajs.org/" },
+    { "key": "jest", "name": "Jest", "url": "https://jestjs.io/" },
+    { "key": "gatsby", "name": "Gatsby", "url": "https://www.gatsbyjs.org/" },
+    { "key": "eslint", "name": "ESLint", "url": "https://eslint.org/" },
+    { "key": "express", "name": "Express", "url": "https://expressjs.com/" },
+    { "key": "rest", "name": "REST", "url": "https://restfulapi.net/rest-architectural-constraints/" },
+    { "key": "hypermedia", "name": "Hypermedia", "url": "https://restfulapi.net/hateoas/" },
+    { "key": "docker", "name": "Docker", "url": "https://www.docker.com/" },
+    { "key": "redis", "name": "Redis", "url": "https://redis.io/" },
+    { "key": "rabbitmq", "name": "RabbitMQ", "url": "https://www.rabbitmq.com/" },
+    { "key": "sql", "name": "SQL", "url": "https://en.wikipedia.org/wiki/SQL" },
+    { "key": "nosql", "name": "NoSQL", "url": "https://en.wikipedia.org/wiki/NoSQL" },
+    { "key": "sublimetext", "name": "Sublime Text", "url": "https://www.sublimetext.com/" },
+    { "key": "git", "name": "Git", "url": "https://git-scm.com/" },
+    { "key": "github", "name": "GitHub", "url": "https://github.com/" },
+    { "key": "shell", "name": "Terminal/Command Line", "url": "https://iterm2.com/" },
+    { "key": "vscode", "name": "VS Code", "url": "https://code.visualstudio.com/" }
+  ],
   "skillProficiencyCollections": [
     {
       "title": "Web Development (Advanced)",
       "skillsProficiencies": [
-        { "name": "JavaScript", "url": "https://developer.mozilla.org/en-US/docs/Web/javascript" },
-        { "name": "HTML", "url": "https://developer.mozilla.org/en-US/docs/Web/HTML" },
-        { "name": "CSS", "url": "https://developer.mozilla.org/en-US/docs/Web/CSS" },
-        { "name": "node.js", "url": "https://nodejs.org" },
-        { "name": "React", "url": "https://reactjs.org/" },
-        { "name": "Redux", "url": "https://redux.js.org/" },
-        { "name": "Vue.js", "url": "https://vuejs.org/" },
-        { "name": "Vuex", "url": "https://vuex.vuejs.org/" },
-        { "name": "Svelte", "url": "https://svelte.dev/" },
-        { "name": "Webpack", "url": "https://webpack.js.org/" }
+        "js",
+        "html",
+        "css",
+        "nodejs",
+        "react",
+        "redux",
+        "vue",
+        "vuex",
+        "svelte",
+        "sapper",
+        "webpack",
+        "mocha",
+        "jest",
+        "gatsby",
+        "eslint"
       ]
     },
     {
-      "title": "Architecture and Backend (Intermediate)",
+      "title": "Backend and Distributed Architecture (Intermediate)",
       "skillsProficiencies": [
-        { "name": "REST", "url": "" },
-        { "name": "Hypermedia", "url": "" },
-        { "name": "node.js", "url": "https://nodejs.org" },
-        { "name": "Express JS", "url": "https://expressjs.com/" },
-        { "name": "SQL", "url": "" },
-        { "name": "NoSQL", "url": "" }
+        "express",
+        "rest",
+        "hypermedia",
+        "docker",
+        "redis",
+        "rabbitmq",
+        "sql",
+        "nosql"
       ]
     },
     {
       "title": "Developer Tools (Advanced)",
       "skillsProficiencies": [
-        { "name": "Sublime Text", "url": "" },
-        { "name": "Git", "url": "" },
-        { "name": "GitHub", "url": "" },
-        { "name": "Terminal/Command Line", "url": "" }
+        "sublimetext",
+        "git",
+        "github",
+        "shell",
+        "vscode"
       ]
     }
   ],
@@ -44,6 +82,7 @@
       "endDate": "Current",
       "positionTitle": "Software Developer",
       "description": "",
+      "technologiesTools": [""],
       "highlights": [""]
     }
   ]

@@ -1,9 +1,10 @@
 import React, { Fragment } from "react"
 import { StaticQuery, graphql } from "gatsby"
 import PropTypes from "prop-types"
-import { ThemeContext } from "../layouts"
-import { Hero } from "../components/Resume/Hero"
-import { SkillsAndProficiencies } from "../components/Resume/SkillsAndProficiencies"
+import { ThemeContext } from "@/layouts"
+import { Hero } from "@cmp/Resume/Hero"
+import { selectResumeData } from "@cmp/Resume/selectors"
+import { SkillsAndProficiencies } from "@cmp/Resume/SkillsAndProficiencies"
 
 const Resume = ({
   data: {
@@ -14,9 +15,10 @@ const Resume = ({
 }) => {
   const { node: resumeData } = data
   const {
+    toolsAndSkillsMap,
     skillProficiencyCollections,
     workHistory
-  } = resumeData
+  } = selectResumeData(resumeData)
 
   return (
     <Fragment>
@@ -58,12 +60,14 @@ export const query = graphql`
     allDataJson {
       edges {
         node {
+          toolsAndSkills {
+            key
+            name
+            url
+          }
           skillProficiencyCollections {
             title
-            skillsProficiencies {
-              name
-              url
-            }
+            skillsProficiencies
           }
           workHistory {
             employer
@@ -72,15 +76,9 @@ export const query = graphql`
             endDate
             positionTitle
             description
+            technologiesTools
             highlights
           }
-        }
-      }
-    }
-    site {
-      siteMetadata {
-        facebook {
-          appId
         }
       }
     }

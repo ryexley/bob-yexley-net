@@ -170,6 +170,12 @@ exports.onCreateWebpackConfig = ({ stage, actions }, options) => {
   switch (stage) {
   case "build-javascript":
     actions.setWebpackConfig({
+      resolve: {
+        alias: {
+          "@": path.resolve("src"),
+          "@cmp": path.resolve("src", "components")
+        }
+      },
       plugins: [
         new BundleAnalyzerPlugin({
           analyzerMode: "static",
@@ -179,6 +185,17 @@ exports.onCreateWebpackConfig = ({ stage, actions }, options) => {
           defaultSizes: "gzip"
         })
       ]
+    })
+
+    break
+  default:
+    actions.setWebpackConfig({
+      resolve: {
+        alias: {
+          "@": path.resolve("src"),
+          "@cmp": path.resolve("src", "components")
+        }
+      }
     })
   }
 }
