@@ -79,11 +79,98 @@
       "employer": "Amplify Exchange",
       "employerUrl": "https://amplifyexchange.com",
       "startDate": "February 2019",
-      "endDate": "Current",
+      "endDate": "Present",
       "positionTitle": "Software Developer",
-      "description": "",
-      "technologiesTools": [""],
+      "summary": "Building a Cryptocurrency Exchange",
+      "technologiesTools": [
+        "js",
+        "vue",
+        "vuex",
+        "html",
+        "css",
+        "nodejs",
+        "express",
+        "jest"
+      ],
+      "highlights": [
+        "Building a series of web-based UIs for facilitating the deposit, withdrawal and trading of a number of Cryptocurrency asset types (Bitcoin, Ethereum, etc)",
+        "Building a number of different REST micro services supporting various exchange operations such as background checks, incentive rewards, etc"
+      ]
+    },
+    {
+      "employer": "Sparkbox",
+      "employerUrl": "https://seesparkbox.com",
+      "startDate": "January 2018",
+      "endDate": "February 2019",
+      "positionTitle": "Senior Web Developer (Remote)",
+      "summary": "Web Developer specializing in working with clients to build web responsive and accessible web sites and applications with a focus on moving the web forward by building it a better way.",
+      "technologiesTools": [
+        "js",
+        "react",
+        "html",
+        "css",
+        "nodejs",
+        "express",
+        "jest"
+      ],
+      "highlights": [
+        "Worked primarily with a major retail client on improving their ecommerce platform performance by converting it to an improved component-based architecture using React."
+      ]
+    },
+    {
+      "employer": "LeanKit",
+      "employerUrl": "https://leankit.com/",
+      "startDate": "September 2015",
+      "endDate": "December 2017",
+      "positionTitle": "Senior Web Developer (Remote)",
+      "summary": "Worked on maintaining the company's flagship Lean/Kanban project management product",
+      "technologiesTools": [
+        "js",
+        "react",
+        "html",
+        "css",
+        "nodejs",
+        "express",
+        "mocha"
+      ],
       "highlights": [""]
+    },
+    {
+      "employer": "Lampo Group",
+      "employerUrl": "https://daveramsey.com/",
+      "startDate": "November 2014",
+      "endDate": "September 2015",
+      "positionTitle": "Senior JavaScript Engineer (Contractor, Remote)",
+      "summary": "Contracted for Ramsey Solutions as a front-end web developer helping build the SmartDollar site and application. We applied responsive design methodologies to make applications available in web browsers on any device.",
+      "technologiesTools": [
+        "js",
+        "react",
+        "html",
+        "css"
+      ],
+      "highlights": [
+        "Designed and implemented a solution for modular JavaScript for the SmartDollar application using vanilla JavaScript and namespacing",
+        "Designed and implemented a reporting application with React and my own implement of Flux using postal.js and the Chartist library for custom charts and graphs"
+      ]
+    },
+    {
+      "employer": "appendTo",
+      "employerUrl": "",
+      "startDate": "December 2012",
+      "endDate": "October 2014",
+      "positionTitle": "Senior JavaScript Engineer and Team Lead (Remote)",
+      "summary": "Senior JavaScript Engineer and Team Lead in the Solutions Delivery group at appendTo.",
+      "technologiesTools": [
+        "js",
+        "html",
+        "css"
+      ],
+      "highlights": [
+        "Built a large, complex single-page-application for an international client. The application made heavy use of KnockoutJS with numerous custom bindings and extensions, and custom developed modules to handle client-side routing, logging and other architectural concerns, as well as Twitter Bootstrap for UI layout (grid) and components.",
+        "JavaScript module development and migration as part of a responsive re-design of a client's public web site and commerce application.",
+        "UX development (JavaScript (jQuery, Knockout.JS), HTML5 and CSS3) for a customer building a large-scale custom commerce application.",
+        "Built several native iPad applications using HTML5, CSS3 and JavaScript (jQuery, Backbone.js) with Cordova/PhoneGap."
+      ]
     }
   ]
 }

@@ -5,6 +5,7 @@ import { ThemeContext } from "@/layouts"
 import { Hero } from "@cmp/Resume/Hero"
 import { selectResumeData } from "@cmp/Resume/selectors"
 import { SkillsAndProficiencies } from "@cmp/Resume/SkillsAndProficiencies"
+import { WorkHistory } from "@cmp/Resume/WorkHistory"
 
 const Resume = ({
   data: {
@@ -28,10 +29,26 @@ const Resume = ({
             <Hero theme={ theme } />
             <main className="resume-content">
               <SkillsAndProficiencies data={skillProficiencyCollections} />
+              <WorkHistory data={workHistory} />
             </main>
             <style jsx>{`
+              :root {
+                --resume-heading-color: #444;
+              }
+
               .resume-content {
                 padding: 2rem;
+              }
+
+              :global(.resume-section-heading) {
+                border-bottom: 1px solid #eee;
+                color: var(--resume-heading-color);
+                font-size: 2rem;
+                margin: 2rem 0;
+
+                &:first-of-type {
+                  margin-top: 0;
+                }
               }
 
               @from-width desktop {
@@ -75,7 +92,7 @@ export const query = graphql`
             startDate
             endDate
             positionTitle
-            description
+            summary
             technologiesTools
             highlights
           }

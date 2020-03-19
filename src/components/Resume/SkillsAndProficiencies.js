@@ -46,7 +46,7 @@ export const SkillsAndProficiencies = ({ data }) => {
 
   return (
     <Fragment>
-      <h2>Skills and Proficiencies</h2>
+      <h2 className="resume-section-heading">Skills and Proficiencies</h2>
       { data.map(collection => renderCollection(collection)) }
       <style jsx>{`
         h2 {

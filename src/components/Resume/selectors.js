@@ -28,9 +28,37 @@ export const selectResumeData = rawData => {
     }
   )
 
+  const workHistory = rawWorkHistory.map(raw => {
+    const {
+      employer,
+      employerUrl,
+      startDate,
+      endDate,
+      positionTitle,
+      summary,
+      technologiesTools: rawTechnologiesTools,
+      highlights
+    } = raw
+
+    const technologiesTools = rawTechnologiesTools.map(
+      key => toolsAndSkillsMap[key]
+    )
+
+    return {
+      employer,
+      employerUrl,
+      startDate,
+      endDate,
+      positionTitle,
+      summary,
+      technologiesTools,
+      highlights
+    }
+  })
+
   return {
     toolsAndSkillsMap,
     skillProficiencyCollections,
-    workHistory: rawWorkHistory
+    workHistory
   }
 }
