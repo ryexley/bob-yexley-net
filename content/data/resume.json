@@ -81,7 +81,7 @@
       "startDate": "February 2019",
       "endDate": "Present",
       "positionTitle": "Software Developer",
-      "summary": "Building a Cryptocurrency Exchange",
+      "summary": "FinTech startup, building a Cryptocurrency Exchange",
       "technologiesTools": [
         "js",
         "vue",
@@ -90,7 +90,9 @@
         "css",
         "nodejs",
         "express",
-        "jest"
+        "jest",
+        "git",
+        "github"
       ],
       "highlights": [
         "Building a series of web-based UIs for facilitating the deposit, withdrawal and trading of a number of Cryptocurrency asset types (Bitcoin, Ethereum, etc)",
@@ -111,10 +113,12 @@
         "css",
         "nodejs",
         "express",
-        "jest"
+        "jest",
+        "git",
+        "github"
       ],
       "highlights": [
-        "Worked primarily with a major retail client on improving their ecommerce platform performance by converting it to an improved component-based architecture using React."
+        "Worked primarily with a Fortune 500 retail client on improving their ecommerce platform performance by converting it to an improved component-based architecture using React."
       ]
     },
     {
@@ -123,7 +127,7 @@
       "startDate": "September 2015",
       "endDate": "December 2017",
       "positionTitle": "Senior Web Developer (Remote)",
-      "summary": "Worked on maintaining the company's flagship Lean/Kanban project management product",
+      "summary": "Worked on maintaining the company's flagship Lean/Kanban project management product. Much of this work involved migrating legacy ASP.NET code to node.js microservices and React in the browser.",
       "technologiesTools": [
         "js",
         "react",
@@ -131,7 +135,10 @@
         "css",
         "nodejs",
         "express",
-        "mocha"
+        "mocha",
+        "Flux",
+        "git",
+        "github"
       ],
       "highlights": [""]
     },
@@ -146,7 +153,13 @@
         "js",
         "react",
         "html",
-        "css"
+        "css",
+        "Sass",
+        "webpack",
+        "nodejs",
+        "git",
+        "github",
+        "Ruby on Rails"
       ],
       "highlights": [
         "Designed and implemented a solution for modular JavaScript for the SmartDollar application using vanilla JavaScript and namespacing",
@@ -163,13 +176,169 @@
       "technologiesTools": [
         "js",
         "html",
-        "css"
+        "css",
+        "Sass",
+        "Compass",
+        "Knockout.js",
+        "Backbone.js",
+        "Cordova",
+        "git",
+        "github"
       ],
       "highlights": [
         "Built a large, complex single-page-application for an international client. The application made heavy use of KnockoutJS with numerous custom bindings and extensions, and custom developed modules to handle client-side routing, logging and other architectural concerns, as well as Twitter Bootstrap for UI layout (grid) and components.",
         "JavaScript module development and migration as part of a responsive re-design of a client's public web site and commerce application.",
         "UX development (JavaScript (jQuery, Knockout.JS), HTML5 and CSS3) for a customer building a large-scale custom commerce application.",
         "Built several native iPad applications using HTML5, CSS3 and JavaScript (jQuery, Backbone.js) with Cordova/PhoneGap."
+      ]
+    },
+    {
+      "employer": "Food Donation Connection",
+      "employerUrl": "http://foodtodonate.com/",
+      "startDate": "September 2011",
+      "endDate": "December 2012",
+      "positionTitle": "Senior Software Developer",
+      "summary": "Built data-driven web applications and backend services. Single-page JavaScript applications using Backbone.js and jQuery, with HTML5 and LESS/CSS, calling a HTTP/Hypermedia API written with the Nancy framework in C# on the server side.",
+      "technologiesTools": [
+        "js",
+        "html",
+        "css",
+        "jQuery",
+        "LessCSS",
+        "ASP.NET MVC",
+        "NancyFx",
+        "C#",
+        "hypermedia"
+      ],
+      "highlights": [""]
+    },
+    {
+      "employer": "Scripps Networks",
+      "employerUrl": "http://scrippsnetworks.com/",
+      "startDate": "July 2008",
+      "endDate": "August 2011",
+      "positionTitle": "Senior Software Developer",
+      "summary": "Senior member of a team at Scripps Networks responsible for the development, maintenance, testing and delivery of internal customer-facing and integration software.",
+      "technologiesTools": [
+        "C#",
+        "WinForms",
+        "Silverlight",
+        "ASP.NET MVC",
+        "jQuery",
+        "TSQL",
+        "WCF",
+        "BizTalk"
+      ],
+      "highlights": [
+        "Developed an ASP.NET MVC web application to allow users to perform batch editing of media asset metadata, calling SOAP web services on the backend.",
+        "Rebuilt an existing Access application using Silverlight, WCF and SQL Server with Telerik Reporting services for the maintenance and amortization of affiliate accounting data.",
+        "Maintenance and development of new modules for content accounting and billing applications using C#/WinForms and SQL Server Reporting Services.",
+        "Development of BizTalk and WCF services for financial application integrations."
+      ]
+    },
+    {
+      "employer": "Extreme Consulting",
+      "employerUrl": "",
+      "startDate": "April 2008",
+      "endDate": "July 2008",
+      "positionTitle": "Software Developer",
+      "summary": "Our client was hosting an international event with various educational tracks that consisted of breakout sessions in different rooms (each with different, limited capacity) at a conference center. They needed an application that would allow attendees to register for the event and breakout sessions. I designed and created it for them.",
+      "technologiesTools": [
+        "js",
+        "html",
+        "css",
+        "C#",
+        "ASP.NET",
+        "jQuery",
+        "SQL Server",
+        "TSQL",
+        "Subversion"
+      ],
+      "highlights": [""]
+    },
+    {
+      "employer": "Lexis Nexis Corporation",
+      "employerUrl": "http://lexisnexis.com/",
+      "startDate": "June 2006",
+      "endDate": "March 2008",
+      "positionTitle": "Software Developer",
+      "summary": "Member of a team at LexisNexis responsible for the development of UI functionality consuming SOAP web services rendering results of public records searches for customers.",
+      "technologiesTools": [
+        "js",
+        "html",
+        "css",
+        "C#",
+        "ASP.NET",
+        "jQuery",
+        "Windows Services",
+        "SQL Server",
+        "TSQL",
+        "Subversion",
+        "CruiseControl.NET",
+        "NAnt"
+      ],
+      "highlights": [
+        "Developed an ASP.NET (C#/webforms) web UI to allow users to perform public records searches. Used jQuery to perform client side form validation and DOM manipulation.",
+        "Created HTML and CSS for printable reports based on search results.",
+        "Established a configuration management environment for the project using Subversion for version control and CruiseControl.NET for continuous integration, automated build and deployment.",
+        "Developed a windows service to monitor database information and generate e-mail notifications to sales employees of service usage."
+      ]
+    },
+    {
+      "employer": "Lighthouse Technologies, Inc",
+      "employerUrl": "",
+      "startDate": "June 2005",
+      "endDate": "June 2006",
+      "positionTitle": "Software Engineer in Development and Test",
+      "summary": "Member of a team at Lighthouse Technologies that developed a custom application for our client, Collins-Stewart. The client needed a custom financial analysis application designed and built from the ground up. It required the flexibility to be able to deal with the ever-changing financial forecasting and reporting data provided them by their financial data vendors, and the power to allow them to do complex dynamic computation and reporting on the financial data of publicly traded companies from around the globe.",
+      "technologiesTools": [
+        "C#",
+        "WinForms",
+        "SQL Server",
+        "TSQL",
+        "CruiseControl.NET"
+      ],
+      "highlights": [
+        "Developed all layers of several application modules, including UI, (logical) middle-tier components, data access layer components and database artifacts (tables, views, stored procedures).",
+        "Created and executed manual test scenarios for several application modules."
+      ]
+    },
+    {
+      "employer": "Northrop Grumman for Air Force Research Labs",
+      "employerUrl": "",
+      "startDate": "January 2002",
+      "endDate": "June 2005",
+      "positionTitle": "Database Administrator and Developer",
+      "summary": "Member of a team of contractors supporting the Air Force Research Labs (AFRL), I performed the following duties in support of a number of applications that allowed AFRL personnel to maintain and distribute data in support of research contract management.",
+      "technologiesTools": [
+        "Oracle",
+        "PL/SQL",
+        "ColdFusion",
+        "js",
+        "html",
+        "css"
+      ],
+      "highlights": [
+        "Performed database administration and support for Oracle databases.",
+        "Provided maintenance, new development and technical support for desktop/thick-client applications written on top of an Oracle database.",
+        "Extended the availability and reach of the application by rewriting the entire application from the ground up as a web application using Macromedia ColdFusion and JavaScript."
+      ]
+    },
+    {
+      "employer": "Air Force Institute of Technology",
+      "employerUrl": "http://afit.edu/",
+      "startDate": "August 1997",
+      "endDate": "December 2001",
+      "positionTitle": "Database Administrator and Developer",
+      "summary": "As a military staff member of a team at the Air Force Institute of Technology, the U.S. Air Force's graduate school for officers, I performed the following duties in support of a number of applications that allowed organization staff and faculty to maintain student education and personnel management data.",
+      "technologiesTools": [
+        "Oracle",
+        "PL/SQL"
+      ],
+      "highlights": [
+        "Performed database administration and support for Oracle databases.",
+        "Established and documented organizational configuration management processes and procedures.",
+        "Provided maintenance, new development and technical support for desktop/thick-client applications written on top of Oracle databases."
       ]
     }
   ]

@@ -1,18 +1,22 @@
 import _ from "lodash"
-import React, { Fragment } from "react"
+import React, { Component, Fragment, useRef } from "react"
 import PropTypes from "prop-types"
 import classnames from "classnames"
+import {
+  FaChevronDown as ExpandIcon,
+  FaChevronUp as CollapseIcon
+} from "react-icons/fa/"
 import { isNotEmpty } from "@/utils"
 import { Badge } from "@/components/Resume/Badge"
 
-export const WorkHistory = ({ data: workHistory }) => {
-  const renderHeader = ({
-    employer,
-    employerUrl,
-    startDate,
-    endDate,
-    positionTitle
-  }) => (
+function renderHeader({
+  employer,
+  employerUrl,
+  startDate,
+  endDate,
+  positionTitle
+}) {
+  return (
     <Fragment>
       <header>
         <div>
@@ -42,7 +46,7 @@ export const WorkHistory = ({ data: workHistory }) => {
           display: flex;
           flex-direction: column;
           margin: 0 0 0.5rem 0;
-          padding: 0.5rem;
+          padding: 0.5rem 0.75rem;
         }
 
         div {
@@ -54,6 +58,7 @@ export const WorkHistory = ({ data: workHistory }) => {
           }
 
           &.position-title {
+            color: #069;
             font-style: italic;
           }
         }
@@ -70,15 +75,16 @@ export const WorkHistory = ({ data: workHistory }) => {
         h3 {
           a {
             border-bottom: 0;
+            color: #09c;
           }
         }
       `}</style>
     </Fragment>
   )
+}
 
-  const renderTechnologiesTools = ({
-    technologiesTools
-  }) => (
+function renderTechnologiesTools({ technologiesTools }) {
+  return (
     <Fragment>
       <ul>
         { technologiesTools.map(({ name, url }) => {
@@ -105,32 +111,48 @@ export const WorkHistory = ({ data: workHistory }) => {
       `}</style>
     </Fragment>
   )
+}
 
-  const renderHighlights = highlights => {
-    if (isNotEmpty(highlights)) {
-      return (
-        <Fragment>
-          <ul>
-            { highlights.map((item, index) => (
-              <li key={`highlight-${index}`}>{item}</li>
-            ))}
-          </ul>
-          <style jsx>{`
-            ul {
-              list-style-type: circle;
-              padding: 0 0 0 1.5rem;
-            }
-          `}</style>
-        </Fragment>
-      )
-    }
-
-    return null
+function renderHighlights({ highlights }) {
+  if (isNotEmpty(highlights)) {
+    return (
+      <Fragment>
+        <ul>
+          { highlights.map((item, index) => (
+            <li key={`highlight-${index}`}>{item}</li>
+          ))}
+        </ul>
+        <style jsx>{`
+          ul {
+            list-style-type: circle;
+            padding: 0 0 0 1.5rem;
+          }
+        `}</style>
+      </Fragment>
+    )
   }
 
-  const renderWorkHistoryItem = (workHistoryItem, expanded) => {
-    console.log({ expanded })
+  return null
+}
 
+class WorkHistoryItem extends Component {
+  constructor(props) {
+    super(props)
+
+    const { expanded } = this.props
+
+    this.state = {
+      expanded
+    }
+  }
+
+  toggle() {
+    this.setState(({ expanded }) => ({ expanded: !expanded }))
+  }
+
+  render() {
+    const { data: workHistoryItem, expanded: showToggle } = this.props
+    const { expanded } = this.state
     const {
       employer,
       positionTitle,
@@ -141,34 +163,60 @@ export const WorkHistory = ({ data: workHistory }) => {
     } = workHistoryItem
 
     const classes = classnames({ collapsed: !expanded })
+    const refkey = `work-history-${_.kebabCase(employer)}`
+    const workHistoryItemRef = React.createRef()
+    const toggleClasses = classnames("toggle", { collapsed: !expanded })
 
     return (
-      <Fragment key={`work-history-${_.kebabCase(employer)}`}>
+      <Fragment key={refkey}>
         <section>
-          <div className="toggle">
-            {`${employer} // ${positionTitle} // from ${startDate} to ${endDate}`}
+          <div className={toggleClasses} onClick={() => this.toggle()}>
+            {expanded ? <CollapseIcon className="work-item-toggle-icon" /> : <ExpandIcon className="work-item-toggle-icon" />}
+            {`{ ${startDate} ↠ ${endDate} } ${employer} [ ${positionTitle} ] `}
           </div>
-          <article className={classes}>
+          <article className={classes} ref={workHistoryItemRef}>
             { renderHeader(workHistoryItem) }
             { renderTechnologiesTools(workHistoryItem) }
             <p>{summary}</p>
-            { renderHighlights(highlights) }
+            { renderHighlights(workHistoryItem) }
           </article>
         </section>
         <style jsx>{`
           section {}
 
+          p {
+            margin: 1rem 0.25rem !important;
+          }
+
           div {
             &.toggle {
+              align-items: center;
+              color: #ddd;
               cursor: pointer;
-              display: ${expanded ? "none" : "block"};
+              display: ${showToggle ? "none" : "flex"};
               font-size: 0.8rem;
-              margin: 0.25rem 0;
+              margin: 0.5rem 0;
+              transition: color 250ms ease-in-out;
+
+              &:hover {
+                color: #777;
+              }
+
+              &.collapsed {
+                color: #777;
+              }
             }
+          }
+
+          :global(.work-item-toggle-icon) {
+            color: #ddd;
+            margin: 0 0.25rem 0 0;
           }
 
           article {
             margin: 0 0 3rem 0;
+            overflow: hidden;
+            transition: all 0.5s;
 
             &.collapsed {
               height: 0;
@@ -184,13 +232,20 @@ export const WorkHistory = ({ data: workHistory }) => {
       </Fragment>
     )
   }
+}
 
+export const WorkHistory = ({ data: workHistory }) => {
   return (
-    <Fragment>
-      <h2 className="resume-section-heading">Work History</h2>
-      { workHistory.map(
-        (workHistoryItem, index) => renderWorkHistoryItem(workHistoryItem, index < 3)
-      ) }
-    </Fragment>
+    <section className="resume-section">
+      <h2 className="resume-section-heading">Professional Experience</h2>
+      {workHistory.map(
+        (workHistoryItem, index) => (
+          <WorkHistoryItem
+            key={`work-history-item-${index}`}
+            data={workHistoryItem}
+            expanded={index < 3} />
+        )
+      )}
+    </section>
   )
 }

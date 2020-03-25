@@ -33,28 +33,45 @@ const Resume = ({
             </main>
             <style jsx>{`
               :root {
-                --resume-heading-color: #444;
+                --resume-heading-color: #e7e7e7;
+
+                h3 {
+                  color: var(--resume-heading-color);
+                }
               }
 
               .resume-content {
+                color: #747474;
                 padding: 2rem;
               }
 
+              :global(.resume-section) {
+                margin: 0 0 5rem 4rem;
+                position: relative;
+              }
+
               :global(.resume-section-heading) {
-                border-bottom: 1px solid #eee;
                 color: var(--resume-heading-color);
                 font-size: 2rem;
-                margin: 2rem 0;
-
-                &:first-of-type {
-                  margin-top: 0;
-                }
+                left: 0;
+                margin: 0;
+                padding: 2rem 0;
+                position: absolute;
+                text-shadow: 0px 1px 1px rgba(0, 0, 0, 0.25);
+                top: 0;
+                transform: rotate(90deg);
+                transform-origin: 0 0;
+                white-space: nowrap;
               }
 
               @from-width desktop {
                 .resume-content {
                   margin: 0 auto;
                   max-width: 50rem;
+                }
+
+                :global(.resume-section) {
+                  margin-left: 0 0 5rem 0;
                 }
               }
             `}</style>

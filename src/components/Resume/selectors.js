@@ -41,7 +41,7 @@ export const selectResumeData = rawData => {
     } = raw
 
     const technologiesTools = rawTechnologiesTools.map(
-      key => toolsAndSkillsMap[key]
+      key => toolsAndSkillsMap[key] || { name: key, url: "" }
     )
 
     return {
