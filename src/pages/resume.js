@@ -23,6 +23,8 @@ class Resume extends Component {
     const { data: { allDataJson: { edges: [data] } } } = this.props
     const { node: resumeData } = data
     const {
+      title,
+      intro,
       skillProficiencyCollections,
       workHistory,
       codeSamples,
@@ -36,6 +38,8 @@ class Resume extends Component {
             <Fragment>
               <Hero
                 theme={ theme }
+                title={title}
+                intro={intro}
                 onMouseScrollHintClick={this.scrollToContent} />
               <hr ref={this.separator} />
               <main className="resume-content">
@@ -117,6 +121,8 @@ export const query = graphql`
     allDataJson {
       edges {
         node {
+          title
+          intro
           toolsAndSkills {
             key
             name

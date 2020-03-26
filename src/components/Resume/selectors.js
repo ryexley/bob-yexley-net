@@ -1,5 +1,7 @@
 export const selectResumeData = rawData => {
   const {
+    title,
+    intro,
     toolsAndSkills: rawToolsAndSkills,
     skillProficiencyCollections: rawSkillProficiencyCollections,
     workHistory: rawWorkHistory,
@@ -80,6 +82,8 @@ export const selectResumeData = rawData => {
   }
 
   return {
+    title,
+    intro,
     toolsAndSkillsMap,
     skillProficiencyCollections,
     workHistory,

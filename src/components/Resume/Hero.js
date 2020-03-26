@@ -3,25 +3,12 @@ import PropTypes from "prop-types"
 import { HighlightedTechIcons } from "./HighlightedTechIcons"
 import HeroImage from "./hero-image.jpg"
 
-export const Hero = ({ theme, onMouseScrollHintClick }) => (
+export const Hero = ({ theme, title, intro, onMouseScrollHintClick }) => (
   <Fragment>
     <header>
-      <h1>Front End Web and Distributed Software Developer</h1>
+      <h1>{title}</h1>
       <HighlightedTechIcons />
-      <h2>
-        Family-first husband and father of three, I believe a good work-life
-        balance is essential to maintaining the focus and productivity needed to
-        achieve great results. I believe in using the right tool to get the job
-        done in the most effective and efficient manner possible. In my 20+
-        years of experience, that has involved the use of various tools and
-        platforms, but most recently my focus and specialization has been on
-        native front-end web application development using HTML5, CSS3 and
-        JavaScript connecting to flexible and powerful REST and microservices
-        on the server. I&#39;m passionate about delivering high-quality,
-        user-friendly solutions that deliver business value to my customers and
-        clients on the most ubiquitous and accessible platform available to
-        them: the web.
-      </h2>
+      <h2>{intro}</h2>
       <div
         role="button"
         className="scroll-hint-container"
@@ -145,3 +132,10 @@ export const Hero = ({ theme, onMouseScrollHintClick }) => (
     `}</style>
   </Fragment>
 )
+
+Hero.propTypes = {
+  theme: PropTypes.object,
+  title: PropTypes.string,
+  intro: PropTypes.string,
+  onMouseScrollHintClick: PropTypes.func
+}

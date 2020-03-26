@@ -1,4 +1,6 @@
 {
+  "title": "Front End Web and Distributed Software Developer",
+  "intro": "Family-first husband and father of three, I believe a good work-life balance is essential to maintaining the focus and productivity needed to achieve great results. I believe in using the right tool to get the job done in the most effective and efficient manner possible. In my 20+ years of experience, that has involved the use of various tools and platforms, but most recently my focus and specialization has been on native front-end web application development using HTML5, CSS3 and JavaScript connecting to flexible and powerful REST and microservices on the server. I'm passionate about delivering high-quality, user-friendly solutions that deliver business value to my customers and clients on the most ubiquitous and accessible platform available to them: the web.",
   "toolsAndSkills": [
     { "key": "js", "name": "JavaScript", "url": "https://developer.mozilla.org/en-US/docs/Web/javascript" },
     { "key": "html", "name": "HTML", "url": "https://developer.mozilla.org/en-US/docs/Web/HTML" },
