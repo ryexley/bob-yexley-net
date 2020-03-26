@@ -50,7 +50,8 @@
         "mocha",
         "jest",
         "gatsby",
-        "eslint"
+        "eslint",
+        "electron"
       ]
     },
     {
@@ -123,7 +124,7 @@
         "github"
       ],
       "highlights": [
-        "Worked primarily with a Fortune 500 retail client on improving their ecommerce platform performance by converting it to an improved component-based architecture using React."
+        "Worked primarily with a Fortune 500 retail client on modernizing and improving their ecommerce platform performance by converting it to an improved component-based architecture using React."
       ]
     },
     {
@@ -384,8 +385,26 @@
         "name": "Various Others",
         "url": "https://github.com/ryexley",
         "technologiesTools": [],
-        "description": "You'll find a number of other projects in various states of relevancy and completion. Some are no longer in use or are outdated by now, and others are the product of learning new tools and techniques, and never really got completely \"finished.\" You know how it is, right? ;-) Feel free to poke around in them anyway."
+        "description": "You'll find a number of other projects in various states of relevancy and completion. Some are no longer in use or are outdated by now, and others are the product of learning new tools and techniques, and never really got completely \"finished.\" You know how it is, right? 😉 Feel free to poke around in them anyway."
       }
     ]
-  }
+  },
+  "extraStuff": [
+    {
+      "heading": "Writing",
+      "body": "Feel free to browse anything that I've written [here on my blog](/tags). There's not a ton of stuff here, as I've pruned much of the stuff I've written over the years as it has fallen out of relevancy. I also contributed a chapter to an ebook on [Modern Web Practices](https://leanpub.com/modernwebpractices) a while back. It's almost sad how quickly technical content becomes outdated and practically irrelevant."
+    },
+    {
+      "heading": "Air Force Career",
+      "body": "I spent 11 years in the Air Force after graduating from high school. For the first 6 years I was a [Munitions Systems Specialist](https://www.airforce.com/careers/detail/munitions-systems/), at which point I cross-trained into [Communications Computer Systems Programming](https://www.airforce.com/careers/detail/computer-systems-programming/), where they taught me foundational computer programming skills. During my time in the Air Force, I spent time at various places all over the world. Here in the US I spent time in Texas, Colorado, California, Nevada, Arizona, Mississippi and Ohio. I also traveled extensively overseas to Germany, Spain, Sardinia, Saudi Arabia, Italy and Turkey. I separated from the Air Force in December of 2001 and have worked as a professional software developer ever since."
+    },
+    {
+      "heading": "Formal Education",
+      "body": "Not gon' lie, I don't have a whole lot of it. While I was in the Air Force, I did take some college courses toward an attempt to get a college degree, but it was tough to stay on top of that with as much as I was deployed during my enlistment. After getting out of the Air Force, I took a curriculum's worth of course work at [a local college](http://www.miamijacobs.edu/) near where I lived in Ohio, learning more about computer programming, to which I credit a significant portion of the foundational programming knowledge that launched my career as a developer."
+    },
+    {
+      "heading": "That's pretty much it",
+      "body": "If you've gotten this far, there really isn't a whole lot more to tell _(and I commend you)_. You're welcome to check out [the About page](/about) if you're interested in a little bit about me personally. Feel free to browse around the site, as it contains just about everything I'm willing to share about myself online. Beyond that, you're just gonna have to ask me. Thanks for checking out my resume! 🙂"
+    }
+  ]
 }

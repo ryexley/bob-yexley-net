@@ -3,7 +3,7 @@ import PropTypes from "prop-types"
 import { HighlightedTechIcons } from "./HighlightedTechIcons"
 import HeroImage from "./hero-image.jpg"
 
-export const Hero = ({ theme }) => (
+export const Hero = ({ theme, onMouseScrollHintClick }) => (
   <Fragment>
     <header>
       <h1>Front End Web and Distributed Software Developer</h1>
@@ -22,9 +22,14 @@ export const Hero = ({ theme }) => (
         clients on the most ubiquitous and accessible platform available to
         them: the web.
       </h2>
-      {/* https://codepen.io/chrissimmons/pen/GrLQWp */}
-      <div className="mouse-hint">
-        <div className="scroll"></div>
+      <div
+        role="button"
+        className="scroll-hint-container"
+        onClick={onMouseScrollHintClick}>
+        {/* https://codepen.io/chrissimmons/pen/GrLQWp */}
+        <div className="mouse-hint">
+          <div className="scroll"></div>
+        </div>
       </div>
     </header>
     <style jsx>{`
@@ -42,8 +47,6 @@ export const Hero = ({ theme }) => (
         height: 100vh;
         justify-content: center;
         min-height: 50rem;
-        position: relative;
-        z-index: -1;
 
         &::after {
           background: rgba(0, 0, 0, 0.25);
@@ -53,7 +56,6 @@ export const Hero = ({ theme }) => (
           min-height: 50rem;
           position: absolute;
           width: 100vw;
-          z-index: -2
         }
       }
 
@@ -71,18 +73,30 @@ export const Hero = ({ theme }) => (
         margin: 2rem;
       }
 
+      .scroll-hint-container {
+        --size: 4rem;
+        background: rgba(0, 0, 0, 0.5);
+        border-radius: 50%;
+        bottom: 4rem;
+        cursor: pointer;
+        height: var(--size);
+        left: calc(50% - 2rem);
+        position: absolute;
+        width: var(--size);
+        z-index: 10;
+      }
+
       .mouse-hint {
         cursor: pointer;
         border: 2px solid rgba(255, 255, 255, 0.5);
         border-radius: 12px;
-        bottom: 4rem;
         box-sizing: border-box;
-        height: 36px;
+        height: 2.25rem;
         left: calc(50% - 0.6875rem);
         position: absolute;
+        top: calc(50% - 1.125rem);
         transition: opacity .5s ease;
         width: 1.375rem;
-        z-index: 10;
         -ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=0)";
 
         .scroll {

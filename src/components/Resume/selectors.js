@@ -3,7 +3,8 @@ export const selectResumeData = rawData => {
     toolsAndSkills: rawToolsAndSkills,
     skillProficiencyCollections: rawSkillProficiencyCollections,
     workHistory: rawWorkHistory,
-    codeSamples: rawCodeSamples
+    codeSamples: rawCodeSamples,
+    extraStuff
   } = rawData
 
   const toolsAndSkillsMap = rawToolsAndSkills.reduce((toolsAndSkills, rts) => {
@@ -82,6 +83,7 @@ export const selectResumeData = rawData => {
     toolsAndSkillsMap,
     skillProficiencyCollections,
     workHistory,
-    codeSamples
+    codeSamples,
+    extraStuff
   }
 }
