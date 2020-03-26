@@ -30,8 +30,9 @@ class Menu extends React.Component {
       { to: "/tags", label: "Tags", icon: TagsIcon },
       { to: "/categories", label: "Categories", icon: CategoryIcon },
       { to: "/search", label: "Search", icon: SearchIcon },
-      ...pages
+      ...pages,
       // { to: "/contact/", label: "Contact", icon: FaEnvelope }
+      { to: "/résumé", label: "Résumé / CV" }
     ]
 
     // will contain references to rendered DOM elements of menu
