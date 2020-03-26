@@ -1,11 +1,12 @@
 import React, { Fragment } from "react"
-import { StaticQuery, graphql } from "gatsby"
+import { graphql } from "gatsby"
 import PropTypes from "prop-types"
 import { ThemeContext } from "@/layouts"
 import { Hero } from "@cmp/Resume/Hero"
 import { selectResumeData } from "@cmp/Resume/selectors"
 import { SkillsAndProficiencies } from "@cmp/Resume/SkillsAndProficiencies"
 import { WorkHistory } from "@cmp/Resume/WorkHistory"
+import { CodeSamples } from "@cmp/Resume/CodeSamples"
 
 const Resume = ({
   data: {
@@ -16,9 +17,9 @@ const Resume = ({
 }) => {
   const { node: resumeData } = data
   const {
-    toolsAndSkillsMap,
     skillProficiencyCollections,
-    workHistory
+    workHistory,
+    codeSamples
   } = selectResumeData(resumeData)
 
   return (
@@ -30,6 +31,7 @@ const Resume = ({
             <main className="resume-content">
               <SkillsAndProficiencies data={skillProficiencyCollections} />
               <WorkHistory data={workHistory} />
+              <CodeSamples data={codeSamples} />
             </main>
             <style jsx>{`
               :root {
@@ -112,6 +114,15 @@ export const query = graphql`
             summary
             technologiesTools
             highlights
+          }
+          codeSamples {
+            intro
+            items {
+              name
+              url
+              technologiesTools
+              description
+            }
           }
         }
       }

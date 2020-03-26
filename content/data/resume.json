@@ -27,7 +27,9 @@
     { "key": "git", "name": "Git", "url": "https://git-scm.com/" },
     { "key": "github", "name": "GitHub", "url": "https://github.com/" },
     { "key": "shell", "name": "Terminal/Command Line", "url": "https://iterm2.com/" },
-    { "key": "vscode", "name": "VS Code", "url": "https://code.visualstudio.com/" }
+    { "key": "vscode", "name": "VS Code", "url": "https://code.visualstudio.com/" },
+    { "key": "electron", "name": "Electron", "url": "https://www.electronjs.org/" },
+    { "key": "sass", "name": "Sass", "url": "https://sass-lang.com/" }
   ],
   "skillProficiencyCollections": [
     {
@@ -36,6 +38,7 @@
         "js",
         "html",
         "css",
+        "sass",
         "nodejs",
         "react",
         "redux",
@@ -88,6 +91,7 @@
         "vuex",
         "html",
         "css",
+        "sass",
         "nodejs",
         "express",
         "jest",
@@ -111,6 +115,7 @@
         "react",
         "html",
         "css",
+        "sass",
         "nodejs",
         "express",
         "jest",
@@ -154,7 +159,7 @@
         "react",
         "html",
         "css",
-        "Sass",
+        "sass",
         "webpack",
         "nodejs",
         "git",
@@ -341,5 +346,46 @@
         "Provided maintenance, new development and technical support for desktop/thick-client applications written on top of Oracle databases."
       ]
     }
-  ]
+  ],
+  "codeSamples": {
+    "intro": "You're always welcome to head over and checkout [my GitHub profile](https://github.com/ryexley) and the code samples there; but, well, there's a lot there and I feel like it might be more convenient for you if I point out some of the more well rounded repositories that you'll find there. Below you'll find a list of links to repositories, along with a brief description of what you can expect in each. I feel like this could be helpful to you in case you might be looking for something specific, like an example of some of my experience with React or node.js or something like that.",
+    "items": [
+      {
+        "name": "Poplar",
+        "url": "https://github.com/ryexley/poplar",
+        "technologiesTools": ["Electron", "react", "redux", "css"],
+        "description": "This project is an Electron menubar application for MacOS that I built for use in controlling a Wemo power outlet for turning a light on and off from my laptop. It's build with Electron, React and Redux."
+      },
+      {
+        "name": "Decked Out Workout",
+        "url": "https://github.com/ryexley/juniper",
+        "technologiesTools": ["react", "redux", "css"],
+        "description": "React/Redux web application optimized for mobile devices for facilitating a quick-and-easy workout from anywhere you are when you have time. Code walkthrough available upon request. The link above is to the code repository itself, [you can see the app itself hosted and running on Netlify](https://deckedoutworkout.netlify.com)."
+      },
+      {
+        "name": "My Web Site",
+        "url": "https://github.com/ryexley/bob-yexley-net",
+        "technologiesTools": ["gatsby", "react"],
+        "description": "This includes the custom React code for this resume, which I like to use as an example of my understanding of that library. The pieces for the resume are scattered around a bit, but you can find [the base page file here](https://github.com/ryexley/bob-yexley-net/tree/master/src/pages/resume.js), [the components here](https://github.com/ryexley/bob-yexley-net/tree/master/src/components/Resume), and [the raw data used to generate it here](https://github.com/ryexley/bob-yexley-net/tree/master/content/data/resume.json)."
+      },
+      {
+        "name": "service-core",
+        "url": "https://github.com/ryexley/service-core",
+        "technologiesTools": ["nodejs", "express"],
+        "description": "This is a library that I've put together that I use as a boilerplate for creating REST services with node.js and Express. I like it because it encapsulates the core configuration of the Express server, and allows me to simply define routes and handlers along with a configuration that I pass in to it. This library dramatically simplifies the creation and maintenance of REST services for me."
+      },
+      {
+        "name": "Quakie",
+        "url": "https://github.com/ryexley/quakie",
+        "technologiesTools": ["nodejs", "express", "Postgres", "Chart.js"],
+        "description": "This was a fun project that gave me a great opportunity to get more comfortable with some tools I was interested in expanding my knowledge of. At the time I wrote it, it was fantastic tool in helping me learn Express and Postgres better. There is a node.js script that iterates over a series of dates and downloads historical weather data and persists it to a Postgres database. With all of the historical weather data I was interested in persisted locally, I created a web UI with React, Webpack, postal.js, express.js, axios and Massive.js to extract the data from the database and generate graphs with weather trends using Chart.js."
+      },
+      {
+        "name": "Various Others",
+        "url": "https://github.com/ryexley",
+        "technologiesTools": [],
+        "description": "You'll find a number of other projects in various states of relevancy and completion. Some are no longer in use or are outdated by now, and others are the product of learning new tools and techniques, and never really got completely \"finished.\" You know how it is, right? ;-) Feel free to poke around in them anyway."
+      }
+    ]
+  }
 }

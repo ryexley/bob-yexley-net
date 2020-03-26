@@ -2,7 +2,8 @@ export const selectResumeData = rawData => {
   const {
     toolsAndSkills: rawToolsAndSkills,
     skillProficiencyCollections: rawSkillProficiencyCollections,
-    workHistory: rawWorkHistory
+    workHistory: rawWorkHistory,
+    codeSamples: rawCodeSamples
   } = rawData
 
   const toolsAndSkillsMap = rawToolsAndSkills.reduce((toolsAndSkills, rts) => {
@@ -10,7 +11,7 @@ export const selectResumeData = rawData => {
 
     return {
       ...toolsAndSkills,
-      [key]: { name, url }
+      [key.toLowerCase()]: { name, url }
     }
   }, {})
 
@@ -18,7 +19,7 @@ export const selectResumeData = rawData => {
     raw => {
       const { title, skillsProficiencies: rawSkillsProficiencies } = raw
       const skillsProficiencies = rawSkillsProficiencies.map(
-        key => toolsAndSkillsMap[key]
+        key => toolsAndSkillsMap[key.toLowerCase()] || { name: key, url: "" }
       )
 
       return {
@@ -41,7 +42,7 @@ export const selectResumeData = rawData => {
     } = raw
 
     const technologiesTools = rawTechnologiesTools.map(
-      key => toolsAndSkillsMap[key] || { name: key, url: "" }
+      key => toolsAndSkillsMap[key.toLowerCase()] || { name: key, url: "" }
     )
 
     return {
@@ -56,9 +57,31 @@ export const selectResumeData = rawData => {
     }
   })
 
+  const codeSamples = {
+    intro: rawCodeSamples.intro,
+    items: rawCodeSamples.items.map(raw => {
+      const {
+        name,
+        url,
+        technologiesTools: rawTechnologiesTools,
+        description
+      } = raw
+
+      return {
+        name,
+        url,
+        technologiesTools: rawTechnologiesTools.map(
+          key => toolsAndSkillsMap[key.toLowerCase()] || { name: key, url: "" }
+        ),
+        description
+      }
+    })
+  }
+
   return {
     toolsAndSkillsMap,
     skillProficiencyCollections,
-    workHistory
+    workHistory,
+    codeSamples
   }
 }

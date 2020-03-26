@@ -1,7 +1,6 @@
 import _ from "lodash"
 import React, { Fragment } from "react"
 import PropTypes from "prop-types"
-import { isNotEmpty } from "@/utils"
 import { Badge } from "@/components/Resume/Badge"
 
 export const SkillsAndProficiencies = ({ data }) => {
@@ -44,10 +43,19 @@ export const SkillsAndProficiencies = ({ data }) => {
     </Fragment>
   )
 
+  renderCollection.propTypes = {
+    title: PropTypes.string,
+    skillsProficiencies: PropTypes.array
+  }
+
   return (
     <section className="resume-section">
       <h2 className="resume-section-heading">Skills and Proficiencies</h2>
       { data.map(collection => renderCollection(collection)) }
     </section>
   )
+}
+
+SkillsAndProficiencies.propTypes = {
+  data: PropTypes.array
 }

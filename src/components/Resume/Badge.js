@@ -17,6 +17,7 @@ import { AiFillDatabase as NoSqlIcon } from "react-icons/ai/"
 import { DiRedis as RedisIcon } from "react-icons/di/"
 import { FaDocker as DockerIcon } from "react-icons/fa/"
 import { DiVisualstudio as VsCodeIcon } from "react-icons/di/"
+import { FaSass as SassIcon } from "react-icons/fa/"
 import { isNotEmpty } from "../../utils"
 
 export const Badge = ({ label, url, className, children }) => {
@@ -37,7 +38,8 @@ export const Badge = ({ label, url, className, children }) => {
     "no-sql": NoSqlIcon,
     "redis": RedisIcon,
     "docker": DockerIcon,
-    "vs-code": VsCodeIcon
+    "vs-code": VsCodeIcon,
+    "sass": SassIcon
   }
 
   const renderIcon = name => {
@@ -350,6 +352,28 @@ export const Badge = ({ label, url, className, children }) => {
 
           a {
             color: var(--color-white);
+          }
+        }
+
+        .badge-sass {
+          background: #CF649A;
+          background-image: linear-gradient(135deg, #CF649A, #BF4080);
+          border: 1px solid var(--color-background);
+          color: var(--color-white);
+
+          a {
+            color: var(--color-white);
+          }
+        }
+
+        .badge-electron {
+          background: #2F3241;
+          background-image: linear-gradient(135deg, #2F3241, #2B2E3B);
+          border: 1px solid #9FEAF9;
+          color: #9FEAF9;
+
+          a {
+            color: #9FEAF9;
           }
         }
       `}</style>

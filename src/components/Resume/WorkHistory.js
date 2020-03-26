@@ -83,6 +83,14 @@ function renderHeader({
   )
 }
 
+renderHeader.propTypes = {
+  employer: PropTypes.string,
+  employerUrl: PropTypes.string,
+  startDate: PropTypes.string,
+  endDate: PropTypes.string,
+  positionTitle: PropTypes.string
+}
+
 function renderTechnologiesTools({ technologiesTools }) {
   return (
     <Fragment>
@@ -113,6 +121,8 @@ function renderTechnologiesTools({ technologiesTools }) {
   )
 }
 
+renderTechnologiesTools.propTypes = { technologiesTools: PropTypes.object }
+
 function renderHighlights({ highlights }) {
   if (isNotEmpty(highlights)) {
     return (
@@ -127,6 +137,11 @@ function renderHighlights({ highlights }) {
             list-style-type: circle;
             padding: 0 0 0 1.5rem;
           }
+
+          li {
+            line-height: 1.5rem;
+            margin-bottom: 0.75rem;
+          }
         `}</style>
       </Fragment>
     )
@@ -134,6 +149,8 @@ function renderHighlights({ highlights }) {
 
   return null
 }
+
+renderHighlights.propTypes = { highlights: PropTypes.object }
 
 class WorkHistoryItem extends Component {
   constructor(props) {
@@ -248,4 +265,8 @@ export const WorkHistory = ({ data: workHistory }) => {
       )}
     </section>
   )
+}
+
+WorkHistory.propTypes = {
+  data: PropTypes.array
 }
