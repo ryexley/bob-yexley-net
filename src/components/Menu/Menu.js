@@ -32,7 +32,7 @@ class Menu extends React.Component {
       { to: "/search", label: "Search", icon: SearchIcon },
       ...pages,
       // { to: "/contact/", label: "Contact", icon: FaEnvelope }
-      { to: "/résumé", label: "Résumé / CV" }
+      { to: "/resume", label: "Résumé / CV" }
     ]
 
     // will contain references to rendered DOM elements of menu
