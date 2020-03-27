@@ -369,7 +369,7 @@
         "name": "My Web Site",
         "url": "https://github.com/ryexley/bob-yexley-net",
         "technologiesTools": ["gatsby", "react"],
-        "description": "This includes the custom React code for this resume, which I like to use as an example of my understanding of that library. The pieces for the resume are scattered around a bit, but you can find [the base page file here](https://github.com/ryexley/bob-yexley-net/tree/master/src/pages/resume.js), [the components here](https://github.com/ryexley/bob-yexley-net/tree/master/src/components/Resume), and [the raw data used to generate it here](https://github.com/ryexley/bob-yexley-net/tree/master/content/data/resume.json)."
+        "description": "This includes the custom React code for this resume, which I like to use as an example of my understanding of that library. The pieces for the resume are scattered around a bit, but you can find [the base page file here](https://github.com/ryexley/bob-yexley-net/tree/master/src/pages/résumé.js), [the components here](https://github.com/ryexley/bob-yexley-net/tree/master/src/components/Resume), and [the raw data used to generate it here](https://github.com/ryexley/bob-yexley-net/tree/master/content/data/resume.json)."
       },
       {
         "name": "service-core",

@@ -73,6 +73,7 @@ class Resume extends Component {
 
                 :global(.resume-section) {
                   margin: 0 0 5rem 4rem;
+                  margin: 0 0 5rem 0;
                   position: relative;
                 }
 
@@ -80,7 +81,7 @@ class Resume extends Component {
                   color: var(--resume-heading-color);
                   font-size: 2rem;
                   left: 0;
-                  margin: 0;
+                  margin: 2rem 0;
                   padding: 2rem 0;
                   position: absolute;
                   /* text-shadow: 0px 1px 1px rgba(0, 0, 0, 0.25); */
@@ -88,6 +89,10 @@ class Resume extends Component {
                   transform: rotate(90deg);
                   transform-origin: 0 0;
                   white-space: nowrap;
+
+                  &:first-of-type {
+                    margin-top: 0;
+                  }
                 }
 
                 @from-width desktop {
@@ -98,6 +103,18 @@ class Resume extends Component {
 
                   :global(.resume-section) {
                     margin-left: 0 0 5rem 0;
+                  }
+                }
+
+                @below desktop {
+                  :global(.resume-section-heading) {
+                    padding: 0;
+                    position: relative;
+                    transform: none;
+
+                    &:first-of-type {
+                      margin-top: 0;
+                    }
                   }
                 }
               `}</style>

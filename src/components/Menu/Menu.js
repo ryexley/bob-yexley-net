@@ -187,8 +187,8 @@ class Menu extends React.Component {
             padding: 0 ${theme.space.inset.s};
             position: fixed;
             width: 100%;
-            z-index: 1;
             transition: all ${theme.time.duration.default};
+            z-index: 2;
           }
 
           .itemList {
@@ -233,6 +233,7 @@ class Menu extends React.Component {
               justify-content: flex-end;
               padding-left: 50px;
               transition: none;
+              z-index: 2;
             }
 
             .itemList {
@@ -254,7 +255,7 @@ class Menu extends React.Component {
               padding: ${theme.space.m};
               border-radius: ${theme.size.radius.small};
               border-top-right-radius: 0;
-
+              z-index: 2;
 
               &:after {
                 content: "";

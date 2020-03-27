@@ -30,18 +30,19 @@ export const Hero = ({ theme, title, intro, onMouseScrollHintClick }) => (
         background-repeat: no-repeat;
         color: ${theme.color.neutral.gray.a};
         display: flex;
-        flex-direction: column;
-        height: 100vh;
+        flex-flow: column nowrap;
         justify-content: center;
-        min-height: 50rem;
+        min-height: 100vh;
+        position: relative;
 
         &::after {
           background: rgba(0, 0, 0, 0.25);
           content: '';
           display: flex;
-          height: 100vh;
-          min-height: 50rem;
+          height: 100%;
+          min-height: 100vh;
           position: absolute;
+          top: 0;
           width: 100vw;
         }
       }
@@ -49,6 +50,7 @@ export const Hero = ({ theme, title, intro, onMouseScrollHintClick }) => (
       h1 {
         animation: fade-in-down .7s;
         margin: 2rem;
+        margin-top: ${`calc(${theme.header.height.homepage} + 5rem)`};
         text-align: center;
       }
 
@@ -58,6 +60,7 @@ export const Hero = ({ theme, title, intro, onMouseScrollHintClick }) => (
         font-weight: normal;
         line-height: 1.5rem;
         margin: 2rem;
+        margin-bottom: 12rem;
       }
 
       .scroll-hint-container {
@@ -70,7 +73,7 @@ export const Hero = ({ theme, title, intro, onMouseScrollHintClick }) => (
         left: calc(50% - 2rem);
         position: absolute;
         width: var(--size);
-        z-index: 10;
+        z-index: 4;
       }
 
       .mouse-hint {

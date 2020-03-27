@@ -53,8 +53,22 @@ function renderHeader({
           display: flex;
 
           &:first-child {
+            display: flex;
+            flex-direction: column;
             justify-content: space-between;
             margin: 0 0 0.5rem 0;
+
+            @from-width 500px {
+              flex-direction: row;
+            }
+
+            div {
+              margin-top: 0.25rem;
+
+              @from-width 500px {
+                margin-top: 0;
+              }
+            }
           }
 
           &.position-title {
@@ -69,6 +83,14 @@ function renderHeader({
 
           &:nth-child(odd) {
             color: #ccc;
+          }
+
+          &:first-of-type {
+            margin-left: 0;
+
+            @from-width 500px {
+              margin-left: 0.5rem;
+            }
           }
         }
 

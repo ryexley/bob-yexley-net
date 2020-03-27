@@ -124,7 +124,7 @@ class Layout extends React.Component {
 
     a {
       border-bottom: 1px solid ${this.state.theme.color.brand.primary};
-      color: #666;
+      color: ${this.state.theme.color.brand.primary};
       text-decoration: none;
       transition: all 250ms ease-in-out;
     }

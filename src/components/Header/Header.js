@@ -37,7 +37,10 @@ class Header extends Component {
     const classes = classnames("header", {
       fixed: this.state.fixed,
       homepage: this.props.path === "/",
-      resume: this.props.path === "/resume",
+      resume: (
+        this.props.path === "/résumé" ||
+        this.props.path === "/r%C3%A9sum%C3%A9"
+      ),
       subpage: this.props.path !== "/"
     })
 
@@ -82,11 +85,13 @@ class Header extends Component {
             background-color: rgba(255, 255, 255, 0.9);
             display: flex;
             height: ${theme.header.height.default};
+            padding: 1rem;
             position: relative;
             top: 0;
             width: 100%;
             align-items: center;
             transition: all 500ms ease-in-out;
+            z-index: 1;
 
             :global(a) {
               border-bottom: 1px solid transparent;
@@ -137,7 +142,8 @@ class Header extends Component {
             width: 44px;
             transition: all 0.5s;
 
-            .homepage & {
+            .homepage &,
+            .resume & {
               height: 60px;
               width: 60px;
             }
@@ -162,14 +168,17 @@ class Header extends Component {
             .header {
               padding: ${theme.space.inset.l};
 
-              &.homepage {
+              &.homepage,
+              &.resume {
                 height: ${theme.header.height.homepage};
               }
             }
           }
 
           @below desktop {
-            .header.homepage, .header.subpage {
+            .header.homepage,
+            .header.subpage,
+            .header.resume {
               .logo {
                 border: none;
               }
@@ -262,6 +271,10 @@ class Header extends Component {
               }
 
               .header.subpage:not(.fixed) & {
+                border: none;
+              }
+
+              .header.resume:not(.fixed) & {
                 border: none;
               }
             }

@@ -145,5 +145,5 @@ blog:
 header:
   height:
     default: 80px
-    fixed: 50px;
-    homepage: 100px;
+    fixed: 50px
+    homepage: 100px

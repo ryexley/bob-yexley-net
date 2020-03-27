@@ -65,6 +65,7 @@ class Hero extends Component {
           header {
             align-items: center;
             background-image: url(${heroImage.postCoverMobile});
+            background-position: center;
             background-size: cover;
             display: flex;
             flex-flow: column nowrap;
