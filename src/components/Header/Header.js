@@ -37,10 +37,7 @@ class Header extends Component {
     const classes = classnames("header", {
       fixed: this.state.fixed,
       homepage: this.props.path === "/",
-      resume: (
-        this.props.path === "/résumé" ||
-        this.props.path === "/r%C3%A9sum%C3%A9"
-      ),
+      resume: this.props.path === "/resume",
       subpage: this.props.path !== "/"
     })
 

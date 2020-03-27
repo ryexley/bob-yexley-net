@@ -32,6 +32,7 @@ export const Hero = ({ theme, title, intro, onMouseScrollHintClick }) => (
         display: flex;
         flex-flow: column nowrap;
         justify-content: center;
+        margin-top: ${`-calc(${theme.header.height.homepage} + ${theme.space.inset.l})`};
         min-height: 100vh;
         position: relative;
 
