@@ -1,19 +1,19 @@
-import React from "react";
-import PropTypes from "prop-types";
-import Helmet from "react-helmet";
-import config from "../../../content/meta/config";
+import React from "react"
+import PropTypes from "prop-types"
+import Helmet from "react-helmet"
+import config from "../../../content/meta/config"
 
 const Seo = props => {
-  const { data, facebook } = props;
-  const postTitle = ((data || {}).frontmatter || {}).title;
-  const postDescription = ((data || {}).frontmatter || {}).description;
-  const postCover = ((data || {}).frontmatter || {}).cover;
-  const postSlug = ((data || {}).fields || {}).slug;
+  const { data, facebook } = props
+  const postTitle = ((data || {}).frontmatter || {}).title
+  const postDescription = ((data || {}).frontmatter || {}).description
+  const postCover = ((data || {}).frontmatter || {}).cover
+  const postSlug = ((data || {}).fields || {}).slug
 
-  const title = postTitle ? `${postTitle} - ${config.shortSiteTitle}` : config.siteTitle;
-  const description = postDescription ? postDescription : config.siteDescription;
-  const image = postCover ? postCover : config.siteImage;
-  const url = config.siteUrl + config.pathPrefix + postSlug;
+  const title = postTitle ? `${postTitle} - ${config.shortSiteTitle}` : config.siteTitle
+  const description = postDescription ? postDescription : config.siteDescription
+  const image = postCover ? postCover : config.siteImage
+  const url = config.siteUrl + config.pathPrefix + postSlug
 
   return (
     <Helmet
@@ -39,12 +39,12 @@ const Seo = props => {
         content={config.authorTwitterAccount ? config.authorTwitterAccount : ""}
       />
     </Helmet>
-  );
-};
+  )
+}
 
 Seo.propTypes = {
   data: PropTypes.object,
   facebook: PropTypes.object.isRequired
-};
+}
 
-export default Seo;
+export default Seo

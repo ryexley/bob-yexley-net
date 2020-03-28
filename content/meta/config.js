@@ -36,4 +36,4 @@ module.exports = {
     { name: "github", url: "https://github.com/ryexley" },
     { name: "twitter", url: "https://twitter.com/ryexley" }
   ]
-};
+}

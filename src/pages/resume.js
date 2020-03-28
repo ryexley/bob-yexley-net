@@ -2,7 +2,9 @@ import React, { Component, Fragment, createRef } from "react"
 import { graphql } from "gatsby"
 import PropTypes from "prop-types"
 import { ThemeContext } from "@/layouts"
+import Seo from "@cmp/Seo"
 import { Hero } from "@cmp/Resume/Hero"
+import { Contact } from "@cmp/Resume/Contact"
 import { selectResumeData } from "@cmp/Resume/selectors"
 import { SkillsAndProficiencies } from "@cmp/Resume/SkillsAndProficiencies"
 import { WorkHistory } from "@cmp/Resume/WorkHistory"
@@ -20,28 +22,40 @@ class Resume extends Component {
   }
 
   render() {
-    const { data: { allDataJson: { edges: [data] } } } = this.props
+    const {
+      data: {
+        site: { siteMetadata: { facebook } },
+        allDataJson: { edges: [data] }
+      }
+    } = this.props
     const { node: resumeData } = data
     const {
+      pageTitle,
       title,
       intro,
+      contactInfo,
       skillProficiencyCollections,
       workHistory,
       codeSamples,
       extraStuff
     } = selectResumeData(resumeData)
+    const seoData = {
+      frontmatter: { title: pageTitle }
+    }
 
     return (
       <Fragment>
         <ThemeContext.Consumer>
           {theme => (
             <Fragment>
+              <Seo data={seoData} facebook={facebook} />
               <Hero
                 theme={ theme }
                 title={title}
                 intro={intro}
                 onMouseScrollHintClick={this.scrollToContent} />
               <hr ref={this.separator} />
+              <Contact data={contactInfo} />
               <main className="resume-content">
                 <SkillsAndProficiencies data={skillProficiencyCollections} />
                 <WorkHistory data={workHistory} />
@@ -135,11 +149,23 @@ export default Resume
 // eslint-disable-next-line no-undef
 export const query = graphql`
   query ResumeQuery {
+    site {
+      siteMetadata {
+        facebook {
+          appId
+        }
+      }
+    }
     allDataJson {
       edges {
         node {
+          pageTitle
           title
           intro
+          contactInfo {
+            email
+            phoneNumber
+          }
           toolsAndSkills {
             key
             name

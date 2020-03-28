@@ -12222,9 +12222,10 @@ react-md-spinner@^0.3.0:
     inline-style-prefixer "^3.0.3"
     prop-types "^15.5.8"
 
-react-obfuscate@^2.1.4:
-  version "2.1.4"
-  resolved "https://registry.yarnpkg.com/react-obfuscate/-/react-obfuscate-2.1.4.tgz#ae647207c1a8241b83b6a284a82870260a2298b6"
+react-obfuscate@^3.6.6:
+  version "3.6.6"
+  resolved "https://registry.yarnpkg.com/react-obfuscate/-/react-obfuscate-3.6.6.tgz#03a15005c1b2e13f1d102051a251f8dfba0fa706"
+  integrity sha512-ZbQ0Qr1JtoSENXu+rZ3lDLgHM7qRaguM5WCwgr2XxzIrFssytjcIP+X0uc5jlWBuDqAjZbkSa3M7PveLBcefcA==
 
 react-share@^2.2.0:
   version "2.2.0"
