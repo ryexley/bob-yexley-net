@@ -218,7 +218,8 @@ class Menu extends React.Component {
                 padding: ${theme.space.inset.m};
               }
 
-              :global(.homepage):not(.fixed) & {
+              :global(.homepage):not(.fixed) &,
+              :global(.resume):not(.fixed) & {
                 bottom: -100px;
               }
             }
@@ -270,7 +271,8 @@ class Menu extends React.Component {
                 border-right: 1px solid ${theme.line.color};
               }
 
-              :global(.homepage):not(.fixed) & {
+              :global(.homepage):not(.fixed) &,
+              :global(.resume):not(.fixed) & {
                 border: 1px solid transparent;
                 background: color(white alpha(-10%));
                 top: 50px;
