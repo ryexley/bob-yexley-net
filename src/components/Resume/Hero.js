@@ -59,6 +59,17 @@ export const Hero = ({ theme, title, intro, onMouseScrollHintClick }) => (
         margin-bottom: 12rem;
       }
 
+      @keyframes fade-in-down {
+        0% {
+          opacity: 0;
+          transform: translateY(-2rem);
+        }
+        100% {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
       @from-width desktop {
         h2 {
           max-width: 50rem;
