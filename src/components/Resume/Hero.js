@@ -1,5 +1,6 @@
 import React, { Fragment } from "react"
 import PropTypes from "prop-types"
+import { ScrollHint } from "@cmp/ScrollHint"
 import { HighlightedTechIcons } from "./HighlightedTechIcons"
 import HeroImage from "./hero-image.jpg"
 
@@ -9,15 +10,9 @@ export const Hero = ({ theme, title, intro, onMouseScrollHintClick }) => (
       <h1>{title}</h1>
       <HighlightedTechIcons />
       <h2>{intro}</h2>
-      <div
-        role="button"
-        className="scroll-hint-container"
-        onClick={onMouseScrollHintClick}>
-        {/* https://codepen.io/chrissimmons/pen/GrLQWp */}
-        <div className="mouse-hint">
-          <div className="scroll"></div>
-        </div>
-      </div>
+      <ScrollHint
+        className="scroll-hint"
+        onScrollHintClick={onMouseScrollHintClick} />
     </header>
     <style jsx>{`
       header {
@@ -62,70 +57,6 @@ export const Hero = ({ theme, title, intro, onMouseScrollHintClick }) => (
         line-height: 1.5rem;
         margin: 2rem;
         margin-bottom: 12rem;
-      }
-
-      .scroll-hint-container {
-        --size: 4rem;
-        background: rgba(0, 0, 0, 0.5);
-        border-radius: 50%;
-        bottom: 4rem;
-        cursor: pointer;
-        height: var(--size);
-        left: calc(50% - 2rem);
-        position: absolute;
-        width: var(--size);
-        z-index: 4;
-      }
-
-      .mouse-hint {
-        cursor: pointer;
-        border: 2px solid rgba(255, 255, 255, 0.5);
-        border-radius: 12px;
-        box-sizing: border-box;
-        height: 2.25rem;
-        left: calc(50% - 0.6875rem);
-        position: absolute;
-        top: calc(50% - 1.125rem);
-        transition: opacity .5s ease;
-        width: 1.375rem;
-        -ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=0)";
-
-        .scroll {
-          animation: scroll-hint-animation 2s linear infinite;
-          background: white;
-          border-radius: 50%;
-          left: 0.3125rem;
-          height: 0.5rem;
-          opacity: 0;
-          pointer-events: none;
-          position: absolute;
-          width: 0.5rem;
-          top: 0.3125rem;
-          -ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=0)";
-        }
-      }
-
-      @keyframes fade-in-down {
-        0% {
-          opacity: 0;
-          transform: translateY(-2rem);
-        }
-        100% {
-          opacity: 1;
-          transform: translateY(0);
-        }
-      }
-
-      @keyframes scroll-hint-animation {
-        60% {
-          opacity: 0.5;
-          -ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=50)";
-        }
-        100% {
-          opacity: 0;
-          -ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=0)";
-          transform: translateY(14px);
-        }
       }
 
       @from-width desktop {

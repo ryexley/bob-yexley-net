@@ -1,6 +1,7 @@
 import React, { Fragment } from "react"
 import PropTypes from "prop-types"
 import { IoIosArrowDown as DownArrowIcon } from "react-icons/io/"
+import { ScrollHint } from "@cmp/ScrollHint"
 import config from "../../../content/meta/config"
 
 const Hero = props => {
@@ -10,9 +11,9 @@ const Hero = props => {
     <Fragment>
       <section className="hero">
         <h1>{ config.siteDescription }</h1>
-        <button onClick={scrollToContent} aria-label="scroll">
-          <DownArrowIcon />
-        </button>
+        <ScrollHint
+          className=""
+          onScrollHintClick={scrollToContent} />
       </section>
 
       <style jsx>{`
@@ -53,45 +54,6 @@ const Hero = props => {
               content: "‹";
               margin: 0 0 0 ${theme.space.xs};
             }
-          }
-        }
-
-        button {
-          background: rgba(0, 0, 0, 0.25); /* ${theme.background.color.brand}; */
-          border: 0;
-          border-radius: 50%;
-          font-size: ${theme.font.size.m};
-          padding: ${theme.space.s} ${theme.space.m};
-          cursor: pointer;
-          width: ${theme.space.xl};
-          height: ${theme.space.xl};
-
-          &:focus {
-            outline-style: none;
-            background: ${theme.color.brand.primary.active};
-          }
-
-          :global(svg) {
-            position: relative;
-            top: 5px;
-            fill: ${theme.color.neutral.white};
-            stroke-width: 40;
-            stroke: ${theme.color.neutral.white};
-            animation-duration: ${theme.time.duration.long};
-            animation-name: buttonIconMove;
-            animation-iteration-count: infinite;
-          }
-        }
-
-        @keyframes buttonIconMove {
-          0% {
-            transform: translateY(0);
-          }
-          50% {
-            transform: translateY(-10px);
-          }
-          100% {
-            transform: translateY(0);
           }
         }
 
