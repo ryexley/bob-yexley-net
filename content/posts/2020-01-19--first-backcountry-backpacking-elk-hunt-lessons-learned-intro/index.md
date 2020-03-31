@@ -20,8 +20,8 @@ These are the things that I plan to cover through the course of this series. Som
 * [Backpacks](/first-backcountry-backpacking-elk-hunt-lessons-learned-backpacks)
 * [Tents](/first-backcountry-backpacking-elk-hunt-lessons-learned-tents)
 * [Sleep System](/first-backcountry-backpacking-elk-hunt-lessons-learned-sleep-system)
-* Water Filtration System(s) _(up next)_
-* Electronics / Software / Mapping _(coming soon)_
+* [Water Filtration System(s)](/first-backcountry-backpacking-elk-hunt-lessons-learned-water-system)
+* Electronics / Software / Mapping  _(up next)_
 * Reading Maps and Electronic Scouting _(coming soon)_
 * Food _(coming soon)_
 

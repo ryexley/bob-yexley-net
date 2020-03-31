@@ -5,7 +5,7 @@ category: hunting
 tags: ["hunting", "elk", "backpacking"]
 ---
 
-_This is the fourth post in a series on lessons I learned on my first backcountry backpacking elk hunt. [The previous post, which focused on tents, can be found here](/first-backcountry-backpacking-elk-hunt-lessons-learned-tents)._
+_This is the fourth post in [a series](/first-backcountry-backpacking-elk-hunt-lessons-learned-intro) on lessons I learned on my first backcountry backpacking elk hunt. [The previous post, which focused on tents, can be found here](/first-backcountry-backpacking-elk-hunt-lessons-learned-tents). [The next post, which is focused on my water system, can be found here](first-backcountry-backpacking-elk-hunt-lessons-learned-water-system)._
 
 I am a side/stomach sleeper. Always have been, and I don't see that fact changing anytime soon. At some point, that decision is subconscious and happens in your sleep, so you have very little control over changing it.
 

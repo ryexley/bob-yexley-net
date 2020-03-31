@@ -5,7 +5,7 @@ category: hunting
 tags: ["elk", "hunting", "backpacking"]
 ---
 
-_This is the third post in a series on lessons I learned on my first backcountry backpacking elk hunt. [The previous post, which focused on backpacks, can be found here](/first-backcountry-backpacking-elk-hunt-lessons-learned-backpacks). [The next post after this, which is focused on my sleep system, can be found here](/first-backcountry-backpacking-elk-hunt-lessons-learned-sleep-system)._
+_This is the third post in [a series](/first-backcountry-backpacking-elk-hunt-lessons-learned-intro) on lessons I learned on my first backcountry backpacking elk hunt. [The previous post, which focused on backpacks, can be found here](/first-backcountry-backpacking-elk-hunt-lessons-learned-backpacks). [The next post after this, which is focused on my sleep system, can be found here](/first-backcountry-backpacking-elk-hunt-lessons-learned-sleep-system)._
 
 ![our tents in camp](tents-setup-messy-camp.jpg "please forgive our messy camp...I promise we didn't actually leave it that way")
 
