@@ -3,7 +3,7 @@ import PropTypes from "prop-types"
 import classnames from "classnames"
 
 // Adapted from https://codepen.io/chrissimmons/pen/GrLQWp
-export const ScrollHint = ({ className, onScrollHintClick }) => {
+export const ScrollHint = ({ className, onScrollHintClick, style }) => {
   const classes = classnames("scroll-hint-container", className)
 
   return (
@@ -11,7 +11,8 @@ export const ScrollHint = ({ className, onScrollHintClick }) => {
       <div
         role="button"
         className={classes}
-        onClick={onScrollHintClick}>
+        onClick={onScrollHintClick}
+        style={style}>
         <div className="mouse-hint">
           <div className="scroll"></div>
         </div>
@@ -83,4 +84,10 @@ export const ScrollHint = ({ className, onScrollHintClick }) => {
       `}</style>
     </Fragment>
   )
+}
+
+ScrollHint.propTypes = {
+  className: PropTypes.string,
+  onScrollHintClick: PropTypes.func,
+  style: PropTypes.object
 }
