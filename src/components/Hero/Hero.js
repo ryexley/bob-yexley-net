@@ -7,7 +7,8 @@ class Hero extends Component {
   state = {
     backgroundImageOffset: 0,
     titleOffset: 0,
-    titleOpacity: 1
+    titleOpacity: 1,
+    scrollHintOpacity: 1
   }
 
   componentDidMount = () => {
@@ -25,12 +26,14 @@ class Hero extends Component {
   parallaxShift = () => {
     if (window) {
       const { pageYOffset } = window
-      const calculatedOpacity = ((100 - (pageYOffset * 0.085)) / 100)
+      const calculatedTitleOpacity = ((100 - (pageYOffset * 0.085)) / 100)
+      const calculatedScrollHintOpacity = ((100 - (pageYOffset * 0.15)) / 100)
 
       this.setState(() => ({
         backgroundImageOffset: (pageYOffset * 0.25),
         titleOffset: -(pageYOffset * 0.4),
-        titleOpacity: (calculatedOpacity > 0) ? calculatedOpacity : 0
+        titleOpacity: (calculatedTitleOpacity > 0) ? calculatedTitleOpacity : 0,
+        scrollHintOpacity: (calculatedScrollHintOpacity > 0) ? calculatedScrollHintOpacity : 0
       }))
     }
   }
@@ -40,7 +43,8 @@ class Hero extends Component {
     const {
       backgroundImageOffset,
       titleOffset,
-      titleOpacity
+      titleOpacity,
+      scrollHintOpacity
     } = this.state
 
     const titleStyle = {
@@ -57,7 +61,7 @@ class Hero extends Component {
           <ScrollHint
             className=""
             onScrollHintClick={scrollToContent}
-            style={{ opacity: titleOpacity }} />
+            style={{ opacity: scrollHintOpacity }} />
         </section>
 
         <style jsx>{`
@@ -69,9 +73,10 @@ class Hero extends Component {
             color: ${theme.text.color.primary.inverse};
             display: flex;
             flex-flow: column nowrap;
+            height: 100px;
             justify-content: center;
             min-height: 100vh;
-            height: 100px;
+            overflow: hidden;
             padding: ${theme.space.inset.l};
             padding-top: ${theme.header.height.homepage};
           }
