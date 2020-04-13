@@ -5,7 +5,7 @@ category: hunting
 tags: ["hunting", "elk", "backpacking"]
 ---
 
-_This is the fifth post in [a series](/first-backcountry-backpacking-elk-hunt-lessons-learned-intro) on lessons I learned on my first backcountry backpacking elk hunt. [The previous post, which focused on my sleep system, can be found here](/first-backcountry-backpacking-elk-hunt-lessons-learned-sleep-system)._
+_This is the fifth post in [a series](/first-backcountry-backpacking-elk-hunt-lessons-learned-intro) on lessons I learned on my first backcountry backpacking elk hunt. [The previous post, which focused on my sleep system, can be found here](/first-backcountry-backpacking-elk-hunt-lessons-learned-sleep-system). [The next post, which is focused on electronics, software and navigation, can be found here](/first-backcountry-backpacking-elk-hunt-lessons-learned-electronics-software-and-navigation)._
 
 When I decided to try my hand at a multi-day backpacking hunting trip, I knew that one of the first and most critical things that I would need a solution for was going to be water. Water is just essential as a human, and you have to have a reliable means of obtaining clean water when you're in the backcountry, or you're not going to be there for long.
 

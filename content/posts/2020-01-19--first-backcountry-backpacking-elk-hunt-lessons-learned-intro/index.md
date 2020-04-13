@@ -21,8 +21,8 @@ These are the things that I plan to cover through the course of this series. Som
 * [Tents](/first-backcountry-backpacking-elk-hunt-lessons-learned-tents)
 * [Sleep System](/first-backcountry-backpacking-elk-hunt-lessons-learned-sleep-system)
 * [Water Filtration System(s)](/first-backcountry-backpacking-elk-hunt-lessons-learned-water-system)
-* Electronics / Software / Mapping  _(up next)_
-* Reading Maps and Electronic Scouting _(coming soon)_
+* [Electronics / Software / Mapping](/first-backcountry-backpacking-elk-hunt-lessons-learned-electronics-software-and-navigation)
+* Reading Maps and Electronic Scouting  _(up next)_
 * Food _(coming soon)_
 
 I hope you enjoy this series, and that you're able to find something in it that can maybe help you in your own future backcountry adventures.
