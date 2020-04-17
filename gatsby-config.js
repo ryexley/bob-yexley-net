@@ -1,6 +1,6 @@
-require("dotenv").config();
-const config = require("./content/meta/config");
-const transformer = require("./src/utils/algolia");
+require("dotenv").config()
+const config = require("./content/meta/config")
+const transformer = require("./src/utils/algolia")
 
 const query = `{
   allMarkdownRemark( filter: { fields: { slug: { ne: null } } }) {
@@ -19,16 +19,16 @@ const query = `{
       }
     }
   }
-}`;
+}`
 
 const queries = [
   {
     query,
     transformer: ({ data }) => {
-      return data.allMarkdownRemark.edges.reduce(transformer, []);
+      return data.allMarkdownRemark.edges.reduce(transformer, [])
     }
   }
-];
+]
 
 module.exports = {
   // pathPrefix: config.pathPrefix,
@@ -38,26 +38,23 @@ module.exports = {
     siteUrl: config.siteUrl,
     algolia: {
       appId: process.env.ALGOLIA_APP_ID ? process.env.ALGOLIA_APP_ID : "",
-      searchOnlyApiKey: process.env.ALGOLIA_SEARCH_ONLY_API_KEY
-        ? process.env.ALGOLIA_SEARCH_ONLY_API_KEY
-        : "",
+      searchOnlyApiKey: process.env.ALGOLIA_SEARCH_ONLY_API_KEY ? process.env.ALGOLIA_SEARCH_ONLY_API_KEY : "",
       indexName: process.env.ALGOLIA_INDEX_NAME ? process.env.ALGOLIA_INDEX_NAME : ""
-    },
-    facebook: {
-      appId: process.env.FB_APP_ID ? process.env.FB_APP_ID : ""
     }
   },
   plugins: [
-    `gatsby-plugin-styled-jsx`, // the plugin's code is inserted directly to gatsby-node.js and gatsby-ssr.js files
-    `gatsby-plugin-styled-jsx-postcss`, // as above
+    // the plugin's code is inserted directly to gatsby-node.js and
+    // gatsby-ssr.js files
+    "gatsby-plugin-styled-jsx",
+    "gatsby-plugin-styled-jsx-postcss", // as above
     {
-      resolve: `gatsby-plugin-layout`,
+      resolve: "gatsby-plugin-layout",
       options: {
-        component: require.resolve(`./src/layouts/`)
+        component: require.resolve("./src/layouts/")
       }
     },
     {
-      resolve: `gatsby-plugin-algolia`,
+      resolve: "gatsby-plugin-algolia",
       options: {
         appId: process.env.ALGOLIA_APP_ID ? process.env.ALGOLIA_APP_ID : "",
         apiKey: process.env.ALGOLIA_ADMIN_API_KEY ? process.env.ALGOLIA_ADMIN_API_KEY : "",
@@ -67,30 +64,30 @@ module.exports = {
       }
     },
     {
-      resolve: `gatsby-source-filesystem`,
+      resolve: "gatsby-source-filesystem",
       options: {
-        name: `images`,
+        name: "images",
         path: `${__dirname}/src/images/`
       }
     },
     {
-      resolve: `gatsby-source-filesystem`,
+      resolve: "gatsby-source-filesystem",
       options: {
         path: `${__dirname}/content/posts/`,
         name: "posts"
       }
     },
     {
-      resolve: `gatsby-source-filesystem`,
+      resolve: "gatsby-source-filesystem",
       options: {
         path: `${__dirname}/content/pages/`,
         name: "pages"
       }
     },
     {
-      resolve: `gatsby-source-filesystem`,
+      resolve: "gatsby-source-filesystem",
       options: {
-        name: `parts`,
+        name: "parts",
         path: `${__dirname}/content/parts/`
       }
     },
@@ -103,26 +100,26 @@ module.exports = {
       }
     },
     {
-      resolve: `gatsby-transformer-remark`,
+      resolve: "gatsby-transformer-remark",
       options: {
         plugins: [
-          `gatsby-plugin-sharp`,
+          "gatsby-plugin-sharp",
           {
-            resolve: `gatsby-remark-images`,
+            resolve: "gatsby-remark-images",
             options: {
               maxWidth: 800,
               backgroundColor: "transparent"
             }
           },
           {
-            resolve: `gatsby-remark-responsive-iframe`,
+            resolve: "gatsby-remark-responsive-iframe",
             options: {
-              wrapperStyle: `margin-bottom: 2em`
+              wrapperStyle: "margin-bottom: 2em"
             }
           },
-          `gatsby-remark-prismjs`,
-          `gatsby-remark-copy-linked-files`,
-          `gatsby-remark-smartypants`,
+          "gatsby-remark-prismjs",
+          "gatsby-remark-copy-linked-files",
+          "gatsby-remark-smartypants",
           {
             resolve: "gatsby-remark-emojis",
             options: {
@@ -134,24 +131,24 @@ module.exports = {
               size: 64,
               // Add custom styles
               styles: {
-                display: "inline",
-                margin: "0",
+                "display": "inline",
+                "margin": "0",
                 "margin-top": "1px",
-                position: "relative",
-                top: "5px",
-                width: "25px"
+                "position": "relative",
+                "top": "5px",
+                "width": "25px"
               }
             }
           }
         ]
       }
     },
-    `gatsby-plugin-sharp`,
-    `gatsby-transformer-sharp`,
-    `gatsby-plugin-react-helmet`,
-    `gatsby-plugin-catch-links`,
+    "gatsby-plugin-sharp",
+    "gatsby-transformer-sharp",
+    "gatsby-plugin-react-helmet",
+    "gatsby-plugin-catch-links",
     {
-      resolve: `gatsby-plugin-manifest`,
+      resolve: "gatsby-plugin-manifest",
       options: {
         name: config.manifestName,
         short_name: config.manifestShortName,
@@ -198,15 +195,15 @@ module.exports = {
         ]
       }
     },
-    `gatsby-plugin-offline`,
+    "gatsby-plugin-offline",
     {
-      resolve: `gatsby-plugin-google-analytics`,
+      resolve: "gatsby-plugin-google-analytics",
       options: {
         trackingId: process.env.GOOGLE_ANALYTICS_ID
       }
     },
     {
-      resolve: `gatsby-plugin-feed`,
+      resolve: "gatsby-plugin-feed",
       options: {
         query: `
           {
@@ -230,8 +227,8 @@ module.exports = {
                   url: site.siteMetadata.siteUrl + edge.node.fields.slug,
                   guid: site.siteMetadata.siteUrl + edge.node.fields.slug,
                   custom_elements: [{ "content:encoded": edge.node.html }]
-                });
-              });
+                })
+              })
             },
             query: `
               {
@@ -267,7 +264,7 @@ module.exports = {
       }
     },
     {
-      resolve: `gatsby-plugin-sitemap`
+      resolve: "gatsby-plugin-sitemap"
     },
     {
       resolve: "gatsby-plugin-react-svg",
@@ -276,4 +273,4 @@ module.exports = {
       }
     }
   ]
-};
+}

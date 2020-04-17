@@ -14,7 +14,7 @@ const SearchPage = props => {
   const {
     data: {
       site: {
-        siteMetadata: { algolia, facebook }
+        siteMetadata: { algolia }
       }
     }
   } = props
@@ -33,7 +33,7 @@ const SearchPage = props => {
         )}
       </ThemeContext.Consumer>
 
-      <Seo facebook={facebook} />
+      <Seo />
 
       {/* --- STYLES --- */}
       <style jsx>{`
@@ -42,6 +42,7 @@ const SearchPage = props => {
           justify-content: flex-end;
           margin-bottom: 20px;
         }
+
         .icon :global(svg) {
           height: 30px;
         }
@@ -65,9 +66,6 @@ export const query = graphql`
           appId
           searchOnlyApiKey
           indexName
-        }
-        facebook {
-          appId
         }
       }
     }

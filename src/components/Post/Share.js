@@ -1,12 +1,5 @@
 import React, { Fragment } from "react"
 import PropTypes from "prop-types"
-import {
-  FacebookShareButton,
-  TwitterShareButton,
-  FacebookShareCount,
-  FacebookIcon,
-  TwitterIcon
-} from "react-share"
 
 import config from "../../../content/meta/config"
 
@@ -14,8 +7,7 @@ const PostShare = props => {
   const {
     post: {
       fields: { slug },
-      frontmatter: { title },
-      excerpt
+      frontmatter: { title }
     },
     theme
   } = props
@@ -23,7 +15,6 @@ const PostShare = props => {
   const url = config.siteUrl + config.pathPrefix + slug
 
   const iconSize = 36
-  const filter = count => (count > 0 ? count : "")
 
   const dev = process.env.NODE_ENV === "development"
 
@@ -32,27 +23,6 @@ const PostShare = props => {
       <div className="share">
         <span className="label">SHARE</span>
         <div className="links">
-          <TwitterShareButton
-            url={url}
-            title={title}
-            additionalProps={{
-              "aria-label": "Twitter share"
-            }}
-          >
-            <TwitterIcon round size={iconSize} />
-          </TwitterShareButton>
-          <FacebookShareButton
-            url={url}
-            quote={`${title} - ${excerpt}`}
-            additionalProps={{
-              "aria-label": "Facebook share"
-            }}
-          >
-            <FacebookIcon round size={iconSize} />
-            <FacebookShareCount url={url}>
-              {count => <div className="share-count">{filter(count)}</div>}
-            </FacebookShareCount>
-          </FacebookShareButton>
         </div>
       </div>
 

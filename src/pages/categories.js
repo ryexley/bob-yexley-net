@@ -12,9 +12,6 @@ const CategoriesPage = props => {
   const {
     data: {
       posts: { edges: posts },
-      site: {
-        siteMetadata: { facebook }
-      }
     }
   } = props
 
@@ -87,7 +84,7 @@ const CategoriesPage = props => {
         )}
       </ThemeContext.Consumer>
 
-      <Seo facebook={facebook} />
+      <Seo />
     </Fragment>
   )
 }
@@ -125,13 +122,6 @@ export const query = graphql`
               }
             }
           }
-        }
-      }
-    }
-    site {
-      siteMetadata {
-        facebook {
-          appId
         }
       }
     }

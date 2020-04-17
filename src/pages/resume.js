@@ -24,7 +24,6 @@ class Resume extends Component {
   render() {
     const {
       data: {
-        site: { siteMetadata: { facebook } },
         allDataJson: { edges: [data] }
       }
     } = this.props
@@ -48,7 +47,7 @@ class Resume extends Component {
         <ThemeContext.Consumer>
           {theme => (
             <Fragment>
-              <Seo data={seoData} facebook={facebook} />
+              <Seo data={seoData} />
               <Hero
                 theme={ theme }
                 title={title}
@@ -149,13 +148,6 @@ export default Resume
 // eslint-disable-next-line no-undef
 export const query = graphql`
   query ResumeQuery {
-    site {
-      siteMetadata {
-        facebook {
-          appId
-        }
-      }
-    }
     allDataJson {
       edges {
         node {

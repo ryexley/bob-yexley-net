@@ -11,7 +11,9 @@ const ContactPage = props => {
   const {
     data: {
       site: {
-        siteMetadata: { facebook }
+        siteMetadata: {
+          title
+        }
       }
     }
   } = props
@@ -29,7 +31,7 @@ const ContactPage = props => {
         )}
       </ThemeContext.Consumer>
 
-      <Seo facebook={facebook} />
+      <Seo />
     </React.Fragment>
   )
 }
@@ -45,9 +47,7 @@ export const query = graphql`
   query ContactQuery {
     site {
       siteMetadata {
-        facebook {
-          appId
-        }
+        title
       }
     }
   }

@@ -28,7 +28,6 @@ const PostTemplate = props => {
       bgDesktop: { resize: { src: siteHeroDesktop } },
       bgTablet: { resize: { src: siteHeroTablet } },
       bgMobile: { resize: { src: siteHeroMobile } },
-      site: { siteMetadata: { facebook } },
       authornote: { html: authorNote }
     },
     pageContext: { next, prev }
@@ -57,7 +56,6 @@ const PostTemplate = props => {
                 next={next}
                 prev={prev}
                 authornote={authorNote}
-                facebook={facebook}
                 theme={theme}
               />
             </Article>
@@ -65,7 +63,7 @@ const PostTemplate = props => {
         )}
       </ThemeContext.Consumer>
 
-      <Seo data={post} facebook={facebook} />
+      <Seo data={post} />
     </Fragment>
   )
 }
@@ -113,13 +111,6 @@ export const postQuery = graphql`
     authornote: markdownRemark(fileAbsolutePath: { regex: "/author/" }) {
       id
       html
-    }
-    site {
-      siteMetadata {
-        facebook {
-          appId
-        }
-      }
     }
     bgDesktop: imageSharp(fluid: {
       originalName: {

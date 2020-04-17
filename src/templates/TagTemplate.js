@@ -11,7 +11,6 @@ import List from "../components/List"
 const TagTemplate = ({ pageContext, data }) => {
   const { tag } = pageContext
   const { edges } = data.allMarkdownRemark
-  const { siteMetadata: { facebook } } = data.site
 
   return (
     <Fragment>
@@ -49,7 +48,7 @@ const TagTemplate = ({ pageContext, data }) => {
           </Article>
         )}
       </ThemeContext.Consumer>
-      <Seo facebook={facebook} />
+      <Seo />
     </Fragment>
   )
 }
@@ -78,13 +77,6 @@ export const tagQuery = graphql`
           frontmatter {
             title
           }
-        }
-      }
-    }
-    site {
-      siteMetadata {
-        facebook {
-          appId
         }
       }
     }
