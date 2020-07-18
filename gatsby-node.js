@@ -45,7 +45,6 @@ exports.createPages = ({ graphql, actions }) => {
 
     // Do not create draft post files in production.
     const activeEnv = process.env.ACTIVE_ENV || process.env.NODE_ENV || "development"
-    console.log(`Using environment config: '${activeEnv}'`)
     let filters = "filter: { fields: { slug: { ne: null } } }"
     if (activeEnv == "production") filters = "filter: { fields: { slug: { ne: null } , prefix: { ne: null } } }"
 

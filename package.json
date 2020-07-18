@@ -12,7 +12,8 @@
     "lint:fix": "yarn run lint --fix",
     "stylelint": "stylelint src/**/*.js",
     "generate-app-icons": "sh ./scripts/generate-app-icons.sh",
-    "new:post": "plop blog-post"
+    "new:post": "plop blog-post",
+    "generate-pdf-resume": "node ./scripts/pdf-resume.js"
   },
   "dependencies": {
     "antd": "^3.7.0",

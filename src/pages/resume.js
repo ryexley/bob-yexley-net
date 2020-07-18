@@ -155,6 +155,7 @@ export const query = graphql`
           title
           intro
           contactInfo {
+            name
             email
             phoneNumber
           }

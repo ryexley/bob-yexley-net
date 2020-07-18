@@ -14,7 +14,7 @@ export const FontLoadedContext = React.createContext(false)
 
 import themeObjectFromYaml from "../theme/theme.yaml"
 
-class Layout extends React.Component {
+class BaseLayout extends React.Component {
   constructor() {
     super()
 
@@ -256,10 +256,30 @@ class Layout extends React.Component {
   }
 }
 
-Layout.propTypes = {
+BaseLayout.propTypes = {
   children: PropTypes.object.isRequired,
   data: PropTypes.object.isRequired,
   location: PropTypes.object.isRequired
 }
 
-export default Layout
+const PdfResumeLayout = ({ children }) => {
+  return (
+    <main>
+      {children}
+    </main>
+  )
+}
+
+PdfResumeLayout.propTypes = {
+  children: PropTypes.object.isRequired
+}
+
+const PageLayout = props => {
+  const { "*": pageName } = props // eslint-disable-line react/prop-types
+
+  const Layout = pageName.match(/pdf-resume/) ? PdfResumeLayout : BaseLayout
+
+  return <Layout { ...props } />
+}
+
+export default PageLayout
