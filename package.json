@@ -5,6 +5,7 @@
   "license": "MIT",
   "scripts": {
     "build": "gatsby build",
+    "postbuild": "yarn run generate-pdf-resume",
     "dev": "gatsby develop --port 7117",
     "devhost": "gatsby develop --host 192.168.0.112",
     "lint-errors": "eslint src/**/*.{js,jsx} --quiet",
@@ -50,6 +51,7 @@
     "js-yaml": "^3.12.0",
     "normalize.css": "^8.0.0",
     "prismjs": "^1.15.0",
+    "puppeteer": "^5.2.0",
     "react": "^16.5.2",
     "react-addons-perf": "^15.4.2",
     "react-dom": "^16.5.2",

@@ -5,7 +5,8 @@
   "contactInfo": {
     "name": "Bob Yexley",
     "email": "bob@yexley.net",
-    "phoneNumber": "865-399-3696"
+    "phoneNumber": "865-399-3696",
+    "website": "https://bob.yexley.net"
   },
   "toolsAndSkills": [
     { "key": "js", "name": "JavaScript", "url": "https://developer.mozilla.org/en-US/docs/Web/javascript" },
@@ -91,9 +92,9 @@
       "employer": "Amplify Exchange",
       "employerUrl": "https://amplifyexchange.com",
       "startDate": "February 2019",
-      "endDate": "Present",
-      "positionTitle": "Software Developer",
-      "summary": "FinTech startup, building a Cryptocurrency Exchange",
+      "endDate": "July 2020",
+      "positionTitle": "Senior Software Engineer (On-Site and Remote)",
+      "summary": "FinTech startup, built a Cryptocurrency Exchange",
       "technologiesTools": [
         "js",
         "vue",
@@ -108,8 +109,8 @@
         "github"
       ],
       "highlights": [
-        "Building a series of web-based UIs for facilitating the deposit, withdrawal and trading of a number of Cryptocurrency asset types (Bitcoin, Ethereum, etc)",
-        "Building a number of different REST micro services supporting various exchange operations such as background checks, incentive rewards, etc"
+        "Built a series of web-based UIs for facilitating the deposit, withdrawal and trading of a number of Cryptocurrency asset types (Bitcoin, Ethereum, etc)",
+        "Built a number of different REST micro services supporting various exchange operations such as background checks, incentive rewards, etc"
       ]
     },
     {
@@ -400,7 +401,7 @@
   "extraStuff": [
     {
       "heading": "Writing",
-      "body": "Feel free to browse anything that I've written [here on my blog](/tags). There's not a ton of stuff here, as I've pruned much of the stuff I've written over the years as it has fallen out of relevancy. I also contributed a chapter to an ebook on [Modern Web Practices](https://leanpub.com/modernwebpractices) a while back. It's almost sad how quickly technical content becomes outdated and practically irrelevant."
+      "body": "Feel free to browse anything that I've written [on my web site](https://bob.yexley.net/tags). There's not a ton of stuff here, as I've pruned much of the stuff I've written over the years as it has fallen out of relevancy. I also contributed a chapter to an ebook on [Modern Web Practices](https://leanpub.com/modernwebpractices) a while back. It's almost sad how quickly technical content becomes outdated and practically irrelevant."
     },
     {
       "heading": "Air Force Career",
@@ -412,7 +413,7 @@
     },
     {
       "heading": "That's pretty much it",
-      "body": "If you've gotten this far, there really isn't a whole lot more to tell _(and I commend you)_. You're welcome to check out [the About page](/about) if you're interested in a little bit about me personally. Feel free to browse around the site, as it contains just about everything I'm willing to share about myself online. Beyond that, you're just gonna have to ask me. Thanks for checking out my resume! 🙂"
+      "body": "If you've gotten this far, there really isn't a whole lot more to tell _(and I commend you)_. You're welcome to check out [the About page](https://bob.yexley.net/about) if you're interested in a little bit about me personally. Feel free to browse around the site, as it contains just about everything I'm willing to share about myself online. Beyond that, you're just gonna have to ask me. Thanks for checking out my resume! 🙂"
     }
   ]
 }

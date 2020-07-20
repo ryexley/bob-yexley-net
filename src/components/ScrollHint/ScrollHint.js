@@ -24,6 +24,7 @@ export const ScrollHint = ({ className, onScrollHintClick, style }) => {
           border-radius: 50%;
           bottom: 4rem;
           cursor: pointer;
+          display: none;
           height: var(--size);
           left: calc(50% - 2rem);
           position: absolute;
@@ -79,6 +80,20 @@ export const ScrollHint = ({ className, onScrollHintClick, style }) => {
             opacity: 0;
             -ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=0)";
             transform: translateY(14px);
+          }
+        }
+
+        @from-width tablet {
+          .scroll-hint-container {
+            display: block;
+            bottom: 10rem;
+          }
+        }
+
+        @from-width desktop {
+          .scroll-hint-container {
+            display: block;
+            bottom: 4rem;
           }
         }
       `}</style>

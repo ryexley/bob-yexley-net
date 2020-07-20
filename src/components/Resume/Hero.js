@@ -10,6 +10,7 @@ export const Hero = ({ theme, title, intro, onMouseScrollHintClick }) => (
       <h1>{title}</h1>
       <HighlightedTechIcons />
       <h2>{intro}</h2>
+      <a className="pdf-link" href="/pdf-resume/bob-yexley-resume.pdf">Get the PDF version</a>
       <ScrollHint
         className="scroll-hint"
         onScrollHintClick={onMouseScrollHintClick} />
@@ -26,9 +27,8 @@ export const Hero = ({ theme, title, intro, onMouseScrollHintClick }) => (
         color: ${theme.color.neutral.gray.a};
         display: flex;
         flex-flow: column nowrap;
-        justify-content: center;
-        margin-top: ${`-calc(${theme.header.height.homepage} + ${theme.space.inset.l})`};
-        min-height: 100vh;
+        margin-top: -${theme.header.height.homepage};
+        min-height: ${`calc(100vh + ${theme.header.height.homepage})`};
         position: relative;
 
         &::after {
@@ -46,7 +46,7 @@ export const Hero = ({ theme, title, intro, onMouseScrollHintClick }) => (
       h1 {
         animation: fade-in-down .7s;
         margin: 2rem;
-        margin-top: ${`calc(${theme.header.height.homepage} + 5rem)`};
+        margin-top: ${`calc(${theme.header.height.homepage} + 2.5rem)`};
         text-align: center;
       }
 
@@ -56,7 +56,10 @@ export const Hero = ({ theme, title, intro, onMouseScrollHintClick }) => (
         font-weight: normal;
         line-height: 1.5rem;
         margin: 2rem;
-        margin-bottom: 12rem;
+      }
+
+      a.pdf-link {
+        z-index: 2;
       }
 
       @keyframes fade-in-down {
@@ -70,7 +73,23 @@ export const Hero = ({ theme, title, intro, onMouseScrollHintClick }) => (
         }
       }
 
+      @from-width tablet {
+        header {
+          margin-top: ${`-calc(${theme.header.height.homepage} + ${theme.space.inset.l})`};
+
+          h1 {
+            margin-top: ${`calc(${theme.header.height.homepage} + 5rem)`};
+          }
+        }
+      }
+
       @from-width desktop {
+        header {
+          h1 {
+            margin-top: ${`calc(${theme.header.height.homepage} + 10rem)`};
+          }
+        }
+
         h2 {
           max-width: 50rem;
         }
