@@ -89,6 +89,32 @@
   ],
   "workHistory": [
     {
+      "employer": "The Art of Education University",
+      "employerUrl": "https://theartofeducation.edu",
+      "startDate": "October 2020",
+      "endDate": "June 2022",
+      "positionTitle": "Software Engineer III",
+      "summary": "Senior Software Engineer leading a replatforming and modernization effort, rebuilding an existing WordPress site into a more modern architecture with a micro-services backend, and next-generation frontend using Next.js and React, dramatically improving performance, quality and maintainability.",
+      "technologiesTools": [
+        "js",
+        "react",
+        "next.js",
+        "nodejs",
+        "jest",
+        "css",
+        "python",
+        "go",
+        "git",
+        "github",
+        "stripe"
+      ],
+      "highlights": [
+        "Designed and built a new identity system from the ground up, as the foundation of the replatforming effort.",
+        "Implemented the design for a brand new marketplace experience that allowed users to purchase event tickets and digital product subscriptions, interfacing directly with Stripe as the payment gateway for the ecommerce side of the application.",
+        "Evaluated, hired and mentored junior developers who made significant contributions to both replatforming and maintenance development efforts."
+      ]
+    },
+    {
       "employer": "Amplify Exchange",
       "employerUrl": "https://amplifyexchange.com",
       "startDate": "February 2019",
