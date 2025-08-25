@@ -1,0 +1,1198 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0" />
+    <title>Bob Yexley - Senior React Developer & Engineering Leader</title>
+    <!-- <script src="https://unpkg.com/react@17/umd/react.production.min.js"></script> -->
+    <script src="https://unpkg.com/react@17/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@17/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/clsx@1.1.1/dist/clsx.min.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🤖</text></svg>" />
+    <style>
+      :root {
+        --font-family: "Geist", -apple-system, BlinkMacSystemFont, sans-serif;
+        --line-height: 1.5;
+        --colors-text-base: #2d3748;
+        --colors-text-light: #718096;
+        --colors-background-base: #f8fafc;
+        --colors-accent: #3182ce;
+        --colors-accent-light: #63b3ed;
+        --colors-border: #e2e8f0;
+        --font-size-base: 16px;
+        --font-size-lg: 1.25rem;
+        --font-size-xl: 2rem;
+        --font-size-h1: 2.5rem;
+        --font-size-h2: 2rem;
+        --font-size-h3: 1.5rem;
+        --font-weight-normal: 400;
+        --font-weight-medium: 500;
+        --font-weight-bold: 700;
+        --letter-spacing-normal: 0;
+        --letter-spacing-wide: 0.02em;
+        --heading-line-height: 1.2;
+        --body-line-height: 1.5;
+      }
+
+      html {
+        color: var(--colors-text-base);
+        font-size: var(--font-size-base);
+        font-family: var(--font-family);
+        line-height: var(--body-line-height);
+        background: var(--colors-background-base);
+        box-sizing: border-box;
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: inherit;
+      }
+
+      h1,
+      h2,
+      h3,
+      h4,
+      h5,
+      h6,
+      p,
+      li {
+        margin: 0;
+      }
+
+      h1 {
+        font-size: var(--font-size-h1);
+        font-weight: var(--font-weight-bold);
+        line-height: var(--heading-line-height);
+        letter-spacing: var(--letter-spacing-wide);
+      }
+
+      h2 {
+        font-size: var(--font-size-h2);
+        font-weight: var(--font-weight-medium);
+        line-height: var(--heading-line-height);
+        letter-spacing: var(--letter-spacing-normal);
+      }
+
+      h3 {
+        font-size: var(--font-size-h3);
+        font-weight: var(--font-weight-medium);
+        line-height: var(--heading-line-height);
+      }
+
+      p,
+      li {
+        font-size: 1rem;
+        font-weight: var(--font-weight-normal);
+        line-height: var(--body-line-height);
+      }
+
+      body {
+        background: var(--colors-background-base);
+        color: var(--colors-text-base);
+        font-size: var(--font-size-base);
+        font-family: var(--font-family);
+        line-height: var(--body-line-height);
+        margin: 0;
+      }
+
+      aside.download {
+        align-items: center;
+        border: 0.125rem dashed var(--colors-border);
+        border-radius: 0.5rem;
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        margin: 1rem;
+        max-width: 60rem;
+        padding: 1rem;
+
+        a,
+        button {
+          align-items: center;
+          background: var(--colors-background-base);
+          border: none;
+          border-radius: 0.5rem;
+          box-shadow: 0 0 0 0.0625rem var(--colors-accent);
+          color: var(--colors-accent);
+          cursor: pointer;
+          display: flex;
+          font-family: var(--font-family);
+          font-size: 1rem;
+          font-weight: 500;
+          gap: 0.5rem;
+          justify-content: center;
+          min-height: 2.5rem;
+          min-width: 12.5rem;
+          padding: 0.5rem 1rem;
+          text-decoration: none;
+          text-transform: uppercase;
+          transition: all 250ms ease-in-out;
+
+          &:hover {
+            box-shadow: 0 0 0 0.0625rem var(--colors-border);
+            color: var(--colors-text-base);
+          }
+
+          svg {
+            --size: 1rem;
+            height: var(--size);
+            width: var(--size);
+          }
+        }
+      }
+
+      main {
+        background: #fff;
+        border-radius: 0.5rem;
+        box-shadow: 0 0.125rem 0.5rem rgba(45, 55, 72, 0.08);
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
+        margin: 1rem; /* 2rem auto; */
+        max-width: 60rem;
+        padding: 2rem;
+      }
+
+      @media screen and (min-width: 62rem) {
+        aside.download,
+        main {
+          margin: 1rem auto;
+        }
+      }
+
+      .stack {
+        display: flex;
+      }
+
+      .card-grid {
+        display: grid;
+        gap: 1.5rem;
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .card {
+        background: white;
+        border: 0.0625rem solid #e2e8f0;
+        border-radius: 0.5rem;
+        box-shadow: 0 0.125rem 0.5rem rgba(0, 0, 0, 0.06);
+        color: var(--colors-text-light);
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        padding: 1rem;
+        transition: box-shadow 0.2s ease;
+      }
+
+      .section-heading {
+        border-bottom: 0.125rem solid var(--colors-border);
+        font-size: 1.6rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        padding-bottom: 0.25rem;
+        position: relative;
+
+        &::before {
+          background: var(--colors-accent);
+          bottom: -0.125rem;
+          content: "";
+          height: 0.125rem;
+          left: 0;
+          position: absolute;
+          right: 0;
+          width: 6.25rem;
+        }
+      }
+
+      .header {
+        align-items: center;
+        border-bottom: 0.1875rem solid var(--colors-accent);
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        justify-content: center;
+        padding-bottom: 1.5rem;
+
+        h1 {
+          font-size: 2.8rem;
+          font-weight: 500;
+          letter-spacing: var(--letter-spacing-normal);
+          margin-bottom: 0.5rem;
+        }
+
+        h2 {
+          color: var(--colors-accent);
+          font-size: 1.4rem;
+          font-weight: 500;
+        }
+
+        .icon-container {
+          --size: 0.85rem;
+          align-items: center;
+          display: flex;
+          height: var(--size);
+          justify-content: center;
+          width: var(--size);
+
+          .icon {
+            color: var(--colors-text-base);
+            height: var(--size);
+            width: var(--size);
+          }
+        }
+
+        .contact {
+          color: var(--colors-text-light);
+          font-size: 0.75rem;
+          font-weight: var(--font-weight-normal);
+
+          * {
+            align-items: center;
+            display: flex;
+            gap: 0.5rem;
+            justify-content: center;
+          }
+        }
+
+        p {
+          color: var(--colors-text-light);
+          font-size: 1.1rem;
+          line-height: 1.1rem;
+        }
+
+        a {
+          color: var(--colors-text-light);
+          text-decoration: none;
+        }
+      }
+
+      .professional-summary {
+        h2 {
+          font-size: 1.6rem;
+          font-weight: 600;
+        }
+
+        p {
+          font-size: 0.9rem;
+
+          .lede {
+            font-weight: 600;
+            margin-right: 0.5rem;
+          }
+        }
+      }
+
+      .technical-expertise {
+        .card {
+          font-size: 0.85rem;
+
+          h3 {
+            color: var(--colors-accent);
+            font-size: 1rem;
+            font-weight: 600;
+          }
+        }
+      }
+
+      .pillars-for-success {
+        .card {
+          background: var(--colors-text-base);
+          color: var(--colors-background-base);
+
+          h3 {
+            color: var(--colors-accent-light);
+            font-size: 1.25rem;
+          }
+
+          h4 {
+            color: var(--colors-accent-light);
+            font-size: 1rem;
+            font-weight: 600;
+          }
+
+          p {
+            font-size: 0.85rem;
+          }
+        }
+      }
+
+      .professional-experience {
+        .job {
+          border-bottom: 0.0625rem solid var(--colors-border);
+          padding-bottom: 1rem;
+
+          h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+          }
+
+          h4 {
+            align-items: center;
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+          }
+
+          .company-work-location {
+            align-items: baseline;
+            display: flex;
+            gap: 0.5rem;
+          }
+
+          .company-name {
+            color: var(--colors-accent);
+            font-size: 1.25rem;
+            font-weight: 500;
+          }
+
+          .work-location {
+            color: var(--colors-text-light);
+            font-size: 1rem;
+            font-style: italic;
+            font-weight: var(--font-weight-normal);
+            text-transform: capitalize;
+          }
+
+          .employment-dates {
+            color: var(--colors-text-light);
+            font-size: 1rem;
+            font-weight: var(--font-weight-normal);
+            text-transform: capitalize;
+          }
+
+          .job-description-callout {
+            font-weight: 700;
+            margin-right: 0.5rem;
+          }
+
+          .highlights {
+            list-style: none;
+            margin-left: 0;
+            padding-left: 0;
+
+            .job-highlight {
+              padding-left: 1.5rem;
+              position: relative;
+
+              &::before {
+                color: var(--colors-accent);
+                content: "➜";
+                font-size: 0.85rem;
+                left: 0;
+                position: absolute;
+                top: 0.125rem;
+              }
+
+              .job-highlight-callout {
+                font-weight: 700;
+                margin-right: 0.5rem;
+              }
+            }
+          }
+        }
+
+        .historical-experience-heading {
+          font-size: 1.25rem;
+          font-weight: 600;
+          margin: 1rem 0;
+        }
+
+        .historical-job-list {
+          .historical-job {
+            border-bottom: 0.0625rem solid #f7f7f7;
+            font-size: 0.85rem;
+            line-height: 1.25rem;
+            padding-bottom: 0.25rem;
+            width: 100%;
+
+            .job-details {
+              align-items: baseline;
+              display: flex;
+              justify-content: space-between;
+
+              .company-name {
+                color: var(--colors-accent);
+                font-weight: 600;
+              }
+
+              .job-title {
+                font-weight: 600;
+              }
+
+              .work-location {
+                color: var(--colors-text-light);
+                font-size: 0.75rem;
+                font-style: italic;
+                text-transform: capitalize;
+              }
+
+              .employment-dates {
+                color: var(--colors-text-light);
+                font-variant-numeric: tabular-nums;
+              }
+            }
+          }
+        }
+      }
+
+      .footer {
+        align-items: center;
+        background: #f7fafc;
+        border: 0.0625rem solid var(--colors-border);
+        border-radius: 0.5rem;
+        display: flex;
+        justify-content: center;
+        padding: 1rem;
+
+        blockquote {
+          font-size: 0.85rem;
+          font-style: italic;
+          margin: 0;
+          text-align: center;
+          text-wrap: balance;
+          width: 70%;
+        }
+
+        cite {
+          color: var(--colors-text-light);
+          font-style: normal;
+        }
+      }
+
+      @media print {
+        @page {
+          margin: 0.35in 0.5in;
+          orphans: 2;
+          size: Letter;
+          widows: 2;
+        }
+
+        html {
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
+          font-size: 12px;
+        }
+
+        html,
+        body,
+        main {
+          background: #fff !important;
+          font-family: "Geist", Helvetica, Arial, sans-serif !important;
+          height: auto !important;
+          margin: 0 !important;
+          padding: 0 !important;
+          width: 100% !important;
+        }
+
+        aside.download {
+          display: none;
+        }
+
+        main,
+        .card {
+          box-shadow: none;
+        }
+
+        main {
+          /* margin: -2rem auto 0 auto; */
+          margin: auto;
+          max-width: 100%;
+          width: 100%;
+        }
+
+        .technical-expertise {
+          .card {
+            padding: 0.75rem 1rem;
+          }
+        }
+
+        .professional-experience {
+          .job {
+            padding-bottom: 0.5rem;
+          }
+        }
+
+        .header {
+          gap: 0.25rem;
+
+          h1 {
+            font-size: 2rem;
+            font-weight: 600;
+            margin-bottom: 0;
+          }
+
+          h2 {
+            font-size: 1.25rem;
+            font-weight: 600;
+          }
+
+          p {
+            font-size: 1rem;
+            font-weight: 600;
+          }
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <aside class="download">
+      <a href="/resume/resume-bob-yexley.pdf">
+        <svg
+          version="1.1"
+          id="Layer_1"
+          xmlns="http://www.w3.org/2000/svg"
+          xmlns:xlink="http://www.w3.org/1999/xlink"
+          viewBox="0 0 512 512"
+          xml:space="preserve">
+          <path
+            style="fill: #e2e5e7"
+            d="M128,0c-17.6,0-32,14.4-32,32v448c0,17.6,14.4,32,32,32h320c17.6,0,32-14.4,32-32V128L352,0H128z" />
+          <path
+            style="fill: #b0b7bd"
+            d="M384,128h96L352,0v96C352,113.6,366.4,128,384,128z" />
+          <polygon
+            style="fill: #cad1d8"
+            points="480,224 384,128 480,128 " />
+          <path
+            style="fill: #f15642"
+            d="M416,416c0,8.8-7.2,16-16,16H48c-8.8,0-16-7.2-16-16V256c0-8.8,7.2-16,16-16h352c8.8,0,16,7.2,16,16
+	V416z" />
+          <g>
+            <path
+              style="fill: #ffffff"
+              d="M101.744,303.152c0-4.224,3.328-8.832,8.688-8.832h29.552c16.64,0,31.616,11.136,31.616,32.48
+		c0,20.224-14.976,31.488-31.616,31.488h-21.36v16.896c0,5.632-3.584,8.816-8.192,8.816c-4.224,0-8.688-3.184-8.688-8.816V303.152z
+		 M118.624,310.432v31.872h21.36c8.576,0,15.36-7.568,15.36-15.504c0-8.944-6.784-16.368-15.36-16.368H118.624z" />
+            <path
+              style="fill: #ffffff"
+              d="M196.656,384c-4.224,0-8.832-2.304-8.832-7.92v-72.672c0-4.592,4.608-7.936,8.832-7.936h29.296
+		c58.464,0,57.184,88.528,1.152,88.528H196.656z M204.72,311.088V368.4h21.232c34.544,0,36.08-57.312,0-57.312H204.72z" />
+            <path
+              style="fill: #ffffff"
+              d="M303.872,312.112v20.336h32.624c4.608,0,9.216,4.608,9.216,9.072c0,4.224-4.608,7.68-9.216,7.68
+		h-32.624v26.864c0,4.48-3.184,7.92-7.664,7.92c-5.632,0-9.072-3.44-9.072-7.92v-72.672c0-4.592,3.456-7.936,9.072-7.936h44.912
+		c5.632,0,8.96,3.344,8.96,7.936c0,4.096-3.328,8.704-8.96,8.704h-37.248V312.112z" />
+          </g>
+          <path
+            style="fill: #cad1d8"
+            d="M400,432H96v16h304c8.8,0,16-7.2,16-16v-16C416,424.8,408.8,432,400,432z" />
+        </svg>
+        <span>Download PDF</span>
+      </a>
+      <button onClick="window?.print()">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 -960 960 960"
+          fill="#b0b7bd">
+          <path
+            d="M640-640v-120H320v120h-80v-200h480v200h-80Zm-480 80h640-640Zm560 100q17 0 28.5-11.5T760-500q0-17-11.5-28.5T720-540q-17 0-28.5 11.5T680-500q0 17 11.5 28.5T720-460Zm-80 260v-160H320v160h320Zm80 80H240v-160H80v-240q0-51 35-85.5t85-34.5h560q51 0 85.5 34.5T880-520v240H720v160Zm80-240v-160q0-17-11.5-28.5T760-560H200q-17 0-28.5 11.5T160-520v160h80v-80h480v80h80Z" />
+        </svg>
+        <span>Print</span>
+      </button>
+    </aside>
+    <main />
+    <script type="text/babel">
+      const appName = "bob-yexley-resume"
+
+      const app = (window[appName] = window[appName] || {
+        data: {
+          name: "Bob Yexley",
+          title: "Senior React Developer & Engineering Leader",
+          description: "Technical Leader • Team Builder • Full-Stack Architect",
+          contact: {
+            phone: "(865) 399-3696",
+            email: "bob@yexley.net",
+            location: "Knoxville, TN",
+            github: "https://github.com/ryexley",
+          },
+          professionalSummary: [
+            {
+              lede: "Senior React Developer",
+              content:
+                "with 20+ years of progressive software engineering experience, specializing in building scalable, performant front-end applications. Proven expertise in the React ecosystem, modern JavaScript/TypeScript, and full-stack architecture.",
+            },
+            {
+              lede: "Experienced technical lead",
+              content:
+                "with a track record of mentoring developers, fostering collaborative teams, and driving delivery on complex projects. Adept at bridging technical solutions with business needs, and eager to contribute deep technical skills while continuing to grow into formal engineering leadership responsibilities.",
+            },
+          ],
+          technicalExpertise: {
+            frontEnd: {
+              heading: "Frontend Development",
+              items: [
+                "React",
+                "React Router",
+                "Remix",
+                "HTML",
+                "CSS",
+                "JavaScript (ES6+)",
+                "TypeScript",
+                "Tailwind",
+                "Next.js",
+              ],
+            },
+            processAndQuality: {
+              heading: "Process and Quality",
+              items: [
+                "Git (and related workflows)",
+                "CI/CD pipelines",
+                "Automated Testing (Vitest, Jest, Cypress, Playwright)",
+                "code review",
+                "related quality tooling (Vite, Webpack, ESLint, Prettier)",
+              ],
+            },
+            backend: {
+              heading: "Backend Systems",
+              items: [
+                "Node.js",
+                "Express.js",
+                "REST",
+                "HTTP",
+                "Microservices",
+                "C#",
+                ".NET",
+              ],
+            },
+            database: {
+              heading: "Database Technologies",
+              items: [
+                "Postgres",
+                "SQL Server",
+                "Oracle",
+                "SQL",
+                "ORMs",
+                "Migrations",
+              ],
+            },
+          },
+          pillarsForSuccess: [
+            {
+              heading: "Leadership Philosophy",
+              content:
+                "Dedicated to building high-performing teams by mentoring developers, fostering clear communication, and aligning technical decisions with business goals. Committed to creating an environment where engineers can deliver their best work while maintaining a focus on quality, user experience, and long-term sustainability.",
+            },
+            {
+              heading: "Military Foundation",
+              subheading: "United States Air Force | 1991 - 2001",
+              content:
+                "From a Munitions Systems Specialist to a Communications Computers Systems Programmer, with experience in the toughest environments around the globe. Developed foundational technical skills and a disciplined approach to process improvement and team collaboration.",
+            },
+          ],
+          professionalExperience: {
+            relevant: [
+              {
+                jobTitle: "Senior Software Engineer",
+                company: "Monarx",
+                workLocation: "remote",
+                startDate: "September 2022",
+                endDate: "Present (3 years)",
+                jobDescription: {
+                  callout: "Technical Lead",
+                  body: "for the maintenance and enhancement of Monarx's customer-facing admin console application. This was a React / React Router / Redux application with custom abstractions around Redux for dispatching async actions for data loading. Collaborated closely with internal stakeholders to deliver new features and address mission-critical infrastructure needs.",
+                },
+                highlights: [
+                  {
+                    callout: "Product Ownership",
+                    body: "Lead developer and maintainer of our core Single Page Application (SPA), making architectural decisions to ensure long-term maintainability.",
+                  },
+                  {
+                    callout: "Workflow Automation",
+                    body: "Designed and implemented a custom Slack bot application for the ingest, parsing and processing of incoming messages from specific partner channels to automate the flow of data to support the smooth onboarding of a new customer feature.",
+                  },
+                  {
+                    callout: "Startup Agility",
+                    body: "Contributed across the stack and adapted quickly to evolving requirements in a fast-paced, resource constrained environment.",
+                  },
+                ],
+              },
+              {
+                jobTitle: "Senior Software Engineer",
+                company: "The Art of Education University",
+                workLocation: "remote",
+                startDate: "October 2020",
+                endDate: "June 2022",
+                jobDescription: {
+                  callout: "Led comprehensive replatforming initiative",
+                  body: "from legacy WordPress platform to modern microservices backend with React/Next.js frontend, serving an education platform for thousands of users.",
+                },
+                highlights: [
+                  {
+                    callout: "Team Leadership",
+                    body: "Evaluated, hired, and mentored engineers who became core contributors to both replatforming and ongoing development efforts in parallel.",
+                  },
+                  {
+                    callout: "Technical Strategy",
+                    body: "Partnered in the design and implementation of a new identity system and other core services, establishing the foundation for future platform growth.",
+                  },
+                  {
+                    callout: "Business Impact",
+                    body: "Built a complete Stripe-powered marketplace for event tickets and digital subscriptions, opening new revenue streams.",
+                  },
+                  {
+                    callout: "Results",
+                    body: "Delivered significant improvements in speed, maintainability and code quality through modern tooling and development practices.",
+                  },
+                ],
+              },
+              {
+                jobTitle: "Senior Software Engineer",
+                company: "Amplify Exchange",
+                workLocation: "on-site, remote",
+                startDate: "February 2019",
+                endDate: "July 2020",
+                jobDescription: {
+                  callout: "Technical Lead",
+                  body: "for FinTech startup building cryptocurrency exchange platform, responsible for both frontend and backend architecture decisions.",
+                },
+                highlights: [
+                  {
+                    callout: "Full-Stack Development",
+                    body: "Designed and built web-based UIs for deposit, withdrawal, and trading of multiple cryptocurrency assets (Bitcoin, Ethereum, etc).",
+                  },
+                  {
+                    callout: "Microservices Architecture",
+                    body: "Developed REST microservices supporting exchange operations including background checks and incentive systems.",
+                  },
+                  {
+                    callout: "Stakeholder Management",
+                    body: "Worked directly with business stakeholders to translate complex financial requirements into technical solutions.",
+                  },
+                ],
+              },
+            ],
+            historical: [
+              {
+                jobTitle: "Senior Web Developer",
+                company: "Sparkbox",
+                workLocation: "remote",
+                startDate: "2018",
+                endDate: "2019",
+                jobDescription: "React [e-commerce]",
+              },
+              {
+                jobTitle: "Senior Web Developer",
+                company: "LeanKit",
+                workLocation: "remote",
+                startDate: "2015",
+                endDate: "2017",
+                jobDescription: "React [Project Management]",
+              },
+              {
+                jobTitle: "Senior JavaScript Engineer",
+                company: "Ramsey Solutions",
+                workLocation: "remote",
+                startDate: "2014",
+                endDate: "2015",
+                jobDescription: "JavaScript, React, Sass [Financial Planning]",
+              },
+              {
+                jobTitle: "Senior Engineer & Team Lead",
+                company: "appendTo",
+                workLocation: "remote",
+                startDate: "2012",
+                endDate: "2014",
+                jobDescription:
+                  "JavaScript, Sass, Cordova [Pharmaceutical Sales]",
+              },
+              {
+                jobTitle: "Senior Software Developer",
+                company: "Food Donation Connection",
+                workLocation: "on-site",
+                startDate: "2011",
+                endDate: "2012",
+                jobDescription:
+                  "JavaScript, HTTP/Hypermedia, C# [Donation Management]",
+              },
+              {
+                jobTitle: "Senior Software Developer",
+                company: "Scripps Networks",
+                workLocation: "on-site",
+                startDate: "2008",
+                endDate: "2011",
+                jobDescription:
+                  "BizTalk, ASP.NET MVC, Silverlight [Financial Data]",
+              },
+              {
+                jobTitle: "Software Developer",
+                company: "Extreme Consulting",
+                workLocation: "on-site",
+                startDate: "2008",
+                endDate: "2008",
+                jobDescription: "ASP.NET [Event Management]",
+              },
+              {
+                jobTitle: "Software Developer",
+                company: "Lexis Nexis Corporation",
+                workLocation: "on-site",
+                startDate: "2006",
+                endDate: "2008",
+                jobDescription: "ASP.NET [Risk Management]",
+              },
+              {
+                jobTitle: "Software Engineer",
+                company: "Lighthouse Technologies",
+                workLocation: "on-site",
+                startDate: "2005",
+                endDate: "2006",
+                jobDescription: "C#, WinForms, SQL Server [Financial Analysis]",
+              },
+              {
+                jobTitle: "Database Admin/Developer",
+                company: "Northrop Grumman (AFRL)",
+                workLocation: "on-site",
+                startDate: "2001",
+                endDate: "2005",
+                jobDescription:
+                  "Oracle, ColdFusion and JavaScript [Project Planning]",
+              },
+              {
+                jobTitle: "Database Admin/Developer",
+                company: "Air Force Institute of Technology",
+                workLocation: "on-site",
+                startDate: "1997",
+                endDate: "2001",
+                jobDescription:
+                  "Oracle, Forms and Reports [Education Management]",
+              },
+              {
+                jobTitle: "Munitions Systems Specialist",
+                company: "United States Air Force",
+                workLocation: "global",
+                startDate: "1991",
+                endDate: "1997",
+                jobDescription:
+                  "Munitions Systems, Weapons Management, Logistics",
+              },
+            ],
+          },
+          footer: {
+            quote: {
+              content:
+                "Programming is a craft ... we are all apprentices in a craft where no one ever becomes a master.",
+              citation: "The Pragmatic Programmer",
+            },
+          },
+        },
+
+        ui: {
+          components: {
+            Stack: ({
+              children,
+              className,
+              gap = "1rem",
+              orient = "column",
+              align = "start",
+              justify = "start",
+            }) => {
+              const style = {
+                gap,
+                flexDirection: orient === "column" ? "column" : "row",
+                alignItems: align,
+                justifyContent: justify,
+              }
+
+              return (
+                <div
+                  className={clsx("stack", className)}
+                  style={style}>
+                  {children}
+                </div>
+              )
+            },
+
+            CardGrid: ({ children, className }) => {
+              return (
+                <div className={clsx("card-grid", className)}>{children}</div>
+              )
+            },
+
+            Card: ({ children, className }) => {
+              return <div className={clsx("card", className)}>{children}</div>
+            },
+          },
+
+          sections: {
+            Header: () => {
+              const { name, title, contact, description } = app.data || {}
+              const { Stack } = app.ui.components || {}
+
+              return (
+                <section className="header">
+                  <h1>{name}</h1>
+                  <h2>{title}</h2>
+                  <Stack
+                    orient="row"
+                    gap="1.5rem"
+                    align="center"
+                    justify="center"
+                    className="contact">
+                    <span>
+                      <span>📲</span>
+                      <span>{contact.phone}</span>
+                    </span>
+                    <span>
+                      <span>✉️</span>
+                      <span>{contact.email}</span>
+                    </span>
+                    <span>
+                      <span>📍</span>
+                      <span>{contact.location}</span>
+                    </span>
+                    <span>
+                      <span class="icon-container">
+                        <span class="icon">
+                          {/** GitHub mark */}
+                          <svg
+                            viewBox="0 0 16 16"
+                            aria-label="GitHub"
+                            role="img"
+                            focusable="false">
+                            <path
+                              fill="currentColor"
+                              d="M8 0C3.58 0 0 3.58 0 8c0 3.54
+                            2.29 6.53 5.47 7.59.4.07.55-.17.55-.38
+                            0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52
+                            0-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95
+                            0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27
+                            1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48
+                            0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"
+                            />
+                          </svg>
+                        </span>
+                      </span>
+                      <span>
+                        <a
+                          href={contact.github}
+                          target="_blank">
+                          {contact.github}
+                        </a>
+                      </span>
+                    </span>
+                  </Stack>
+                  <p>{description}</p>
+                </section>
+              )
+            },
+
+            ProfessionalSummary: () => {
+              const { professionalSummary } = app.data || {}
+              const { Stack } = app.ui.components || {}
+
+              return (
+                <section className="professional-summary">
+                  <h2 className="section-heading">Professional Summary</h2>
+                  <Stack orient="column">
+                    {professionalSummary.map((item, index) => (
+                      <p key={index}>
+                        <span className="lede">{item.lede}</span>
+                        <span>{item.content}</span>
+                      </p>
+                    ))}
+                  </Stack>
+                </section>
+              )
+            },
+
+            TechnicalExpertise: () => {
+              const { technicalExpertise } = app.data || {}
+              const { CardGrid, Card, Stack } = app.ui.components || {}
+
+              return (
+                <section className="technical-expertise">
+                  <h2 className="section-heading">Technical Expertise</h2>
+                  <CardGrid className="expertise-categories">
+                    {Object.entries(technicalExpertise).map(
+                      ([key, { heading, items }]) => (
+                        <Card key={key}>
+                          <h3>{heading}</h3>
+                          <div>{items.join(", ")}</div>
+                        </Card>
+                      ),
+                    )}
+                  </CardGrid>
+                </section>
+              )
+            },
+
+            PillarsForSuccess: () => {
+              const { pillarsForSuccess } = app.data || {}
+              const { CardGrid, Card } = app.ui.components || {}
+
+              return (
+                <section className="pillars-for-success">
+                  <h2 className="section-heading">Pillars for Success</h2>
+                  <CardGrid>
+                    {pillarsForSuccess.map(
+                      ({ heading, subheading, content }) => (
+                        <Card key={heading}>
+                          <h3>{heading}</h3>
+                          {subheading !== undefined ? (
+                            <h4>{subheading}</h4>
+                          ) : null}
+                          <p>{content}</p>
+                        </Card>
+                      ),
+                    )}
+                  </CardGrid>
+                </section>
+              )
+            },
+
+            ProfessionalExperience: () => {
+              const { professionalExperience } = app.data || {}
+              const { relevant, historical } = professionalExperience || {}
+              const { Stack } = app.ui.components || {}
+
+              return (
+                <section className="professional-experience">
+                  <h2 className="section-heading">Professional Experience</h2>
+                  <Stack gap="1.5rem">
+                    {relevant.map(
+                      ({
+                        jobTitle,
+                        company,
+                        workLocation,
+                        startDate,
+                        endDate,
+                        jobDescription,
+                        highlights,
+                      }) => (
+                        <div
+                          key={`${jobTitle}-${company}`}
+                          className="job">
+                          <h3>{jobTitle}</h3>
+                          <h4>
+                            <span className="company-work-location">
+                              <span className="company-name">{company}</span>
+                              <span className="work-location">
+                                ({workLocation})
+                              </span>
+                            </span>
+                            <span className="employment-dates">
+                              {startDate} - {endDate}
+                            </span>
+                          </h4>
+                          <p>
+                            <span className="job-description-callout">
+                              {jobDescription.callout}
+                            </span>
+                            {jobDescription.body}
+                          </p>
+                          <ul className="highlights">
+                            {highlights.map((highlight, index) => (
+                              <li
+                                key={index}
+                                className="job-highlight">
+                                <span className="job-highlight-callout">
+                                  {highlight.callout}:
+                                </span>
+                                {highlight.body}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      ),
+                    )}
+                  </Stack>
+                  <h3 className="historical-experience-heading">
+                    Additional Work Experience (1991 - 2019)
+                  </h3>
+                  <Stack
+                    gap="0.25rem"
+                    className="historical-job-list">
+                    {historical.map(
+                      ({
+                        jobTitle,
+                        company,
+                        workLocation,
+                        startDate,
+                        endDate,
+                        jobDescription,
+                      }) => (
+                        <div
+                          key={`${jobTitle}-${company}`}
+                          className="historical-job">
+                          <div className="job-details">
+                            <Stack
+                              orient="row"
+                              gap="0.5rem"
+                              align="baseline">
+                              <span className="job-title">{jobTitle}</span>
+                              <span className="company-name">{company}</span>
+                              <span className="work-location">
+                                ({workLocation})
+                              </span>
+                              <span className="job-description">
+                                {jobDescription}
+                              </span>
+                            </Stack>
+                            <span className="employment-dates">
+                              {startDate} - {endDate}
+                            </span>
+                          </div>
+                        </div>
+                      ),
+                    )}
+                  </Stack>
+                </section>
+              )
+            },
+
+            Footer: () => {
+              const { footer } = app.data || {}
+              const { quote } = footer || {}
+              const { content, citation } = quote || {}
+
+              return (
+                <footer className="footer">
+                  <blockquote>
+                    {content} &mdash; <cite>{citation}</cite>
+                  </blockquote>
+                </footer>
+              )
+            },
+          },
+
+          Root: () => {
+            const {
+              Header,
+              ProfessionalSummary,
+              TechnicalExpertise,
+              PillarsForSuccess,
+              ProfessionalExperience,
+              Footer,
+            } = app.ui.sections || {}
+
+            return (
+              <>
+                <Header />
+                <ProfessionalSummary />
+                <TechnicalExpertise />
+                <PillarsForSuccess />
+                <ProfessionalExperience />
+                <Footer />
+              </>
+            )
+          },
+
+          init: () => {
+            const { Root: App } = app.ui
+
+            ReactDOM.render(<App />, document.querySelector("main"))
+          },
+        },
+      })
+
+      app.ui.init()
+    </script>
+  </body>
+</html>

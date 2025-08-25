@@ -1,0 +1,51 @@
+/* !!!! Recharts Styling Overrides !!!! */
+.chart .recharts-tooltip-wrapper,
+.chart .recharts-tooltip-wrapper .recharts-default-tooltip,
+.chart
+  .recharts-tooltip-wrapper
+  .recharts-default-tooltip
+  .recharts-tooltip-item {
+  background: var(--colors-mono-02) !important;
+  color: var(--colors-mono-11) !important;
+}
+
+.chart .recharts-tooltip-wrapper {
+  border: none !important;
+  border-radius: 0.5rem !important;
+}
+
+.chart .recharts-tooltip-wrapper .recharts-default-tooltip {
+  border: 0.0625rem solid var(--colors-mono-00) !important;
+  border-radius: 0.5rem !important;
+  font-size: 0.85rem !important;
+  padding: 0.5rem 0.75rem !important;
+}
+
+.chart
+  .recharts-tooltip-wrapper
+  .recharts-default-tooltip
+  .recharts-tooltip-item {
+  padding: 0 !important;
+}
+
+.chart .recharts-default-legend {
+  font-size: 0.85rem;
+}
+
+.chart .recharts-default-legend li {
+  align-items: center !important;
+  display: flex !important;
+  gap: 0.5rem !important;
+}
+
+.chart .recharts-cartesian-axis-line {
+  stroke: var(--colors-mono-08) !important;
+}
+
+.chart .recharts-cartesian-axis-tick-value {
+  fill: var(--colors-mono-08) !important;
+}
+
+.chart .recharts-text.recharts-cartesian-axis-tick-value {
+  font-size: 0.85rem !important;
+}

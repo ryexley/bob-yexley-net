@@ -1,0 +1,67 @@
+{
+  "name": "bob.yexley.net",
+  "description": "my personal web site",
+  "type": "module",
+  "scripts": {
+    "refresh": "rm -rf node_modules && rm -f pnpm-lock.yaml && pnpm install",
+    "compile": "tsc",
+    "lint": "eslint src/ --cache",
+    "quality-check": "concurrently --kill-others-on-fail --names \"tsc,eslint\" --prefix-colors \"auto,auto\" \"pnpm compile\" \"pnpm lint\" --color",
+    "qc": "pnpm quality-check",
+    "dev": "vinxi dev --port 7808",
+    "build": "vinxi build",
+    "start": "vinxi start",
+    "component:add": "pnpm dlx shadcn-solid add"
+  },
+  "dependencies": {
+    "@cookbook/solid-intl": "^0.1.2",
+    "@corvu/drawer": "^0.2.4",
+    "@formatjs/intl": "^3.1.6",
+    "@solidjs/meta": "^0.29.4",
+    "@solidjs/router": "^0.15.3",
+    "@solidjs/start": "^1.1.4",
+    "@unpic/solid": "^1.0.0",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "date-fns": "^4.1.0",
+    "fontfaceobserver": "^2.3.0",
+    "solid-js": "^1.9.7",
+    "tailwind-merge": "^3.3.1",
+    "vinxi": "^0.5.7"
+  },
+  "devDependencies": {
+    "@corvu/tailwind": "^0.1.7",
+    "@kobalte/tailwindcss": "^0.9.0",
+    "@tailwindcss/vite": "^4.1.10",
+    "@typescript-eslint/eslint-plugin": "^8.34.1",
+    "@typescript-eslint/parser": "^8.34.1",
+    "concurrently": "^9.1.2",
+    "eslint": "^9.29.0",
+    "eslint-config-prettier": "^10.1.5",
+    "eslint-plugin-import": "^2.31.0",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
+    "eslint-plugin-solid": "^0.14.5",
+    "eslint-plugin-unicorn": "^59.0.1",
+    "globals": "^16.2.0",
+    "prettier": "^3.5.3",
+    "tailwindcss": "^4.1.10",
+    "tailwindcss-animate": "^1.0.7",
+    "typescript": "^5.8.3"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "pnpm": {
+    "peerDependencyRules": {
+      "allowedVersions": {
+        "@corvu/tailwind>tailwindcss": "*",
+        "@kobalte/tailwindcss>tailwindcss": "*"
+      }
+    },
+    "onlyBuiltDependencies": [
+      "@parcel/watcher",
+      "@tailwindcss/oxide",
+      "esbuild"
+    ]
+  }
+}
