@@ -8,7 +8,7 @@ import {
   onCleanup,
 } from "solid-js"
 import { Image as UnpicImage } from "@unpic/solid"
-import { Monogram as Logo } from "@/components/logos"
+import { ImagePlaceholder } from "@/components/icon"
 import { tr } from "@/i18n"
 import { cx } from "@/util"
 import {
@@ -272,7 +272,7 @@ export const CloudinaryImage: Component<CloudinaryImageProps> = props => {
         )}
         style={placeholderStyle()}
         aria-hidden={imageLoaded()}>
-        <Logo class="relative h-1/2 w-1/2 max-h-40 overflow-hidden opacity-[0.025]" />
+        <ImagePlaceholder class="relative h-1/2 w-1/2 max-h-40 overflow-hidden opacity-[0.025]" />
         <div
           class={cx(
             "text-center text-xs uppercase text-balance",
