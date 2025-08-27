@@ -8,12 +8,8 @@ import {
 } from "solid-js"
 import { useLocation } from "@solidjs/router"
 import { Hero } from "@/modules/home/sections/hero"
-// import { About } from "@/modules/home/sections/about"
-// import { Services } from "@/modules/home/sections/services"
-// import { MobileHunting } from "@/modules/home/sections/mobile-hunting"
-import { Footer } from "@/modules/home/sections/footer"
+// import { Footer } from "@/modules/home/sections/footer"
 import { MainHeader } from "@/modules/home/components/main-header"
-// import { ContactInfoPanel } from "@/modules/home/components/contact-info-panel"
 import { tr } from "@/i18n"
 import { pages } from "@/urls"
 import { cx } from "@/util"
@@ -53,9 +49,6 @@ export function Home() {
   )
 
   let homeRef: HTMLElement | undefined
-  // let aboutRef: HTMLElement | undefined
-  // let servicesRef: HTMLElement | undefined
-  // let mobileHuntingRef: HTMLElement | undefined
 
   const pageSections = createMemo(() => [
     {
@@ -68,40 +61,6 @@ export function Home() {
       pageTitle: tr("home.pageSections.hero.pageTitle"),
       metaDescription: tr("home.pageSections.hero.metaDescription"),
     },
-    // {
-    //   id: "about",
-    //   path: pages.marketing.about,
-    //   label: "About",
-    //   setRef: (el: HTMLElement) => (aboutRef = el),
-    //   getRef: () => aboutRef,
-    //   component: About,
-    //   pageTitle: tr("marketing.home.pageSections.about.pageTitle"),
-    //   metaDescription: tr("marketing.home.pageSections.about.metaDescription"),
-    // },
-    // {
-    //   id: "services",
-    //   path: pages.marketing.services,
-    //   label: "Services",
-    //   setRef: (el: HTMLElement) => (servicesRef = el),
-    //   getRef: () => servicesRef,
-    //   component: Services,
-    //   pageTitle: tr("marketing.home.pageSections.services.pageTitle"),
-    //   metaDescription: tr(
-    //     "marketing.home.pageSections.services.metaDescription",
-    //   ),
-    // },
-    // {
-    //   id: "mobile-hunting",
-    //   path: pages.marketing.mobileHunting,
-    //   label: "Mobile Hunting",
-    //   setRef: (el: HTMLElement) => (mobileHuntingRef = el),
-    //   getRef: () => mobileHuntingRef,
-    //   component: MobileHunting,
-    //   pageTitle: tr("marketing.home.pageSections.mobileHunting.pageTitle"),
-    //   metaDescription: tr(
-    //     "marketing.home.pageSections.mobileHunting.metaDescription",
-    //   ),
-    // },
   ])
 
   const navMeta = createMemo(() => {
@@ -232,9 +191,8 @@ export function Home() {
             return <Component ref={section.setRef} />
           }}
         </For>
-        {/* <ContactInfoPanel /> */}
       </main>
-      <Footer />
+      {/* <Footer /> */}
     </>
   )
 }

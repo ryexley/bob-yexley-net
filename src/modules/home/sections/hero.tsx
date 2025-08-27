@@ -43,7 +43,8 @@ export function Hero(props) {
         <div class="flex items-center justify-center">
           <CloudinaryImage
             imageId="crys-and-i_i0aulu"
-            class="h-[20rem]! w-[20rem]! rounded-full mt-[-10rem] drop-shadow-[0_1rem_2rem_rgba(0,0,0,1)]"
+            alt={tr("site.title") as string}
+            class="transition-all duration-250 ease-in-out rounded-full drop-shadow-[0_1rem_2rem_rgba(0,0,0,1)] mt-[-8rem] h-[15rem]! w-[15rem]! md:h-[20rem]! md:w-[20rem]!"
           />
         </div>
         <div class="/*flex-1*/ flex flex-col items-center justify-start gap-8 opacity-0 animate-[fade-in_1.5s_ease_1s_forwards]">
