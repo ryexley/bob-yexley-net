@@ -56,8 +56,8 @@ const drawerBaseStyles = cva(
           "right-0 top-0 h-screen min-w-[20rem] border-l translate-x-full data-[open]:translate-x-0",
         [DRAWER_POSITION.LEFT]:
           "left-0 top-0 h-screen min-w-[20rem] border-r translate-x-full data-[open]:translate-x-0",
-        [DRAWER_POSITION.TOP]: "top-0 left-0 w-screen min-h-[10rem]",
-        [DRAWER_POSITION.BOTTOM]: "bottom-0 left-0 w-screen min-h-[10rem]",
+        [DRAWER_POSITION.TOP]: "top-0 left-0 w-full min-h-[10rem]",
+        [DRAWER_POSITION.BOTTOM]: "bottom-0 left-0 w-full min-h-[10rem]",
       },
     },
     defaultVariants: {
