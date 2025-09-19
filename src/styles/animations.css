@@ -4,7 +4,7 @@
     transform: translateY(-50%);
   }
   100% {
-    opacity: 0.5;
+    opacity: 1;
     transform: translateY(0);
   }
 }
@@ -19,5 +19,5 @@
 }
 
 .animate-slide-in-down {
-  animation: slideDownFadeIn 1s ease-out forwards;
+  animation: slideDownFadeIn 300ms ease-out forwards;
 }

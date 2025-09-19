@@ -1,6 +1,8 @@
 export const pages = {
   home: "/",
   resume: "/resume/",
+  login: "/a/li",
+  logout: "/a/lo",
 }
 
 export const external = {

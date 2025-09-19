@@ -29,17 +29,32 @@ export const en = {
           subtitle: "Mobile navigation menu",
         },
       },
-      contactInfoPanel: {
-        title: "Contact Us",
-        subtitle: "Find and get in touch with Harvest Archery",
-        callUsLinkLabel: "Give us a call",
-        mapLinkLabel: "Find our shop",
-      },
     },
     pageSections: {
       hero: {
         pageTitle: "Home",
         metaDescription: "Bob Yexley",
+      },
+    },
+  },
+  auth: {
+    views: {
+      login: {
+        pageTitle: "Uuummmm ... you probably don't belong here",
+        loginFormCardTitle: "Login",
+        loginFormCardDescription:
+          "Enter your credentials to access privileged content.",
+        emailFieldLabel: "Email",
+        emailFieldPlaceholder: "You probably don't belong here",
+        passwordFieldLabel: "Password",
+        passwordFieldPlaceholder: "◌◌◌◌◌◌◌◌◌◌◌◌◌◌◌◌◌◌◌◌",
+        submitButton: {
+          enabled: { label: "Login" },
+          disabled: { label: "Nope" },
+          submitting: { label: "Logging in..." },
+        },
+        returnHomeLink: "Get me outta here",
+        loginFailedError: "Login failed.",
       },
     },
   },
