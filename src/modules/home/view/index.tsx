@@ -10,6 +10,7 @@ import { useLocation } from "@solidjs/router"
 import { Hero } from "@/modules/home/sections/hero"
 // import { Footer } from "@/modules/home/sections/footer"
 import { MainHeader } from "@/modules/home/components/main-header"
+import { UserMenu } from "@/modules/home/components/user-menu"
 import { tr } from "@/i18n"
 import { pages } from "@/urls"
 import { cx } from "@/util"
@@ -192,6 +193,7 @@ export function Home() {
           }}
         </For>
       </main>
+      <UserMenu />
       {/* <Footer /> */}
     </>
   )

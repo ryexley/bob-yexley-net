@@ -14,7 +14,15 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
 }
 
 // Singleton client instance
-const client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY) as SupabaseClient
+let client: SupabaseClient | null = null
+
+function getClient(): SupabaseClient {
+  if (!client) {
+    client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY) as SupabaseClient
+  }
+
+  return client
+}
 
 export type AuthResult<T = any> = {
   data: T | null
@@ -44,7 +52,7 @@ function Supabase() {
           return { data: null, error: "Email and password are required" }
         }
 
-        const { data, error } = await client.auth.signInWithPassword({
+        const { data, error } = await getClient().auth.signInWithPassword({
           email: email.trim(),
           password,
         })
@@ -53,7 +61,7 @@ function Supabase() {
           return { data: null, error: formatAuthError(error) }
         }
 
-        return { data: data.user, error: null }
+        return { data: data?.user, error: null }
       } catch (err) {
         console.error("Login error:", err)
         return {
@@ -65,7 +73,7 @@ function Supabase() {
 
     async logout(): Promise<AuthResult<void>> {
       try {
-        const { error } = await client.auth.signOut()
+        const { error } = await getClient()?.auth?.signOut()
 
         if (error) {
           return { data: null, error: formatAuthError(error) }
@@ -83,13 +91,13 @@ function Supabase() {
 
     async getUser(): Promise<AuthResult<User>> {
       try {
-        const { data, error } = await client.auth.getUser()
+        const { data, error } = await getClient()?.auth?.getUser()
 
         if (error) {
           return { data: null, error: formatAuthError(error) }
         }
 
-        return { data: data.user, error: null }
+        return { data: data?.user, error: null }
       } catch (err) {
         console.error("Get user error:", err)
         return {
@@ -101,13 +109,13 @@ function Supabase() {
 
     // eslint-disable-next-line no-unused-vars
     onAuthStateChange(callback: (user: User | null) => void) {
-      return client.auth.onAuthStateChange((event, session) => {
+      return getClient()?.auth?.onAuthStateChange((event, session) => {
         callback(session?.user ?? null)
       })
     },
 
     get client() {
-      return client
+      return getClient()
     },
   }
 }

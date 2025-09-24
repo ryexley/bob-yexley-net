@@ -1,0 +1,28 @@
+.user-menu {
+  border-radius: 50%;
+  bottom: 3rem;
+  position: fixed;
+  right: 0.5rem;
+
+  .icon {
+    color: var(--colors-info);
+  }
+}
+
+.user-menu-header {
+  align-items: center;
+  display: flex;
+  justify-content: center;
+  width: 100%;
+
+  .label {
+    color: var(--colors-mono-08);
+    font-size: 0.6rem;
+    font-style: italic;
+    line-height: 0.75rem;
+  }
+
+  .email {
+    line-height: 1rem;
+  }
+}

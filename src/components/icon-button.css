@@ -1,0 +1,39 @@
+.icon-button {
+  align-items: center;
+  border-radius: 50%;
+  background: rgba(var(--colors-mono-01-rgb), 0.75);
+  border: 0.0625rem solid var(--colors-mono-01);
+  display: flex;
+  justify-content: center;
+  transition: var(--transitions-primary);
+
+  &:hover {
+    background: rgba(var(--colors-mono-01-rgb), 0.9);
+  }
+
+  &.sm {
+    --size: 2.5rem;
+    height: var(--size);
+    width: var(--size);
+  }
+
+  &.md {
+    --size: 3.75rem;
+    height: var(--size);
+    width: var(--size);
+
+    .icon {
+      font-size: 2.5rem;
+    }
+  }
+
+  &.lg {
+    --size: 5rem;
+    height: var(--size);
+    width: var(--size);
+
+    .icon {
+      font-size: 3.5rem;
+    }
+  }
+}

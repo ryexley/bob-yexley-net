@@ -7,13 +7,12 @@ import { Input } from "@/components/input"
 import { Stack } from "@/components/stack"
 import { Button } from "@/components/button"
 import { Callout } from "@/components/callout"
-import { tr as translate } from "@/i18n"
+import { ptr } from "@/i18n"
 import { pages } from "@/urls"
 import { generateRandomRadialGradients } from "@/util/image"
 import { isEmpty, isNotEmpty } from "@/util"
 
-const tr = (key: string, args?: Record<string, any>): string =>
-  translate(`auth.views.login.${key}`, args) as string
+const tr = ptr("auth.views.login")
 
 export function Login() {
   const navigate = useNavigate()
@@ -58,7 +57,6 @@ export function Login() {
         throw error
       }
 
-      console.log({ user })
       navigate(pages.home)
     } catch {
       setError(tr("loginFailedError"))

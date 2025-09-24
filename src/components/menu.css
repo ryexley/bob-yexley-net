@@ -1,0 +1,195 @@
+@keyframes menu-content-show {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes menu-content-hide {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+}
+
+.menu {
+  .menu-trigger {
+    appearance: none;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    height: 40px;
+    width: auto;
+    outline: none;
+    border-radius: 6px;
+    padding: 0 16px;
+    /* background-color: hsl(200 98% 39%); */
+    color: white;
+    font-size: 16px;
+    gap: 8px;
+    line-height: 0;
+    transition: 250ms background-color;
+
+    .icon {
+      height: 20px;
+      width: 20px;
+      flex: 0 0 20px;
+      transition: transform 250ms;
+
+      &[data-expanded] {
+        transform: rotate(180deg);
+      }
+    }
+  }
+
+  &.content,
+  &.sub-content {
+    --menu-content-radius: 0.5rem;
+    --menu-content-padding: 0.0625rem;
+    --menu-content-border: 0.0625rem;
+    animation: menu-content-hide 250ms ease-in forwards;
+    backdrop-filter: blur(0.1rem);
+    background-color: rgba(var(--colors-mono-01-rgb), 0.75);
+    border: var(--menu-content-border) solid
+      rgba(var(--colors-mono-00-rgb), 0.5);
+    border-radius: var(--menu-content-radius);
+    box-shadow:
+      0 0.25rem 0.375rem -0.0625rem rgb(0 0 0 / 0.1),
+      0 0.125rem 0.25rem -0.0625rem rgb(0 0 0 / 0.1);
+    display: flex;
+    flex-direction: column;
+    gap: var(--menu-content-padding);
+    min-width: 15rem;
+    outline: none;
+    padding: var(--menu-content-padding);
+    transform-origin: var(--kb-menu-content-transform-origin);
+
+    &[data-expanded] {
+      animation: menu-content-show 250ms ease-out;
+    }
+
+    .menu-item,
+    .menu-checkbox-item,
+    .menu-radio-item,
+    .menu-sub-trigger {
+      font-size: 0.9rem;
+      font-weight: 500;
+      line-height: 1;
+      color: var(--colors-links);
+      border-radius: max(
+        0px,
+        calc(
+          var(--menu-content-radius) -
+            (var(--menu-content-padding) + var(--menu-content-border))
+        )
+      );
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+      /* height: 2rem; */
+      padding: 0.25rem 0.5rem;
+      position: relative;
+      user-select: none;
+      outline: none;
+      width: 100%;
+      transition: var(--transitions-primary);
+
+      &:hover {
+        cursor: pointer;
+      }
+
+      &[data-disabled] {
+        color: hsl(240 5% 65%);
+        opacity: 0.5;
+        pointer-events: none;
+      }
+
+      &[data-highlighted] {
+        outline: none;
+        background-color: rgba(var(--colors-links-rgb), 0.8);
+        color: var(--colors-mono-00);
+
+        .icon {
+          color: var(--colors-mono-00);
+        }
+      }
+
+      .icon {
+        font-size: 1.25rem;
+      }
+
+      .indicator {
+        position: absolute;
+        left: 0;
+        height: 20px;
+        width: 20px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .right-slot {
+        margin-left: auto;
+        padding-left: 20px;
+        font-size: 14px;
+        color: hsl(240 4% 46%);
+
+        [data-highlighted] > & {
+          color: white;
+        }
+
+        [data-disabled] & {
+          color: hsl(240 5% 65%);
+          opacity: 0.5;
+        }
+      }
+    }
+
+    .sub-trigger {
+      &[data-expanded] {
+        background-color: hsl(204 94% 94%);
+        color: hsl(201 96% 32%);
+      }
+    }
+
+    .group-label {
+      padding: 0 24px;
+      font-size: 14px;
+      line-height: 32px;
+      color: hsl(240 4% 46%);
+    }
+
+    .menu-separator {
+      border-bottom: var(--menu-content-border) solid
+        rgba(var(--colors-mono-00-rgb), 0.5);
+      height: 0.0625rem;
+      margin: 0.0625rem 0;
+    }
+
+    header.menu-header {
+      font-size: 0.85rem;
+      padding: 0.25rem 0.5rem;
+    }
+
+    footer.menu-footer {
+      font-size: 0.85rem;
+      padding: 0.25rem 0.5rem;
+    }
+  }
+
+  &.content {
+    &.arrow {
+      background-color: rgba(var(--colors-mono-01-rgb), 0.75);
+      fill: rgba(var(--colors-mono-01-rgb), 0.75) !important;
+      stroke: rgba(var(--colors-mono-01-rgb), 0.75) !important;
+    }
+  }
+}

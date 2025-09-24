@@ -6,5 +6,6 @@ export { cva } from "class-variance-authority"
 export { twMerge as merge } from "tailwind-merge"
 
 export const cx = (...classLists: ClassValue[]) => twMerge(clsx(classLists))
+export { clsx } from "clsx"
 
 export * from "./assertions"

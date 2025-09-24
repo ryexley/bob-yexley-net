@@ -29,6 +29,11 @@ export const en = {
           subtitle: "Mobile navigation menu",
         },
       },
+      userMenu: {
+        header: { label: "Signed in as" },
+        blip: "Blip",
+        logout: "Sign Out",
+      },
     },
     pageSections: {
       hero: {
