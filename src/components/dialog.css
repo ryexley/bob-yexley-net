@@ -1,0 +1,163 @@
+.dialog-overlay {
+  background: rgb(0 0 0 / 0.65);
+  inset: 0;
+  position: fixed;
+  z-index: 1200;
+
+  &[data-expanded] {
+    animation: dialog-overlay-in 180ms ease-out;
+  }
+
+  &[data-closed] {
+    animation: dialog-overlay-out 140ms ease-in;
+  }
+}
+
+.dialog {
+  --dialog-transform-base: translate(-50%, -50%);
+  --dialog-transform-enter: translate(-50%, -48%) scale(0.985);
+  --dialog-transform-exit: translate(-50%, -49.25%) scale(0.99);
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: var(--dialog-transform-base);
+  width: min(36rem, calc(100vw - 2rem));
+  max-width: 100%;
+  max-height: calc(100vh - 2rem);
+  background: var(--colors-mono-01);
+  color: var(--colors-mono-11);
+  border: 1px solid var(--colors-mono-05);
+  border-radius: 1rem;
+  padding: 1rem;
+  z-index: 1201;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+
+  &[data-expanded] {
+    animation: dialog-content-in 200ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  &[data-closed] {
+    animation: dialog-content-out 150ms ease-in;
+  }
+}
+
+.dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.dialog-title {
+  margin: 0;
+}
+
+.dialog-description {
+  margin: 0;
+}
+
+.dialog-body {
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.dialog-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+.dialog-close-button {
+  --size: 1.5rem;
+  width: var(--size);
+  height: var(--size);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 1px solid var(--colors-mono-05);
+  background: rgba(var(--colors-mono-01-rgb), 0.75);
+  transition: var(--transitions-primary);
+
+  &:hover {
+    background: rgba(var(--colors-mono-01-rgb), 0.95);
+  }
+}
+
+.dialog-close-icon {
+  font-size: 1rem;
+}
+
+@keyframes dialog-overlay-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes dialog-overlay-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes dialog-content-in {
+  from {
+    opacity: 0;
+    transform: var(--dialog-transform-enter);
+  }
+  to {
+    opacity: 1;
+    transform: var(--dialog-transform-base);
+  }
+}
+
+@keyframes dialog-content-out {
+  from {
+    opacity: 1;
+    transform: var(--dialog-transform-base);
+  }
+  to {
+    opacity: 0;
+    transform: var(--dialog-transform-exit);
+  }
+}
+
+@media (max-width: 48rem) {
+  .dialog {
+    width: calc(100vw - 1rem);
+    max-height: calc(100dvh - 1rem);
+    padding: 0.875rem;
+
+    &:has(.dialog-close-button) {
+      padding-bottom: 3.25rem;
+    }
+  }
+
+  .dialog-close-button {
+    --size: 2.125rem;
+    position: absolute;
+    right: 0.875rem;
+    bottom: 0.875rem;
+    z-index: 2;
+  }
+
+  .dialog-close-icon {
+    font-size: 1.25rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dialog-overlay,
+  .dialog {
+    animation: none !important;
+  }
+}

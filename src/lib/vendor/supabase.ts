@@ -4,8 +4,9 @@ import {
   type User,
   type AuthError,
 } from "@supabase/supabase-js"
+import { isServer } from "solid-js/web"
+import { isEmpty } from "@/util"
 
-// Validate environment variables at module load time
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY
 
@@ -13,15 +14,64 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
   throw new Error("Missing required Supabase environment variables")
 }
 
-// Singleton client instance
-let client: SupabaseClient | null = null
+const SESSION_STARTED_AT_STORAGE_KEY = "auth:session-started-at"
+const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000
+const DEFAULT_SESSION_TTL = "7 days"
 
-function getClient(): SupabaseClient {
-  if (!client) {
-    client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY) as SupabaseClient
+// Singleton client instance
+let browserClient: SupabaseClient | null = null
+
+function canUseStorage() {
+  return typeof window !== "undefined" && !!window.localStorage
+}
+
+function getSessionStartedAtMs() {
+  if (!canUseStorage()) {
+    return null
   }
 
-  return client
+  const raw = window.localStorage.getItem(SESSION_STARTED_AT_STORAGE_KEY)
+  const parsed = raw ? Number.parseInt(raw, 10) : Number.NaN
+
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    return null
+  }
+
+  return parsed
+}
+
+function setSessionStartedAtMs(timestampMs: number) {
+  if (!canUseStorage()) {
+    return
+  }
+
+  window.localStorage.setItem(
+    SESSION_STARTED_AT_STORAGE_KEY,
+    String(timestampMs),
+  )
+}
+
+function clearSessionStartedAtMs() {
+  if (!canUseStorage()) {
+    return
+  }
+
+  window.localStorage.removeItem(SESSION_STARTED_AT_STORAGE_KEY)
+}
+
+export function getClient(): SupabaseClient {
+  if (isServer) {
+    // Server: always create a new client per request
+    const client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+
+    return client
+  } else {
+    if (isEmpty(browserClient)) {
+      browserClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+    }
+
+    return browserClient
+  }
 }
 
 export type AuthResult<T = any> = {
@@ -46,6 +96,66 @@ function formatAuthError(error: AuthError): string {
 
 function Supabase() {
   return {
+    async openCurrentSession(
+      ttl: string = DEFAULT_SESSION_TTL,
+    ): Promise<AuthResult<void>> {
+      try {
+        const { error } = await getClient().rpc("open_current_session", { ttl })
+
+        if (error) {
+          return { data: null, error: error.message }
+        }
+
+        return { data: null, error: null }
+      } catch (err) {
+        console.error("Open current session error:", err)
+        return {
+          data: null,
+          error: "An unexpected error occurred while opening session",
+        }
+      }
+    },
+
+    async revokeCurrentSession(): Promise<AuthResult<void>> {
+      try {
+        const { error } = await getClient().rpc("revoke_current_session")
+
+        if (error) {
+          return { data: null, error: error.message }
+        }
+
+        return { data: null, error: null }
+      } catch (err) {
+        console.error("Revoke current session error:", err)
+        return {
+          data: null,
+          error: "An unexpected error occurred while revoking session",
+        }
+      }
+    },
+
+    async isServerSessionValid(
+      maxAge: string = DEFAULT_SESSION_TTL,
+    ): Promise<AuthResult<boolean>> {
+      try {
+        const { data, error } = await getClient().rpc("session_is_valid", {
+          max_age: maxAge,
+        })
+
+        if (error) {
+          return { data: null, error: error.message }
+        }
+
+        return { data: data === true, error: null }
+      } catch (err) {
+        console.error("Server session validity check error:", err)
+        return {
+          data: null,
+          error: "An unexpected error occurred while validating session",
+        }
+      }
+    },
+
     async login(email: string, password: string): Promise<AuthResult<User>> {
       try {
         if (!email?.trim() || !password?.trim()) {
@@ -61,6 +171,8 @@ function Supabase() {
           return { data: null, error: formatAuthError(error) }
         }
 
+        setSessionStartedAtMs(Date.now())
+
         return { data: data?.user, error: null }
       } catch (err) {
         console.error("Login error:", err)
@@ -73,11 +185,15 @@ function Supabase() {
 
     async logout(): Promise<AuthResult<void>> {
       try {
+        await this.revokeCurrentSession()
+
         const { error } = await getClient()?.auth?.signOut()
 
         if (error) {
           return { data: null, error: formatAuthError(error) }
         }
+
+        clearSessionStartedAtMs()
 
         return { data: null, error: null }
       } catch (err) {
@@ -107,7 +223,40 @@ function Supabase() {
       }
     },
 
-    // eslint-disable-next-line no-unused-vars
+    getSessionAgeMs(): number | null {
+      const sessionStartedAtMs = getSessionStartedAtMs()
+      if (isEmpty(sessionStartedAtMs)) {
+        return null
+      }
+
+      return Date.now() - sessionStartedAtMs
+    },
+
+    hasSessionStartedAt(): boolean {
+      return !isEmpty(getSessionStartedAtMs())
+    },
+
+    markSessionStartIfMissing(): void {
+      if (!this.hasSessionStartedAt()) {
+        setSessionStartedAtMs(Date.now())
+      }
+    },
+
+    clearSessionStart(): void {
+      clearSessionStartedAtMs()
+    },
+
+    isSessionExpired(maxSessionAgeMs: number = ONE_WEEK_MS): boolean {
+      const ageMs = this.getSessionAgeMs()
+
+      // Missing timestamp is treated as expired to enforce strict max age.
+      if (isEmpty(ageMs)) {
+        return true
+      }
+
+      return ageMs > maxSessionAgeMs
+    },
+
     onAuthStateChange(callback: (user: User | null) => void) {
       return getClient()?.auth?.onAuthStateChange((event, session) => {
         callback(session?.user ?? null)

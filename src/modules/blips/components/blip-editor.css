@@ -1,0 +1,114 @@
+[data-corvu-drawer-content] {
+  &.blip-editor-container {
+    &[data-side="bottom"] {
+      --offset: 0.5rem;
+      background: var(--colors-mono-02);
+      border: none;
+      border-top-left-radius: var(--offset);
+      border-top-right-radius: var(--offset);
+      left: var(--offset);
+      /* overflow: hidden; */
+      padding: var(--offset);
+      right: var(--offset);
+      width: calc(100% - (var(--offset) * 2));
+
+      @media (min-width: 29.125rem) {
+        width: 28.125rem;
+        left: calc(50% - (28.125rem / 2));
+      }
+    }
+
+    .handle {
+      align-self: center;
+      background: var(--colors-mono-03);
+      border-radius: 9999px;
+      height: 0.25rem;
+      width: 7rem;
+    }
+
+    form {
+      width: 100%;
+    }
+
+    .blip-draft-picker {
+      padding: 0.25rem;
+      width: 100%;
+    }
+
+    .blip-draft-picker-item {
+      align-items: center;
+      appearance: none;
+      background: var(--colors-mono-03);
+      border: 1px solid var(--colors-mono-05);
+      border-radius: 0.5rem;
+      color: var(--colors-text-primary);
+      cursor: pointer;
+      display: flex;
+      font-size: 0.95rem;
+      line-height: 1.2;
+      gap: 0.5rem;
+      padding: 0.75rem;
+      text-align: left;
+      transition: var(--transitions-primary);
+      width: 100%;
+
+      .icon {
+        color: var(--colors-mono-08);
+        flex: 0 0 auto;
+        font-size: 1.05rem;
+      }
+
+      span {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      &:hover {
+        border-color: var(--colors-cool-blue);
+        background: var(--colors-mono-04);
+      }
+
+      &.new {
+        border-color: var(--colors-resonant-blue);
+        color: var(--colors-neon-green);
+
+        .icon {
+          color: var(--colors-neon-green);
+        }
+
+        .blip-new-icon .blip-icon-accent {
+          stroke: var(--colors-scarlett);
+        }
+      }
+    }
+
+    .blip-action-publish {
+      &.published {
+        .icon {
+          color: var(--colors-success);
+        }
+      }
+
+      &.unpublished {
+        .icon {
+          color: var(--colors-warning);
+        }
+      }
+    }
+
+    .blip-action-save {
+      .icon {
+        color: var(--colors-resonant-blue);
+      }
+    }
+
+    .blip-action-delete {
+      .icon {
+        color: rgba(var(--colors-error-rgb), 0.75);
+        font-size: 1.1rem;
+      }
+    }
+  }
+}

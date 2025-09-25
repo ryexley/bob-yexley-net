@@ -11,6 +11,24 @@
     background: rgba(var(--colors-mono-01-rgb), 0.9);
   }
 
+  &[disabled] {
+    cursor: not-allowed;
+
+    .icon {
+      opacity: 0.25;
+    }
+  }
+
+  &.xs {
+    --size: 1.5rem;
+    height: var(--size);
+    width: var(--size);
+
+    .icon {
+      font-size: 1.25rem;
+    }
+  }
+
   &.sm {
     --size: 2.5rem;
     height: var(--size);

@@ -1,16 +1,9 @@
-import {
-  createEffect,
-  createMemo,
-  createSignal,
-  For,
-  onCleanup,
-  onMount,
-} from "solid-js"
+import { createMemo, createSignal, For, onCleanup, onMount } from "solid-js"
+import { Meta, Title } from "@solidjs/meta"
 import { useLocation } from "@solidjs/router"
 import { Hero } from "@/modules/home/sections/hero"
+import { Signals } from "~/modules/home/sections/signals"
 // import { Footer } from "@/modules/home/sections/footer"
-import { MainHeader } from "@/modules/home/components/main-header"
-import { UserMenu } from "@/modules/home/components/user-menu"
 import { tr } from "@/i18n"
 import { pages } from "@/urls"
 import { cx } from "@/util"
@@ -18,26 +11,14 @@ import { windowTitle, withWindow } from "@/util/browser"
 
 const homeStyles = cx()
 
-function setWindowTitle(title: string) {
+function replacePath(path: string) {
   withWindow((window: Window) => {
-    window.document.title = title
-  })
-}
-
-function setMetaDescription(description: string) {
-  withWindow((window: Window) => {
-    let metaDescription = window.document.querySelector(
-      // eslint-disable-next-line quotes
-      'meta[name="description"]',
+    window.history.replaceState(null, "", path)
+    window.dispatchEvent(
+      new CustomEvent("main-nav-path-changed", {
+        detail: { path },
+      }),
     )
-
-    if (!metaDescription) {
-      metaDescription = window.document.createElement("meta")
-      metaDescription.setAttribute("name", "description")
-      window.document.head.appendChild(metaDescription)
-    }
-
-    metaDescription.setAttribute("content", description)
   })
 }
 
@@ -50,6 +31,7 @@ export function Home() {
   )
 
   let homeRef: HTMLElement | undefined
+  let signalsRef: HTMLElement | undefined
 
   const pageSections = createMemo(() => [
     {
@@ -62,53 +44,40 @@ export function Home() {
       pageTitle: tr("home.pageSections.hero.pageTitle"),
       metaDescription: tr("home.pageSections.hero.metaDescription"),
     },
+    {
+      id: "signals",
+      path: pages.signals,
+      label: "Signals",
+      setRef: (el: HTMLElement) => (signalsRef = el),
+      getRef: () => signalsRef,
+      component: Signals,
+      pageTitle: tr("home.pageSections.signals.pageTitle"),
+      metaDescription: tr("home.pageSections.signals.metaDescription"),
+    },
   ])
-
-  const navMeta = createMemo(() => {
-    return pageSections().map(({ path, label }) => ({
-      path,
-      label,
-      isActive: activeSectionPath() === path,
-    }))
-  })
 
   const currentSection = createMemo(() => {
     const path = activeSectionPath()
     return pageSections().find(sec => sec.path === path) || pageSections()[0]
   })
 
-  const handleNavItemClick = (e, path) => {
-    e.preventDefault()
-
-    // Update our custom active section signal
-    setActiveSectionPath(path)
-    // Update the URL without triggering navigation
-    window.history.replaceState(null, "", path)
-
-    const sectionMeta = pageSections().find(section => section.path === path)
-    const element = sectionMeta?.getRef()
-
-    if (element) {
-      element.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      })
-    }
-  }
-
-  createEffect(() => {
-    const section = currentSection()
-    setWindowTitle(windowTitle(section.pageTitle as string))
-    setMetaDescription(section.metaDescription as string)
-  })
-
   onMount(() => {
+    // const blipsRealtimeSubscription = initBlipsRealtime()
+
     let lastPath = location.pathname
 
-    // Set initial page title and meta description
-    const initialSection = currentSection()
-    setWindowTitle(windowTitle(initialSection.pageTitle as string))
-    setMetaDescription(initialSection.metaDescription as string)
+    if (lastPath !== pages.home) {
+      const initialTarget = pageSections().find(
+        section => section.path === lastPath,
+      )
+      const initialElement = initialTarget?.getRef()
+      if (initialElement) {
+        initialElement.scrollIntoView({
+          behavior: "auto",
+          block: "start",
+        })
+      }
+    }
 
     const headerHeight =
       parseInt(
@@ -121,17 +90,16 @@ export function Home() {
       .filter(section => section?.path !== pages.home)
       .map(section => {
         const element = section.getRef()
-        if (!element) return null
+        if (!element) {
+          return null
+        }
 
         const observer = new IntersectionObserver(
           ([entry]) => {
             if (entry.isIntersecting && section.path !== lastPath) {
               setActiveSectionPath(section.path)
-              window.history.replaceState(null, "", section.path)
+              replacePath(section.path)
               lastPath = section.path
-              // Update title and meta description when section changes
-              setWindowTitle(windowTitle(section.pageTitle as string))
-              setMetaDescription(section.metaDescription as string)
             }
           },
           {
@@ -157,11 +125,8 @@ export function Home() {
         lastPath !== pages.home
       ) {
         setActiveSectionPath(pages.home)
-        window.history.replaceState(null, "", pages.home)
+        replacePath(pages.home)
         lastPath = pages.home
-        // Update title and meta description when returning to home section
-        setWindowTitle(windowTitle(pageSections()[0].pageTitle as string))
-        setMetaDescription(pageSections()[0].metaDescription as string)
       }
     }
 
@@ -175,25 +140,32 @@ export function Home() {
       })
 
       window.removeEventListener("scroll", homeSectionScroll)
+
+      // blipsRealtimeSubscription.unsubscribe()
     })
   })
 
   return (
     <>
-      <MainHeader
-        meta={navMeta}
-        onNavItemClick={handleNavItemClick}
+      <Title>{windowTitle(currentSection().pageTitle as string)}</Title>
+      <Meta
+        name="description"
+        content={currentSection().metaDescription as string}
       />
       <main class={homeStyles}>
         <For each={pageSections()}>
           {section => {
             const Component = section.component
 
-            return <Component ref={section.setRef} />
+            return (
+              <Component
+                ref={section.setRef}
+                data-home-section-id={section.id}
+              />
+            )
           }}
         </For>
       </main>
-      <UserMenu />
       {/* <Footer /> */}
     </>
   )

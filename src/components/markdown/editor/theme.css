@@ -1,0 +1,215 @@
+/* Custom Milkdown Theme - Using site color variables */
+
+.milkdown {
+  /* Editor container */
+  background-color: var(--colors-mono-01);
+  color: var(--colors-mono-10);
+  font-family: var(--fonts-primary);
+
+  /* Prose styles */
+  .ProseMirror {
+    background-color: var(--colors-mono-01);
+    color: var(--colors-mono-10);
+    padding: 0 1rem;
+    min-height: 3.125rem;
+    font-size: inherit;
+
+    /* Selection */
+    ::selection {
+      background-color: var(--colors-mono-05);
+    }
+
+    /* Focus */
+    &:focus {
+      outline: none;
+    }
+
+    /* Placeholder */
+    .placeholder {
+      color: var(--colors-mono-07);
+    }
+  }
+
+  /* Headings */
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    color: var(--colors-text-primary);
+    font-weight: 600;
+    margin-top: 1.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  h1 {
+    font-size: 2em;
+    border-bottom: 1px solid var(--colors-mono-04);
+    padding-bottom: 0.3em;
+  }
+  h2 {
+    font-size: 1.5em;
+    border-bottom: 1px solid var(--colors-mono-04);
+    padding-bottom: 0.3em;
+  }
+  h3 {
+    font-size: 1.25em;
+  }
+  h4 {
+    font-size: 1.1em;
+  }
+  h5 {
+    font-size: 1em;
+  }
+  h6 {
+    font-size: 0.9em;
+    color: var(--colors-mono-10);
+  }
+
+  /* Paragraphs */
+  p {
+    margin-bottom: 1rem;
+    line-height: 1.25;
+  }
+
+  /* Links */
+  a {
+    color: var(--colors-links);
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+    transition: var(--transitions-primary);
+
+    &:hover {
+      border-bottom-color: var(--colors-links);
+    }
+  }
+
+  /* Strong (Bold) */
+  strong {
+    color: var(--colors-text-primary);
+    font-weight: 700;
+  }
+
+  /* Emphasis (Italic) */
+  em {
+    color: var(--colors-mono-10);
+    font-style: italic;
+  }
+
+  /* Inline code */
+  code {
+    background-color: var(--colors-mono-03);
+    color: var(--colors-arctic-lime);
+    padding: 0.2rem 0.4rem;
+    border-radius: 0.1875rem;
+    font-size: 0.9rem;
+    font-family: "Monaco", "Menlo", "Consolas", monospace;
+  }
+
+  /* Code blocks */
+  pre {
+    background-color: var(--colors-mono-03);
+    color: var(--colors-text-primary);
+    padding: 1rem;
+    border-radius: 0.375rem;
+    overflow-x: auto;
+    margin: 1rem 0;
+    border: 0.0625rem solid var(--colors-mono-04);
+
+    code {
+      background-color: transparent;
+      padding: 0;
+      color: var(--colors-text-primary);
+    }
+  }
+
+  /* Blockquotes */
+  blockquote {
+    border-left: 4px solid var(--colors-mono-05);
+    padding-left: 1rem;
+    margin: 1rem 0;
+    color: var(--colors-mono-10);
+    font-style: italic;
+    background-color: var(--colors-mono-02);
+
+    p {
+      margin-bottom: 0.5rem;
+    }
+  }
+
+  /* Lists */
+  ul,
+  ol {
+    margin: 0.5rem 0;
+    padding-left: 1.25rem;
+
+    li {
+      margin-bottom: 0;
+      color: var(--colors-text-primary);
+
+      > p {
+        margin-bottom: 0;
+      }
+
+      &::marker {
+        color: var(--colors-mono-08);
+      }
+    }
+  }
+
+  ul {
+    list-style-type: disc;
+  }
+
+  ol {
+    list-style-type: decimal;
+  }
+
+  /* Horizontal Rule */
+  hr {
+    border: none;
+    border-top: 2px solid var(--colors-mono-04);
+    margin: 2rem 0;
+  }
+
+  /* Tables */
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 1rem 0;
+
+    th,
+    td {
+      border: 1px solid var(--colors-mono-04);
+      padding: 0.5rem;
+      text-align: left;
+    }
+
+    th {
+      background-color: var(--colors-mono-03);
+      font-weight: 600;
+    }
+
+    tr:nth-child(even) {
+      background-color: var(--colors-mono-02);
+    }
+  }
+
+  /* Images */
+  img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 4px;
+    margin: 1rem 0;
+  }
+
+  /* Task lists (if using GFM plugin) */
+  .task-list-item {
+    list-style-type: none;
+
+    input[type="checkbox"] {
+      margin-right: 0.5rem;
+    }
+  }
+}

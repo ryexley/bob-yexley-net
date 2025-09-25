@@ -1,0 +1,57 @@
+.markdown-editor {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  max-height: 100%;
+  max-width: 100%;
+  min-height: 5rem;
+  overflow: hidden;
+  width: 100%;
+
+  .editor-container {
+    background-color: var(--colors-mono-02);
+    border: 0.0625rem solid var(--colors-mono-04);
+    border-radius: 0.5rem;
+    box-sizing: border-box;
+    flex: 1;
+    min-height: 5rem;
+    overflow: hidden;
+    overflow-y: auto;
+    position: relative;
+    width: 100%;
+  }
+
+  .milkdown {
+    box-sizing: border-box;
+    font-size: 1rem;
+    min-height: 3.125rem;
+    padding: 1rem 0;
+    width: 100%;
+
+    @media (pointer: coarse) {
+      font-size: 1rem;
+    }
+
+    /* Style emojis to fit naturally with text */
+    img.emoji,
+    .emoji {
+      display: inline-block;
+      height: 1.2em;
+      margin: 0 0.1em;
+      vertical-align: text-bottom;
+      width: auto;
+    }
+  }
+}
+
+.milkdown-placeholder {
+  color: var(--colors-mono-07);
+  left: 1rem;
+  pointer-events: none;
+  position: absolute;
+  user-select: none;
+}
+
+.ProseMirror-focused .milkdown-placeholder {
+  display: none;
+}

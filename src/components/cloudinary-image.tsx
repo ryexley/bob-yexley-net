@@ -96,8 +96,12 @@ export const CloudinaryImage: Component<CloudinaryImageProps> = props => {
   const getWidth = () => local.width
   const getAlt = () => {
     const alt = local.alt
-    if (typeof alt === "string" && alt.trim().length > 0) return alt
-    if (Array.isArray(alt) && alt.length > 0) return alt.join(" ")
+    if (typeof alt === "string" && alt.trim().length > 0) {
+      return alt
+    }
+    if (Array.isArray(alt) && alt.length > 0) {
+      return alt.join(" ")
+    }
     return String(local.imageId ?? "")
   }
   const getClass = () => local.class
@@ -134,7 +138,9 @@ export const CloudinaryImage: Component<CloudinaryImageProps> = props => {
 
   // Memoized image URL with fallback handling
   const resolvedImageUrl = createMemo(() => {
-    if (!isInView()) return ""
+    if (!isInView()) {
+      return ""
+    }
 
     const url = imageUrl(getImageId())
     if (!url) {
@@ -149,7 +155,9 @@ export const CloudinaryImage: Component<CloudinaryImageProps> = props => {
   // Memoized image props to prevent recreation on every render
   const imageProps = createMemo(() => {
     const url = resolvedImageUrl()
-    if (!url) return null
+    if (!url) {
+      return null
+    }
 
     const height =
       typeof dimensions().height === "number" ? dimensions().height : undefined

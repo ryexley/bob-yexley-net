@@ -8,7 +8,14 @@ import {
 import { supabase } from "@/lib/vendor/supabase"
 import { isEmpty, isNotEmpty } from "@/util"
 
-const AuthContext = createContext()
+interface AuthContextType {
+  user: () => any | null
+  loading: () => boolean
+  logout: () => Promise<void>
+  isAuthenticated: () => boolean
+}
+
+const AuthContext = createContext<AuthContextType>()
 
 export function AuthProvider(props: { children: any }) {
   const [user, setUser] = createSignal(null)
@@ -18,6 +25,21 @@ export function AuthProvider(props: { children: any }) {
     const { data: currentUser } = await supabase?.getUser()
 
     if (isNotEmpty(currentUser)) {
+      if (supabase.isSessionExpired()) {
+        await supabase.logout()
+        setUser(null)
+        setLoading(false)
+        return
+      }
+
+      const { data: isValidServerSession } = await supabase.isServerSessionValid()
+      if (!isValidServerSession) {
+        await supabase.logout()
+        setUser(null)
+        setLoading(false)
+        return
+      }
+
       setUser(currentUser)
     }
 
@@ -28,8 +50,50 @@ export function AuthProvider(props: { children: any }) {
     const {
       data: { subscription },
     } = supabase?.client?.auth?.onAuthStateChange((event, session) => {
-      setUser(session?.user ?? null)
-      setLoading(false)
+      void (async () => {
+        if (event === "SIGNED_OUT") {
+          supabase.clearSessionStart()
+          setUser(null)
+          setLoading(false)
+          return
+        }
+
+        if (isEmpty(session?.user)) {
+          setUser(null)
+          setLoading(false)
+          return
+        }
+
+        if (event === "SIGNED_IN") {
+          supabase.markSessionStartIfMissing()
+
+          const { error: openSessionError } = await supabase.openCurrentSession()
+          if (isNotEmpty(openSessionError)) {
+            await supabase.logout()
+            setUser(null)
+            setLoading(false)
+            return
+          }
+        }
+
+        if (supabase.isSessionExpired()) {
+          await supabase.logout()
+          setUser(null)
+          setLoading(false)
+          return
+        }
+
+        const { data: isValidServerSession } = await supabase.isServerSessionValid()
+        if (!isValidServerSession) {
+          await supabase.logout()
+          setUser(null)
+          setLoading(false)
+          return
+        }
+
+        setUser(session?.user ?? null)
+        setLoading(false)
+      })()
     })
 
     return () => subscription?.unsubscribe()

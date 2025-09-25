@@ -1,5 +1,8 @@
 export const pages = {
   home: "/",
+  signals: "/signals",
+  blips: "/blips",
+  blip: (id: string) => `/blips/${id}`,
   resume: "/resume/",
   login: "/a/li",
   logout: "/a/lo",

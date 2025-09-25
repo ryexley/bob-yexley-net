@@ -57,7 +57,16 @@ export default [
       // Warn about undefined variables
       "no-undef": "warn",
       // Warn about unused variables
-      "no-unused-vars": "warn",
+      "no-unused-vars": [
+        "warn",
+        {
+          args: "none",
+          vars: "all",
+          caughtErrors: "all",
+        },
+      ],
+      curly: ["error", "all"],
+      "brace-style": ["error", "1tbs"],
       // Filename casing rule from unicorn plugin
       "unicorn/filename-case": [
         "error",

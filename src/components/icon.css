@@ -1,0 +1,98 @@
+.icon {
+  color: var(--colors-mono-07);
+  font-size: 1.5rem;
+  transition: var(--transitions-primary);
+}
+
+@keyframes loading-spinner-rotate {
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes loading-spinner-dash {
+  0% {
+    stroke-dasharray: 0 150;
+    stroke-dashoffset: 0;
+  }
+  47.5% {
+    stroke-dasharray: 42 150;
+    stroke-dashoffset: -16;
+  }
+  95%,
+  100% {
+    stroke-dasharray: 42 150;
+    stroke-dashoffset: -59;
+  }
+}
+
+.loading-spinner {
+  --size: 1.5rem;
+  animation: loading-spinner-rotate 2s linear infinite;
+  height: var(--size);
+  stroke: var(--colors-info);
+  transform-origin: center;
+  width: var(--size);
+
+  circle {
+    animation: loading-spinner-dash 1.5s ease-in-out infinite;
+    stroke-linecap: round;
+  }
+}
+
+.blip-icon-accent {
+  transition: var(--transitions-primary);
+}
+
+.hashtag {
+  --size: 1rem;
+  --color: var(--colors-cool-blue);
+  --accent-color: var(--colors-resonant-blue);
+  height: var(--size);
+  width: var(--size);
+  transform: skewX(-5deg);
+
+  /* Top horizontal line */
+  .line-top-horizontal {
+    fill: var(--color);
+  }
+  .line-top-left {
+    fill: var(--accent-color);
+  }
+  .line-top-right {
+    fill: var(--color);
+  }
+
+  /* Right vertical line */
+  .line-right-vertical {
+    fill: var(--color);
+  }
+  .line-right-top {
+    fill: var(--accent-color);
+  }
+  .line-right-bottom {
+    fill: var(--color);
+  }
+
+  /* Bottom horizontal line */
+  .line-bottom-horizontal {
+    fill: var(--color);
+  }
+  .line-bottom-left {
+    fill: var(--color);
+  }
+  .line-bottom-right {
+    fill: var(--accent-color);
+  }
+
+  /* Left vertical line */
+  .line-left-vertical {
+    fill: var(--color);
+  }
+  .line-left-top {
+    fill: var(--color);
+  }
+  .line-left-bottom {
+    fill: var(--accent-color);
+  }
+}

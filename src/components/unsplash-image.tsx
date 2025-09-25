@@ -79,11 +79,17 @@ export const UnsplashImage: Component<ImageProps> = props => {
   const getWidth = () => local.width
   const getAlt = () => {
     const userAlt = local.alt?.trim()
-    if (userAlt) return userAlt
+    if (userAlt) {
+      return userAlt
+    }
 
     const photo = photoData()
-    if (photo?.alt_description) return photo.alt_description
-    if (photo?.description) return photo.description
+    if (photo?.alt_description) {
+      return photo.alt_description
+    }
+    if (photo?.description) {
+      return photo.description
+    }
 
     return String(local.imageId ?? "")
   }
@@ -122,7 +128,9 @@ export const UnsplashImage: Component<ImageProps> = props => {
 
   const imageUrl = createMemo(() => {
     // Don't generate URL until component is in view
-    if (!isInView()) return ""
+    if (!isInView()) {
+      return ""
+    }
 
     const photo = photoData()
 

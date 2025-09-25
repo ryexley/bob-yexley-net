@@ -1,0 +1,58 @@
+.blip-detail-page {
+  display: flex;
+  justify-content: center;
+}
+
+.blip-detail-container {
+  max-width: 60rem;
+  width: 100%;
+}
+
+a.blip-detail-back-link {
+  align-items: center;
+  display: inline-flex;
+  gap: 0.25rem;
+  left: 0;
+  height: var(--main-header-height);
+  padding: 0 2rem 0 1.25rem;
+  position: fixed;
+  top: 0;
+  text-transform: lowercase;
+  z-index: 11;
+
+  .icon {
+    color: inherit;
+    font-size: 1rem;
+  }
+}
+
+.blip-detail-card {
+  background: transparent;
+  border: none;
+  padding: 0;
+}
+
+.blip-detail-header {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 0.5rem;
+}
+
+.blip-detail-timestamp {
+  color: var(--colors-mono-07);
+  font-size: 0.875rem;
+  font-style: italic;
+}
+
+.blip-detail-content {
+  color: color-mix(
+    in srgb,
+    var(--colors-mono-10) 65%,
+    var(--colors-mono-11) 35%
+  );
+  font-size: 1rem;
+}
+
+.blip-detail-status {
+  color: var(--colors-mono-09);
+}

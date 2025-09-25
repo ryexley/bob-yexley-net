@@ -7,7 +7,9 @@ export function debounce(fn, delay = 500) {
 
   const debounced = (...args) => {
     return new Promise(resolve => {
-      if (timeoutId) clearTimeout(timeoutId)
+      if (timeoutId) {
+        clearTimeout(timeoutId)
+      }
 
       timeoutId = setTimeout(() => {
         resolve(fn(...args))

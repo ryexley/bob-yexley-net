@@ -3,7 +3,9 @@ export const isObject = target =>
   !Array.isArray(target) && target === Object(target)
 
 export const isEmpty = value => {
-  if (value == null) return true // catches null and undefined
+  if (value == null) {
+    return true
+  } // catches null and undefined
 
   if (typeof value === "string" || Array.isArray(value)) {
     return value.length === 0

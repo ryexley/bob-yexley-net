@@ -1,0 +1,7 @@
+.page-section {
+  min-height: 100vh;
+  padding: 1rem;
+  padding-top: var(--main-header-height);
+  position: relative;
+  width: 100%;
+}

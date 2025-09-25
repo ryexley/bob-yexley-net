@@ -9,6 +9,13 @@ export const en = {
     pageTitle: "bob.yexley.net",
     pageTitleDescription: "the personal web site of Bob Yexley",
     components: {
+      confirmDialog: {
+        actions: {
+          cancel: "Cancel",
+          confirm: "Confirm",
+          confirming: "Working...",
+        },
+      },
       image: {
         defaultImageAlt: "Image alt text not available",
         imageStatusPending: "Image load pending ...",
@@ -40,6 +47,13 @@ export const en = {
         pageTitle: "Home",
         metaDescription: "Bob Yexley",
       },
+      signals: {
+        pageTitle: "Signals",
+        metaDescription: "Signals",
+        actions: {
+          seeMore: "See More",
+        },
+      },
     },
   },
   auth: {
@@ -60,6 +74,91 @@ export const en = {
         },
         returnHomeLink: "Get me outta here",
         loginFailedError: "Login failed.",
+      },
+    },
+  },
+  blips: {
+    views: {
+      index: {
+        pageTitle: "Blips",
+        metaDescription: "Blips",
+        loading: "Loading blips...",
+        nav: {
+          home: "Home",
+          signals: "Signals",
+          blips: "Blips",
+        },
+        paging: {
+          actions: {
+            showMore: "Show more",
+            loading: "Loading more...",
+          },
+        },
+      },
+      detail: {
+        pageTitle: "Blip",
+        metaDescription: "Blip",
+        loading: "Loading blip...",
+        notFound: "Blip not found.",
+        actions: {
+          backToBlips: "blips",
+        },
+      },
+    },
+    components: {
+      blipActions: {
+        confirmDelete: {
+          title: "Delete blip?",
+          prompt:
+            "This action permanently deletes this blip and cannot be undone.",
+          actions: {
+            confirm: "Delete",
+            confirming: "Deleting...",
+            cancel: "Cancel",
+          },
+        },
+      },
+      blipEditor: {
+        placeholder: "What's on your mind?",
+        draftPicker: {
+          new: "New Blip",
+          untitled: "Untitled draft",
+        },
+        status: {
+          idle: "Draft",
+          saving: "Saving...",
+          saved: "Saved",
+          published: "Published",
+          error: "Error saving",
+        },
+        actions: {
+          save: "Save",
+          publish: "Publish",
+          unpublish: "Unpublish",
+          delete: "Delete Draft",
+        },
+        confirmDelete: {
+          title: "Delete draft blip?",
+          prompt:
+            "This removes the draft from your cache and the database if it has already been synced.",
+          actions: {
+            confirm: "Delete",
+            confirming: "Deleting...",
+            cancel: "Keep draft",
+          },
+        },
+      },
+    },
+    util: {
+      relativeTime: {
+        justNow: "just now",
+        minutesAgo:
+          "{minutes, plural, one {a minute ago} other {# minutes ago}}",
+        hoursAgo: "{hours, plural, one {an hour ago} other {# hours ago}}",
+        daysAgo: "{days, plural, one {yesterday} other {# days ago}}",
+        weeksAgo: "{weeks, plural, one {last week} other {# weeks ago}}",
+        monthsAgo: "{months, plural, one {last month} other {# months ago}}",
+        yearsAgo: "{years, plural, one {last year} other {# years ago}}",
       },
     },
   },

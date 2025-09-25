@@ -1,0 +1,34 @@
+.signals {
+  .signals-see-more {
+    display: flex;
+    justify-content: flex-end;
+    margin: 1rem auto 0;
+    max-width: 60rem;
+    width: 100%;
+  }
+
+  .signals-see-more-link {
+    align-items: center;
+    color: var(--colors-links);
+    display: inline-flex;
+    font-size: 1.25rem;
+    font-weight: 400;
+    gap: 0.25rem;
+    line-height: 1;
+    text-decoration: none;
+    transition: var(--transitions-primary);
+
+    .icon {
+      align-items: center;
+      color: var(--colors-links);
+      display: inline-flex;
+      font-size: 1.25rem;
+      justify-content: center;
+      line-height: 1;
+    }
+
+    &:hover {
+      opacity: 0.85;
+    }
+  }
+}

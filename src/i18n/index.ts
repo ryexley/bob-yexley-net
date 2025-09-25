@@ -16,17 +16,14 @@ const flattenMessages = (nestedMessages, prefix = "") => {
   }, {})
 }
 
-export * from "@formatjs/intl"
 export * from "@cookbook/solid-intl"
-export { IntlProvider } from "@cookbook/solid-intl"
 export const messages = flattenMessages(nestedMessages["en"])
 export const intl = createIntl({ locale: "en", messages })
 export const tr /* "translate" */ = (
   id: string,
   params: Record<string, any> = {},
 ) => intl.formatMessage({ id }, params)
-export const ptr = // "Prefixed" tr (translate)
-
-    (prefix: string) =>
-    (key: string, params: Record<string, any> = {}) =>
-      tr(`${prefix}.${key}`, params) as string
+export const ptr /* "prefixed" tr (translate) */ =
+  (prefix: string) =>
+  (key: string, params: Record<string, any> = {}) =>
+    tr(`${prefix}.${key}`, params) as string

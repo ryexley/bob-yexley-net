@@ -1,0 +1,26 @@
+.blip-actions {
+  .delete {
+    .icon {
+      color: var(--colors-danger);
+      font-size: 1.25rem;
+    }
+  }
+
+  .publish {
+    .icon {
+      color: var(--colors-warning);
+    }
+  }
+
+  .unpublish {
+    .icon {
+      color: var(--colors-success);
+    }
+  }
+
+  .edit {
+    .icon {
+      color: var(--colors-resonant-blue);
+    }
+  }
+}

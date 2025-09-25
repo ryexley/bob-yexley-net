@@ -1,0 +1,113 @@
+.markdown-editor-header {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.header-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  gap: 1rem;
+}
+
+.header-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--colors-text-primary);
+}
+
+.header-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.header-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--colors-mono-04);
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transitions-primary);
+  background: var(--colors-mono-02);
+  color: var(--colors-text-primary);
+}
+
+.header-action:hover:not(.header-action--disabled) {
+  background: var(--colors-mono-03);
+  border-color: var(--colors-mono-05);
+}
+
+.header-action:active:not(.header-action--disabled) {
+  transform: scale(0.98);
+}
+
+.header-action--primary {
+  background: var(--colors-neon-green);
+  color: var(--colors-mono-00);
+  border-color: var(--colors-neon-green);
+}
+
+.header-action--primary:hover:not(.header-action--disabled) {
+  background: var(--colors-arctic-lime);
+  border-color: var(--colors-arctic-lime);
+}
+
+.header-action--secondary {
+  background: var(--colors-mono-02);
+  border-color: var(--colors-mono-04);
+}
+
+.header-action--secondary:hover:not(.header-action--disabled) {
+  background: var(--colors-mono-03);
+  border-color: var(--colors-mono-05);
+}
+
+.header-action--danger {
+  color: var(--colors-error);
+  background: var(--colors-mono-02);
+  border-color: var(--colors-mono-04);
+}
+
+.header-action--danger:hover:not(.header-action--disabled) {
+  background: rgba(255, 47, 61, 0.1);
+  border-color: var(--colors-error);
+}
+
+.header-action--disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.header-divider {
+  height: 1px;
+  background: var(--colors-mono-04);
+}
+
+/* Material Icons in buttons */
+.header-action .material-symbols-outlined {
+  font-size: 1.125rem;
+}
+
+/* Mobile adjustments */
+@media (max-width: 640px) {
+  .header-content {
+    padding: 0.5rem 0.75rem;
+  }
+
+  .header-action {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.8125rem;
+  }
+
+  .header-action .material-symbols-outlined {
+    font-size: 1rem;
+  }
+}

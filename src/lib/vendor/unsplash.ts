@@ -345,7 +345,9 @@ export function getCachedUnsplashImage(imageId: string): UnsplashPhoto | null {
 
   try {
     const cached = localStorage.getItem(cacheKey)
-    if (!cached) return null
+    if (!cached) {
+      return null
+    }
 
     const { images, timestamp } = JSON.parse(cached)
 
@@ -370,7 +372,9 @@ export function getCachedUnsplashImage(imageId: string): UnsplashPhoto | null {
 export async function cacheUnsplashImage(imageId: string): Promise<void> {
   try {
     const photo = await fetchUnsplashPhoto(imageId)
-    if (!photo) return
+    if (!photo) {
+      return
+    }
 
     // Add to metadata cache
     const cacheKey = "unsplash-images-cache"

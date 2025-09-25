@@ -1,49 +1,174 @@
-import { createMemo, createSignal, For, splitProps } from "solid-js"
+import {
+  createMemo,
+  createSignal,
+  createEffect,
+  For,
+  splitProps,
+  onMount,
+  onCleanup,
+} from "solid-js"
+import { useLocation } from "@solidjs/router"
 import { Drawer } from "@/components/drawer"
 import { Stack } from "@/components/stack"
 import { pages } from "@/urls"
+import { clsx as cx } from "@/util"
 import { tr } from "@/i18n"
+import { withWindow } from "@/util/browser"
+import "./main-header.css"
 
 export function MainHeader(props: any) {
   const [local] = splitProps(props, ["meta", "onNavItemClick"])
+  const location = useLocation()
   const [mobileNavOpen, setMobileNavOpen] = createSignal(false)
+  const [activePath, setActivePath] = createSignal(location.pathname)
+  const [pendingMobileNavLink, setPendingMobileNavLink] = createSignal<any>(null)
 
   const navLinks = createMemo(() => {
-    const dynamicLinks = local.meta() || []
+    const dynamicLinks = local.meta?.() || [
+      {
+        path: pages.home,
+        label: "Home",
+        isActive: activePath() === pages.home,
+      },
+      {
+        path: pages.signals,
+        label: "Signals",
+        isActive: activePath() === pages.signals,
+      },
+    ]
+
     const staticLinks = [
       {
         path: pages.resume,
         label: "Resume",
+        isActive: activePath() === pages.resume,
       },
     ].map(link => ({ ...link, isStatic: true }))
 
     return [...dynamicLinks, ...staticLinks]
   })
 
-  const onMobileNavClick = (e, link) => {
+  const scrollToHomeSectionIfPresent = (path: string): boolean => {
+    const sectionIdByPath = {
+      [pages.home]: "home",
+      [pages.signals]: "signals",
+    }
+
+    const sectionId = sectionIdByPath[path]
+    if (!sectionId) {
+      return false
+    }
+
+    let didScroll = false
+
+    withWindow((window: Window) => {
+      const selector = `[data-home-section-id="${sectionId}"]`
+      const target = window.document.querySelector(selector)
+
+      if (!(target instanceof HTMLElement)) {
+        return
+      }
+
+      target.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      })
+      window.history.replaceState(null, "", path)
+      setActivePath(path)
+      didScroll = true
+    })
+
+    return didScroll
+  }
+
+  const navigate = (path: string) => {
+    setActivePath(path)
+    withWindow((window: Window) => {
+      window.location.assign(path)
+    })
+  }
+
+  const runNavAction = (e, link) => {
     if (link.isStatic) {
       e.preventDefault()
-      window.location.assign(link.path)
-      setMobileNavOpen(false)
+      navigate(link.path)
       return
     }
 
-    local.onNavItemClick(e, link.path)
+    if (local.onNavItemClick) {
+      local.onNavItemClick(e, link.path)
+      return
+    }
+
+    const didScroll = scrollToHomeSectionIfPresent(link.path)
+    if (didScroll) {
+      e.preventDefault()
+      return
+    }
+
+    e.preventDefault()
+    navigate(link.path)
+  }
+
+  const onMobileNavClick = (e, link) => {
+    e.preventDefault()
+    setPendingMobileNavLink(link)
     setMobileNavOpen(false)
   }
 
   const handleNavClick = (e, link) => {
-    if (link.isStatic) {
-      e.preventDefault()
-      window.location.assign(link.path)
+    runNavAction(e, link)
+  }
+
+  const handleMobileNavOpenChange = (open: boolean) => {
+    if (open) {
+      withWindow((window: Window) => {
+        setActivePath(window.location.pathname)
+      })
+    }
+    setMobileNavOpen(open)
+  }
+
+  createEffect(() => {
+    const nextLink = pendingMobileNavLink()
+    if (!nextLink || mobileNavOpen()) {
       return
     }
 
-    local.onNavItemClick(e, link.path)
-  }
+    const fakeEvent = {
+      preventDefault: () => {},
+    }
+    runNavAction(fakeEvent, nextLink)
+    setPendingMobileNavLink(null)
+  })
+
+  onMount(() => {
+    const syncActivePath = () => {
+      setActivePath(location.pathname)
+    }
+
+    const onMainNavPathChanged = (event: Event) => {
+      const customEvent = event as CustomEvent<{ path?: string }>
+      const nextPath = customEvent.detail?.path
+      if (nextPath) {
+        setActivePath(nextPath)
+        return
+      }
+
+      syncActivePath()
+    }
+
+    window.addEventListener("popstate", syncActivePath)
+    window.addEventListener("main-nav-path-changed", onMainNavPathChanged)
+
+    onCleanup(() => {
+      window.removeEventListener("popstate", syncActivePath)
+      window.removeEventListener("main-nav-path-changed", onMainNavPathChanged)
+    })
+  })
 
   return (
-    <header class="fixed w-full flex items-center justify-between top-0 z-10 backdrop-blur-sm">
+    <header class="main-header">
       {/*
       <a
         href={pages.home}
@@ -53,17 +178,15 @@ export function MainHeader(props: any) {
       </a>
       */}
       <span />
-      <nav class="flex gap-3 items-center ml-2 mr-5 h-[var(--main-header-height)] max-[40rem]:hidden">
+      <nav class="desktop-nav">
         <For each={navLinks()}>
           {link => (
             <a
               href={link.path}
               onClick={e => handleNavClick(e, link)}
-              class={`flex items-center !py-2 !px-4 uppercase font-medium common-transition hover:!text-[var(--colors-resonant-blue)] dim-glassy-hover !rounded-full ${
-                link.isActive
-                  ? "!text-[var(--colors-resonant-blue)] !bg-[rgba(var(--colors-mono-01-rgb),0.5)]"
-                  : ""
-              }`}>
+              class={cx("desktop-nav-link", {
+                active: link.isActive,
+              })}>
               {link.label}
             </a>
           )}
@@ -71,34 +194,29 @@ export function MainHeader(props: any) {
       </nav>
       <Drawer
         open={mobileNavOpen()}
-        onOpenChange={setMobileNavOpen}
-        class="w-full min-[32rem]:w-[18.75rem]"
+        onOpenChange={handleMobileNavOpenChange}
+        class="mobile-nav"
         headerClass="h-[var(--main-header-height)] justify-center"
         title={tr("home.components.mainHeader.mobileNav.title")}
-        titleClass="text-[1.5rem] font-[600]"
-        toggleClass="hidden max-[40rem]:flex items-center justify-center h-12 w-12 px-7 py-6 focus:!outline-none focus:!shadow-none active:!outline-none active:!shadow-none focus-visible:!outline-none focus-visible:!shadow-none"
-        toggleIconClass="text-[var(--colors-mono-11)] text-4xl"
-        closeButtonIcon="chevron_right"
-        closeButtonClass="top-2 !right-0 p-6 focus:!outline-none focus:!shadow-none active:!outline-none active:!shadow-none focus-visible:!outline-none focus-visible:!shadow-none"
-        closeButtonIconClass="text-[var(--colors-mono-10)] text-5xl">
+        triggerClass="mobile-nav-trigger"
+        triggerIconClass="mobile-nav-trigger-icon"
+        closeIcon="chevron_right"
+        closeClass="mobile-nav-close"
+        closeIconClass="mobile-nav-close-icon">
         <Stack
           gap="0"
-          class="py-3">
+          class="mobile-nav-list">
           <For each={navLinks()}>
             {link => (
               <a
                 href={link.path}
                 onClick={e => onMobileNavClick(e, link)}
-                class={
-                  link.isActive
-                    ? "flex items-center !m-0 !py-2 !px-5 w-full uppercase font-medium !rounded-none common-transition !text-[var(--colors-resonant-blue)] !bg-[var(--colors-mono-02)]"
-                    : "flex items-center !m-0 !py-2 !px-5 w-full uppercase font-medium !rounded-none common-transition !text-[var(--colors-links)] hover:!text-[var(--colors-resonant-blue)] hover:!bg-[var(--colors-mono-02)] focus:!outline-none focus:!shadow-none focus:!text-[var(--colors-links)] focus:!bg-transparent active:!text-[var(--colors-links)] active:!bg-transparent"
-                }>
+                class={cx("mobile-nav-link", { active: link.isActive })}>
                 {link.label}
               </a>
             )}
           </For>
-          <hr class="!mx-4 !w-[calc(100%-2rem)]" />
+          <hr class="mobile-nav-divider" />
         </Stack>
       </Drawer>
     </header>

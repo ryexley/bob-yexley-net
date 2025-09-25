@@ -2,7 +2,10 @@ import { MetaProvider } from "@solidjs/meta"
 import { Router } from "@solidjs/router"
 import { FileRoutes } from "@solidjs/start/router"
 import { onMount, Suspense } from "solid-js"
+import { ConfirmationProvider } from "@/components/confirm-dialog"
 import { AuthProvider } from "@/context/auth-context"
+import { ServicesProvider } from "@/context/services-context"
+import { ViewportProvider } from "@/context/viewport"
 import { IntlProvider, messages } from "@/i18n"
 import { MainLayout } from "@/layouts"
 import { generateRGBColorVarsFromHexVars } from "@/util/colors"
@@ -19,14 +22,20 @@ export default function App() {
     <MetaProvider>
       <Router
         root={props => (
-          <Suspense fallback={<div>Loading...</div>}>
-            <AuthProvider>
-              <IntlProvider
-                locale="en"
-                messages={messages}>
-                <MainLayout>{props.children}</MainLayout>
-              </IntlProvider>
-            </AuthProvider>
+          <Suspense fallback={null}>
+            <ServicesProvider>
+              <AuthProvider>
+                <IntlProvider
+                  locale="en"
+                  messages={messages}>
+                  <ViewportProvider>
+                    <ConfirmationProvider>
+                      <MainLayout>{props.children}</MainLayout>
+                    </ConfirmationProvider>
+                  </ViewportProvider>
+                </IntlProvider>
+              </AuthProvider>
+            </ServicesProvider>
           </Suspense>
         )}>
         <FileRoutes />

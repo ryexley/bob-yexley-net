@@ -1,194 +1,237 @@
-import { createMemo, createSignal, splitProps } from "solid-js"
-import { cva, cx, isNotEmpty } from "@/util"
 import {
-  Drawer as DrawerPrimitive,
-  DrawerTrigger,
-  DrawerClose,
-  DrawerContent,
-  DrawerHeader,
-  // DrawerFooter,
-  DrawerLabel as DrawerTitle,
-  DrawerDescription as DrawerSubtitle,
-} from "@/lib/ui/drawer"
-import { Icon } from "@/components/icon"
+  mergeProps,
+  splitProps,
+  ValidComponent,
+  Component,
+  JSX,
+  createMemo,
+  ComponentProps,
+} from "solid-js"
+import DrawerPrimitive from "@corvu/drawer"
+import { Icon } from "./icon"
+import { clsx as cx, isNotEmpty } from "@/util"
+// Drawer styles are imported by `@/layouts/main/main.css` so they stay loaded
+// for the shared main-layout chrome across client-side route transitions.
 
-export const DRAWER_POSITION = {
+export const DrawerPosition = {
   LEFT: "left",
   RIGHT: "right",
   TOP: "top",
   BOTTOM: "bottom",
+} as const
+
+export type DrawerPosition =
+  (typeof DrawerPosition)[keyof typeof DrawerPosition]
+
+export interface DrawerProps {
+  side?: DrawerPosition
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
+  class?: string
+  drawerProps?: Omit<ComponentProps<typeof DrawerPrimitive>, "children">
+
+  showTrigger?: boolean
+  Trigger?: ValidComponent
+  triggerIcon?: string
+  triggerClass?: string
+  triggerIconClass?: string
+
+  showClose?: boolean
+  Close?: ValidComponent
+  closeClass?: string
+  closeIcon?: string
+  closeIconClass?: string
+
+  Header?: ValidComponent
+  headerClass?: string
+  title?: string | string[]
+  titleClass?: string
+  subtitle?: string
+  subtitleClass?: string
+
+  contentClass?: string
+  children: ValidComponent | Component | JSX.Element | HTMLElement
 }
 
-const resolveToggleIcon = (position: string) => {
-  const toggleIconPositions = {
-    [DRAWER_POSITION.LEFT]: "menu_open",
-    [DRAWER_POSITION.RIGHT]: "menu_open",
-    [DRAWER_POSITION.TOP]: "top_panel_open",
-    [DRAWER_POSITION.BOTTOM]: "top_panel_open",
+const resolveTriggerIcon = (position: DrawerPosition) => {
+  const triggerIconPositions = {
+    [DrawerPosition.LEFT]: "menu_open",
+    [DrawerPosition.RIGHT]: "menu_open",
+    [DrawerPosition.TOP]: "top_panel_open",
+    [DrawerPosition.BOTTOM]: "top_panel_open",
   }
 
-  return toggleIconPositions[position]
+  return triggerIconPositions[position]
 }
 
-const toggleButtonStyles = cva(
-  "drawer-toggle flex items-center justify-center h-8 w-8 rounded-md p-1 cursor-pointer",
-  {
-    variants: {
-      position: {
-        [DRAWER_POSITION.LEFT]: "rotate-180",
-        [DRAWER_POSITION.RIGHT]: "",
-        [DRAWER_POSITION.TOP]: "",
-        [DRAWER_POSITION.BOTTOM]: "rotate-180",
-      },
+export function Drawer(props: DrawerProps) {
+  const propsWithDefaults = mergeProps(
+    {
+      side: DrawerPosition.RIGHT,
+      open: false,
+      onOpenChange: () => {},
+      showTrigger: true,
+      triggerIcon: resolveTriggerIcon(props.side || DrawerPosition.RIGHT),
+      showClose: true,
+      closeIcon: "close",
     },
-    defaultVariants: {
-      position: DRAWER_POSITION.RIGHT,
-    },
-  },
-)
+    props,
+  )
 
-const drawerBaseStyles = cva(
-  "rounded-none bg-[var(--colors-mono-01)] border border-[var(--colors-mono-02)] z-50 fixed",
-  {
-    variants: {
-      position: {
-        [DRAWER_POSITION.RIGHT]:
-          "right-0 top-0 h-screen min-w-[20rem] border-l translate-x-full data-[open]:translate-x-0",
-        [DRAWER_POSITION.LEFT]:
-          "left-0 top-0 h-screen min-w-[20rem] border-r translate-x-full data-[open]:translate-x-0",
-        [DRAWER_POSITION.TOP]: "top-0 left-0 w-full min-h-[10rem]",
-        [DRAWER_POSITION.BOTTOM]: "bottom-0 left-0 w-full min-h-[10rem]",
-      },
-    },
-    defaultVariants: {
-      position: "right",
-    },
-  },
-)
-
-const contentBaseStyles = cva("drawer-content overflow-y-auto pb-4")
-
-const closeButtonStyles = cva(
-  "drawer-close absolute top-2 right-2 flex items-center justify-center h-8 w-8 p-1 rounded-md ml-4 text-xl hover:text-[var(--colors-resonant-blue)]",
-)
-
-const headerStyles = cva(
-  "drawer-header flex flex-col p-4 bg-[var(--colors-mono-02)] border-b border-[var(--colors-mono-03)] flex justify-between items-start",
-)
-
-const titleStyles = cva("drawer-title text-[2rem] font-[400]")
-
-const subtitleStyles = cva("drawer-subtitle m-0 p-0 text-sm opacity-70 mt-1")
-
-export function Drawer(props: any) {
-  const [local, rest] = splitProps(props, [
-    "position",
+  const [local] = splitProps(propsWithDefaults, [
+    "side",
     "open",
     "onOpenChange",
     "class",
-    "showToggle",
-    "toggleIcon",
-    "toggleClass",
-    "toggleIconClass",
-    "showCloseButton",
-    "closeButtonIcon",
-    "closeButtonClass",
-    "closeButtonIconClass",
-    "showHeader",
-    "title",
-    "subtitle",
-    "contentClass",
+    "drawerProps",
+    "showTrigger",
+    "Trigger",
+    "triggerIcon",
+    "triggerClass",
+    "triggerIconClass",
+    "showClose",
+    "Close",
+    "closeClass",
+    "closeIcon",
+    "closeIconClass",
+    "Header",
     "headerClass",
+    "title",
     "titleClass",
+    "subtitle",
     "subtitleClass",
+    "contentClass",
     "children",
   ])
-  const isControlled = createMemo(() => isNotEmpty(local.open))
-  const [controlledOpen, setControlledOpen] = createSignal(false)
-  const open = createMemo(() =>
-    isControlled() ? local.open : controlledOpen(),
+
+  const hasTrigger = createMemo(
+    () =>
+      local.showTrigger &&
+      (isNotEmpty(local.Trigger) || isNotEmpty(local.triggerIcon)),
   )
-  const position = createMemo(() => local.position || DRAWER_POSITION.RIGHT)
-  const showToggle = createMemo(() => local.showToggle ?? true)
-  const toggleIcon = createMemo(
-    () => local.toggleIcon || resolveToggleIcon(position()),
-  )
-  const showCloseButton = createMemo(() => local.showCloseButton ?? true)
-  const closeButtonIcon = createMemo(() => local.closeButtonIcon || "close")
-  const showTitle = createMemo(() => isNotEmpty(local.title))
-  const showSubtitle = createMemo(() => isNotEmpty(local.subtitle))
-  const showHeader = createMemo(() => {
-    if (isNotEmpty(local.showHeader)) {
-      return local.showHeader
+
+  // Render the trigger based on what was provided
+  const renderTrigger = () => {
+    if (!hasTrigger()) {
+      return null
     }
 
-    return showTitle() || showSubtitle()
-  })
-  const drawerStyles = createMemo(() =>
-    drawerBaseStyles({
-      position: position(),
-      class: local.class,
-    }),
-  )
-  const contentStyles = createMemo(() =>
-    contentBaseStyles({ class: cx(position(), local.contentClass) }),
-  )
-
-  const handleOpenChange = (isOpen: boolean) => {
-    if (!isControlled()) {
-      setControlledOpen(isOpen)
+    // If custom Trigger is provided, use it
+    if (local.Trigger) {
+      if (typeof local.Trigger === "function") {
+        // If it's a function, call it with the trigger props
+        return local.Trigger({
+          as: DrawerPrimitive.Trigger,
+          class: cx("drawer-trigger", local.triggerClass),
+        })
+      } else {
+        // If it's a component, render it wrapped in DrawerTrigger
+        const TriggerComponent = local.Trigger as any
+        return (
+          <DrawerPrimitive.Trigger
+            class={cx("drawer-trigger", local.triggerClass)}>
+            <TriggerComponent />
+          </DrawerPrimitive.Trigger>
+        )
+      }
     }
 
-    local.onOpenChange?.(isOpen)
+    // If no custom trigger but we have triggerIcon, render default icon trigger
+    if (local.triggerIcon) {
+      return (
+        <DrawerPrimitive.Trigger
+          class={cx("drawer-trigger", local.triggerClass)}>
+          <Icon
+            name={local.triggerIcon}
+            class={local.triggerIconClass}
+          />
+        </DrawerPrimitive.Trigger>
+      )
+    }
+
+    // No trigger provided
+    return null
+  }
+
+  const renderClose = () => {
+    if (!local.showClose) {
+      return null
+    }
+
+    if (local.Close) {
+      const CloseComponent = local.Close as any
+      return (
+        <DrawerPrimitive.Close class={cx("drawer-close", local.closeClass)}>
+          <CloseComponent />
+        </DrawerPrimitive.Close>
+      )
+    }
+
+    if (local.closeIcon) {
+      return (
+        <DrawerPrimitive.Close
+          class={cx("drawer-close drawer-close--icon", local.closeClass)}>
+          <Icon
+            name={local.closeIcon}
+            class={cx(local.closeIconClass)}
+          />
+        </DrawerPrimitive.Close>
+      )
+    }
+
+    return null
+  }
+
+  // Render header
+  const renderHeader = () => {
+    if (local.Header) {
+      const HeaderComponent = local.Header as any
+      return <HeaderComponent />
+    }
+
+    if (local.title || local.subtitle) {
+      return (
+        <header class={cx("drawer-header", local.headerClass)}>
+          {local.title ? (
+            <DrawerPrimitive.Label class={cx("drawer-title", local.titleClass)}>
+              {local.title}
+            </DrawerPrimitive.Label>
+          ) : null}
+          {local.subtitle ? (
+            <DrawerPrimitive.Description
+              class={cx("drawer-subtitle", local.subtitleClass)}>
+              {local.subtitle}
+            </DrawerPrimitive.Description>
+          ) : null}
+        </header>
+      )
+    }
+
+    return null
   }
 
   return (
     <DrawerPrimitive
-      side={position()}
-      open={open()}
-      onOpenChange={handleOpenChange}
-      {...rest}>
-      {showToggle ? (
-        <DrawerTrigger
-          class={toggleButtonStyles({
-            position: position(),
-            class: local.toggleClass,
-          })}>
-          <Icon
-            name={toggleIcon()}
-            class={local.toggleIconClass}
-          />
-        </DrawerTrigger>
-      ) : null}
-      <DrawerContent
-        class={drawerStyles()}
-        {...(rest as any)}>
-        {showHeader() ? (
-          <DrawerHeader class={headerStyles({ class: local.headerClass })}>
-            {showTitle() ? (
-              <DrawerTitle class={titleStyles({ class: local.titleClass })}>
-                {local.title}
-              </DrawerTitle>
-            ) : null}
-            {showSubtitle() ? (
-              <DrawerSubtitle
-                class={subtitleStyles({ class: local.subtitleClass })}>
-                {local.subtitle}
-              </DrawerSubtitle>
-            ) : null}
-          </DrawerHeader>
-        ) : null}
-        <div class={contentStyles()}>{local.children}</div>
-        {showCloseButton() ? (
-          <DrawerClose
-            class={closeButtonStyles({ class: local.closeButtonClass })}>
-            <Icon
-              name={closeButtonIcon()}
-              class={local.closeButtonIconClass}
-            />
-          </DrawerClose>
-        ) : null}
-      </DrawerContent>
+      side={local.side}
+      open={local.open}
+      onOpenChange={open => local.onOpenChange(open)}
+      {...local.drawerProps}>
+      {renderTrigger()}
+      <DrawerPrimitive.Portal>
+        <DrawerPrimitive.Overlay />
+        <DrawerPrimitive.Content
+          as="aside"
+          class={cx(
+            "drawer-content",
+            local.side,
+            local.class,
+            local.contentClass,
+          )}>
+          {renderHeader()}
+          {local.children as any}
+          {renderClose()}
+        </DrawerPrimitive.Content>
+      </DrawerPrimitive.Portal>
     </DrawerPrimitive>
   )
 }

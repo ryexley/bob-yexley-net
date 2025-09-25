@@ -2,21 +2,6 @@
 @import url("animations.css");
 @import "tailwindcss";
 
-@layer utilities {
-  .common-transition {
-    @apply transition-all duration-250 ease-in-out;
-  }
-
-  .dim-glassy-hover {
-    background-color: rgba(var(--colors-mono-01-rgb), 0);
-    transition: all 250ms ease-in-out;
-  }
-
-  .dim-glassy-hover:hover {
-    background-color: rgba(var(--colors-mono-01-rgb), 0.5);
-  }
-}
-
 :root {
   --fonts-primary: "Geist", Helvetica, Arial, sans-serif;
   --colors-mono-00: #000;
@@ -47,6 +32,7 @@
   --colors-success: var(--colors-neon-green);
   --colors-warning: var(--colors-safety-orange-02);
   --colors-error: var(--colors-scarlett);
+  --colors-danger: var(--colors-scarlett);
   --colors-reminder: var(--colors-resonant-blue);
   --transitions-primary: all 250ms ease-in-out;
   --main-header-height: 4rem;
@@ -202,7 +188,6 @@ fieldset {
 
 .material-icons-loaded .material-icons,
 .material-symbols-loaded .material-symbols-outlined {
-  font-size: revert-layer;
   opacity: 1;
 }
 

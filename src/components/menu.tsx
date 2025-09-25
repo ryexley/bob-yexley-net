@@ -1,14 +1,16 @@
-import { JSX, splitProps, For, Show } from "solid-js"
+import { JSX, splitProps, For, Show, ComponentProps } from "solid-js"
 import { DropdownMenu } from "@kobalte/core/dropdown-menu"
 import { Icon } from "@/components/icon"
-import { IconButton, IconButtonSize } from "@/components/icon-button"
+import { IconButtonSize } from "@/components/icon-button"
 import { clsx as cx, isNotEmpty } from "@/util"
 import "./menu.css"
 
 type MenuItem = {
   icon?: string
+  iconNode?: JSX.Element
   label: string
   onClick: () => void
+  menuItemProps?: ComponentProps<typeof DropdownMenu.Item>
 }
 
 type MenuProps = {
@@ -19,16 +21,18 @@ type MenuProps = {
   items: MenuItem[]
   Header?: JSX.Element | (() => JSX.Element)
   Footer?: JSX.Element | (() => JSX.Element)
+  dropdownMenuProps?: ComponentProps<typeof DropdownMenu>
 }
 
 export function Menu(props: MenuProps) {
   const propsWithDefaults = {
     triggerIcon: "more_vert" as string,
     triggerButtonSize: "md" as IconButtonSize,
+    modal: true,
     ...props,
   }
 
-  const [local] = splitProps(propsWithDefaults, [
+  const [local, rest] = splitProps(propsWithDefaults, [
     "Trigger",
     "triggerIcon",
     "triggerButtonSize",
@@ -36,7 +40,10 @@ export function Menu(props: MenuProps) {
     "items",
     "Header",
     "Footer",
+    "dropdownMenuProps",
   ])
+
+  const triggerClass = cx("menu-trigger", local.triggerButtonSize, local.triggerClass)
 
   const renderTrigger = () => {
     if (isNotEmpty(local.Trigger)) {
@@ -48,10 +55,7 @@ export function Menu(props: MenuProps) {
     }
 
     return (
-      <IconButton
-        icon={local.triggerIcon}
-        size={local.triggerButtonSize}
-      />
+      <Icon name={local.triggerIcon} />
     )
   }
 
@@ -76,8 +80,8 @@ export function Menu(props: MenuProps) {
   }
 
   return (
-    <DropdownMenu>
-      <DropdownMenu.Trigger class={cx("menu-trigger", local.triggerClass)}>
+    <DropdownMenu {...local.dropdownMenuProps}>
+      <DropdownMenu.Trigger class={triggerClass}>
         {renderTrigger()}
       </DropdownMenu.Trigger>
       <DropdownMenu.Portal>
@@ -91,8 +95,10 @@ export function Menu(props: MenuProps) {
             {item => (
               <DropdownMenu.Item
                 class="menu-item"
-                onClick={item.onClick}>
-                {item.icon ? <Icon name={item.icon} /> : null}
+                textValue={item.label}
+                onSelect={item.onClick}
+                {...item.menuItemProps}>
+                {item.iconNode || (item.icon ? <Icon name={item.icon} /> : null)}
                 <span class="menu-item-label">{item.label}</span>
               </DropdownMenu.Item>
             )}

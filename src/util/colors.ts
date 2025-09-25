@@ -16,7 +16,9 @@ export function generateRGBColorVarsFromHexVars() {
   const rgbColorVarsStyleTagID = "rgb-color-vars"
 
   withWindow(() => {
-    if (document.getElementById(rgbColorVarsStyleTagID)) return
+    if (document.getElementById(rgbColorVarsStyleTagID)) {
+      return
+    }
 
     const stylesheets = Array.from(document.styleSheets)
     const colorVars = {}
@@ -55,7 +57,9 @@ export function generateRGBColorVarsFromHexVars() {
     const rgbVars = []
 
     Object.entries(colorVars).forEach(([key, value]) => {
-      if (typeof value !== "string") return
+      if (typeof value !== "string") {
+        return
+      }
 
       let resolved = value
 
@@ -68,7 +72,9 @@ export function generateRGBColorVarsFromHexVars() {
       }
 
       const hexMatch = resolved.match(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i)
-      if (!hexMatch) return
+      if (!hexMatch) {
+        return
+      }
 
       const hex = hexMatch[0]
       let r, g, b

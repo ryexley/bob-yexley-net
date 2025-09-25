@@ -2,7 +2,7 @@ import { tr } from "@/i18n"
 import { isEmpty, isNotEmpty } from "@/util"
 export const inBrowser = typeof window !== "undefined"
 
-export function withWindow(fn) {
+export function withWindow(fn, fallbackFn = () => {}) {
   if (
     typeof window !== "undefined" &&
     typeof fn !== "undefined" &&
@@ -10,6 +10,8 @@ export function withWindow(fn) {
   ) {
     return fn(window)
   }
+
+  return fallbackFn()
 }
 
 export function windowTitle(pageTitle: string) {
