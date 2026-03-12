@@ -1,7 +1,8 @@
 import type { Blip as BlipType } from "@/modules/blips/data/schema"
 import { usePreloadRoute } from "@solidjs/router"
-import { createSignal, onMount, splitProps, Show } from "solid-js"
+import { createSignal, For, onMount, splitProps, Show } from "solid-js"
 // import { Icon } from "@/components/icon"
+import { Hashtag } from "@/components/icon"
 import { MarkdownRenderer as Markdown } from "@/components/markdown/renderer"
 import { Button } from "@/components/button"
 import {
@@ -16,16 +17,20 @@ import {
 import { Stack } from "@/components/stack"
 import { BlipActions } from "@/modules/blips/components/blip-actions"
 import { formatBlipTimestamp } from "@/modules/blips/util"
+import { ptr } from "@/i18n"
 import { pages } from "@/urls"
 import { clsx as cx } from "@/util"
 import "./blip.css"
 
+const tr = ptr("blips.components.blip")
+
 export function Blip(props: {
   blip: BlipType
+  tags?: string[]
   onEdit?: (blipId: string) => void
   onView?: (blipId: string) => void
 }) {
-  const [local] = splitProps(props, ["blip", "onEdit", "onView"])
+  const [local] = splitProps(props, ["blip", "tags", "onEdit", "onView"])
   const preloadRoute = usePreloadRoute()
   let contentRef: HTMLDivElement | undefined
   const [isClipped, setIsClipped] = createSignal(false)
@@ -105,36 +110,24 @@ export function Blip(props: {
                     openDetails()
                   }}
                   class="read-more"
-                  label="Read more"
+                  label={tr("actions.readMore")}
                   iconRight="arrow_forward"
                 />
               </Show>
             </div>
           </div>
-          {/*
-          <footer>
-            <div class="tags">
-              <Hashtag size="0.85rem" />
-              <ul class="tag-list">
-                <li class="tag">
-                  <a href="#">faith</a>
-                </li>
-                <li class="tag">
-                  <a href="#">life</a>
-                </li>
-                <li class="tag">
-                  <a href="#">football</a>
-                </li>
-                <li class="tag">
-                  <a href="#">javascript</a>
-                </li>
-              </ul>
-            </div>
-            <div class="comments">
-              <Icon name="forum" />
-            </div>
-          </footer>
-          */}
+          <Show when={(local.tags?.length ?? 0) > 0}>
+            <footer>
+              <div class="tags">
+                <Hashtag size="0.85rem" />
+                <ul class="tag-list">
+                  <For each={local.tags}>
+                    {tag => <li class="tag">{tag}</li>}
+                  </For>
+                </ul>
+              </div>
+            </footer>
+          </Show>
         </div>
         <BlipActions
           blip={local.blip}
@@ -151,13 +144,25 @@ export function Blip(props: {
             </DialogTitle>
             <DialogCloseButton
               class="blip-readmore-close"
-              aria-label="Close dialog"
+              aria-label={tr("readMoreDialog.closeAriaLabel")}
             />
           </DialogHeader>
           <DialogBody class="blip-readmore-content">
             <DialogDescription>
               <Markdown content={local.blip.content} />
             </DialogDescription>
+            <Show when={(local.tags?.length ?? 0) > 0}>
+              <footer class="blip-readmore-footer">
+                <div class="tags">
+                  <Hashtag size="0.85rem" />
+                  <ul class="tag-list">
+                    <For each={local.tags}>
+                      {tag => <li class="tag">{tag}</li>}
+                    </For>
+                  </ul>
+                </div>
+              </footer>
+            </Show>
           </DialogBody>
         </Dialog>
       </Stack>

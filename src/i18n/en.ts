@@ -106,7 +106,16 @@ export const en = {
       },
     },
     components: {
+      blip: {
+        actions: {
+          readMore: "Read more",
+        },
+        readMoreDialog: {
+          closeAriaLabel: "Close dialog",
+        },
+      },
       blipActions: {
+        toolbarAriaLabel: "Blip actions",
         confirmDelete: {
           title: "Delete blip?",
           prompt:
@@ -120,6 +129,10 @@ export const en = {
       },
       blipEditor: {
         placeholder: "What's on your mind?",
+        tags: {
+          ariaLabel: "Blip tags",
+          placeholder: "tags...",
+        },
         draftPicker: {
           new: "New Blip",
           untitled: "Untitled draft",
@@ -132,6 +145,7 @@ export const en = {
           error: "Error saving",
         },
         actions: {
+          close: "close",
           save: "Save",
           publish: "Publish",
           unpublish: "Unpublish",

@@ -1,5 +1,5 @@
 import type { Blip as BlipType } from "@/modules/blips/data/schema"
-import { createSignal, For, Show, splitProps } from "solid-js"
+import { createSignal, For, splitProps } from "solid-js"
 import { Blip } from "@/modules/blips/components/blip"
 import { BlipEditor } from "@/modules/blips/components/blip-editor"
 import "./blips.css"
@@ -29,26 +29,24 @@ export function Blips(props: {
           {blip => (
             <Blip
               blip={blip}
+              tags={blip.tags ?? []}
               onEdit={handleEdit}
               onView={local.onView}
             />
           )}
         </For>
       </ul>
-      <Show when={showBlipEditor()}>
-        <BlipEditor
-          open={showBlipEditor()}
-          blipId={selectedBlipId()}
-          onPanelOpenChange={open => {
-            const nextOpen = !open
-            setShowBlipEditor(nextOpen)
-            if (!nextOpen) {
-              setSelectedBlipId(null)
-            }
-          }}
-          close={closeEditor}
-        />
-      </Show>
+      <BlipEditor
+        open={showBlipEditor()}
+        blipId={selectedBlipId()}
+        onPanelOpenChange={open => {
+          setShowBlipEditor(open)
+          if (!open) {
+            setSelectedBlipId(null)
+          }
+        }}
+        close={closeEditor}
+      />
     </>
   )
 }

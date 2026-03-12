@@ -79,7 +79,7 @@ export function BlipActions(props: BlipActionsProps) {
           class="blip-actions"
           gap="0.25rem"
           role="toolbar"
-          aria-label="Blip actions">
+          aria-label={tr("toolbarAriaLabel")}>
           {/* <DeleteAction blip={local.blip} /> */}
           <IconButton
             size="xs"

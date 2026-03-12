@@ -15,6 +15,7 @@ export const blipSchema = z
       "rejected",
       "flagged",
     ]),
+    tags: z.array(z.string()).optional(),
     created_at: z.string(),
     updated_at: z.string(),
   })

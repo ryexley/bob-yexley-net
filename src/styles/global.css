@@ -134,6 +134,24 @@ p {
   margin-bottom: 1rem;
 }
 
+blockquote {
+  font-style: italic;
+  padding-left: 1rem;
+  position: relative;
+
+  &::before {
+    background-color: var(--colors-info);
+    border-radius: 999rem;
+    content: "";
+    display: block;
+    height: 100%;
+    left: 0;
+    position: absolute;
+    top: 0;
+    width: 0.25rem;
+  }
+}
+
 main {
   /* isolation: isolate; */
   /* padding: 1rem 1rem 5rem 1rem; */

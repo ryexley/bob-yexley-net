@@ -53,6 +53,36 @@ a.blip-detail-back-link {
   font-size: 1rem;
 }
 
+.blip-detail-footer {
+  border-top: 1px solid var(--colors-mono-04);
+  margin-top: 0.75rem;
+  padding-top: 0.5rem;
+
+  .tags {
+    align-items: center;
+    display: flex;
+    gap: 0.25rem;
+    justify-content: start;
+
+    .tag-list {
+      align-items: center;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.25rem;
+      justify-content: start;
+      list-style: none;
+      margin: 0;
+      padding: 0;
+
+      .tag {
+        color: var(--colors-mono-08);
+        font-size: 0.75rem;
+        font-style: italic;
+      }
+    }
+  }
+}
+
 .blip-detail-status {
   color: var(--colors-mono-09);
 }

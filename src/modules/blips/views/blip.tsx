@@ -1,7 +1,7 @@
 import { createAsync, useLocation, useNavigate, useParams } from "@solidjs/router"
 import { Meta, Title } from "@solidjs/meta"
-import { createEffect, Show } from "solid-js"
-import { Icon } from "@/components/icon"
+import { createEffect, For, Show } from "solid-js"
+import { Hashtag, Icon } from "@/components/icon"
 import { PageSection } from "@/modules/home/components/page-section"
 import { MarkdownRenderer as Markdown } from "@/components/markdown/renderer"
 import { getBlip } from "@/modules/blips/data"
@@ -87,6 +87,18 @@ export function BlipView() {
                   <div class="blip-detail-content">
                     <Markdown content={data().content ?? ""} />
                   </div>
+                  <Show when={(data().tags?.length ?? 0) > 0}>
+                    <footer class="blip-detail-footer">
+                      <div class="tags">
+                        <Hashtag size="0.85rem" />
+                        <ul class="tag-list">
+                          <For each={data().tags}>
+                            {tag => <li class="tag">{tag}</li>}
+                          </For>
+                        </ul>
+                      </div>
+                    </footer>
+                  </Show>
                 </article>
               )}
             </Show>

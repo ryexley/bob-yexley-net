@@ -1,4 +1,4 @@
-import { createMemo, createSignal } from "solid-js"
+import { createEffect, createMemo, createSignal } from "solid-js"
 import { useNavigate } from "@solidjs/router"
 import { Title } from "@solidjs/meta"
 import { supabase } from "~/lib/vendor/supabase"
@@ -7,15 +7,18 @@ import { Input } from "@/components/input"
 import { Stack } from "@/components/stack"
 import { Button } from "@/components/button"
 import { Callout } from "@/components/callout"
+import { useAuth } from "@/context/auth-context"
 import { ptr } from "@/i18n"
 import { pages } from "@/urls"
 import { generateRandomRadialGradients } from "@/util/image"
 import { isEmpty, isNotEmpty } from "@/util"
+import "./login.css"
 
 const tr = ptr("auth.views.login")
 
 export function Login() {
   const navigate = useNavigate()
+  const { isAuthenticated, loading } = useAuth()
   const pageBackground = createMemo(() => ({
     background: generateRandomRadialGradients(),
   }))
@@ -36,6 +39,17 @@ export function Login() {
       ? tr("submitButton.disabled.label")
       : tr("submitButton.enabled.label")
   })
+  const showLoginPage = createMemo(() => {
+    return !loading() && !isAuthenticated()
+  })
+
+  createEffect(() => {
+    if (loading() || !isAuthenticated()) {
+      return
+    }
+
+    navigate(pages.home, { replace: true })
+  })
 
   const handleSubmit = async (e: Event) => {
     e?.preventDefault()
@@ -51,7 +65,7 @@ export function Login() {
 
     setSubmitting(true)
     try {
-      const { data: user, error } = await supabase.login(email(), password())
+      const { error } = await supabase.login(email(), password())
 
       if (isNotEmpty(error)) {
         throw error
@@ -68,63 +82,65 @@ export function Login() {
   return (
     <>
       <Title>{tr("pageTitle")}</Title>
-      <main
-        class="h-screen w-screen flex items-center justify-center"
-        style={pageBackground()}>
-        <Stack
-          gap="1rem"
-          class="items-center w-[24rem]">
-          <Card
-            icon="shield_lock"
-            title={tr("loginFormCardTitle")}
-            subtitle={tr("loginFormCardDescription")}
-            class="p-8 bg-black/25 backdrop-blur-md">
-            {isNotEmpty(error()) ? (
-              <Callout
-                variant="error"
-                content={error()}
-                class="mb-2"
-              />
-            ) : null}
-            <form
-              onSubmit={handleSubmit}
-              novalidate>
-              <Stack fullWidth>
-                <Input
-                  label={tr("emailFieldLabel")}
-                  type="email"
-                  autocomplete="username"
-                  placeholder={tr("emailFieldPlaceholder")}
-                  value={email()}
-                  onInput={e => setEmail(e.currentTarget.value)}
+      {showLoginPage() ? (
+        <main
+          class="login-page"
+          style={pageBackground()}>
+          <Stack
+            gap="1rem"
+            class="login-shell">
+            <Card
+              icon="shield_lock"
+              title={tr("loginFormCardTitle")}
+              subtitle={tr("loginFormCardDescription")}
+              class="login-card">
+              {isNotEmpty(error()) ? (
+                <Callout
+                  variant="error"
+                  content={error()}
+                  class="login-error"
                 />
-                <Input
-                  label={tr("passwordFieldLabel")}
-                  type="password"
-                  autocomplete="current-password"
-                  placeholder={tr("passwordFieldPlaceholder")}
-                  value={password()}
-                  onInput={e => setPassword(e.currentTarget.value)}
-                  inputClass="tracking-[0.25rem]"
-                />
-                <Stack class="mt-4 w-full">
-                  <Button
-                    type="submit"
-                    disabled={disableSubmitButton()}
-                    class="w-full"
-                    label={submitButtonLabel()}
+              ) : null}
+              <form
+                onSubmit={handleSubmit}
+                novalidate>
+                <Stack fullWidth>
+                  <Input
+                    label={tr("emailFieldLabel")}
+                    type="email"
+                    autocomplete="username"
+                    placeholder={tr("emailFieldPlaceholder")}
+                    value={email()}
+                    onInput={e => setEmail(e.currentTarget.value)}
                   />
+                  <Input
+                    label={tr("passwordFieldLabel")}
+                    type="password"
+                    autocomplete="current-password"
+                    placeholder={tr("passwordFieldPlaceholder")}
+                    value={password()}
+                    onInput={e => setPassword(e.currentTarget.value)}
+                    inputClass="login-password-input"
+                  />
+                  <Stack class="login-form-actions">
+                    <Button
+                      type="submit"
+                      disabled={disableSubmitButton()}
+                      class="login-submit-button"
+                      label={submitButtonLabel()}
+                    />
+                  </Stack>
                 </Stack>
-              </Stack>
-            </form>
-          </Card>
-          <a
-            href={pages.home}
-            class="text-sm text-[var(--colors-mono-09)]! hover:text-[var(--colors-links)]! transition-[var(--transitions-primary)] flex p-2!">
-            {tr("returnHomeLink")}
-          </a>
-        </Stack>
-      </main>
+              </form>
+            </Card>
+            <a
+              href={pages.home}
+              class="login-home-link">
+              {tr("returnHomeLink")}
+            </a>
+          </Stack>
+        </main>
+      ) : null}
     </>
   )
 }

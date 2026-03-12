@@ -60,13 +60,11 @@ export function UserMenu() {
         ]}
         Header={MenuHeader}
       />
-      <Show when={showNewBlipDrawer()}>
-        <BlipEditor
-          open={showNewBlipDrawer()}
-          onPanelOpenChange={open => setShowNewBlipDrawer(!open)}
-          close={() => setShowNewBlipDrawer(false)}
-        />
-      </Show>
+      <BlipEditor
+        open={showNewBlipDrawer()}
+        onPanelOpenChange={open => setShowNewBlipDrawer(open)}
+        close={() => setShowNewBlipDrawer(false)}
+      />
     </Show>
   )
 }

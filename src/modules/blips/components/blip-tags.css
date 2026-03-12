@@ -1,0 +1,49 @@
+.blip-tags {
+  width: 100%;
+
+  .combobox-control {
+    border: 0.0625rem solid var(--colors-mono-04);
+    border-radius: 0.5rem;
+
+    &:focus-within {
+      border: 0.0625rem solid var(--colors-mono-04);
+      box-shadow: none;
+      z-index: auto;
+    }
+  }
+
+  .combobox-input {
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+
+    &::placeholder {
+      font-size: 0.875rem;
+    }
+  }
+}
+
+.blip-tags-content {
+  border: 0.0625rem solid var(--colors-mono-04);
+  border-radius: 0.5rem;
+  z-index: 60;
+
+  .combobox-item {
+    &[data-selected] {
+      background-color: var(--colors-mono-03);
+      color: var(--colors-info);
+
+      .icon {
+        color: var(--colors-info);
+      }
+    }
+
+    &[data-selected][data-highlighted] {
+      background-color: var(--colors-mono-03);
+      color: var(--colors-info);
+
+      .icon {
+        color: var(--colors-info);
+      }
+    }
+  }
+}

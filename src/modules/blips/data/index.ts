@@ -1,3 +1,5 @@
 export * from "./schema"
 export * from "./queries"
 export * from "./store"
+export * from "./tags-schema"
+export * from "./tags-store"

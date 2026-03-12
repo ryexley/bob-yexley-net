@@ -28,6 +28,7 @@ export interface DrawerProps {
   open?: boolean
   onOpenChange?: (open: boolean) => void
   class?: string
+  contentRef?: (element: HTMLElement) => void
   drawerProps?: Omit<ComponentProps<typeof DrawerPrimitive>, "children">
 
   showTrigger?: boolean
@@ -41,6 +42,7 @@ export interface DrawerProps {
   closeClass?: string
   closeIcon?: string
   closeIconClass?: string
+  closeAriaLabel?: string
 
   Header?: ValidComponent
   headerClass?: string
@@ -74,6 +76,7 @@ export function Drawer(props: DrawerProps) {
       triggerIcon: resolveTriggerIcon(props.side || DrawerPosition.RIGHT),
       showClose: true,
       closeIcon: "close",
+      closeAriaLabel: "Close",
     },
     props,
   )
@@ -83,6 +86,7 @@ export function Drawer(props: DrawerProps) {
     "open",
     "onOpenChange",
     "class",
+    "contentRef",
     "drawerProps",
     "showTrigger",
     "Trigger",
@@ -94,6 +98,7 @@ export function Drawer(props: DrawerProps) {
     "closeClass",
     "closeIcon",
     "closeIconClass",
+    "closeAriaLabel",
     "Header",
     "headerClass",
     "title",
@@ -161,7 +166,9 @@ export function Drawer(props: DrawerProps) {
     if (local.Close) {
       const CloseComponent = local.Close as any
       return (
-        <DrawerPrimitive.Close class={cx("drawer-close", local.closeClass)}>
+        <DrawerPrimitive.Close
+          aria-label={local.closeAriaLabel}
+          class={cx("drawer-close", local.closeClass)}>
           <CloseComponent />
         </DrawerPrimitive.Close>
       )
@@ -170,6 +177,7 @@ export function Drawer(props: DrawerProps) {
     if (local.closeIcon) {
       return (
         <DrawerPrimitive.Close
+          aria-label={local.closeAriaLabel}
           class={cx("drawer-close drawer-close--icon", local.closeClass)}>
           <Icon
             name={local.closeIcon}
@@ -221,6 +229,7 @@ export function Drawer(props: DrawerProps) {
         <DrawerPrimitive.Overlay />
         <DrawerPrimitive.Content
           as="aside"
+          ref={element => local.contentRef?.(element as HTMLElement)}
           class={cx(
             "drawer-content",
             local.side,

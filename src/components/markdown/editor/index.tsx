@@ -21,6 +21,7 @@ import { emoji } from "@milkdown/plugin-emoji"
 import { history } from "@milkdown/prose/history"
 import { clsx as cx, isEmpty } from "@/util"
 import { withWindow } from "@/util/browser"
+import { Stack } from "@/components/stack"
 import { placeholder } from "./plugins/placeholder"
 import {
   applyFormat,
@@ -49,6 +50,7 @@ interface MarkdownEditorProps {
   statusFading?: boolean
   statusActions?: Component<any>
   statusContext?: any
+  BelowEditor?: Component
 }
 
 const propDefaults = {
@@ -78,6 +80,7 @@ export function MarkdownEditor(props: MarkdownEditorProps) {
     "statusFading",
     "statusActions",
     "statusContext",
+    "BelowEditor",
   ])
 
   let editorRef: HTMLDivElement | undefined
@@ -228,37 +231,40 @@ export function MarkdownEditor(props: MarkdownEditorProps) {
   return (
     <div class={cx("markdown-editor", local.class)}>
       <Show when={local.Header}>{local.Header?.({})}</Show>
-      <div
-        class="editor-container"
-        {...rest}>
-        <Toolbar
-          visible={toolbarVisible()}
-          activeFormats={activeFormats()}
-          disabledFormats={disabledFormats()}
-          selectedText={selectedText()}
-          selectedLinkHref={selectedLinkHref()}
-          selectedLinkRangeFrom={selectedLinkRangeFrom()}
-          selectedLinkRangeTo={selectedLinkRangeTo()}
-          linkEditorRequestNonce={linkEditorRequestNonce()}
-          onRequestEditorFocus={focusEditor}
-          onFormatApply={handleApplyFormat}
-        />
+      <Stack gap="0.5rem">
         <div
-          ref={editorRef}
-          data-placeholder={local.placeholder}
-        />
-      </div>
-      {local.showStatusBar ? (
-        <StatusBar
-          onToggleToolbar={handleToggleToolbar}
-          statusText={local.statusText}
-          statusIcon={local.statusIcon}
-          showStatus={local.showStatus}
-          statusFading={local.statusFading}
-          actions={local.statusActions}
-          context={local.statusContext}
-        />
-      ) : null}
+          class="editor-container"
+          {...rest}>
+          <Toolbar
+            visible={toolbarVisible()}
+            activeFormats={activeFormats()}
+            disabledFormats={disabledFormats()}
+            selectedText={selectedText()}
+            selectedLinkHref={selectedLinkHref()}
+            selectedLinkRangeFrom={selectedLinkRangeFrom()}
+            selectedLinkRangeTo={selectedLinkRangeTo()}
+            linkEditorRequestNonce={linkEditorRequestNonce()}
+            onRequestEditorFocus={focusEditor}
+            onFormatApply={handleApplyFormat}
+          />
+          <div
+            ref={editorRef}
+            data-placeholder={local.placeholder}
+          />
+        </div>
+        <Show when={local.BelowEditor}>{local.BelowEditor?.({})}</Show>
+        {local.showStatusBar ? (
+          <StatusBar
+            onToggleToolbar={handleToggleToolbar}
+            statusText={local.statusText}
+            statusIcon={local.statusIcon}
+            showStatus={local.showStatus}
+            statusFading={local.statusFading}
+            actions={local.statusActions}
+            context={local.statusContext}
+          />
+        ) : null}
+      </Stack>
     </div>
   )
 }
