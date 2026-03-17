@@ -78,6 +78,15 @@ a.blip-detail-back-link {
         color: var(--colors-mono-08);
         font-size: 0.75rem;
         font-style: italic;
+
+        a {
+          color: var(--colors-mono-08);
+          transition: var(--transitions-primary);
+
+          &:hover {
+            color: var(--colors-links);
+          }
+        }
       }
     }
   }

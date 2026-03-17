@@ -1,5 +1,5 @@
 import type { Blip as BlipType } from "@/modules/blips/data/schema"
-import { usePreloadRoute } from "@solidjs/router"
+import { A, usePreloadRoute } from "@solidjs/router"
 import { createSignal, For, onMount, splitProps, Show } from "solid-js"
 // import { Icon } from "@/components/icon"
 import { Hashtag } from "@/components/icon"
@@ -122,7 +122,11 @@ export function Blip(props: {
                 <Hashtag size="0.85rem" />
                 <ul class="tag-list">
                   <For each={local.tags}>
-                    {tag => <li class="tag">{tag}</li>}
+                    {tag => (
+                      <li class="tag">
+                        <A href={pages.blipsTag(tag)}>{tag}</A>
+                      </li>
+                    )}
                   </For>
                 </ul>
               </div>
@@ -157,7 +161,11 @@ export function Blip(props: {
                   <Hashtag size="0.85rem" />
                   <ul class="tag-list">
                     <For each={local.tags}>
-                      {tag => <li class="tag">{tag}</li>}
+                      {tag => (
+                        <li class="tag">
+                          <A href={pages.blipsTag(tag)}>{tag}</A>
+                        </li>
+                      )}
                     </For>
                   </ul>
                 </div>

@@ -41,6 +41,34 @@ export const getBlips = query(async (limit: number = 20, offset: number = 0) => 
   return mapBlipsWithTags((data ?? []) as BlipWithTagRows[])
 }, "blips")
 
+export const getBlipsByTag = query(async (
+  tag: string,
+  limit: number = 20,
+  offset: number = 0,
+) => {
+  "use server"
+
+  if (!tag) {
+    return []
+  }
+
+  const { getClient } = await import("@/lib/vendor/supabase")
+  const supabase = getClient()
+
+  const { data, error } = await supabase
+    .from("blips")
+    .select("*, matching_blip_tags:blip_tags!inner(tag:tags!inner(name)), blip_tags(tag:tags(name))")
+    .eq("matching_blip_tags.tag.name", tag)
+    .order("created_at", { ascending: false })
+    .range(offset, offset + limit - 1)
+
+  if (error) {
+    throw error
+  }
+
+  return mapBlipsWithTags((data ?? []) as BlipWithTagRows[])
+}, "blips-by-tag")
+
 export const getBlip = query(async (id: string) => {
   "use server"
 

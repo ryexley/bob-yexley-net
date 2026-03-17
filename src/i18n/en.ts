@@ -104,6 +104,18 @@ export const en = {
           backToBlips: "blips",
         },
       },
+      tag: {
+        pageTitle: "Blips tagged {tag}",
+        metaDescription: "Blips tagged {tag}",
+        loading: "Loading blips tagged {tag}...",
+        empty: "There are no blips that use this tag.",
+        paging: {
+          actions: {
+            showMore: "Show more",
+            loading: "Loading more...",
+          },
+        },
+      },
     },
     components: {
       blip: {

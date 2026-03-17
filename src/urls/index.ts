@@ -3,6 +3,7 @@ export const pages = {
   signals: "/signals",
   blips: "/blips",
   blip: (id: string) => `/blips/${id}`,
+  blipsTag: (tag: string) => `/blips/tag/${tag}`,
   resume: "/resume/",
   login: "/a/li",
   logout: "/a/lo",

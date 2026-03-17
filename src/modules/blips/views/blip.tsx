@@ -1,4 +1,4 @@
-import { createAsync, useLocation, useNavigate, useParams } from "@solidjs/router"
+import { A, createAsync, useLocation, useNavigate, useParams } from "@solidjs/router"
 import { Meta, Title } from "@solidjs/meta"
 import { createEffect, For, Show } from "solid-js"
 import { Hashtag, Icon } from "@/components/icon"
@@ -93,7 +93,11 @@ export function BlipView() {
                         <Hashtag size="0.85rem" />
                         <ul class="tag-list">
                           <For each={data().tags}>
-                            {tag => <li class="tag">{tag}</li>}
+                            {tag => (
+                              <li class="tag">
+                                <A href={pages.blipsTag(tag)}>{tag}</A>
+                              </li>
+                            )}
                           </For>
                         </ul>
                       </div>

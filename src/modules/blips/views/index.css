@@ -47,3 +47,11 @@
     color: var(--colors-links);
   }
 }
+
+.blips-empty-state {
+  color: var(--colors-mono-10);
+  margin: 0 auto;
+  max-width: 60rem;
+  padding: 1.5rem 0;
+  text-align: center;
+}
