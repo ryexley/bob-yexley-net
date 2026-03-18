@@ -1,5 +1,5 @@
 import type { Blip } from "@/modules/blips/data/schema"
-import { createMemo, createSignal, splitProps, Show } from "solid-js"
+import { createMemo, createSignal, splitProps, Show, type JSX } from "solid-js"
 import { useConfirm } from "@/components/confirm-dialog"
 import { useAuth } from "@/context/auth-context"
 import { useSupabase } from "@/context/services-context"
@@ -13,12 +13,13 @@ import "./blip-actions.css"
 interface BlipActionsProps {
   blip?: Blip
   onEdit?: (blipId: string) => void
+  toolbarExtras?: JSX.Element
 }
 
 const tr = ptr("blips.components.blipActions")
 
 export function BlipActions(props: BlipActionsProps) {
-  const [local] = splitProps(props, ["blip", "onEdit"])
+  const [local] = splitProps(props, ["blip", "onEdit", "toolbarExtras"])
   const confirm = useConfirm()
   const [isTogglingPublish, setIsTogglingPublish] = createSignal(false)
 
@@ -74,6 +75,7 @@ export function BlipActions(props: BlipActionsProps) {
       <Show when={showToolbar()}>
         <Stack
           orient="row"
+          align="center"
           justify="end"
           fullWidth
           class="blip-actions"
@@ -137,6 +139,7 @@ export function BlipActions(props: BlipActionsProps) {
               local.onEdit?.(blipId)
             }}
           />
+          {local.toolbarExtras}
         </Stack>
       </Show>
     </>

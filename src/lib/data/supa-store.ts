@@ -742,7 +742,9 @@ export function supaStore<T extends BaseEntity>(
           updateEntitiesState(current => {
             const existingIndex = current.findIndex(e => e.id === payload.new.id)
             if (existingIndex >= 0) {
-              return current.map(e => (e.id === payload.new.id ? payload.new : e))
+              return current.map(e =>
+                e.id === payload.new.id ? ({ ...e, ...payload.new } as T) : e,
+              )
             }
 
             return [payload.new, ...current]
@@ -755,7 +757,9 @@ export function supaStore<T extends BaseEntity>(
       UPDATE: (payload: { new: T }): void => {
         try {
           updateEntitiesState(current =>
-            current.map(e => (e.id === payload.new.id ? payload.new : e)),
+            current.map(e =>
+              e.id === payload.new.id ? ({ ...e, ...payload.new } as T) : e,
+            ),
           )
         } catch (err) {
           console.error(`Error handling realtime UPDATE for ${tableName}:`, err)

@@ -5,8 +5,9 @@ import { Button } from "@/components/button"
 import { LoadingSpinner } from "@/components/icon"
 import { PageSection } from "@/modules/home/components/page-section"
 import { Blips } from "@/modules/blips/components/blips"
-import { blipStore, getBlips } from "@/modules/blips/data"
+import { BLIP_TYPES, blipStore, getBlips } from "@/modules/blips/data"
 import { useSupabase } from "@/context/services-context"
+import { useAuth } from "@/context/auth-context"
 import { ptr } from "@/i18n"
 import { pages } from "@/urls"
 import { windowTitle, withWindow } from "@/util/browser"
@@ -19,6 +20,7 @@ export function BlipsView() {
   const initialBlips = createAsync(() => getBlips(BLIPS_PAGE_SIZE, 0))
   const navigate = useNavigate()
   const supabase = useSupabase()
+  const { isAuthenticated } = useAuth() as any
   const [isLoadingMore, setIsLoadingMore] = createSignal(false)
   const [hasMore, setHasMore] = createSignal(true)
   let showMoreButtonRef: HTMLButtonElement | undefined
@@ -29,8 +31,21 @@ export function BlipsView() {
   } = blipStore(supabase.client, {
     limit: BLIPS_PAGE_SIZE,
   })
+  const rootFeedBlips = createMemo(() =>
+    (blips() ?? []).filter(
+      blip => blip.parent_id === null && blip.blip_type === BLIP_TYPES.ROOT,
+    ),
+  )
+  const visibleRootFeedBlips = createMemo(() => {
+    const allRootFeedBlips = rootFeedBlips() ?? []
+    if (isAuthenticated()) {
+      return allRootFeedBlips
+    }
+
+    return allRootFeedBlips.filter(blip => blip.published)
+  })
   const hasInitialData = createMemo(() => initialBlips() !== undefined)
-  const hasBlipItems = createMemo(() => (blips()?.length ?? 0) > 0)
+  const hasBlipItems = createMemo(() => (visibleRootFeedBlips()?.length ?? 0) > 0)
 
   createEffect(() => {
     const ssrData = initialBlips()
@@ -51,7 +66,8 @@ export function BlipsView() {
     setIsLoadingMore(true)
     try {
       const currentBlips = blips() ?? []
-      const nextBlips = await getBlips(BLIPS_PAGE_SIZE, currentBlips.length)
+      const currentRootBlips = rootFeedBlips() ?? []
+      const nextBlips = await getBlips(BLIPS_PAGE_SIZE, currentRootBlips.length)
 
       const mergedBlips = [...currentBlips]
       const existingIds = new Set(currentBlips.map(blip => blip.id))
@@ -108,11 +124,11 @@ export function BlipsView() {
               </div>
             }>
             <Blips
-              blips={blips() ?? []}
+              blips={visibleRootFeedBlips() ?? []}
               onView={handleViewBlip}
             />
           </Show>
-          <Show when={hasInitialData() && hasBlipItems() && hasMore()}>
+          <Show when={hasInitialData() && hasMore()}>
             <div class="w-full flex justify-center mt-4">
               <Button
                 ref={(el: HTMLButtonElement) => {

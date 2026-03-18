@@ -1,5 +1,13 @@
 import { z } from "zod"
 
+export const BLIP_TYPES = {
+  ROOT: "root",
+  UPDATE: "update",
+} as const
+
+export const blipTypeSchema = z.enum([BLIP_TYPES.ROOT, BLIP_TYPES.UPDATE])
+export type BlipType = z.infer<typeof blipTypeSchema>
+
 export const blipSchema = z
   .object({
     id: z.string(),
@@ -7,6 +15,8 @@ export const blipSchema = z
     content: z.string().nullable(), // allow null for drafts
     user_id: z.string().nullable(),
     parent_id: z.string().nullable(),
+    blip_type: blipTypeSchema,
+    updates_count: z.number().int().nonnegative().optional(),
     published: z.boolean(),
     moderation_status: z.enum([
       "auto-approved",

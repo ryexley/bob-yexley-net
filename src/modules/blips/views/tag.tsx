@@ -6,6 +6,7 @@ import { LoadingSpinner } from "@/components/icon"
 import { Blips } from "@/modules/blips/components/blips"
 import { getBlipsByTag } from "@/modules/blips/data"
 import type { Blip } from "@/modules/blips/data/schema"
+import { useAuth } from "@/context/auth-context"
 import { PageSection } from "@/modules/home/components/page-section"
 import { ptr } from "@/i18n"
 import { pages } from "@/urls"
@@ -18,12 +19,20 @@ const tr = ptr("blips.views.tag")
 export function BlipsTagView() {
   const params = useParams()
   const navigate = useNavigate()
+  const { isAuthenticated } = useAuth() as any
   const initialBlips = createAsync(() => getBlipsByTag(params.tag, BLIPS_PAGE_SIZE, 0))
   const [blips, setBlips] = createSignal<Blip[]>([])
   const [isLoadingMore, setIsLoadingMore] = createSignal(false)
   const [hasMore, setHasMore] = createSignal(true)
   const hasInitialData = createMemo(() => initialBlips() !== undefined)
-  const hasBlipItems = createMemo(() => blips().length > 0)
+  const visibleBlips = createMemo(() => {
+    const allBlips = blips()
+    if (isAuthenticated()) {
+      return allBlips
+    }
+    return allBlips.filter(blip => blip.published)
+  })
+  const hasBlipItems = createMemo(() => visibleBlips().length > 0)
   let showMoreButtonRef: HTMLButtonElement | undefined
 
   createEffect(() => {
@@ -103,15 +112,17 @@ export function BlipsTagView() {
             <Show
               when={hasBlipItems()}
               fallback={
-                <p class="blips-empty-state">{tr("empty", { tag: params.tag })}</p>
+                <Show when={!hasMore()}>
+                  <p class="blips-empty-state">{tr("empty", { tag: params.tag })}</p>
+                </Show>
               }>
               <Blips
-                blips={blips()}
+                blips={visibleBlips()}
                 onView={handleViewBlip}
               />
             </Show>
           </Show>
-          <Show when={hasInitialData() && hasBlipItems() && hasMore()}>
+          <Show when={hasInitialData() && hasMore()}>
             <div class="w-full flex justify-center mt-4">
               <Button
                 ref={(el: HTMLButtonElement) => {

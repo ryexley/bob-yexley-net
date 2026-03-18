@@ -3,6 +3,7 @@ import { Router } from "@solidjs/router"
 import { FileRoutes } from "@solidjs/start/router"
 import { onMount, Suspense } from "solid-js"
 import { ConfirmationProvider } from "@/components/confirm-dialog"
+import { NotificationProvider } from "@/components/notification"
 import { AuthProvider } from "@/context/auth-context"
 import { ServicesProvider } from "@/context/services-context"
 import { ViewportProvider } from "@/context/viewport"
@@ -29,9 +30,11 @@ export default function App() {
                   locale="en"
                   messages={messages}>
                   <ViewportProvider>
-                    <ConfirmationProvider>
-                      <MainLayout>{props.children}</MainLayout>
-                    </ConfirmationProvider>
+                    <NotificationProvider>
+                      <ConfirmationProvider>
+                        <MainLayout>{props.children}</MainLayout>
+                      </ConfirmationProvider>
+                    </NotificationProvider>
                   </ViewportProvider>
                 </IntlProvider>
               </AuthProvider>

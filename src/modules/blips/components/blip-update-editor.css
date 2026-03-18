@@ -1,0 +1,92 @@
+.blip-update-editor-shell {
+  display: grid;
+  grid-template-rows: minmax(0, 0fr);
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-0.35rem);
+  transition: var(--transitions-primary);
+  will-change: grid-template-rows, opacity, transform;
+
+  &.is-open {
+    grid-template-rows: minmax(0, 1fr);
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
+  }
+}
+
+.blip-update-editor-shell-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-height: 0;
+  overflow: visible;
+  padding-bottom: 0.75rem;
+}
+
+.blip-update-editor-top-row {
+  align-items: center;
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+}
+
+.blip-update-editor-close {
+  pointer-events: auto;
+  margin: 0;
+
+  .icon {
+    color: var(--colors-mono-08);
+    font-size: 0.95rem;
+  }
+}
+
+.blip-update-editor-mode-label {
+  color: var(--colors-mono-08);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  margin: 0 0.25rem;
+  text-transform: uppercase;
+}
+
+.blip-update-editor {
+  width: 100%;
+}
+
+.blip-update-editor-body {
+  overflow: hidden;
+}
+
+.blip-update-editor-save {
+  .icon {
+    color: var(--colors-resonant-blue);
+  }
+}
+
+.blip-update-editor-delete {
+  .icon {
+    color: rgba(var(--colors-error-rgb), 0.75);
+    font-size: 1.1rem;
+  }
+}
+
+.blip-update-editor-actions {
+  align-items: center;
+  display: flex;
+  gap: 0.25rem;
+}
+
+.blip-update-editor-publish {
+  &.published {
+    .icon {
+      color: var(--colors-success);
+    }
+  }
+
+  &.unpublished {
+    .icon {
+      color: var(--colors-warning);
+    }
+  }
+}

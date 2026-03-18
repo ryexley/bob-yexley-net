@@ -1,0 +1,206 @@
+.notification-region {
+  align-items: flex-end;
+  bottom: max(0.75rem, env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  left: auto;
+  overflow: visible;
+  pointer-events: auto;
+  position: fixed;
+  right: 0.75rem;
+  top: auto;
+  width: min(25rem, calc(100vw - 1.5rem));
+  z-index: 1300;
+}
+
+.notification-list {
+  align-items: stretch;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  list-style: none;
+  margin: 0;
+  overflow: visible;
+  padding: 0;
+  width: 100%;
+}
+
+.notification {
+  align-items: flex-start;
+  background: color-mix(in srgb, var(--colors-mono-02) 92%, transparent);
+  border: 1px solid var(--colors-mono-04);
+  border-radius: 0.5rem;
+  box-shadow: 0 0.5rem 1.5rem rgb(0 0 0 / 0.35);
+  color: var(--colors-mono-11);
+  display: grid;
+  font-size: 0.9rem;
+  gap: 0.6rem;
+  grid-template-columns: auto 1fr auto;
+  line-height: 1.35;
+  padding: 0.7rem 0.75rem;
+  pointer-events: auto;
+  transform-origin: 100% 100%;
+  width: 100%;
+}
+
+.notification[data-opened] {
+  animation: notification-enter 220ms cubic-bezier(0.18, 0.84, 0.35, 1.01);
+}
+
+.notification[data-closed] {
+  animation: notification-exit 180ms ease-in forwards;
+}
+
+.notification[data-swipe="move"] {
+  transform: translateX(var(--kb-toast-swipe-move-x));
+}
+
+.notification[data-swipe="cancel"] {
+  transform: translateX(0);
+  transition: transform 200ms ease-out;
+}
+
+.notification[data-swipe="end"] {
+  animation: notification-swipe-end 120ms ease-out forwards;
+}
+
+.notification-indicator {
+  align-items: center;
+  display: inline-flex;
+  justify-content: center;
+  margin-top: 0.0625rem;
+}
+
+.notification-indicator-icon {
+  color: var(--colors-mono-08);
+  font-size: 1.1rem;
+}
+
+.notification.variant-info .notification-indicator-icon {
+  color: var(--colors-info);
+}
+
+.notification.variant-success .notification-indicator-icon {
+  color: var(--colors-success);
+}
+
+.notification.variant-warn .notification-indicator-icon {
+  color: var(--colors-warning);
+}
+
+.notification.variant-error .notification-indicator-icon {
+  color: var(--colors-error);
+}
+
+.notification-main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.notification.no-title .notification-main {
+  gap: 0;
+}
+
+.notification-title {
+  color: var(--colors-mono-11);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.notification-content {
+  color: var(--colors-mono-10);
+  font-size: 0.85rem;
+  line-height: 1.3;
+  margin: 0;
+}
+
+.notification-actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  justify-content: flex-end;
+  margin-top: 0;
+  width: 100%;
+}
+
+.notification-close {
+  align-items: center;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 0.4rem;
+  color: var(--colors-mono-09);
+  cursor: pointer;
+  display: inline-flex;
+  justify-content: center;
+  margin-left: 0.25rem;
+  margin-top: -0.05rem;
+  padding: 0.1rem;
+  transition: var(--transitions-primary);
+
+  .icon {
+    color: currentcolor;
+    font-size: 0.95rem;
+  }
+
+  &:hover {
+    border-color: var(--colors-mono-05);
+    color: var(--colors-mono-11);
+  }
+}
+
+@media (max-width: 40rem) {
+  .notification-region {
+    bottom: 0;
+    left: 0;
+    right: 0;
+    max-width: none;
+    min-width: 0;
+    width: 100%;
+  }
+
+  .notification-list {
+    padding: 0 0.5rem 0.5rem;
+    width: 100%;
+  }
+
+  .notification {
+    transform-origin: 50% 100%;
+    width: 100%;
+  }
+}
+
+@keyframes notification-enter {
+  from {
+    opacity: 0;
+    transform: translateY(0.35rem) translateX(0.35rem) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) translateX(0) scale(1);
+  }
+}
+
+@keyframes notification-exit {
+  from {
+    opacity: 1;
+    transform: translateY(0) translateX(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(0.25rem) translateX(0.5rem) scale(0.985);
+  }
+}
+
+@keyframes notification-swipe-end {
+  from {
+    opacity: 1;
+    transform: translateX(var(--kb-toast-swipe-end-x));
+  }
+  to {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+}

@@ -24,7 +24,7 @@ import { debounce } from "@/util/debounce"
 import { TIME } from "@/util/enums"
 import { useSupabase } from "@/context/services-context"
 import { useAuth } from "@/context/auth-context"
-import type { Blip } from "@/modules/blips/data/schema"
+import { BLIP_TYPES, type Blip } from "@/modules/blips/data/schema"
 import { blipId, blipStore, tagStore } from "@/modules/blips/data"
 import { slugify } from "@/util/formatters"
 // Blip editor drawer styles are imported by `@/layouts/main/main.css` so they
@@ -308,6 +308,8 @@ export function BlipEditor(props: BlipEditorProps) {
           content: markdown,
           // Persist ownership in cache so draft toolbars render consistently.
           ...(userId ? { user_id: userId } : {}),
+          blip_type: BLIP_TYPES.ROOT,
+          parent_id: null,
         },
         { cacheOnly: true },
       )
@@ -339,6 +341,8 @@ export function BlipEditor(props: BlipEditorProps) {
         id: blipId,
         content: markdown,
         user_id: userId, // Add user_id for RLS
+        blip_type: BLIP_TYPES.ROOT,
+        parent_id: null,
       })
 
       if (result.error) {
@@ -469,6 +473,8 @@ export function BlipEditor(props: BlipEditorProps) {
             id: closingBlipId!,
             content: closingContent,
             ...(userId ? { user_id: userId } : {}),
+            blip_type: BLIP_TYPES.ROOT,
+            parent_id: null,
           },
           { cacheOnly: true },
         )
@@ -479,6 +485,8 @@ export function BlipEditor(props: BlipEditorProps) {
           id: closingBlipId!,
           content: closingContent,
           user_id: userId,
+          blip_type: BLIP_TYPES.ROOT,
+          parent_id: null,
         })
       }
 
@@ -598,8 +606,6 @@ export function BlipEditor(props: BlipEditorProps) {
 
       if (content() !== lastDbSavedContent()) {
         await saveToDatabase(content())
-      } else {
-        void persistTagsToDatabase()
       }
 
       setSaveStatus("saving-db")

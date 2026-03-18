@@ -1,0 +1,258 @@
+.update-blip {
+  background: color-mix(in srgb, var(--colors-mono-02) 55%, transparent);
+  border: 1px solid var(--colors-mono-04);
+  border-radius: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  list-style: none;
+  overflow: hidden;
+  padding: 0.5rem 0.75rem;
+  position: relative;
+  transition:
+    border-color 220ms ease,
+    box-shadow 220ms ease,
+    background-color 220ms ease;
+}
+
+.update-blip--unpublished {
+  background: color-mix(in srgb, var(--colors-mono-02) 27.5%, transparent);
+  border-color: color-mix(in srgb, var(--colors-mono-04) 50%, transparent);
+}
+
+.update-blip--unpublished .update-blip-header,
+.update-blip--unpublished .update-blip-content {
+  opacity: 0.25;
+}
+
+@property --update-blip-border-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
+.update-blip--recent-realtime {
+  border-color: transparent;
+  box-shadow: 0 0 0.625rem rgb(1 162 199 / 0.18);
+}
+
+.update-blip--recent-realtime::before {
+  animation: update-blip-border-flow 4.2s linear infinite;
+  background: conic-gradient(
+    from var(--update-blip-border-angle, 0deg),
+    color-mix(in srgb, var(--colors-cool-blue) 88%, var(--colors-mono-11) 12%) 0deg,
+    color-mix(
+      in srgb,
+      var(--colors-resonant-blue) 88%,
+      var(--colors-mono-11) 12%
+    )
+    120deg,
+    color-mix(in srgb, var(--colors-neon-green) 84%, var(--colors-cool-blue) 16%)
+    148deg,
+    color-mix(in srgb, var(--colors-resonant-blue) 88%, var(--colors-mono-11) 12%)
+    210deg,
+    color-mix(in srgb, var(--colors-cool-blue) 88%, var(--colors-mono-11) 12%)
+    360deg
+  );
+  content: "";
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  pointer-events: none;
+  position: absolute;
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+}
+
+.update-blip-header {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.update-blip-timestamp {
+  color: var(--colors-mono-07);
+  font-size: 0.75rem;
+  font-style: italic;
+}
+
+.update-blip-content {
+  color: color-mix(
+    in srgb,
+    var(--colors-mono-10) 65%,
+    var(--colors-mono-11) 35%
+  );
+  font-size: 0.9rem;
+}
+
+.update-blip-footer {
+  .blip-actions {
+    margin: 0;
+    min-height: 1.75rem;
+    opacity: 0;
+    pointer-events: none;
+    transition: var(--transitions-primary);
+  }
+}
+
+.update-blip:is(:hover, :focus-within) .update-blip-footer .blip-actions {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.update-blip--shimmering .update-blip-content :is(
+    p,
+    li,
+    blockquote,
+    code,
+    pre,
+    strong,
+    em,
+    span,
+    a,
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6
+  ) {
+  animation: update-blip-text-shimmer 1.45s linear infinite;
+  background-image: linear-gradient(
+    108deg,
+    color-mix(in srgb, var(--colors-mono-10) 70%, var(--colors-mono-11) 30%) 0%,
+    color-mix(in srgb, var(--colors-mono-10) 70%, var(--colors-mono-11) 30%) 36%,
+    color-mix(in srgb, var(--colors-mono-11) 76%, var(--colors-cool-blue) 24%) 47%,
+    color-mix(in srgb, var(--colors-mono-11) 88%, var(--colors-neon-green) 12%) 50%,
+    color-mix(in srgb, var(--colors-mono-11) 76%, var(--colors-cool-blue) 24%) 53%,
+    color-mix(in srgb, var(--colors-mono-10) 70%, var(--colors-mono-11) 30%) 64%,
+    color-mix(in srgb, var(--colors-mono-10) 70%, var(--colors-mono-11) 30%) 100%
+  );
+  background-size: 235% 100%;
+  background-position: 0% 50%;
+  color: transparent;
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+@media (max-width: 40rem) {
+  .update-blip-footer {
+    .blip-actions {
+      opacity: 1;
+      pointer-events: auto;
+    }
+  }
+
+  .update-blip--recent-realtime {
+    box-shadow: 0 0 0.4rem rgb(1 162 199 / 0.14);
+  }
+
+  .update-blip--recent-realtime::before {
+    animation-duration: 5.2s;
+  }
+
+  .update-blip--shimmering .update-blip-content :is(
+      p,
+      li,
+      blockquote,
+      code,
+      pre,
+      strong,
+      em,
+      span,
+      a,
+      h1,
+      h2,
+      h3,
+      h4,
+      h5,
+      h6
+    ) {
+    animation-duration: 1.8s;
+  }
+}
+
+@media (hover: none), (pointer: coarse) {
+  .update-blip-footer {
+    .blip-actions {
+      opacity: 1;
+      pointer-events: auto;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .update-blip--recent-realtime::before,
+  .update-blip--shimmering .update-blip-content :is(
+      p,
+      li,
+      blockquote,
+      code,
+      pre,
+      strong,
+      em,
+      span,
+      a,
+      h1,
+      h2,
+      h3,
+      h4,
+      h5,
+      h6
+    ) {
+    animation: none;
+  }
+
+  .update-blip--shimmering .update-blip-content :is(
+      p,
+      li,
+      blockquote,
+      code,
+      pre,
+      strong,
+      em,
+      span,
+      a,
+      h1,
+      h2,
+      h3,
+      h4,
+      h5,
+      h6
+    ) {
+    background-image: none;
+    color: color-mix(in srgb, var(--colors-mono-10) 65%, var(--colors-mono-11) 35%);
+  }
+}
+
+@keyframes update-blip-text-shimmer {
+  from {
+    background-position: 120% 50%;
+  }
+  to {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes update-blip-border-flow {
+  0% {
+    --update-blip-border-angle: 0deg;
+  }
+  16% {
+    --update-blip-border-angle: 38deg;
+  }
+  40% {
+    --update-blip-border-angle: 172deg;
+  }
+  68% {
+    --update-blip-border-angle: 248deg;
+  }
+  85% {
+    --update-blip-border-angle: 324deg;
+  }
+  100% {
+    --update-blip-border-angle: 360deg;
+  }
+}

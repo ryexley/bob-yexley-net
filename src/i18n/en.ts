@@ -26,6 +26,15 @@ export const en = {
       unsplashImage: {
         attribution: "Photo by {photographer} at Unsplash",
       },
+      notification: {
+        region: {
+          ariaLabel: "Notifications ({hotkey})",
+        },
+        actions: {
+          closeAriaLabel: "Close notification",
+          actionsGroupAriaLabel: "Notification actions",
+        },
+      },
     },
   },
   home: {
@@ -102,6 +111,45 @@ export const en = {
         notFound: "Blip not found.",
         actions: {
           backToBlips: "blips",
+          postUpdate: "Post update",
+          hideUpdateComposer: "Hide composer",
+        },
+        updates: {
+          label: "Updates",
+          title: "Updates ({count})",
+          placeholder: "Post a quick update...",
+          empty: "No updates yet.",
+          editor: {
+            newLabel: "Update",
+            editingLabel: "Editing update",
+          },
+          actions: {
+            submit: "Post update",
+            submitting: "Posting...",
+            delete: "Delete update",
+          },
+          confirmDelete: {
+            title: "Delete update?",
+            persistedPrompt:
+              "This permanently deletes the update from the database and cannot be undone.",
+            unsavedPrompt:
+              "This clears the current unsaved update from the editor.",
+            actions: {
+              confirm: "Delete",
+              confirming: "Deleting...",
+              cancel: "Cancel",
+            },
+          },
+          confirmCloseDraft: {
+            title: "Discard update draft?",
+            prompt:
+              "Closing now will discard this unpublished update draft and remove it.",
+            actions: {
+              close: "Discard and close",
+              closing: "Discarding...",
+              cancel: "Keep editing",
+            },
+          },
         },
       },
       tag: {
