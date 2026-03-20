@@ -1,92 +1,308 @@
 import { query } from "@solidjs/router"
-import type { SupabaseClient } from "@supabase/supabase-js"
 import {
   BLIP_TYPES,
   type Blip,
-  type BlipType,
 } from "@/modules/blips/data/schema"
 
-type BlipTagJoinRow = {
-  tag: {
-    name: string
-  } | null
+type ViewTagRow = {
+  id: string
+  name: string
+  description: string | null
 }
 
-type BlipWithTagRows = Blip & {
-  blip_tags?: BlipTagJoinRow[]
+type ViewUpdateRow = Omit<Blip, "tags" | "updates_count"> & {
+  tags?: ViewTagRow[] | null
+  updates_count?: number | null
 }
 
-const mapBlipsWithTags = (rows: BlipWithTagRows[]): Blip[] =>
-  rows.map(row => {
-    const { blip_tags, ...blip } = row
-    const tags = [...new Set((blip_tags ?? []).map(link => link.tag?.name).filter(Boolean))].sort()
+type ViewBlipRow = Omit<Blip, "tags" | "updates_count"> & {
+  tags?: ViewTagRow[] | null
+  updates_count?: number | null
+  updates?: ViewUpdateRow[] | null
+}
 
-    return {
-      ...blip,
-      tags,
-    }
+export type BlipGraph = {
+  blip: Blip
+  updates: Blip[]
+}
+
+type QuerySummary = Record<string, unknown>
+type QueryAggregateEntry = {
+  count: number
+  errors: number
+  totalDurationMs: number
+  maxDurationMs: number
+  slowCount: number
+}
+
+const shouldLogQueryMetrics = () =>
+  import.meta.env.DEV || process.env.BLIPS_QUERY_DEBUG === "1"
+
+const getSlowQueryThresholdMs = () => {
+  const raw = Number(process.env.BLIPS_QUERY_SLOW_MS)
+  return Number.isFinite(raw) && raw > 0 ? raw : 250
+}
+
+const getInFlightBySignature = () => {
+  const globalKey = "__blipsQueryInFlightBySignature"
+  const globalStore = globalThis as typeof globalThis & {
+    [key: string]: Map<string, number> | undefined
+  }
+  if (!globalStore[globalKey]) {
+    globalStore[globalKey] = new Map<string, number>()
+  }
+  return globalStore[globalKey] as Map<string, number>
+}
+
+const getAggregateMetricsStore = () => {
+  const statsKey = "__blipsQueryAggregateByName"
+  const flushTsKey = "__blipsQueryAggregateLastFlushTs"
+  const globalStore = globalThis as typeof globalThis & {
+    [key: string]: Map<string, QueryAggregateEntry> | number | undefined
+  }
+
+  if (!globalStore[statsKey]) {
+    globalStore[statsKey] = new Map<string, QueryAggregateEntry>()
+  }
+  if (!globalStore[flushTsKey]) {
+    globalStore[flushTsKey] = Date.now()
+  }
+
+  return {
+    byName: globalStore[statsKey] as Map<string, QueryAggregateEntry>,
+    getLastFlushTs: () => (globalStore[flushTsKey] as number) ?? Date.now(),
+    setLastFlushTs: (ts: number) => {
+      globalStore[flushTsKey] = ts
+    },
+  }
+}
+
+const nextQueryTraceId = (queryName: string) =>
+  `${queryName}:${Date.now().toString(36)}:${Math.random().toString(36).slice(2, 8)}`
+
+const logQueryStart = (
+  queryName: string,
+  traceId: string,
+  meta: QuerySummary,
+  inFlightCount: number,
+) => {
+  const level = inFlightCount > 1 ? "warn" : "log"
+  console[level](`[blips.query:start] ${queryName}`, {
+    traceId,
+    inFlightCount,
+    ...meta,
   })
+}
+
+const logQueryEnd = (
+  queryName: string,
+  traceId: string,
+  durationMs: number,
+  summary: QuerySummary,
+) => {
+  const slowThresholdMs = getSlowQueryThresholdMs()
+  const level = durationMs >= slowThresholdMs ? "warn" : "log"
+  console[level](`[blips.query:end] ${queryName}`, {
+    traceId,
+    durationMs,
+    slowThresholdMs,
+    slow: durationMs >= slowThresholdMs,
+    ...summary,
+  })
+}
+
+const logQueryError = (
+  queryName: string,
+  traceId: string,
+  durationMs: number,
+  error: unknown,
+) => {
+  console.error(`[blips.query:error] ${queryName}`, {
+    traceId,
+    durationMs,
+    error,
+  })
+}
+
+const recordAggregateMetric = (
+  queryName: string,
+  durationMs: number,
+  hadError: boolean,
+) => {
+  const store = getAggregateMetricsStore()
+  const existing = store.byName.get(queryName) ?? {
+    count: 0,
+    errors: 0,
+    totalDurationMs: 0,
+    maxDurationMs: 0,
+    slowCount: 0,
+  }
+  const slowThresholdMs = getSlowQueryThresholdMs()
+
+  const next: QueryAggregateEntry = {
+    count: existing.count + 1,
+    errors: existing.errors + (hadError ? 1 : 0),
+    totalDurationMs: existing.totalDurationMs + durationMs,
+    maxDurationMs: Math.max(existing.maxDurationMs, durationMs),
+    slowCount: existing.slowCount + (durationMs >= slowThresholdMs ? 1 : 0),
+  }
+
+  store.byName.set(queryName, next)
+}
+
+const maybeFlushAggregateMetrics = () => {
+  const flushIntervalMs = 30_000
+  const now = Date.now()
+  const store = getAggregateMetricsStore()
+  if (now - store.getLastFlushTs() < flushIntervalMs) {
+    return
+  }
+
+  if (store.byName.size === 0) {
+    store.setLastFlushTs(now)
+    return
+  }
+
+  const snapshot = [...store.byName.entries()].map(([queryName, metrics]) => ({
+    queryName,
+    calls: metrics.count,
+    errors: metrics.errors,
+    slowCalls: metrics.slowCount,
+    avgMs: Number((metrics.totalDurationMs / metrics.count).toFixed(1)),
+    maxMs: metrics.maxDurationMs,
+  }))
+
+  console.log("[blips.query:aggregate] rolling 30s", {
+    windowMs: flushIntervalMs,
+    slowThresholdMs: getSlowQueryThresholdMs(),
+    queries: snapshot,
+  })
+
+  store.byName.clear()
+  store.setLastFlushTs(now)
+}
+
+const withQueryMetrics = async <T>(
+  queryName: string,
+  meta: QuerySummary,
+  operation: () => Promise<T>,
+  summarizeResult: (result: T) => QuerySummary = () => ({}),
+): Promise<T> => {
+  if (!shouldLogQueryMetrics()) {
+    return operation()
+  }
+
+  const traceId = nextQueryTraceId(queryName)
+  const startedAt = Date.now()
+  const signature = JSON.stringify([queryName, meta])
+  const inFlightBySignature = getInFlightBySignature()
+  const inFlightCount = (inFlightBySignature.get(signature) ?? 0) + 1
+  inFlightBySignature.set(signature, inFlightCount)
+  logQueryStart(queryName, traceId, meta, inFlightCount)
+
+  try {
+    const result = await operation()
+    const durationMs = Date.now() - startedAt
+    logQueryEnd(queryName, traceId, durationMs, summarizeResult(result))
+    recordAggregateMetric(queryName, durationMs, false)
+    return result
+  } catch (error) {
+    const durationMs = Date.now() - startedAt
+    logQueryError(queryName, traceId, durationMs, error)
+    recordAggregateMetric(queryName, durationMs, true)
+    throw error
+  } finally {
+    const remaining = (inFlightBySignature.get(signature) ?? 1) - 1
+    if (remaining <= 0) {
+      inFlightBySignature.delete(signature)
+    } else {
+      inFlightBySignature.set(signature, remaining)
+    }
+    maybeFlushAggregateMetrics()
+  }
+}
+
+const VIEW_BLIPS_SELECT = [
+  "id",
+  "parent_id",
+  "user_id",
+  "title",
+  "content",
+  "published",
+  "moderation_status",
+  "created_at",
+  "updated_at",
+  "blip_type",
+  "tags",
+  "updates_count",
+].join(", ")
+
+const VIEW_BLIP_GRAPH_SELECT = `${VIEW_BLIPS_SELECT}, updates`
+
+const mapTagNames = (tags?: ViewTagRow[] | null): string[] => {
+  return [...new Set((tags ?? []).map(tag => tag?.name).filter(Boolean))].sort()
+}
+
+const mapViewBlipRow = (row: ViewBlipRow): Blip => ({
+  id: row.id,
+  parent_id: row.parent_id,
+  user_id: row.user_id,
+  title: row.title,
+  content: row.content,
+  published: row.published,
+  moderation_status: row.moderation_status,
+  created_at: row.created_at,
+  updated_at: row.updated_at,
+  blip_type: row.blip_type,
+  tags: mapTagNames(row.tags),
+  updates_count: row.updates_count ?? 0,
+})
+
+const mapViewUpdateRows = (rows?: ViewUpdateRow[] | null): Blip[] =>
+  (rows ?? []).map(row => ({
+    id: row.id,
+    parent_id: row.parent_id,
+    user_id: row.user_id,
+    title: row.title,
+    content: row.content,
+    published: row.published,
+    moderation_status: row.moderation_status,
+    created_at: row.created_at,
+    updated_at: row.updated_at,
+    blip_type: row.blip_type,
+    tags: mapTagNames(row.tags),
+    updates_count: row.updates_count ?? 0,
+  }))
 
 const isRootBlip = (blip: Pick<Blip, "parent_id" | "blip_type">) =>
   blip.parent_id === null && blip.blip_type === BLIP_TYPES.ROOT
 
-const withUpdateCounts = async (
-  supabase: SupabaseClient,
-  rows: BlipWithTagRows[],
-): Promise<BlipWithTagRows[]> => {
-  if (rows.length === 0) {
-    return rows
-  }
-
-  const rootIds = rows.map(row => row.id)
-  const { data, error } = await supabase
-    .from("blips")
-    .select("parent_id")
-    .eq("blip_type", BLIP_TYPES.UPDATE satisfies BlipType)
-    .in("parent_id", rootIds)
-
-  if (error) {
-    throw error
-  }
-
-  const countByParentId = new Map<string, number>()
-  for (const row of data ?? []) {
-    const parentId = row.parent_id
-    if (!parentId) {
-      continue
-    }
-    countByParentId.set(parentId, (countByParentId.get(parentId) ?? 0) + 1)
-  }
-
-  return rows.map(row => ({
-    ...row,
-    updates_count: countByParentId.get(row.id) ?? 0,
-  }))
-}
-
 export const getBlips = query(async (limit: number = 20, offset: number = 0) => {
   "use server"
 
-  const { getClient } = await import("@/lib/vendor/supabase")
-  const supabase = getClient()
+  return withQueryMetrics(
+    "getBlips",
+    { limit, offset },
+    async () => {
+      const { getServerClient } = await import("@/lib/vendor/supabase-server")
+      const supabase = await getServerClient()
 
-  const { data, error } = await supabase
-    .from("blips")
-    .select("*, blip_tags(tag:tags(name))")
-    .is("parent_id", null)
-    .eq("blip_type", BLIP_TYPES.ROOT satisfies BlipType)
-    .order("created_at", { ascending: false })
-    .range(offset, offset + limit - 1)
+      const { data, error } = await supabase
+        .from("view_blips")
+        .select(VIEW_BLIPS_SELECT)
+        .order("created_at", { ascending: false })
+        .range(offset, offset + limit - 1)
 
-  if (error) {
-    throw error
-  }
+      if (error) {
+        throw error
+      }
 
-  const rowsWithCounts = await withUpdateCounts(
-    supabase,
-    (data ?? []) as BlipWithTagRows[],
+      return ((data ?? []) as unknown as ViewBlipRow[]).map(mapViewBlipRow)
+    },
+    result => ({
+      rowCount: result.length,
+    }),
   )
-  return mapBlipsWithTags(rowsWithCounts)
 }, "blips")
 
 export const getBlipsByTag = query(async (
@@ -100,77 +316,106 @@ export const getBlipsByTag = query(async (
     return []
   }
 
-  const { getClient } = await import("@/lib/vendor/supabase")
-  const supabase = getClient()
+  return withQueryMetrics(
+    "getBlipsByTag",
+    { tag, limit, offset },
+    async () => {
+      const { getServerClient } = await import("@/lib/vendor/supabase-server")
+      const supabase = await getServerClient()
 
-  const { data, error } = await supabase
-    .from("blips")
-    .select("*, matching_blip_tags:blip_tags!inner(tag:tags!inner(name)), blip_tags(tag:tags(name))")
-    .is("parent_id", null)
-    .eq("blip_type", BLIP_TYPES.ROOT satisfies BlipType)
-    .eq("matching_blip_tags.tag.name", tag)
-    .order("created_at", { ascending: false })
-    .range(offset, offset + limit - 1)
+      const { data, error } = await supabase
+        .from("view_blips")
+        .select(VIEW_BLIPS_SELECT)
+        .contains("tags", [{ name: tag }])
+        .order("created_at", { ascending: false })
+        .range(offset, offset + limit - 1)
 
-  if (error) {
-    throw error
-  }
+      if (error) {
+        throw error
+      }
 
-  const rowsWithCounts = await withUpdateCounts(
-    supabase,
-    (data ?? []) as BlipWithTagRows[],
+      return ((data ?? []) as unknown as ViewBlipRow[]).map(mapViewBlipRow)
+    },
+    result => ({
+      rowCount: result.length,
+    }),
   )
-  return mapBlipsWithTags(rowsWithCounts)
 }, "blips-by-tag")
 
 export const getBlip = query(async (id: string) => {
   "use server"
 
-  const { getClient } = await import("@/lib/vendor/supabase")
-  const supabase = getClient()
+  return withQueryMetrics(
+    "getBlip",
+    { id },
+    async () => {
+      const { getServerClient } = await import("@/lib/vendor/supabase-server")
+      const supabase = await getServerClient()
 
-  const { data, error } = await supabase
-    .from("blips")
-    .select("*, blip_tags(tag:tags(name))")
-    .eq("id", id)
-    .maybeSingle()
+      const { data, error } = await supabase
+        .from("view_blips")
+        .select(VIEW_BLIPS_SELECT)
+        .eq("id", id)
+        .maybeSingle()
 
-  if (error) {
-    throw error
-  }
+      if (error) {
+        throw error
+      }
 
-  if (!data) {
-    return null
-  }
+      if (!data) {
+        return null
+      }
 
-  if (!isRootBlip(data as Pick<Blip, "parent_id" | "blip_type">)) {
-    return null
-  }
+      if (!isRootBlip(data as unknown as Pick<Blip, "parent_id" | "blip_type">)) {
+        return null
+      }
 
-  const [mapped] = mapBlipsWithTags([data as BlipWithTagRows])
-  return mapped
+      return mapViewBlipRow(data as unknown as ViewBlipRow)
+    },
+    result => ({
+      found: result !== null,
+    }),
+  )
 }, "blip")
 
-export const getBlipUpdates = query(async (rootBlipId: string) => {
+export const getBlipGraph = query(async (id: string): Promise<BlipGraph | null> => {
   "use server"
 
-  if (!rootBlipId) {
-    return []
-  }
+  return withQueryMetrics(
+    "getBlipGraph",
+    { id },
+    async () => {
+      const { getServerClient } = await import("@/lib/vendor/supabase-server")
+      const supabase = await getServerClient()
 
-  const { getClient } = await import("@/lib/vendor/supabase")
-  const supabase = getClient()
+      const { data, error } = await supabase
+        .from("view_blips")
+        .select(VIEW_BLIP_GRAPH_SELECT)
+        .eq("id", id)
+        .maybeSingle()
 
-  const { data, error } = await supabase
-    .from("blips")
-    .select("*, blip_tags(tag:tags(name))")
-    .eq("parent_id", rootBlipId)
-    .eq("blip_type", BLIP_TYPES.UPDATE satisfies BlipType)
-    .order("created_at", { ascending: false })
+      if (error) {
+        throw error
+      }
 
-  if (error) {
-    throw error
-  }
+      if (!data) {
+        return null
+      }
 
-  return mapBlipsWithTags((data ?? []) as BlipWithTagRows[])
-}, "blip-updates")
+      const root = mapViewBlipRow(data as unknown as ViewBlipRow)
+      if (!isRootBlip(root)) {
+        return null
+      }
+
+      return {
+        blip: root,
+        updates: mapViewUpdateRows((data as unknown as ViewBlipRow).updates),
+      }
+    },
+    result => ({
+      found: result !== null,
+      updatesCount: result?.updates.length ?? 0,
+    }),
+  )
+}, "blip-graph")
+

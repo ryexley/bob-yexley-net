@@ -28,7 +28,7 @@ export function Blips(props: {
     }
 
     return local.blips
-      .filter(blip => !blip.published && (blip.tags?.length ?? 0) === 0)
+      .filter(blip => !blip.published && blip.tags === undefined)
       .map(blip => blip.id)
   })
 

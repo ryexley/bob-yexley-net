@@ -4,6 +4,7 @@ import {
   type User,
   type AuthError,
 } from "@supabase/supabase-js"
+import { createBrowserClient } from "@supabase/ssr"
 import { isServer } from "solid-js/web"
 import { isEmpty } from "@/util"
 
@@ -61,13 +62,11 @@ function clearSessionStartedAtMs() {
 
 export function getClient(): SupabaseClient {
   if (isServer) {
-    // Server: always create a new client per request
-    const client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
-
-    return client
+    // Server fallback client without request auth context.
+    return createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
   } else {
     if (isEmpty(browserClient)) {
-      browserClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+      browserClient = createBrowserClient(SUPABASE_URL, SUPABASE_ANON_KEY)
     }
 
     return browserClient

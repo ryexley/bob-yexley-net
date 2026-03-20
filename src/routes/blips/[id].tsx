@@ -1,8 +1,8 @@
-import { getBlip } from "@/modules/blips/data"
+import { getBlipGraph } from "@/modules/blips/data"
 import { BlipView } from "@/modules/blips/views/blip"
 
 export function preload({ params }) {
-  return getBlip(params.id)
+  return getBlipGraph(params.id)
 }
 
 export default BlipView

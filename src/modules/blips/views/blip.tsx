@@ -27,8 +27,7 @@ import { BlipUpdateEditor } from "@/modules/blips/components/blip-update-editor"
 import {
   BLIP_TYPES,
   blipStore,
-  getBlip,
-  getBlipUpdates,
+  getBlipGraph,
   tagStore,
 } from "@/modules/blips/data"
 import { UpdateBlip } from "@/modules/blips/components/update-blip"
@@ -52,8 +51,9 @@ export function BlipView() {
   const store = blipStore(supabase.client, { subscribe: false })
   const tags = tagStore(supabase.client)
   const { isAuthenticated, user } = useAuth() as any
-  const blipQuery = createAsync(() => getBlip(params.id))
-  const initialUpdates = createAsync(() => getBlipUpdates(params.id))
+  const blipGraphQuery = createAsync(() => getBlipGraph(params.id))
+  const blipQuery = createMemo(() => blipGraphQuery()?.blip ?? null)
+  const initialUpdates = createMemo(() => blipGraphQuery()?.updates ?? [])
   const blip = createMemo(() => {
     const fromStore = store.entities().find(item => item.id === params.id)
     return fromStore ?? blipQuery() ?? null
@@ -187,7 +187,7 @@ export function BlipView() {
 
   createEffect(() => {
     const loaded = initialUpdates()
-    if (!loaded) {
+    if (!loaded || loaded.length === 0) {
       return
     }
     const rootBlipId = blip()?.id ?? null
@@ -207,7 +207,7 @@ export function BlipView() {
       setHydratedRootTags([])
       return
     }
-    if ((rootBlip.tags?.length ?? 0) > 0) {
+    if (rootBlip.tags !== undefined) {
       return
     }
 
