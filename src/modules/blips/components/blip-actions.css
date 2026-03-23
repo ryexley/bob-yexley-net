@@ -1,4 +1,10 @@
 .blip-actions {
+  .toolbar-separator {
+    background-color: var(--colors-mono-04);
+    height: 1.5rem;
+    width: 1px;
+  }
+
   .delete {
     .icon {
       color: var(--colors-danger);

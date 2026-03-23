@@ -16,11 +16,11 @@ import {
   untrack,
 } from "solid-js"
 import { Hashtag, Icon } from "@/components/icon"
+import { Button } from "@/components/button"
 import { PageSection } from "@/modules/home/components/page-section"
 import { MarkdownRenderer as Markdown } from "@/components/markdown/renderer"
 import { useSupabase } from "@/context/services-context"
 import { useAuth } from "@/context/auth-context"
-import { IconButton } from "@/components/icon-button"
 import { BlipActions } from "@/modules/blips/components/blip-actions"
 import { BlipEditor } from "@/modules/blips/components/blip-editor"
 import { BlipUpdateEditor } from "@/modules/blips/components/blip-update-editor"
@@ -353,13 +353,14 @@ export function BlipView() {
                     blip={data()}
                     onEdit={handleEditRootBlip}
                     toolbarExtras={
-                      <IconButton
+                      <Button
+                        variant="ghost"
                         size="xs"
-                        icon="chat_add_on"
+                        label={tr("updates.editor.newLabel")}
+                        iconRight="chat_add_on"
                         class={cx("blip-detail-add-update", {
                           active: showComposer(),
                         })}
-                        iconClass="blip-detail-add-update-icon"
                         aria-label={
                           showComposer()
                             ? tr("actions.hideUpdateComposer")

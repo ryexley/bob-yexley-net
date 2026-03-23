@@ -156,6 +156,27 @@ a.blip-detail-back-link {
 }
 
 .blip-detail-add-update {
+  align-items: center;
+  background: rgba(var(--colors-mono-01-rgb), 0.75);
+  border: 0.0625rem solid var(--colors-mono-02);
+  border-radius: 999rem;
+  color: var(--colors-cool-blue);
+  display: inline-flex;
+  font-weight: 400;
+  gap: 0.25rem;
+  line-height: 1;
+  min-width: 4.75rem;
+  text-shadow: none;
+
+  &:hover {
+    background: rgba(var(--colors-mono-01-rgb), 0.9);
+  }
+
+  .icon {
+    color: var(--colors-cool-blue);
+    font-size: 1rem;
+  }
+
   &.active {
     border-color: color-mix(
       in srgb,
@@ -164,10 +185,6 @@ a.blip-detail-back-link {
     );
     box-shadow: 0 0 0 0.0625rem rgb(0 144 255 / 0.22);
   }
-}
-
-.blip-detail-add-update-icon {
-  color: var(--colors-cool-blue);
 }
 
 .blip-updates-list {

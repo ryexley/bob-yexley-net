@@ -82,7 +82,13 @@ export function BlipActions(props: BlipActionsProps) {
           gap="0.25rem"
           role="toolbar"
           aria-label={tr("toolbarAriaLabel")}>
-          {/* <DeleteAction blip={local.blip} /> */}
+          <Show when={local.toolbarExtras}>
+            {local.toolbarExtras}
+            <span
+              class="toolbar-separator"
+              aria-hidden="true"
+            />
+          </Show>
           <IconButton
             size="xs"
             icon="delete"
@@ -139,7 +145,6 @@ export function BlipActions(props: BlipActionsProps) {
               local.onEdit?.(blipId)
             }}
           />
-          {local.toolbarExtras}
         </Stack>
       </Show>
     </>
