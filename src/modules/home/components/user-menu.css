@@ -1,15 +1,16 @@
 .user-menu {
   --size: 2.5rem;
+  --corner-offset: 0.5rem;
   align-items: center;
   background: rgba(var(--colors-mono-01-rgb), 0.75);
   border: 0.0625rem solid var(--colors-mono-01);
   border-radius: 50%;
-  bottom: 3rem;
+  bottom: var(--corner-offset);
   display: flex;
   height: var(--size);
   justify-content: center;
   position: fixed;
-  right: 0.5rem;
+  right: var(--corner-offset);
   width: var(--size);
 
   .icon {

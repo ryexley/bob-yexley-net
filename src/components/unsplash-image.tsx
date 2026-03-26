@@ -358,7 +358,7 @@ export const UnsplashImage: Component<ImageProps> = props => {
 
       {/* Attribution overlay */}
       {getShowAttribution() && photoData() && (
-        <div class="absolute bottom-0 right-0 bg-black/50 px-3 py-2 m-2 rounded-sm leading-tight text-[0.65rem] text-[var(--colors-mono-10)]">
+        <div class="absolute bottom-0 left-0 bg-black/50 px-3 py-2 m-2 rounded-sm leading-tight text-[0.65rem] text-[var(--colors-mono-10)]">
           {tr("shared.components.unsplashImage.attribution", {
             photographer: () => (
               <a
