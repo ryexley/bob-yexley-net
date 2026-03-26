@@ -161,7 +161,7 @@ a.blip-detail-back-link {
   padding: 0 0.2rem;
 }
 
-.blip-detail-add-update {
+.button.blip-detail-add-update {
   align-items: center;
   background: rgba(var(--colors-mono-01-rgb), 0.75);
   border: 0.0625rem solid var(--colors-mono-02);

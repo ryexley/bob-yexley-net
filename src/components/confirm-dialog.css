@@ -49,7 +49,7 @@
   min-width: 5.5rem;
 }
 
-.confirmation-action-confirm.destructive {
+.button.confirmation-action-confirm.destructive {
   background: var(--colors-danger);
   color: var(--colors-mono-11);
 
