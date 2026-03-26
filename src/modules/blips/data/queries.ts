@@ -10,13 +10,15 @@ type ViewTagRow = {
   description: string | null
 }
 
+type ViewTagValue = ViewTagRow | string
+
 type ViewUpdateRow = Omit<Blip, "tags" | "updates_count"> & {
-  tags?: ViewTagRow[] | null
+  tags?: ViewTagValue[] | null
   updates_count?: number | null
 }
 
 type ViewBlipRow = Omit<Blip, "tags" | "updates_count"> & {
-  tags?: ViewTagRow[] | null
+  tags?: ViewTagValue[] | null
   updates_count?: number | null
   updates?: ViewUpdateRow[] | null
 }
@@ -239,9 +241,19 @@ const VIEW_BLIPS_SELECT = [
 
 const VIEW_BLIP_GRAPH_SELECT = `${VIEW_BLIPS_SELECT}, updates`
 
-const mapTagNames = (tags?: ViewTagRow[] | null): string[] => {
-  return [...new Set((tags ?? []).map(tag => tag?.name).filter(Boolean))].sort()
-}
+const mapTagNames = (tags?: ViewTagValue[] | null): string[] =>
+  [
+    ...new Set(
+      (tags ?? [])
+        .map(tag => {
+          if (typeof tag === "string") {
+            return tag
+          }
+          return tag?.name
+        })
+        .filter((value): value is string => Boolean(value)),
+    ),
+  ].sort()
 
 const mapViewBlipRow = (row: ViewBlipRow): Blip => ({
   id: row.id,
@@ -276,6 +288,16 @@ const mapViewUpdateRows = (rows?: ViewUpdateRow[] | null): Blip[] =>
 
 const isRootBlip = (blip: Pick<Blip, "parent_id" | "blip_type">) =>
   blip.parent_id === null && blip.blip_type === BLIP_TYPES.ROOT
+
+const isJsonFilterSyntaxError = (error: unknown): boolean =>
+  typeof error === "object" &&
+  error !== null &&
+  "code" in error &&
+  (error as { code?: string }).code === "22P02" &&
+  "message" in error &&
+  String((error as { message?: unknown }).message).includes(
+    "invalid input syntax for type json",
+  )
 
 export const getBlips = query(async (limit: number = 20, offset: number = 0) => {
   "use server"
@@ -323,18 +345,71 @@ export const getBlipsByTag = query(async (
       const { getServerClient } = await import("@/lib/vendor/supabase-server")
       const supabase = await getServerClient()
 
-      const { data, error } = await supabase
+      const { data: directData, error: directError } = await supabase
         .from("view_blips")
         .select(VIEW_BLIPS_SELECT)
-        .contains("tags", [{ name: tag }])
+        // `tags` on `view_blips` is jsonb of objects ({ id, name, description }).
+        // Query directly in SQL first for efficient paging.
+        .filter("tags", "cs", JSON.stringify([{ name: tag }]))
         .order("created_at", { ascending: false })
         .range(offset, offset + limit - 1)
 
-      if (error) {
-        throw error
+      if (!directError) {
+        return ((directData ?? []) as unknown as ViewBlipRow[]).map(mapViewBlipRow)
       }
 
-      return ((data ?? []) as unknown as ViewBlipRow[]).map(mapViewBlipRow)
+      if (!isJsonFilterSyntaxError(directError)) {
+        throw directError
+      }
+
+      const normalizedTag = tag.trim().toLowerCase()
+      const pageSize = Math.max(limit, 50)
+      let rangeStart = 0
+      let matchedSeen = 0
+      const collected: Blip[] = []
+
+      // Fallback path when the gateway cannot parse jsonb filter syntax.
+      while (collected.length < limit) {
+        const { data, error } = await supabase
+          .from("view_blips")
+          .select(VIEW_BLIPS_SELECT)
+          .order("created_at", { ascending: false })
+          .range(rangeStart, rangeStart + pageSize - 1)
+
+        if (error) {
+          throw error
+        }
+
+        const rows = (data ?? []) as unknown as ViewBlipRow[]
+        if (rows.length === 0) {
+          break
+        }
+
+        for (const row of rows) {
+          const tagNames = mapTagNames(row.tags).map(value => value.toLowerCase())
+          if (!tagNames.includes(normalizedTag)) {
+            continue
+          }
+
+          if (matchedSeen < offset) {
+            matchedSeen += 1
+            continue
+          }
+
+          collected.push(mapViewBlipRow(row))
+          if (collected.length >= limit) {
+            break
+          }
+        }
+
+        if (rows.length < pageSize) {
+          break
+        }
+
+        rangeStart += rows.length
+      }
+
+      return collected
     },
     result => ({
       rowCount: result.length,
