@@ -210,8 +210,13 @@
 body:has([data-corvu-drawer-content][data-open]) {
   -webkit-overflow-scrolling: touch;
   overflow: hidden;
-  position: fixed;
   width: 100%;
+}
+
+@media (pointer: coarse) {
+  body:has([data-corvu-drawer-content][data-open]) {
+    position: fixed;
+  }
 }
 
 /* The main header mobile nav should lock scrolling without pinning the page. */

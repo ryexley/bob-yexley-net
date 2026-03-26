@@ -1,5 +1,5 @@
 import type { Blip as BlipType } from "@/modules/blips/data/schema"
-import { A, usePreloadRoute } from "@solidjs/router"
+import { A, useNavigate, usePreloadRoute } from "@solidjs/router"
 import {
   createMemo,
   createSignal,
@@ -13,14 +13,6 @@ import {
 import { Hashtag, Icon } from "@/components/icon"
 import { MarkdownRenderer as Markdown } from "@/components/markdown/renderer"
 import { Button } from "@/components/button"
-import {
-  Dialog,
-  DialogBody,
-  DialogCloseButton,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/dialog"
 // import { Hashtag } from "@/components/icons"
 import { Stack } from "@/components/stack"
 import { BlipActions } from "@/modules/blips/components/blip-actions"
@@ -39,11 +31,11 @@ export function Blip(props: {
   onView?: (blipId: string) => void
 }) {
   const [local] = splitProps(props, ["blip", "tags", "onEdit", "onView"])
+  const navigate = useNavigate()
   const preloadRoute = usePreloadRoute()
   let contentRef: HTMLDivElement | undefined
   const [timeTick, setTimeTick] = createSignal(Date.now())
   const [isClipped, setIsClipped] = createSignal(false)
-  const [showReadMore, setShowReadMore] = createSignal(false)
   const timestampLabel = createMemo(() => {
     timeTick()
     return formatBlipTimestamp(local.blip.created_at)
@@ -65,7 +57,10 @@ export function Blip(props: {
       return
     }
 
-    setShowReadMore(true)
+    navigate(pages.blip(local.blip.id), {
+      scroll: true,
+      state: { fromBlips: true },
+    })
   }
 
   const openDetailsIfNeeded = () => {
@@ -175,42 +170,6 @@ export function Blip(props: {
           blip={local.blip}
           onEdit={local.onEdit}
         />
-        <Dialog
-          open={showReadMore()}
-          class="blip-readmore-dialog"
-          overlayClass="blip-readmore-overlay"
-          onOpenChange={setShowReadMore}>
-          <DialogHeader class="blip-readmore-header">
-            <DialogTitle class="blip-readmore-title">
-              {timestampLabel()}
-            </DialogTitle>
-            <DialogCloseButton
-              class="blip-readmore-close"
-              aria-label={tr("readMoreDialog.closeAriaLabel")}
-            />
-          </DialogHeader>
-          <DialogBody class="blip-readmore-content">
-            <DialogDescription>
-              <Markdown content={local.blip.content} />
-            </DialogDescription>
-            <Show when={(local.tags?.length ?? 0) > 0}>
-              <footer class="blip-readmore-footer">
-                <div class="tags">
-                  <Hashtag size="0.85rem" />
-                  <ul class="tag-list">
-                    <For each={local.tags}>
-                      {tag => (
-                        <li class="tag">
-                          <A href={pages.blipsTag(tag)}>{tag}</A>
-                        </li>
-                      )}
-                    </For>
-                  </ul>
-                </div>
-              </footer>
-            </Show>
-          </DialogBody>
-        </Dialog>
       </Stack>
     </li>
   )

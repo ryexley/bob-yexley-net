@@ -1,5 +1,5 @@
 import { createEffect } from "solid-js"
-import { createAsync } from "@solidjs/router"
+import { createAsync, useNavigate } from "@solidjs/router"
 import { Icon } from "@/components/icon"
 import { PageSection } from "@/modules/home/components/page-section"
 import { Blips } from "@/modules/blips/components/blips"
@@ -14,6 +14,7 @@ const tr = ptr("home.pageSections.signals")
 
 export function Signals(props) {
   const initialBlips = createAsync(() => getBlips(4))
+  const navigate = useNavigate()
   const { isAuthenticated } = useAuth() as any
 
   const supabase = useSupabase()
@@ -47,7 +48,15 @@ export function Signals(props) {
       ref={props.ref}
       class="thoughts signals"
       {...props}>
-      <Blips blips={visibleBlips()} />
+      <Blips
+        blips={visibleBlips()}
+        onView={blipId =>
+          navigate(pages.blip(blipId), {
+            scroll: true,
+            state: { fromBlips: true },
+          })
+        }
+      />
       <div class="signals-see-more">
         <a
           href={pages.blips}

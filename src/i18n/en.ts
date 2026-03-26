@@ -110,7 +110,7 @@ export const en = {
         loading: "Loading blip...",
         notFound: "Blip not found.",
         actions: {
-          backToBlips: "blips",
+          backToBlips: "back",
           postUpdate: "Post update",
           hideUpdateComposer: "Hide composer",
         },

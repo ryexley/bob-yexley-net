@@ -17,7 +17,6 @@ import {
 } from "solid-js"
 import { Hashtag, Icon } from "@/components/icon"
 import { Button } from "@/components/button"
-import { PageSection } from "@/modules/home/components/page-section"
 import { MarkdownRenderer as Markdown } from "@/components/markdown/renderer"
 import { useSupabase } from "@/context/services-context"
 import { useAuth } from "@/context/auth-context"
@@ -89,7 +88,9 @@ export function BlipView() {
   const store = blipStore(supabase.client, { subscribe: false })
   const tags = tagStore(supabase.client)
   const { isAuthenticated, user } = useAuth() as any
-  const blipGraphQuery = createAsync(() => getBlipGraph(params.id))
+  const blipGraphQuery = createAsync(() => getBlipGraph(params.id), {
+    deferStream: true,
+  })
   const blipQuery = createMemo(() => blipGraphQuery()?.blip ?? null)
   const initialUpdates = createMemo(() => blipGraphQuery()?.updates ?? [])
   const blip = createMemo(() => {
@@ -227,23 +228,6 @@ export function BlipView() {
       replace: true,
     })
   }
-
-  createEffect(() => {
-    const data = blip()
-    const fromBlips = (location.state as any)?.fromBlips
-
-    if (!data || !fromBlips) {
-      return
-    }
-
-    withWindow((window: Window) => {
-      window.requestAnimationFrame(() => {
-        window.requestAnimationFrame(() => {
-          window.scrollTo(0, 0)
-        })
-      })
-    })
-  })
 
   createEffect(() => {
     const loaded = blipQuery()
@@ -405,7 +389,7 @@ export function BlipView() {
         content={shareDescription()}
       />
       <main>
-        <PageSection class="blip-detail-page">
+        <section class="blip-detail-page">
           <div class={cx("blip-detail-container", detailContainerWidthClass())}>
             <a
               href={pages.blips}
@@ -501,16 +485,18 @@ export function BlipView() {
                       </Show>
 
                       <Show when={canManageUpdates()}>
-                        <BlipUpdateEditor
-                          open={showComposer()}
-                          rootBlipId={blip()?.id}
-                          editingUpdateId={selectedUpdateBlipId()}
-                          focusNonce={updateComposerFocusNonce()}
-                          onRequestClose={() => {
-                            setShowComposer(false)
-                            setSelectedUpdateBlipId(null)
-                          }}
-                        />
+                        <Show when={showComposer()}>
+                          <BlipUpdateEditor
+                            open={showComposer()}
+                            rootBlipId={blip()?.id}
+                            editingUpdateId={selectedUpdateBlipId()}
+                            focusNonce={updateComposerFocusNonce()}
+                            onRequestClose={() => {
+                              setShowComposer(false)
+                              setSelectedUpdateBlipId(null)
+                            }}
+                          />
+                        </Show>
                       </Show>
 
                       <Show when={visibleUpdates().length > 0}>
@@ -550,7 +536,7 @@ export function BlipView() {
               )}
             </Show>
           </div>
-        </PageSection>
+        </section>
       </main>
     </>
   )

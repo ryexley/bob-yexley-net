@@ -1,6 +1,12 @@
 .blip-detail-page {
   display: flex;
   justify-content: center;
+  min-height: auto;
+  padding: 1rem;
+  padding-bottom: 7rem;
+  padding-top: var(--main-header-height);
+  position: relative;
+  width: 100%;
 }
 
 .blip-detail-container {
