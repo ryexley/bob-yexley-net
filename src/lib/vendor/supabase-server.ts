@@ -1,6 +1,6 @@
 import { createServerClient } from "@supabase/ssr"
 import type { SupabaseClient } from "@supabase/supabase-js"
-import { parseCookies, setCookie } from "vinxi/http"
+import { getEvent, parseCookies, setCookie } from "vinxi/http"
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY
@@ -8,6 +8,12 @@ const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY
 if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
   throw new Error("Missing required Supabase environment variables")
 }
+
+const isHeadersSentError = (error: unknown): boolean =>
+  typeof error === "object" &&
+  error !== null &&
+  "code" in error &&
+  (error as { code?: string }).code === "ERR_HTTP_HEADERS_SENT"
 
 export async function getServerClient(): Promise<SupabaseClient> {
   const client = createServerClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
@@ -17,11 +23,30 @@ export async function getServerClient(): Promise<SupabaseClient> {
         return Object.entries(cookies).map(([name, value]) => ({ name, value }))
       },
       setAll(cookies) {
+        const event = getEvent()
+        const response = event?.node?.res
+        // Supabase can emit cookie updates late in the request lifecycle.
+        // Skip writes when headers are already finalized.
+        if (
+          response?.headersSent ||
+          response?.writableEnded ||
+          response?.destroyed
+        ) {
+          return
+        }
+
         for (const cookie of cookies) {
-          setCookie(cookie.name, cookie.value, {
-            ...cookie.options,
-            path: cookie.options?.path ?? "/",
-          })
+          try {
+            setCookie(cookie.name, cookie.value, {
+              ...cookie.options,
+              path: cookie.options?.path ?? "/",
+            })
+          } catch (error: unknown) {
+            if (isHeadersSentError(error)) {
+              return
+            }
+            throw error
+          }
         }
       },
     },
