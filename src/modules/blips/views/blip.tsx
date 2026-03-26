@@ -88,9 +88,7 @@ export function BlipView() {
   const store = blipStore(supabase.client, { subscribe: false })
   const tags = tagStore(supabase.client)
   const { isAuthenticated, user } = useAuth() as any
-  const blipGraphQuery = createAsync(() => getBlipGraph(params.id), {
-    deferStream: true,
-  })
+  const blipGraphQuery = createAsync(() => getBlipGraph(params.id))
   const blipQuery = createMemo(() => blipGraphQuery()?.blip ?? null)
   const initialUpdates = createMemo(() => blipGraphQuery()?.updates ?? [])
   const blip = createMemo(() => {
@@ -354,40 +352,42 @@ export function BlipView() {
   return (
     <>
       <Title>{windowTitle(shareTitle())}</Title>
-      <Meta
-        name="description"
-        content={shareDescription()}
-      />
-      <Meta
-        property="og:type"
-        content="article"
-      />
-      <Meta
-        property="og:title"
-        content={shareTitle()}
-      />
-      <Meta
-        property="og:description"
-        content={shareDescription()}
-      />
-      <Show when={ogUrl()}>
+      <Show when={blip()}>
         <Meta
-          property="og:url"
-          content={ogUrl()}
+          name="description"
+          content={shareDescription()}
+        />
+        <Meta
+          property="og:type"
+          content="article"
+        />
+        <Meta
+          property="og:title"
+          content={shareTitle()}
+        />
+        <Meta
+          property="og:description"
+          content={shareDescription()}
+        />
+        <Show when={ogUrl()}>
+          <Meta
+            property="og:url"
+            content={ogUrl()}
+          />
+        </Show>
+        <Meta
+          name="twitter:card"
+          content="summary"
+        />
+        <Meta
+          name="twitter:title"
+          content={shareTitle()}
+        />
+        <Meta
+          name="twitter:description"
+          content={shareDescription()}
         />
       </Show>
-      <Meta
-        name="twitter:card"
-        content="summary"
-      />
-      <Meta
-        name="twitter:title"
-        content={shareTitle()}
-      />
-      <Meta
-        name="twitter:description"
-        content={shareDescription()}
-      />
       <main>
         <section class="blip-detail-page">
           <div class={cx("blip-detail-container", detailContainerWidthClass())}>
