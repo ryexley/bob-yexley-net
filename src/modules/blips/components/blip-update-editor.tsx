@@ -332,10 +332,12 @@ export function BlipUpdateEditor(props: BlipUpdateEditorProps) {
   createEffect(() => {
     if (local.open) {
       hasOpenedAtLeastOnce = true
+      clearKeyboardDismissTimeout()
       clearCloseAnimationTimeout()
       clearOpenAnimationFrame()
       setSkipClosePersist(false)
       setIsEditorOpen(false)
+      requestEditorFocus()
 
       const existing = selectedExistingUpdate()
       if (existing) {

@@ -485,18 +485,16 @@ export function BlipView() {
                       </Show>
 
                       <Show when={canManageUpdates()}>
-                        <Show when={showComposer()}>
-                          <BlipUpdateEditor
-                            open={showComposer()}
-                            rootBlipId={blip()?.id}
-                            editingUpdateId={selectedUpdateBlipId()}
-                            focusNonce={updateComposerFocusNonce()}
-                            onRequestClose={() => {
-                              setShowComposer(false)
-                              setSelectedUpdateBlipId(null)
-                            }}
-                          />
-                        </Show>
+                        <BlipUpdateEditor
+                          open={showComposer()}
+                          rootBlipId={blip()?.id}
+                          editingUpdateId={selectedUpdateBlipId()}
+                          focusNonce={updateComposerFocusNonce()}
+                          onRequestClose={() => {
+                            setShowComposer(false)
+                            setSelectedUpdateBlipId(null)
+                          }}
+                        />
                       </Show>
 
                       <Show when={visibleUpdates().length > 0}>
