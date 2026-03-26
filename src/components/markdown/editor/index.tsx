@@ -37,6 +37,7 @@ import "./styles.css"
 
 interface MarkdownEditorProps {
   instanceKey: string
+  focusNonce?: number
   initialValue?: string
   placeholder?: string
   onChange?: (markdown: string) => void
@@ -67,6 +68,7 @@ export function MarkdownEditor(props: MarkdownEditorProps) {
   const propsWithDefaults = mergeProps(propDefaults, props)
   const [local, rest] = splitProps(propsWithDefaults, [
     "instanceKey",
+    "focusNonce",
     "initialValue",
     "placeholder",
     "onChange",
@@ -86,6 +88,8 @@ export function MarkdownEditor(props: MarkdownEditorProps) {
   let editorRef: HTMLDivElement | undefined
   let editorInstance: Editor | undefined
   let editorKeydownCleanup: (() => void) | undefined
+  let pendingFocusAfterMount = false
+  let lastHandledFocusNonce: number | undefined
   const [activeFormats, setActiveFormats] = createSignal<string[]>([])
   const [disabledFormats, setDisabledFormats] = createSignal<string[]>([])
   const [selectedText, setSelectedText] = createSignal("")
@@ -147,6 +151,16 @@ export function MarkdownEditor(props: MarkdownEditorProps) {
         ctx.set(rootCtx, editorRef)
         ctx.set(defaultValueCtx, initialValue)
         ctx.update(prosePluginsCtx, prev => [...prev, history()])
+        ctx.get(listenerCtx).mounted(() => {
+          if (!pendingFocusAfterMount) {
+            return
+          }
+
+          pendingFocusAfterMount = false
+          queueMicrotask(() => {
+            focusEditor()
+          })
+        })
         ctx.get(listenerCtx).markdownUpdated((ctx, markdown) => {
           local.onChange?.(markdown)
         })
@@ -208,7 +222,29 @@ export function MarkdownEditor(props: MarkdownEditorProps) {
     })
   })
 
+  createEffect(() => {
+    const focusNonce = local.focusNonce
+    if (focusNonce === undefined) {
+      return
+    }
+
+    if (focusNonce === lastHandledFocusNonce) {
+      return
+    }
+
+    lastHandledFocusNonce = focusNonce
+    if (editorInstance) {
+      queueMicrotask(() => {
+        focusEditor()
+      })
+      return
+    }
+
+    pendingFocusAfterMount = true
+  })
+
   onCleanup(() => {
+    pendingFocusAfterMount = false
     editorKeydownCleanup?.()
     editorInstance?.destroy()
   })
@@ -224,7 +260,13 @@ export function MarkdownEditor(props: MarkdownEditorProps) {
     }
 
     editorInstance.action(ctx => {
-      ctx.get(editorViewCtx).focus()
+      const editorView = ctx.get(editorViewCtx)
+      const editorDom = editorView.dom as HTMLElement
+      try {
+        editorDom.focus({ preventScroll: true })
+      } catch {
+        editorView.focus()
+      }
     })
   }
 

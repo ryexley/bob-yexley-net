@@ -73,6 +73,7 @@ export function BlipEditor(props: BlipEditorProps) {
   const [saveStatus, setSaveStatus] = createSignal<SaveStatus>("idle")
   const [showStatus, setShowStatus] = createSignal<boolean>(false)
   const [statusFading, setStatusFading] = createSignal<boolean>(false)
+  const [editorFocusNonce, setEditorFocusNonce] = createSignal(0)
   const [editorView, setEditorView] = createSignal<EditorView>("editor")
   const [skipClosePersist, setSkipClosePersist] = createSignal<boolean>(false)
   const [selectedTags, setSelectedTags] = createSignal<BlipTagOption[]>([])
@@ -100,34 +101,19 @@ export function BlipEditor(props: BlipEditorProps) {
   let windowScrollYOnOpen: number = 0
   let hideStatusTimeout: ReturnType<typeof setTimeout> | null = null
   let fadeStatusTimeout: ReturnType<typeof setTimeout> | null = null
-  let editorFocusTimeout: ReturnType<typeof setTimeout> | null = null
+  let editorFocusRetryTimeout: ReturnType<typeof setTimeout> | null = null
   let resetStateTimeout: ReturnType<typeof setTimeout> | null = null
   let hasOpenedAtLeastOnce = false
 
-  const clearEditorFocusTimeout = () => {
-    if (editorFocusTimeout) {
-      clearTimeout(editorFocusTimeout)
-      editorFocusTimeout = null
+  const clearEditorFocusRetryTimeout = () => {
+    if (editorFocusRetryTimeout) {
+      clearTimeout(editorFocusRetryTimeout)
+      editorFocusRetryTimeout = null
     }
   }
 
-  const focusEditorInput = (attempt = 0) => {
-    withWindow(() => {
-      const editorInput = document.querySelector(
-        ".blip-editor-container .ProseMirror[contenteditable=\"true\"]",
-      ) as HTMLElement | null
-
-      if (editorInput) {
-        editorInput.focus()
-        return
-      }
-
-      if (attempt < 10) {
-        editorFocusTimeout = setTimeout(() => {
-          focusEditorInput(attempt + 1)
-        }, 50)
-      }
-    })
+  const requestEditorFocus = () => {
+    setEditorFocusNonce(previous => previous + 1)
   }
 
   const startNewBlip = () => {
@@ -443,7 +429,7 @@ export function BlipEditor(props: BlipEditorProps) {
       return
     }
 
-    clearEditorFocusTimeout()
+    clearEditorFocusRetryTimeout()
 
     const closingBlipId = currentBlipId()
     const closingContent = content()
@@ -533,8 +519,12 @@ export function BlipEditor(props: BlipEditorProps) {
       editorView() === "editor" &&
       content().trim().length === 0
     ) {
-      clearEditorFocusTimeout()
-      focusEditorInput()
+      requestEditorFocus()
+      clearEditorFocusRetryTimeout()
+      editorFocusRetryTimeout = setTimeout(() => {
+        requestEditorFocus()
+        editorFocusRetryTimeout = null
+      }, 120)
     }
   })
 
@@ -543,7 +533,7 @@ export function BlipEditor(props: BlipEditorProps) {
     debouncedCacheSave.cancel()
     debouncedDbSave.cancel()
     debouncedTagSave.cancel()
-    clearEditorFocusTimeout()
+    clearEditorFocusRetryTimeout()
     if (resetStateTimeout) {
       clearTimeout(resetStateTimeout)
       resetStateTimeout = null
@@ -839,6 +829,7 @@ export function BlipEditor(props: BlipEditorProps) {
               <form>
                 <MarkdownEditor
                   instanceKey="blip-editor"
+                  focusNonce={editorFocusNonce()}
                   placeholder={tr("placeholder")}
                   initialValue={content()}
                   onChange={handleContentChange}

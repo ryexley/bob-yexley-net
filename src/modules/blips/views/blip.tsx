@@ -65,6 +65,7 @@ export function BlipView() {
   const [selectedUpdateBlipId, setSelectedUpdateBlipId] = createSignal<
     string | null
   >(null)
+  const [updateComposerFocusNonce, setUpdateComposerFocusNonce] = createSignal(0)
   const [showBlipEditor, setShowBlipEditor] = createSignal(false)
   const [selectedBlipId, setSelectedBlipId] = createSignal<string | null>(null)
   const realtimeUpdateHighlightTimeouts = new Map<
@@ -367,13 +368,25 @@ export function BlipView() {
                             : tr("actions.postUpdate")
                         }
                         onClick={() => {
+                          if (showComposer()) {
+                            setShowComposer(false)
+                            setSelectedUpdateBlipId(null)
+                            return
+                          }
+
                           setSelectedUpdateBlipId(null)
-                          setShowComposer(current => !current)
+                          setShowComposer(true)
+                          setUpdateComposerFocusNonce(previous => previous + 1)
                         }}
                       />
                     }
                   />
-                  <Show when={visibleUpdates().length > 0 || showComposer()}>
+                  <Show
+                    when={
+                      canManageUpdates() ||
+                      visibleUpdates().length > 0 ||
+                      showComposer()
+                    }>
                     <section class="blip-updates-section">
                       <Show when={visibleUpdates().length > 0}>
                         <header class="blip-updates-header">
@@ -393,6 +406,7 @@ export function BlipView() {
                           open={showComposer()}
                           rootBlipId={blip()?.id}
                           editingUpdateId={selectedUpdateBlipId()}
+                          focusNonce={updateComposerFocusNonce()}
                           onRequestClose={() => {
                             setShowComposer(false)
                             setSelectedUpdateBlipId(null)
