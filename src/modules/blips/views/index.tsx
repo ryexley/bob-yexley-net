@@ -1,6 +1,6 @@
 import { createAsync, useNavigate } from "@solidjs/router"
 import { Meta, Title } from "@solidjs/meta"
-import { createEffect, createMemo, createSignal, Show } from "solid-js"
+import { createEffect, createMemo, createSignal, onCleanup, Show, untrack } from "solid-js"
 import { Button } from "@/components/button"
 import { LoadingSpinner } from "@/components/icon"
 import { PageSection } from "@/modules/home/components/page-section"
@@ -18,19 +18,24 @@ const tr = ptr("blips.views.index")
 
 export function BlipsView() {
   const initialBlips = createAsync(() => getBlips(BLIPS_PAGE_SIZE, 0))
+  let lastReactionViewerKey: string | null = null
+  let lastReactionViewer = {
+    id: null,
+    status: null,
+    displayName: null,
+  } as const
+  let reactionViewerBaselineCaptured = false
   const navigate = useNavigate()
   const supabase = useSupabase()
-  const { isAuthenticated } = useAuth() as any
+  const { isAuthenticated, visitor, loading } = useAuth() as any
   const [isLoadingMore, setIsLoadingMore] = createSignal(false)
   const [hasMore, setHasMore] = createSignal(true)
   let showMoreButtonRef: HTMLButtonElement | undefined
 
-  const {
-    entities: blips,
-    setInitialData,
-  } = blipStore(supabase.client, {
+  const store = blipStore(supabase.client, {
     limit: BLIPS_PAGE_SIZE,
   })
+  const { entities: blips, setInitialData } = store
   const rootFeedBlips = createMemo(() =>
     (blips() ?? []).filter(
       blip => blip.parent_id === null && blip.blip_type === BLIP_TYPES.ROOT,
@@ -44,6 +49,11 @@ export function BlipsView() {
 
     return allRootFeedBlips.filter(blip => blip.published)
   })
+  const reactionWatchKey = createMemo(() =>
+    visibleRootFeedBlips()
+      .map(blip => blip.id)
+      .join("|"),
+  )
   const hasInitialData = createMemo(() => initialBlips() !== undefined)
   const hasBlipItems = createMemo(() => (visibleRootFeedBlips()?.length ?? 0) > 0)
 
@@ -54,6 +64,74 @@ export function BlipsView() {
       setInitialData(ssrData)
       setHasMore(ssrData.length === BLIPS_PAGE_SIZE)
     }
+  })
+
+  createEffect(() => {
+    const watchKey = reactionWatchKey()
+    if (!watchKey) {
+      return
+    }
+
+    const blipIds = watchKey.split("|")
+    const unsubscribe = store.watchReactions(blipIds)
+    onCleanup(unsubscribe)
+  })
+
+  createEffect(() => {
+    const watchKey = reactionWatchKey()
+    if (!watchKey) {
+      return
+    }
+
+    const blipIds = watchKey.split("|")
+    const unsubscribe = store.watchBlips(blipIds, {
+      onUpdate: incoming => {
+        if (incoming.blip_type !== BLIP_TYPES.ROOT) {
+          return
+        }
+
+        void store.refreshReactionState(incoming.id)
+      },
+    })
+    onCleanup(unsubscribe)
+  })
+
+  createEffect(() => {
+    if (loading()) {
+      return
+    }
+
+    const nextViewer = {
+      id: visitor()?.id ?? null,
+      status: visitor()?.status ?? null,
+      displayName: visitor()?.displayName ?? null,
+    }
+    const nextViewerKey = [
+      nextViewer.id ?? "__anon__",
+      nextViewer.status ?? "",
+      nextViewer.displayName ?? "",
+    ].join(":")
+
+    if (!reactionViewerBaselineCaptured) {
+      reactionViewerBaselineCaptured = true
+      lastReactionViewerKey = nextViewerKey
+      lastReactionViewer = nextViewer
+      return
+    }
+
+    if (lastReactionViewerKey === nextViewerKey) {
+      return
+    }
+    lastReactionViewerKey = nextViewerKey
+
+    const blipIds = untrack(() => visibleRootFeedBlips().map(blip => blip.id))
+    if (blipIds.length === 0) {
+      lastReactionViewer = nextViewer
+      return
+    }
+
+    void store.syncReactionViewer(blipIds, nextViewer, lastReactionViewer)
+    lastReactionViewer = nextViewer
   })
 
   const loadMore = async (e: MouseEvent) => {

@@ -88,6 +88,32 @@
 }
 
 .update-blip-footer {
+  align-items: center;
+  display: flex;
+  gap: 0.75rem;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.update-blip-footer-start {
+  align-items: center;
+  display: inline-flex;
+  flex: 1;
+  min-width: 0;
+}
+
+.update-blip-footer-end {
+  align-items: center;
+  display: inline-flex;
+  flex-shrink: 0;
+  gap: 0.5rem;
+
+  > button {
+    height: 1.625rem;
+  }
+}
+
+.update-blip-footer {
   .blip-actions {
     margin: 0;
     min-height: 1.75rem;

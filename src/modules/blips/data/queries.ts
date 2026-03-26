@@ -1,8 +1,10 @@
+import type { SupabaseClient } from "@supabase/supabase-js"
 import { query } from "@solidjs/router"
 import {
   BLIP_TYPES,
   type Blip,
 } from "@/modules/blips/data/schema"
+import type { BlipReactionSummary } from "@/modules/blips/data/reactions-schema"
 
 type ViewTagRow = {
   id: string
@@ -15,12 +17,40 @@ type ViewTagValue = ViewTagRow | string
 type ViewUpdateRow = Omit<Blip, "tags" | "updates_count"> & {
   tags?: ViewTagValue[] | null
   updates_count?: number | null
+  reactions_count?: number | null
+  my_reaction_count?: number | null
+  reactions?: ViewReactionValue[] | null
 }
 
 type ViewBlipRow = Omit<Blip, "tags" | "updates_count"> & {
   tags?: ViewTagValue[] | null
   updates_count?: number | null
   updates?: ViewUpdateRow[] | null
+  reactions_count?: number | null
+  my_reaction_count?: number | null
+  reactions?: ViewReactionValue[] | null
+}
+
+type ViewReactionValue = {
+  emoji?: string | null
+  count?: number | null
+  reacted_by_current_user?: boolean | null
+  display_names?: string[] | null
+}
+
+type VisibleReactionRow = {
+  blip_id?: string | null
+  emoji?: string | null
+  visitor?: {
+    user_id?: string | null
+    display_name?: string | null
+  } | null
+}
+
+export type BlipReactionState = {
+  reactions_count: number
+  my_reaction_count: number
+  reactions: BlipReactionSummary[]
 }
 
 export type BlipGraph = {
@@ -237,6 +267,9 @@ const VIEW_BLIPS_SELECT = [
   "blip_type",
   "tags",
   "updates_count",
+  "reactions_count",
+  "my_reaction_count",
+  "reactions",
 ].join(", ")
 
 const VIEW_BLIP_GRAPH_SELECT = `${VIEW_BLIPS_SELECT}, updates`
@@ -268,9 +301,167 @@ const mapViewBlipRow = (row: ViewBlipRow): Blip => ({
   blip_type: row.blip_type,
   tags: mapTagNames(row.tags),
   updates_count: row.updates_count ?? 0,
+  reactions_count: row.reactions_count ?? 0,
+  my_reaction_count: row.my_reaction_count ?? 0,
+  reactions: mapReactionSummaries(row.reactions),
 })
 
-const mapViewUpdateRows = (rows?: ViewUpdateRow[] | null): Blip[] =>
+const mapReactionSummaries = (
+  reactions?: ViewReactionValue[] | null,
+): BlipReactionSummary[] =>
+  (reactions ?? [])
+    .map(reaction => {
+      const emoji = reaction?.emoji?.trim()
+      if (!emoji) {
+        return null
+      }
+
+      const displayNames = [...new Set((reaction.display_names ?? []).filter(Boolean))]
+      return {
+        emoji,
+        count: typeof reaction.count === "number" ? reaction.count : 0,
+        reacted_by_current_user: reaction.reacted_by_current_user === true,
+        display_names: displayNames,
+      } satisfies BlipReactionSummary
+    })
+    .filter((reaction): reaction is BlipReactionSummary => reaction !== null)
+
+export const buildBlipReactionStates = (
+  blipIds: string[],
+  rows: VisibleReactionRow[],
+  currentUserId: string | null,
+): Record<string, BlipReactionState> => {
+  const states = Object.fromEntries(
+    [...new Set(blipIds.filter(Boolean))].map(blipId => [
+      blipId,
+      {
+        reactions_count: 0,
+        my_reaction_count: 0,
+        reactions: [],
+      } satisfies BlipReactionState,
+    ]),
+  )
+
+  const grouped = new Map<
+    string,
+    Map<string, { count: number; reacted_by_current_user: boolean; display_names: string[] }>
+  >()
+
+  for (const row of rows) {
+    const blipId = row.blip_id?.trim()
+    const emoji = row.emoji?.trim()
+    if (!blipId || !emoji || !(blipId in states)) {
+      continue
+    }
+
+    const byEmoji = grouped.get(blipId) ?? new Map()
+    const current =
+      byEmoji.get(emoji) ?? {
+        count: 0,
+        reacted_by_current_user: false,
+        display_names: [],
+      }
+
+    current.count += 1
+    if (row.visitor?.user_id && row.visitor.user_id === currentUserId) {
+      current.reacted_by_current_user = true
+    }
+
+    const displayName = row.visitor?.display_name?.trim()
+    if (displayName && !current.display_names.includes(displayName)) {
+      current.display_names.push(displayName)
+      current.display_names.sort()
+    }
+
+    byEmoji.set(emoji, current)
+    grouped.set(blipId, byEmoji)
+  }
+
+  for (const [blipId, byEmoji] of grouped) {
+    const reactions = [...byEmoji.entries()]
+      .sort(([left], [right]) => left.localeCompare(right))
+      .map(([emoji, summary]) => ({
+        emoji,
+        count: summary.count,
+        reacted_by_current_user: summary.reacted_by_current_user,
+        display_names: summary.display_names,
+      }))
+
+    states[blipId] = {
+      reactions_count: reactions.reduce((total, reaction) => total + reaction.count, 0),
+      my_reaction_count: reactions.filter(reaction => reaction.reacted_by_current_user).length,
+      reactions,
+    }
+  }
+
+  return states
+}
+
+const getCurrentUserId = async (supabase: SupabaseClient): Promise<string | null> => {
+  try {
+    const { data, error } = await supabase.auth.getUser()
+    if (error) {
+      throw error
+    }
+
+    return data.user?.id ?? null
+  } catch {
+    return null
+  }
+}
+
+export async function getBlipReactionState(
+  supabase: SupabaseClient,
+  blipId: string,
+): Promise<BlipReactionState | null> {
+  if (!blipId) {
+    return null
+  }
+
+  const currentUserId = await getCurrentUserId(supabase)
+  const { data, error } = await supabase
+    .from("reactions")
+    .select("blip_id, emoji, visitor:visitors!inner(user_id, display_name)")
+    .eq("blip_id", blipId)
+
+  if (error) {
+    throw error
+  }
+
+  return buildBlipReactionStates(
+    [blipId],
+    (data ?? []) as VisibleReactionRow[],
+    currentUserId,
+  )[blipId] ?? null
+}
+
+export async function getBlipReactionStates(
+  supabase: SupabaseClient,
+  blipIds: string[],
+): Promise<Record<string, BlipReactionState>> {
+  const targetIds = [...new Set(blipIds.filter(Boolean))]
+  if (targetIds.length === 0) {
+    return {}
+  }
+
+  const currentUserId = await getCurrentUserId(supabase)
+  const { data, error } = await supabase
+    .from("reactions")
+    .select("blip_id, emoji, visitor:visitors!inner(user_id, display_name)")
+    .in("blip_id", targetIds)
+
+  if (error) {
+    throw error
+  }
+
+  return buildBlipReactionStates(
+    targetIds,
+    (data ?? []) as VisibleReactionRow[],
+    currentUserId,
+  )
+}
+
+export const mapViewUpdateRows = (rows?: ViewUpdateRow[] | null): Blip[] =>
   (rows ?? []).map(row => ({
     id: row.id,
     parent_id: row.parent_id,
@@ -284,6 +475,9 @@ const mapViewUpdateRows = (rows?: ViewUpdateRow[] | null): Blip[] =>
     blip_type: row.blip_type,
     tags: mapTagNames(row.tags),
     updates_count: row.updates_count ?? 0,
+    reactions_count: row.reactions_count ?? 0,
+    my_reaction_count: row.my_reaction_count ?? 0,
+    reactions: mapReactionSummaries(row.reactions),
   }))
 
 const isRootBlip = (blip: Pick<Blip, "parent_id" | "blip_type">) =>
@@ -306,7 +500,7 @@ export const getBlips = query(async (limit: number = 20, offset: number = 0) => 
     "getBlips",
     { limit, offset },
     async () => {
-      const { getServerClient } = await import("@/lib/vendor/supabase-server")
+      const { getServerClient } = await import("@/lib/vendor/supabase/server")
       const supabase = await getServerClient()
 
       const { data, error } = await supabase
@@ -342,7 +536,7 @@ export const getBlipsByTag = query(async (
     "getBlipsByTag",
     { tag, limit, offset },
     async () => {
-      const { getServerClient } = await import("@/lib/vendor/supabase-server")
+      const { getServerClient } = await import("@/lib/vendor/supabase/server")
       const supabase = await getServerClient()
 
       const { data: directData, error: directError } = await supabase
@@ -424,7 +618,7 @@ export const getBlip = query(async (id: string) => {
     "getBlip",
     { id },
     async () => {
-      const { getServerClient } = await import("@/lib/vendor/supabase-server")
+      const { getServerClient } = await import("@/lib/vendor/supabase/server")
       const supabase = await getServerClient()
 
       const { data, error } = await supabase
@@ -460,7 +654,7 @@ export const getBlipGraph = query(async (id: string): Promise<BlipGraph | null> 
     "getBlipGraph",
     { id },
     async () => {
-      const { getServerClient } = await import("@/lib/vendor/supabase-server")
+      const { getServerClient } = await import("@/lib/vendor/supabase/server")
       const supabase = await getServerClient()
 
       const { data, error } = await supabase

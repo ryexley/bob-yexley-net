@@ -10,8 +10,10 @@
   transition-duration: 250ms;
   text-shadow: 0 0 0.1875rem rgba(0, 0, 0, 0.85);
 
+  &:focus,
   &:focus-visible {
-    outline: none;
+    outline: 0.0625rem solid var(--colors-cool-blue);
+    outline-offset: 0.0625rem;
   }
 
   &:disabled {
@@ -39,11 +41,23 @@
   }
 
   &.outline {
-    border: 1px solid var(--color-gray-300);
+    /* Temporary Tailwind interop:
+     * Tailwind's global `.outline` utility collides with this variant class and
+     * adds an unwanted default outline ring. Safe to remove once Tailwind is
+     * fully removed from the app and this class-name collision no longer exists.
+     */
+    &:not(:focus):not(:focus-visible) {
+      outline: none;
+    }
+
+    border: 1px solid var(--colors-mono-06);
     background-color: transparent;
+    color: var(--colors-mono-10);
 
     &:hover {
-      background-color: var(--color-gray-50);
+      background-color: rgba(var(--colors-mono-11-rgb), 0.05);
+      border-color: var(--colors-mono-08);
+      color: var(--colors-mono-11);
     }
   }
 

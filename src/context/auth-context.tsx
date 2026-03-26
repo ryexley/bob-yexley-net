@@ -1,49 +1,123 @@
 import {
   createContext,
   createEffect,
+  createMemo,
   createSignal,
+  onCleanup,
   onMount,
   useContext,
 } from "solid-js"
-import { supabase } from "@/lib/vendor/supabase"
+import { createAsync } from "@solidjs/router"
+import { supabase, type AppRole, type UserProfile } from "@/lib/vendor/supabase/browser"
+import {
+  bootstrapAuthSession,
+  loadAuthProfile,
+  resolveSignedInAuth,
+} from "@/context/auth-controller"
+import { setVisitorAuthenticateHandler } from "@/modules/auth/components/visitor-auth-modal"
+import { getUserProfile } from "@/modules/auth/data/queries"
 import { isEmpty, isNotEmpty } from "@/util"
 
 interface AuthContextType {
-  user: () => any | null
+  profile: () => UserProfile | null
+  user: () => UserProfile["user"] | null
+  visitor: () => UserProfile["visitor"] | null
+  role: () => AppRole | null
   loading: () => boolean
+  replaceProfile: (profile: UserProfile | null) => void
   logout: () => Promise<void>
   isAuthenticated: () => boolean
+  isAdmin: () => boolean
+  isSuperuser: () => boolean
 }
 
 const AuthContext = createContext<AuthContextType>()
 
 export function AuthProvider(props: { children: any }) {
-  const [user, setUser] = createSignal(null)
+  const [profile, setProfile] = createSignal<UserProfile | null>(null)
   const [loading, setLoading] = createSignal(true)
+  const [bootstrapped, setBootstrapped] = createSignal(false)
+  const [initialSnapshotApplied, setInitialSnapshotApplied] = createSignal(false)
+  const initialProfile = createAsync(() => getUserProfile())
+  const user = createMemo(() => profile()?.user ?? null)
+  const visitor = createMemo(() => profile()?.visitor ?? null)
+  const role = createMemo(() => profile()?.role ?? null)
 
-  onMount(async () => {
-    const { data: currentUser } = await supabase?.getUser()
+  const clearAuthState = () => {
+    setProfile(null)
+  }
 
-    if (isNotEmpty(currentUser)) {
-      if (supabase.isSessionExpired()) {
-        await supabase.logout()
-        setUser(null)
-        setLoading(false)
-        return
-      }
-
-      const { data: isValidServerSession } = await supabase.isServerSessionValid()
-      if (!isValidServerSession) {
-        await supabase.logout()
-        setUser(null)
-        setLoading(false)
-        return
-      }
-
-      setUser(currentUser)
+  const applyAuthProfile = (profile: UserProfile | null) => {
+    if (isEmpty(profile)) {
+      clearAuthState()
+      return
     }
 
+    setProfile(profile)
+  }
+
+  createEffect(() => {
+    if (initialSnapshotApplied()) {
+      return
+    }
+
+    const profile = initialProfile()
+    if (profile === undefined) {
+      return
+    }
+
+    applyAuthProfile(profile ?? null)
     setLoading(false)
+    setBootstrapped(true)
+    setInitialSnapshotApplied(true)
+  })
+
+  onMount(async () => {
+    setVisitorAuthenticateHandler(async credentials => {
+      if (credentials.mode === "signup") {
+        const { error } = await supabase.visitorSignUp(
+          credentials.email,
+          credentials.pin,
+          credentials.displayName,
+        )
+        return {
+          success: isEmpty(error),
+          error: error ?? undefined,
+        }
+      }
+
+      const { error } = await supabase.visitorLogin(credentials.email, credentials.pin)
+      return {
+        success: isEmpty(error),
+        error: error ?? undefined,
+      }
+    })
+
+    await Promise.resolve()
+    if (bootstrapped()) {
+      return
+    }
+
+    const { profile: nextProfile } = await bootstrapAuthSession({
+      getUser: supabase.getUser,
+      isSessionExpired: () => supabase.isSessionExpired(),
+      isServerSessionValid: () => supabase.isServerSessionValid(),
+      logout: () => supabase.logout(),
+      loadUserProfile: sessionUser =>
+        loadAuthProfile(sessionUser, supabase.getUserProfile),
+    })
+    if (bootstrapped()) {
+      return
+    }
+
+    applyAuthProfile(nextProfile)
+
+    setLoading(false)
+    setBootstrapped(true)
+  })
+
+  onCleanup(() => {
+    setVisitorAuthenticateHandler(undefined)
   })
 
   createEffect(() => {
@@ -53,45 +127,44 @@ export function AuthProvider(props: { children: any }) {
       void (async () => {
         if (event === "SIGNED_OUT") {
           supabase.clearSessionStart()
-          setUser(null)
+          clearAuthState()
           setLoading(false)
+          return
+        }
+
+        if (!bootstrapped() || event !== "SIGNED_IN") {
           return
         }
 
         if (isEmpty(session?.user)) {
-          setUser(null)
+          clearAuthState()
           setLoading(false)
           return
         }
 
-        if (event === "SIGNED_IN") {
-          supabase.markSessionStartIfMissing()
+        setLoading(true)
+        const { profile: nextProfile, shouldLogout } = await resolveSignedInAuth({
+          sessionUser: session.user,
+          currentUserId: user()?.id ?? null,
+          currentRole: role(),
+          cachedProfile: supabase.peekUserProfile(session.user.id),
+          openCurrentSession: () => supabase.openCurrentSession(),
+          markSessionStartIfMissing: () => supabase.markSessionStartIfMissing(),
+          logout: () => supabase.logout(),
+          loadUserProfile: sessionUser =>
+            loadAuthProfile(sessionUser, supabase.getUserProfile),
+        })
 
-          const { error: openSessionError } = await supabase.openCurrentSession()
-          if (isNotEmpty(openSessionError)) {
-            await supabase.logout()
-            setUser(null)
-            setLoading(false)
-            return
-          }
-        }
-
-        if (supabase.isSessionExpired()) {
-          await supabase.logout()
-          setUser(null)
+        if (shouldLogout) {
+          clearAuthState()
           setLoading(false)
           return
         }
 
-        const { data: isValidServerSession } = await supabase.isServerSessionValid()
-        if (!isValidServerSession) {
-          await supabase.logout()
-          setUser(null)
-          setLoading(false)
-          return
+        if (nextProfile) {
+          applyAuthProfile(nextProfile)
         }
 
-        setUser(session?.user ?? null)
         setLoading(false)
       })()
     })
@@ -101,14 +174,20 @@ export function AuthProvider(props: { children: any }) {
 
   const logout = async () => {
     await supabase?.logout()
-    setUser(null)
+    clearAuthState()
   }
 
   const context = {
+    profile,
     user,
+    visitor,
+    role,
     loading,
+    replaceProfile: applyAuthProfile,
     logout,
     isAuthenticated: () => isNotEmpty(user()),
+    isAdmin: () => role() === "admin" || role() === "superuser",
+    isSuperuser: () => role() === "superuser",
   }
 
   return (

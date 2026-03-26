@@ -33,9 +33,10 @@
     border-color: var(--colors-mono-09);
   }
 
+  &:focus,
   &:focus-visible {
-    outline: 2px solid var(--colors-cool-blue);
-    outline-offset: 2px;
+    outline: 0.0625rem solid var(--colors-cool-blue);
+    outline-offset: 0.0625rem;
   }
 
   &[data-invalid] {

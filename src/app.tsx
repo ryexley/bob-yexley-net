@@ -9,6 +9,7 @@ import { ServicesProvider } from "@/context/services-context"
 import { ViewportProvider } from "@/context/viewport"
 import { IntlProvider, messages } from "@/i18n"
 import { MainLayout } from "@/layouts"
+import { VisitorAuthProvider } from "@/modules/auth/components/visitor-auth-modal"
 import { generateRGBColorVarsFromHexVars } from "@/util/colors"
 import { handleIconsReady } from "@/util/fonts"
 import "@/styles/global.css"
@@ -32,7 +33,9 @@ export default function App() {
                   <ViewportProvider>
                     <NotificationProvider>
                       <ConfirmationProvider>
-                        <MainLayout>{props.children}</MainLayout>
+                        <VisitorAuthProvider>
+                          <MainLayout>{props.children}</MainLayout>
+                        </VisitorAuthProvider>
                       </ConfirmationProvider>
                     </NotificationProvider>
                   </ViewportProvider>

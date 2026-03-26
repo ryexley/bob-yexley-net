@@ -1,0 +1,403 @@
+import {
+  createSignal,
+  createMemo,
+  Show,
+  type ParentProps,
+} from "solid-js"
+import { Button } from "@/components/button"
+import { Callout } from "@/components/callout"
+import {
+  Dialog,
+  DialogBody,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/dialog"
+import { Icon, LoadingSpinner } from "@/components/icon"
+import { Input } from "@/components/input"
+import {
+  VISITOR_AUTH_ERROR,
+  isVisitorAuthErrorCode,
+  type VisitorAuthErrorCode,
+} from "@/lib/auth/visitor-auth-errors"
+import { Pin } from "@/modules/auth/components/pin"
+import { ptr } from "@/i18n"
+import { generateRandomRadialGradients } from "@/util/image"
+import { clsx as cx, isNotEmpty } from "@/util"
+import "./visitor-auth-modal.css"
+
+type VisitorAuthCredentials = {
+  mode: VisitorAuthMode
+  email: string
+  pin: string
+  displayName: string
+}
+
+type VisitorAuthResult = {
+  success: boolean
+  error?: string
+}
+
+type VisitorAuthModalProps = {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  onSuccess?: (() => void) | null
+  onAuthenticate?: (
+    credentials: VisitorAuthCredentials,
+  ) => Promise<VisitorAuthResult> | VisitorAuthResult
+}
+
+type OpenVisitorAuthOptions = {
+  onSuccess?: () => void
+}
+
+type VisitorAuthContextType = {
+  open: (options?: OpenVisitorAuthOptions) => void
+  close: () => void
+  isOpen: () => boolean
+}
+
+type VisitorAuthMode = "login" | "signup"
+
+const [openState, setOpenState] = createSignal(false)
+const [pendingSuccessCallback, setPendingSuccessCallback] = createSignal<
+  (() => void) | null
+>(null)
+const [authenticateHandler, setAuthenticateHandler] =
+  createSignal<VisitorAuthModalProps["onAuthenticate"]>()
+const tr = ptr("auth.components.visitorAuthModal")
+const VISITOR_AUTH_ERROR_I18N_KEY: Record<VisitorAuthErrorCode, string> = {
+  [VISITOR_AUTH_ERROR.VALIDATION_LOGIN_REQUIRED]:
+    "errors.codes.validationLoginRequired",
+  [VISITOR_AUTH_ERROR.VALIDATION_SIGNUP_REQUIRED]:
+    "errors.codes.validationSignupRequired",
+  [VISITOR_AUTH_ERROR.INVALID_EMAIL_OR_PIN]:
+    "errors.codes.invalidEmailOrPin",
+  [VISITOR_AUTH_ERROR.VISITOR_LOCKED]: "errors.codes.visitorLocked",
+  [VISITOR_AUTH_ERROR.SIGNUP_EMAIL_EXISTS]: "errors.codes.signupEmailExists",
+  [VISITOR_AUTH_ERROR.SIGNUP_INVALID_EMAIL]: "errors.codes.signupInvalidEmail",
+  [VISITOR_AUTH_ERROR.SIGNUP_UNAVAILABLE]: "errors.codes.signupUnavailable",
+  [VISITOR_AUTH_ERROR.UNEXPECTED]: "errors.codes.unexpected",
+}
+
+export function VisitorAuthModal(props: VisitorAuthModalProps) {
+  let nameInputRef: HTMLInputElement | undefined
+  let submitButtonRef: HTMLButtonElement | undefined
+  const [email, setEmail] = createSignal("")
+  const [pin, setPin] = createSignal("")
+  const [displayName, setDisplayName] = createSignal("")
+  const [submitting, setSubmitting] = createSignal(false)
+  const [error, setError] = createSignal("")
+  const [mode, setMode] = createSignal<VisitorAuthMode>("login")
+  const [showHelpBack, setShowHelpBack] = createSignal(false)
+  const modalBackground = createMemo(() => ({
+    "background-image": generateRandomRadialGradients(),
+  }))
+  const isSignupMode = createMemo(() => mode() === "signup")
+  const disableSubmitButton = createMemo(() => submitting())
+  const title = createMemo(() =>
+    isSignupMode() ? tr("signup.title") : tr("login.title"),
+  )
+  const subtitle = createMemo(() =>
+    isSignupMode() ? tr("signup.subtitle") : tr("login.subtitle"),
+  )
+  const submitLabel = createMemo(() => {
+    return isSignupMode() ? tr("actions.signUp.default") : tr("actions.login.default")
+  })
+  const submitButtonContent = createMemo(() => {
+    if (!submitting()) {
+      return submitLabel()
+    }
+
+    return (
+      <LoadingSpinner
+        size="1rem"
+        color="currentColor"
+        class="visitor-auth-submit-spinner"
+      />
+    )
+  })
+  const resolveVisitorAuthErrorMessage = (errorCode?: string) => {
+    if (!errorCode) {
+      return tr("errors.authFailed")
+    }
+
+    if (isVisitorAuthErrorCode(errorCode)) {
+      return tr(VISITOR_AUTH_ERROR_I18N_KEY[errorCode])
+    }
+
+    return tr("errors.unexpected")
+  }
+
+  const resetForm = () => {
+    setEmail("")
+    setPin("")
+    setDisplayName("")
+    setSubmitting(false)
+    setError("")
+    setMode("login")
+    setShowHelpBack(false)
+  }
+
+  const closeModal = () => {
+    props.onOpenChange(false)
+    resetForm()
+  }
+
+  const handleSubmit = async (event: SubmitEvent) => {
+    event.preventDefault()
+    event.stopPropagation()
+    setError("")
+
+    const nextEmail = email().trim()
+    const nextDisplayName = displayName().trim()
+
+    if (!nextEmail || pin().length !== 6 || (isSignupMode() && !nextDisplayName)) {
+      setError(
+        isSignupMode()
+          ? tr("errors.validation.signupRequired")
+          : tr("errors.validation.loginRequired"),
+      )
+      return
+    }
+
+    setSubmitting(true)
+    try {
+      const payload = {
+        mode: mode(),
+        email: nextEmail,
+        pin: pin(),
+        displayName: isSignupMode() ? nextDisplayName : "",
+      }
+
+      if (!props.onAuthenticate) {
+        setError(tr("errors.notWired"))
+        return
+      }
+
+      const result = await props.onAuthenticate({
+        mode: payload.mode,
+        email: payload.email,
+        pin: payload.pin,
+        displayName: payload.displayName,
+      })
+
+      if (!result.success) {
+        setError(resolveVisitorAuthErrorMessage(result.error))
+        return
+      }
+
+      props.onSuccess?.()
+      closeModal()
+    } catch (submissionError) {
+      console.error("Visitor auth submission failed:", submissionError)
+      setError(tr("errors.unexpected"))
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const toggleMode = () => {
+    setMode(previous => (previous === "login" ? "signup" : "login"))
+    setError("")
+    setShowHelpBack(false)
+  }
+
+  return (
+    <Dialog
+      open={props.open}
+      onOpenChange={open => {
+        props.onOpenChange(open)
+        if (!open) {
+          resetForm()
+        }
+      }}
+      class="visitor-auth-modal"
+      overlayClass="visitor-auth-overlay"
+      style={modalBackground()}>
+      <div class="visitor-auth-shell">
+        <div class="visitor-auth-card">
+          <div
+            class={cx("visitor-auth-flip-card", {
+              "is-flipped": showHelpBack(),
+            })}>
+            <section class="visitor-auth-face visitor-auth-face-front">
+              <DialogHeader class="visitor-auth-header">
+                <div class="visitor-auth-header-row">
+                  <DialogTitle class="visitor-auth-title">
+                    <Icon name="shield_lock" />
+                    <h2>{title()}</h2>
+                  </DialogTitle>
+                  <button
+                    type="button"
+                    class="visitor-auth-help-inline"
+                    onClick={() => setShowHelpBack(true)}>
+                    <span>{tr("help.trigger")}</span>
+                    <Icon name="help" />
+                  </button>
+                </div>
+                <DialogDescription class="visitor-auth-subtitle">
+                  {subtitle()}
+                </DialogDescription>
+              </DialogHeader>
+              <DialogBody>
+                <form
+                  class="visitor-auth-form"
+                  data-mode={mode()}
+                  onSubmit={handleSubmit}
+                  novalidate>
+                  <Show when={isNotEmpty(error())}>
+                    <Callout
+                      variant="error"
+                      content={error()}
+                      class="visitor-auth-error"
+                    />
+                  </Show>
+                  <Input
+                    label={tr("fields.email.label")}
+                    type="email"
+                    autocomplete="off"
+                    placeholder={tr("fields.email.placeholder")}
+                    value={email()}
+                    onInput={event => setEmail(event.currentTarget.value)}
+                    inputClass="visitor-auth-input"
+                  />
+                  <Pin
+                    label={tr("fields.pin.label")}
+                    value={pin()}
+                    onChange={setPin}
+                    onComplete={() => {
+                      queueMicrotask(() => {
+                        if (isSignupMode()) {
+                          nameInputRef?.focus()
+                          nameInputRef?.select()
+                          return
+                        }
+
+                        submitButtonRef?.focus()
+                      })
+                    }}
+                    class="visitor-auth-pin-field"
+                    inputsClass="visitor-auth-pin"
+                    inputClass="visitor-auth-pin-input"
+                  />
+                  <div
+                    class={cx("visitor-auth-signup-row", {
+                      "is-active": isSignupMode(),
+                    })}
+                    aria-hidden={!isSignupMode()}>
+                    <div class="visitor-auth-signup-row-inner">
+                    <Input
+                      label={tr("fields.name.label")}
+                      type="text"
+                      autocomplete="off"
+                      placeholder={tr("fields.name.placeholder")}
+                      value={displayName()}
+                      ref={element => {
+                        nameInputRef = element
+                      }}
+                      onInput={event => setDisplayName(event.currentTarget.value)}
+                      inputClass="visitor-auth-input"
+                      required={isSignupMode()}
+                      disabled={!isSignupMode()}
+                    />
+                    </div>
+                  </div>
+                  <DialogFooter class="visitor-auth-actions">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      label={tr("actions.cancel")}
+                      class="visitor-auth-cancel"
+                      onClick={closeModal}
+                    />
+                    <Button
+                      type="submit"
+                      variant="primary"
+                      label={submitButtonContent()}
+                      disabled={disableSubmitButton()}
+                      ref={element => {
+                        submitButtonRef = element
+                      }}
+                      class="visitor-auth-submit"
+                    />
+                  </DialogFooter>
+                  <p class="visitor-auth-mode-switch">
+                    {isSignupMode()
+                      ? tr("modeSwitch.signup.prefix")
+                      : tr("modeSwitch.login.prefix")}
+                    <button
+                      type="button"
+                      class="visitor-auth-mode-switch-link"
+                      onClick={toggleMode}>
+                      {isSignupMode()
+                        ? tr("modeSwitch.signup.link")
+                        : tr("modeSwitch.login.link")}
+                    </button>
+                  </p>
+                </form>
+              </DialogBody>
+            </section>
+            <section class="visitor-auth-face visitor-auth-face-back">
+              <div class="visitor-auth-help-back-header">
+                <button
+                  type="button"
+                  class="visitor-auth-help-back-button"
+                  onClick={() => setShowHelpBack(false)}>
+                  <Icon name="arrow_back" />
+                  <span>{tr("help.backAction")}</span>
+                </button>
+              </div>
+              <p class="visitor-auth-help-back-content">
+                {isSignupMode() ? tr("help.signupContent") : tr("help.loginContent")}
+              </p>
+            </section>
+          </div>
+        </div>
+      </div>
+    </Dialog>
+  )
+}
+
+export function VisitorAuthProvider(props: ParentProps) {
+  return (
+    <>
+      {props.children}
+      <VisitorAuthModal
+        open={openState()}
+        onOpenChange={open => {
+          setOpenState(open)
+          if (!open) {
+            setPendingSuccessCallback(null)
+          }
+        }}
+        onSuccess={() => {
+          pendingSuccessCallback()?.()
+          setPendingSuccessCallback(null)
+        }}
+        onAuthenticate={authenticateHandler()}
+      />
+    </>
+  )
+}
+
+export const useVisitorAuth = (): VisitorAuthContextType => {
+  return {
+    open: options => {
+      setPendingSuccessCallback(() => options?.onSuccess ?? null)
+      setOpenState(true)
+    },
+    close: () => {
+      setOpenState(false)
+      setPendingSuccessCallback(null)
+    },
+    isOpen: () => openState(),
+  }
+}
+
+export const setVisitorAuthenticateHandler = (
+  handler?: VisitorAuthModalProps["onAuthenticate"],
+) => {
+  setAuthenticateHandler(() => handler)
+}

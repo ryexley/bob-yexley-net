@@ -29,6 +29,10 @@
   gap: 0.25rem;
   min-height: 0;
   overflow: visible;
+  padding-bottom: 0;
+}
+
+.blip-update-editor-shell.is-open .blip-update-editor-shell-inner {
   padding-bottom: 0.75rem;
 }
 

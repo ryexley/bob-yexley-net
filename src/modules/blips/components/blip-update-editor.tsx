@@ -72,6 +72,7 @@ export function BlipUpdateEditor(props: BlipUpdateEditorProps) {
   const [statusFading, setStatusFading] = createSignal(false)
   const [editorFocusNonce, setEditorFocusNonce] = createSignal(0)
   const [keyboardInsetPx, setKeyboardInsetPx] = createSignal(0)
+  const [isEditorMounted, setIsEditorMounted] = createSignal(local.open)
   const [isEditorOpen, setIsEditorOpen] = createSignal(false)
   const [skipClosePersist, setSkipClosePersist] = createSignal(false)
 
@@ -332,6 +333,7 @@ export function BlipUpdateEditor(props: BlipUpdateEditorProps) {
   createEffect(() => {
     if (local.open) {
       hasOpenedAtLeastOnce = true
+      setIsEditorMounted(true)
       clearKeyboardDismissTimeout()
       clearCloseAnimationTimeout()
       clearOpenAnimationFrame()
@@ -427,16 +429,21 @@ export function BlipUpdateEditor(props: BlipUpdateEditorProps) {
     setIsEditorOpen(false)
 
     clearCloseAnimationTimeout()
-    // Dispose composer state immediately on close so reopen is always fresh.
-    setCurrentUpdateId(blipId())
-    setContent("")
-    setIsDirty(false)
-    setIsPublished(true)
-    setHasPersistedCurrentUpdate(false)
-    setSaveStatus("idle")
-    setShowStatus(false)
-    setStatusFading(false)
-    setSkipClosePersist(false)
+    closeAnimationTimeout = setTimeout(() => {
+      // Dispose composer state after the close animation so the shell can
+      // animate out smoothly without its content disappearing mid-transition.
+      setIsEditorMounted(false)
+      setCurrentUpdateId(blipId())
+      setContent("")
+      setIsDirty(false)
+      setIsPublished(true)
+      setHasPersistedCurrentUpdate(false)
+      setSaveStatus("idle")
+      setShowStatus(false)
+      setStatusFading(false)
+      setSkipClosePersist(false)
+      closeAnimationTimeout = null
+    }, ANIMATION_MS)
   })
 
   onCleanup(() => {
@@ -737,7 +744,7 @@ export function BlipUpdateEditor(props: BlipUpdateEditorProps) {
 
   return (
     <Show
-      when={currentUpdateId()}
+      when={isEditorMounted() ? currentUpdateId() : null}
       keyed>
       {updateId => (
         <div

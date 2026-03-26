@@ -18,17 +18,28 @@ import {
 import { Hashtag, Icon } from "@/components/icon"
 import { Button } from "@/components/button"
 import { MarkdownRenderer as Markdown } from "@/components/markdown/renderer"
+import { useNotify } from "@/components/notification"
 import { useSupabase } from "@/context/services-context"
 import { useAuth } from "@/context/auth-context"
 import { BlipActions } from "@/modules/blips/components/blip-actions"
+import { BlipReactionSummary } from "@/modules/blips/components/blip-reaction-summary"
 import { BlipEditor } from "@/modules/blips/components/blip-editor"
+import { BlipReactionTrigger } from "@/modules/blips/components/blip-reaction-trigger"
 import { BlipUpdateEditor } from "@/modules/blips/components/blip-update-editor"
+import { REACTION_ERROR_I18N_KEY } from "@/modules/blips/data/errors"
 import {
   BLIP_TYPES,
   blipStore,
   getBlipGraph,
   tagStore,
 } from "@/modules/blips/data"
+import {
+  buildOptimisticReactionState,
+  createReactionStateOverride,
+  getReactionSignature,
+  type ReactionStateOverride,
+} from "@/modules/blips/data/reaction-optimistic"
+import { reactionStore } from "@/modules/blips/data/reactions-store"
 import { UpdateBlip } from "@/modules/blips/components/update-blip"
 import { formatBlipTimestamp } from "@/modules/blips/util"
 import { ptr } from "@/i18n"
@@ -81,13 +92,22 @@ export function BlipView() {
   const REALTIME_UPDATE_HIGHLIGHT_MS = 60_000
   let lastSeededBlipId: string | null = null
   let lastSeededUpdatesForBlipId: string | null = null
+  let lastReactionViewerKey: string | null = null
+  let lastReactionViewer = {
+    id: null,
+    status: null,
+    displayName: null,
+  } as const
+  let reactionViewerBaselineCaptured = false
   const params = useParams()
   const location = useLocation()
   const navigate = useNavigate()
   const supabase = useSupabase()
+  const notify = useNotify()
   const store = blipStore(supabase.client, { subscribe: false })
+  const reactions = reactionStore(supabase.client, { subscribe: false })
   const tags = tagStore(supabase.client)
-  const { isAuthenticated, user } = useAuth() as any
+  const { isAuthenticated, user, visitor, loading } = useAuth() as any
   const blipGraphQuery = createAsync(() => getBlipGraph(params.id))
   const blipQuery = createMemo(() => blipGraphQuery()?.blip ?? null)
   const initialUpdates = createMemo(() => blipGraphQuery()?.updates ?? [])
@@ -105,6 +125,9 @@ export function BlipView() {
   const [updateComposerFocusNonce, setUpdateComposerFocusNonce] = createSignal(0)
   const [showBlipEditor, setShowBlipEditor] = createSignal(false)
   const [selectedBlipId, setSelectedBlipId] = createSignal<string | null>(null)
+  const [isReactionBusy, setIsReactionBusy] = createSignal(false)
+  const [reactionStateOverride, setReactionStateOverride] =
+    createSignal<ReactionStateOverride | null>(null)
   const realtimeUpdateHighlightTimeouts = new Map<
     string,
     ReturnType<typeof setTimeout>
@@ -183,6 +206,37 @@ export function BlipView() {
       return allUpdates
     }
     return allUpdates.filter(update => update.published)
+  })
+  const watchUpdatesRootId = createMemo(() => {
+    const rootBlip = blip()
+    if (!rootBlip || rootBlip.blip_type !== BLIP_TYPES.ROOT) {
+      return ""
+    }
+
+    return rootBlip.id
+  })
+  const reactionWatchKey = createMemo(() => {
+    const rootId = watchUpdatesRootId()
+    if (!rootId) {
+      return ""
+    }
+
+    return [rootId, ...visibleUpdates().map(update => update.id)].join("|")
+  })
+  const reactionSignature = createMemo(() => getReactionSignature(blip()?.reactions ?? []))
+  const displayBlip = createMemo(() => {
+    const base = blip()
+    const override = reactionStateOverride()
+    if (!base || !override) {
+      return base
+    }
+
+    return {
+      ...base,
+      reactions: override.reactions,
+      my_reaction_count: override.my_reaction_count,
+      reactions_count: override.reactions_count,
+    }
   })
 
   const markRealtimeUpdateAsRecent = (updateId: string) => {
@@ -276,18 +330,31 @@ export function BlipView() {
   })
 
   createEffect(() => {
+    const currentBlip = blip()
+    if (!currentBlip) {
+      return
+    }
+
+    currentBlip.id
+    currentBlip.my_reaction_count
+    currentBlip.reactions_count
+    reactionSignature()
+    setReactionStateOverride(null)
+  })
+
+  createEffect(() => {
     if (!canManageUpdates() && showComposer()) {
       setShowComposer(false)
     }
   })
 
   createEffect(() => {
-    const rootBlip = blip()
-    if (!rootBlip || rootBlip.blip_type !== BLIP_TYPES.ROOT) {
+    const rootBlipId = watchUpdatesRootId()
+    if (!rootBlipId) {
       return
     }
 
-    const unsubscribe = store.watchUpdates(rootBlip.id, {
+    const unsubscribe = store.watchUpdates(rootBlipId, {
       onInsert: incoming => {
         markRealtimeUpdateAsRecent(incoming.id)
       },
@@ -297,6 +364,79 @@ export function BlipView() {
     })
 
     onCleanup(unsubscribe)
+  })
+
+  createEffect(() => {
+    const rootBlipId = watchUpdatesRootId()
+    if (!rootBlipId) {
+      return
+    }
+
+    const unsubscribe = store.watchBlips([rootBlipId], {
+      onUpdate: incoming => {
+        if (incoming.blip_type !== BLIP_TYPES.ROOT) {
+          return
+        }
+
+        void store.refreshReactionState(incoming.id)
+      },
+    })
+
+    onCleanup(unsubscribe)
+  })
+
+  createEffect(() => {
+    const watchKey = reactionWatchKey()
+    if (!watchKey) {
+      return
+    }
+
+    const reactionBlipIds = watchKey.split("|")
+    const unsubscribe = store.watchReactions(reactionBlipIds)
+    onCleanup(unsubscribe)
+  })
+
+  createEffect(() => {
+    if (loading()) {
+      return
+    }
+
+    const nextViewer = {
+      id: visitor()?.id ?? null,
+      status: visitor()?.status ?? null,
+      displayName: visitor()?.displayName ?? null,
+    }
+    const rootBlip = untrack(() => blip())
+    const nextViewerKey = [
+      nextViewer.id ?? "__anon__",
+      nextViewer.status ?? "",
+      nextViewer.displayName ?? "",
+      rootBlip?.id ?? "",
+    ].join(":")
+
+    if (!reactionViewerBaselineCaptured) {
+      reactionViewerBaselineCaptured = true
+      lastReactionViewerKey = nextViewerKey
+      lastReactionViewer = nextViewer
+      return
+    }
+
+    if (lastReactionViewerKey === nextViewerKey) {
+      return
+    }
+    lastReactionViewerKey = nextViewerKey
+
+    if (!rootBlip || rootBlip.blip_type !== BLIP_TYPES.ROOT) {
+      lastReactionViewer = nextViewer
+      return
+    }
+
+    const reactionBlipIds = untrack(() => [
+      rootBlip.id,
+      ...visibleUpdates().map(update => update.id),
+    ])
+    void store.syncReactionViewer(reactionBlipIds, nextViewer, lastReactionViewer)
+    lastReactionViewer = nextViewer
   })
 
   createEffect(() => {
@@ -347,6 +487,56 @@ export function BlipView() {
   const handleEditUpdate = (updateBlipId: string) => {
     setSelectedUpdateBlipId(updateBlipId)
     setShowComposer(true)
+  }
+
+  const handleToggleReaction = async (emoji: string) => {
+    const currentBlip = displayBlip()
+    if (!currentBlip || isReactionBusy()) {
+      return
+    }
+
+    const previousReactions = currentBlip.reactions ?? []
+    const previousCount = currentBlip.my_reaction_count ?? 0
+    const hasActiveReaction =
+      previousReactions.find(reaction => reaction.emoji === emoji)?.reacted_by_current_user ??
+      false
+    const optimisticOverride = buildOptimisticReactionState({
+      reactions: previousReactions,
+      myReactionCount: previousCount,
+      emoji,
+      nextActive: !hasActiveReaction,
+      visitorDisplayName: visitor()?.displayName ?? null,
+    })
+    const applyVisibleReactionState = (next: ReactionStateOverride) => {
+      setReactionStateOverride(next)
+      store.updateCachedReactionState(currentBlip.id, next)
+    }
+
+    setIsReactionBusy(true)
+    applyVisibleReactionState(optimisticOverride)
+
+    const result = await reactions.toggleReaction(currentBlip.id, emoji, {
+      visitorId: visitor()?.id ?? null,
+      visitorStatus: visitor()?.status ?? null,
+      currentCount: previousCount,
+      hasActiveReaction,
+    })
+
+    setIsReactionBusy(false)
+
+    if (result.error || !result.data) {
+      applyVisibleReactionState(createReactionStateOverride(previousReactions, previousCount))
+      const errorKey =
+        REACTION_ERROR_I18N_KEY[result.error ?? "UNKNOWN"] ??
+        REACTION_ERROR_I18N_KEY.UNKNOWN
+      notify.error({ content: errorKey })
+      return
+    }
+
+    applyVisibleReactionState({
+      ...optimisticOverride,
+      my_reaction_count: result.data.myReactionCount,
+    })
   }
 
   return (
@@ -416,9 +606,9 @@ export function BlipView() {
                     <div class="blip-detail-content">
                       <Markdown content={data().content ?? ""} />
                     </div>
-                    <Show when={visibleRootTags().length > 0}>
-                      <footer class="blip-detail-footer">
-                        <div class="tags">
+                    <footer class="blip-detail-footer">
+                      <div class="tags">
+                        <Show when={visibleRootTags().length > 0}>
                           <Hashtag size="0.85rem" />
                           <ul class="tag-list">
                             <For each={visibleRootTags()}>
@@ -429,41 +619,72 @@ export function BlipView() {
                               )}
                             </For>
                           </ul>
-                        </div>
-                      </footer>
-                    </Show>
+                        </Show>
+                      </div>
+                      <div class="activity">
+                        <BlipReactionTrigger
+                          blip={displayBlip() ?? data()}
+                          triggerAriaLabel={tr("actions.addReaction")}
+                          onReactionStateChange={next => {
+                            const nextState = {
+                              reactions: next.reactions,
+                              my_reaction_count: next.myReactionCount,
+                              reactions_count: next.reactionsCount,
+                            }
+                            setReactionStateOverride(nextState)
+                            store.updateCachedReactionState(data().id, nextState)
+                          }}
+                        />
+                      </div>
+                    </footer>
                   </article>
-                  <BlipActions
-                    blip={data()}
-                    onEdit={handleEditRootBlip}
-                    toolbarExtras={
-                      <Button
-                        variant="ghost"
-                        size="xs"
-                        label={tr("updates.editor.newLabel")}
-                        iconRight="chat_add_on"
-                        class={cx("blip-detail-add-update", {
-                          active: showComposer(),
-                        })}
-                        aria-label={
-                          showComposer()
-                            ? tr("actions.hideUpdateComposer")
-                            : tr("actions.postUpdate")
+                  <div class="blip-detail-meta-row">
+                    <div class="blip-detail-meta-row-start">
+                      <BlipReactionSummary
+                        reactions={(displayBlip() ?? data()).reactions}
+                        busy={isReactionBusy()}
+                        onToggleReaction={
+                          isAuthenticated()
+                            ? emoji => {
+                                void handleToggleReaction(emoji)
+                              }
+                            : undefined
                         }
-                        onClick={() => {
-                          if (showComposer()) {
-                            setShowComposer(false)
-                            setSelectedUpdateBlipId(null)
-                            return
-                          }
-
-                          setSelectedUpdateBlipId(null)
-                          setShowComposer(true)
-                          setUpdateComposerFocusNonce(previous => previous + 1)
-                        }}
                       />
-                    }
-                  />
+                    </div>
+                    <BlipActions
+                      blip={data()}
+                      onEdit={handleEditRootBlip}
+                      fullWidth={false}
+                      toolbarExtras={
+                        <Button
+                          variant="ghost"
+                          size="xs"
+                          label={tr("updates.editor.newLabel")}
+                          iconRight="chat_add_on"
+                          class={cx("blip-detail-add-update", {
+                            active: showComposer(),
+                          })}
+                          aria-label={
+                            showComposer()
+                              ? tr("actions.hideUpdateComposer")
+                              : tr("actions.postUpdate")
+                          }
+                          onClick={() => {
+                            if (showComposer()) {
+                              setShowComposer(false)
+                              setSelectedUpdateBlipId(null)
+                              return
+                            }
+
+                            setSelectedUpdateBlipId(null)
+                            setShowComposer(true)
+                            setUpdateComposerFocusNonce(previous => previous + 1)
+                          }}
+                        />
+                      }
+                    />
+                  </div>
                   <Show
                     when={
                       canManageUpdates() ||

@@ -6,6 +6,15 @@ import {
   type OperationResult,
   type StoreOptions,
 } from "@/lib/data/supa-store"
+import {
+  getBlipReactionState,
+  getBlipReactionStates,
+  type BlipReactionState,
+} from "@/modules/blips/data/queries"
+import {
+  reconcileViewerReactionState,
+  type ReactionViewer,
+} from "@/modules/blips/data/reaction-viewer-sync"
 import { formatDate } from "@/util/formatters"
 
 export const blipId = () =>
@@ -20,11 +29,20 @@ export type BlipUpdateWatchHandlers = {
   onDelete?: (blipId: string) => void
 }
 
+type BlipReactionWatchHandlers = {
+  onRefresh?: (blipId: string) => void
+}
+
+type BlipWatchHandlers = {
+  onUpdate?: (blip: Blip) => void
+}
+
 export function blipStore(
   supabaseClient: SupabaseClient,
   options?: StoreOptions,
 ) {
   const store = _blipStore(supabaseClient, options)
+  const toUniqueBlipIds = (blipIds: string[]) => [...new Set(blipIds.filter(Boolean))]
   const sortByCreatedAtDesc = (items: Blip[]) =>
     [...items].sort(
       (a, b) =>
@@ -77,6 +95,142 @@ export function blipStore(
     store.setInitialData(store.entities().filter(blip => blip.id !== blipId))
   }
 
+  const applyReactionState = (
+    blipId: string,
+    reactionState: BlipReactionState,
+  ) => {
+    const existingBlip = store.entities().find(blip => blip.id === blipId)
+    if (!existingBlip) {
+      return
+    }
+
+    const currentReactions = JSON.stringify(existingBlip.reactions ?? [])
+    const nextReactions = JSON.stringify(reactionState.reactions)
+    if (
+      (existingBlip.reactions_count ?? 0) === reactionState.reactions_count &&
+      (existingBlip.my_reaction_count ?? 0) === reactionState.my_reaction_count &&
+      currentReactions === nextReactions
+    ) {
+      return
+    }
+
+    void store.upsert(
+      {
+        ...existingBlip,
+        reactions_count: reactionState.reactions_count,
+        my_reaction_count: reactionState.my_reaction_count,
+        reactions: reactionState.reactions,
+      },
+      { cacheOnly: true },
+    )
+  }
+
+  const syncReactionViewer = async (
+    blipIds: string[],
+    nextViewer: ReactionViewer | null,
+    previousViewer: ReactionViewer | null,
+  ) => {
+    const targetIds = toUniqueBlipIds(blipIds)
+    if (targetIds.length === 0) {
+      return
+    }
+
+    const ownEmojisByBlipId = new Map<string, Set<string>>()
+    if (nextViewer?.id) {
+      try {
+        const { data, error } = await supabaseClient
+          .from("reactions")
+          .select("blip_id, emoji")
+          .eq("visitor_id", nextViewer.id)
+          .in("blip_id", targetIds)
+
+        if (error) {
+          throw error
+        }
+
+        for (const row of data ?? []) {
+          const blipId = row.blip_id as string | undefined
+          const emoji = row.emoji as string | undefined
+          if (!blipId || !emoji) {
+            continue
+          }
+
+          const existing = ownEmojisByBlipId.get(blipId) ?? new Set<string>()
+          existing.add(emoji)
+          ownEmojisByBlipId.set(blipId, existing)
+        }
+      } catch (error) {
+        console.error("Failed to sync reaction viewer state:", error)
+        return
+      }
+    }
+
+    const nextEntities = store.entities().map(blip => {
+      if (!targetIds.includes(blip.id)) {
+        return blip
+      }
+
+      const reactionsWithNextViewer = reconcileViewerReactionState({
+        reactions: blip.reactions ?? [],
+        previousViewer,
+        nextViewer,
+        ownEmojis: ownEmojisByBlipId.get(blip.id) ?? new Set<string>(),
+      })
+
+      return {
+        ...blip,
+        reactions: reactionsWithNextViewer,
+        reactions_count: reactionsWithNextViewer.reduce(
+          (total, reaction) => total + reaction.count,
+          0,
+        ),
+        my_reaction_count: ownEmojisByBlipId.get(blip.id)?.size ?? 0,
+      }
+    })
+
+    store.setInitialData(nextEntities)
+  }
+
+  const refreshReactionState = async (blipId: string) => {
+    try {
+      const reactionState = await getBlipReactionState(supabaseClient, blipId)
+      if (!reactionState) {
+        return
+      }
+
+      applyReactionState(blipId, reactionState)
+    } catch (error) {
+      console.error("Failed to refresh blip reaction state:", error)
+    }
+  }
+
+  const refreshReactionStates = async (blipIds: string[]) => {
+    const targetIds = toUniqueBlipIds(blipIds)
+    if (targetIds.length === 0) {
+      return
+    }
+
+    try {
+      const reactionStates = await getBlipReactionStates(supabaseClient, targetIds)
+      for (const blipId of targetIds) {
+        const reactionState = reactionStates[blipId]
+        if (!reactionState) {
+          continue
+        }
+        applyReactionState(blipId, reactionState)
+      }
+    } catch (error) {
+      console.error("Failed to refresh blip reaction states:", error)
+    }
+  }
+
+  const updateCachedReactionState = (
+    blipId: string,
+    reactionState: BlipReactionState,
+  ) => {
+    applyReactionState(blipId, reactionState)
+  }
+
   // Domain-level realtime contract for update streams scoped to a root blip.
   const watchUpdates = (
     parentId: string,
@@ -123,6 +277,7 @@ export function blipStore(
           }
 
           void store.upsert(incoming, { cacheOnly: true })
+          void refreshReactionState(incoming.id)
           handlers.onUpdate?.(incoming)
         },
       )
@@ -155,6 +310,114 @@ export function blipStore(
       .subscribe()
 
     return () => {
+      void supabaseClient.removeChannel(channel)
+    }
+  }
+
+  const watchBlips = (
+    blipIds: string[],
+    handlers: BlipWatchHandlers = {},
+  ): Unsubscribe => {
+    const targetIds = toUniqueBlipIds(blipIds)
+    if (targetIds.length === 0) {
+      return () => {}
+    }
+
+    let channel = supabaseClient.channel(`blips-watch-${targetIds.slice().sort().join("-")}`)
+
+    for (const blipId of targetIds) {
+      channel = channel.on(
+        "postgres_changes" as any,
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "blips",
+          filter: `id=eq.${blipId}`,
+        },
+        (payload: { new: Blip }) => {
+          const incoming = payload.new
+          if (!incoming?.id) {
+            return
+          }
+
+          void store.upsert(incoming, { cacheOnly: true })
+          handlers.onUpdate?.(incoming)
+        },
+      )
+    }
+
+    channel.subscribe()
+
+    return () => {
+      void supabaseClient.removeChannel(channel)
+    }
+  }
+
+  const watchReactions = (
+    blipIds: string[],
+    handlers: BlipReactionWatchHandlers = {},
+  ): Unsubscribe => {
+    const targetIds = toUniqueBlipIds(blipIds)
+    if (targetIds.length === 0) {
+      return () => {}
+    }
+
+    const pendingRefreshTimers = new Map<string, ReturnType<typeof setTimeout>>()
+    const scheduleRefresh = (blipId: string) => {
+      const existingTimer = pendingRefreshTimers.get(blipId)
+      if (existingTimer) {
+        clearTimeout(existingTimer)
+      }
+
+      const timeoutId = setTimeout(() => {
+        pendingRefreshTimers.delete(blipId)
+        void refreshReactionState(blipId).then(() => {
+          handlers.onRefresh?.(blipId)
+        })
+      }, 60)
+
+      pendingRefreshTimers.set(blipId, timeoutId)
+    }
+
+    let channel = supabaseClient.channel(
+      `blip-reactions-${targetIds.slice().sort().join("-")}`,
+    )
+
+    for (const blipId of targetIds) {
+      channel = channel
+        .on(
+          "postgres_changes" as any,
+          {
+            event: "INSERT",
+            schema: "public",
+            table: "reactions",
+            filter: `blip_id=eq.${blipId}`,
+          },
+          () => {
+            scheduleRefresh(blipId)
+          },
+        )
+        .on(
+          "postgres_changes" as any,
+          {
+            event: "DELETE",
+            schema: "public",
+            table: "reactions",
+            filter: `blip_id=eq.${blipId}`,
+          },
+          () => {
+            scheduleRefresh(blipId)
+          },
+        )
+    }
+
+    channel.subscribe()
+
+    return () => {
+      for (const timeoutId of pendingRefreshTimers.values()) {
+        clearTimeout(timeoutId)
+      }
+      pendingRefreshTimers.clear()
       void supabaseClient.removeChannel(channel)
     }
   }
@@ -238,6 +501,9 @@ export function blipStore(
     const presentationFields: Partial<Blip> = {
       tags: fallbackTags ?? [],
       updates_count: existingBlip.updates_count,
+      reactions_count: existingBlip.reactions_count,
+      my_reaction_count: existingBlip.my_reaction_count,
+      reactions: existingBlip.reactions,
     }
 
     const merged = await store.upsert(
@@ -298,7 +564,13 @@ export function blipStore(
     updatesByParent,
     mergeIntoCache,
     removeFromCache,
+    watchBlips,
     watchUpdates,
+    watchReactions,
+    refreshReactionState,
+    refreshReactionStates,
+    updateCachedReactionState,
+    syncReactionViewer,
     publish: publishWithPreservedFields,
     unpublish: unpublishWithPreservedFields,
   }

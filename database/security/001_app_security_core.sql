@@ -14,12 +14,12 @@
 -- OUTPUT OBJECTS:
 --   - app_security.user_sessions
 --   - app_security.current_session_id()
---   - app_security.open_current_session(interval)
+--   - app_security.start_session(interval)
 --   - app_security.revoke_current_session()
 --   - app_security.session_is_valid(interval)
 --   - app_security.revoke_all_user_sessions(uuid)
 --   - app_security.cleanup_old_sessions(interval)
---   - public.open_current_session(interval)
+--   - public.start_session(interval)
 --   - public.revoke_current_session()
 --   - public.session_is_valid(interval)
 --   - public.cleanup_old_sessions(interval)
@@ -30,7 +30,7 @@
 --   - Public wrappers exist so Supabase client RPC calls can target exposed schema.
 -- ============================================================================
 
-drop function if exists public.open_current_session(interval);
+drop function if exists public.start_session(interval);
 drop function if exists public.revoke_current_session();
 drop function if exists public.session_is_valid(interval);
 
@@ -95,7 +95,7 @@ as $$
   from hashed
 $$;
 
-create function app_security.open_current_session(
+create function app_security.start_session(
   ttl interval default interval '7 days'
 )
 returns void
@@ -219,13 +219,13 @@ end;
 $$;
 
 grant usage on schema app_security to authenticated;
-grant execute on function app_security.open_current_session(interval) to authenticated;
+grant execute on function app_security.start_session(interval) to authenticated;
 grant execute on function app_security.revoke_current_session() to authenticated;
 grant execute on function app_security.session_is_valid(interval) to authenticated;
 grant execute on function app_security.revoke_all_user_sessions(uuid) to authenticated;
 grant execute on function app_security.cleanup_old_sessions(interval) to authenticated;
 
-create function public.open_current_session(
+create function public.start_session(
   ttl interval default interval '7 days'
 )
 returns void
@@ -233,7 +233,7 @@ language sql
 security definer
 set search_path = app_security, public, auth
 as $$
-  select app_security.open_current_session(ttl)
+  select app_security.start_session(ttl)
 $$;
 
 create function public.revoke_current_session()
@@ -268,7 +268,7 @@ as $$
   select app_security.cleanup_old_sessions(retention)
 $$;
 
-grant execute on function public.open_current_session(interval) to authenticated;
+grant execute on function public.start_session(interval) to authenticated;
 grant execute on function public.revoke_current_session() to authenticated;
 grant execute on function public.session_is_valid(interval) to authenticated;
 grant execute on function public.cleanup_old_sessions(interval) to authenticated;

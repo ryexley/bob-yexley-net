@@ -1,19 +1,86 @@
-import { createMemo, createSignal, Show } from "solid-js"
+import { createEffect, createMemo, createSignal, For, onCleanup, Show } from "solid-js"
 import { BlipEditor } from "~/modules/blips/components/blip-editor"
+import { Drawer } from "@/components/drawer"
 import { useAuth } from "@/context/auth-context"
-import { Blip as BlipIcon } from "@/components/icon"
-import { IconButton } from "@/components/icon-button"
+import { useViewport } from "@/context/viewport"
+import { Blip as BlipIcon, Icon } from "@/components/icon"
 import { Menu } from "@/components/menu"
 import { Stack } from "@/components/stack"
 import { ptr } from "@/i18n"
+import { withWindow } from "@/util/browser"
+import { generateRandomRadialGradients } from "@/util/image"
 import { isNotEmpty } from "@/util"
+import { ProfileDrawer } from "@/modules/home/components/profile-drawer"
 import "./user-menu.css"
 
 const tr = ptr("home.components.userMenu")
+const MOBILE_MENU_MAX_WIDTH = 768
 
 export function UserMenu() {
-  const { isAuthenticated, user, logout } = useAuth() as any
+  const { isAdmin, isAuthenticated, user, visitor, logout } = useAuth() as any
+  const viewport = useViewport()
   const [showNewBlipDrawer, setShowNewBlipDrawer] = createSignal(false)
+  const [showProfileDrawer, setShowProfileDrawer] = createSignal(false)
+  const [showMobileMenuDrawer, setShowMobileMenuDrawer] = createSignal(false)
+  const [mobileMenuContentElement, setMobileMenuContentElement] =
+    createSignal<HTMLElement | null>(null)
+  const useDrawerMenu = createMemo(() => viewport.width() <= MOBILE_MENU_MAX_WIDTH)
+  const mobileMenuBackground = createMemo(() => ({
+    "background-image": generateRandomRadialGradients(),
+  }))
+
+  createEffect(() => {
+    if (!showMobileMenuDrawer()) {
+      return
+    }
+
+    const content = mobileMenuContentElement()
+    if (!content) {
+      return
+    }
+
+    withWindow(window => {
+      let blurTimeout: ReturnType<typeof setTimeout> | null = null
+
+      const blurFocusedDrawerElement = () => {
+        const activeElement = window.document.activeElement
+        if (activeElement instanceof HTMLElement && content.contains(activeElement)) {
+          activeElement.blur()
+        }
+      }
+
+      const animationFrameId = window.requestAnimationFrame(() => {
+        blurFocusedDrawerElement()
+        blurTimeout = window.setTimeout(blurFocusedDrawerElement, 120)
+      })
+
+      onCleanup(() => {
+        window.cancelAnimationFrame(animationFrameId)
+        if (blurTimeout) {
+          clearTimeout(blurTimeout)
+        }
+      })
+    })
+  })
+
+  const closeMobileMenu = () => {
+    setShowMobileMenuDrawer(false)
+  }
+
+  const openProfileDrawer = () => {
+    closeMobileMenu()
+    setShowProfileDrawer(true)
+  }
+
+  const openBlipEditor = () => {
+    closeMobileMenu()
+    setShowNewBlipDrawer(true)
+  }
+
+  const handleLogout = async () => {
+    closeMobileMenu()
+    await logout()
+  }
 
   const MenuHeader = createMemo(() => {
     return isNotEmpty(user()) ? (
@@ -22,49 +89,115 @@ export function UserMenu() {
         fullWidth
         class="user-menu-header">
         <div class="label">{tr("header.label")}</div>
+        <div class="name">{visitor()?.displayName ?? user().email}</div>
         <div class="email">{user().email}</div>
-        <IconButton
-          icon="logout"
-          size="sm"
-          onClick={logout}
-          class="user-logout-button"
-        />
       </Stack>
     ) : null
   })
 
+  const menuItems = createMemo(() => {
+    const items = [
+      {
+        icon: "account_circle",
+        label: tr("profile"),
+        onClick: openProfileDrawer,
+      },
+    ]
+
+    if (isAdmin()) {
+      items.push({
+        iconNode: (
+          <BlipIcon
+            size="1.125rem"
+            class="menu-blip-icon"
+            blipColor="var(--menu-blip-accent)"
+          />
+        ),
+        label: tr("blip"),
+        onClick: openBlipEditor,
+      })
+    }
+
+    items.push({
+      icon: "logout",
+      label: tr("logout"),
+      onClick: () => {
+        void handleLogout()
+      },
+    })
+
+    return items
+  })
+
   return (
     <Show when={isAuthenticated()}>
-      <Menu
-        triggerIcon="account_circle"
-        triggerButtonSize="sm"
-        triggerClass="user-menu"
-        dropdownMenuProps={{ modal: false }}
-        items={[
-          {
-            iconNode: (
-              <BlipIcon
-                size="1rem"
-                class="menu-blip-icon"
-                blipColor="var(--menu-blip-accent)"
-              />
-            ),
-            label: tr("blip"),
-            onClick: () => setShowNewBlipDrawer(true),
-          },
-          /* {
-            icon: "logout",
-            label: tr("logout"),
-            onClick: logout,
-          }, */
-        ]}
-        Header={MenuHeader}
-      />
-      <BlipEditor
-        open={showNewBlipDrawer()}
-        onPanelOpenChange={open => setShowNewBlipDrawer(open)}
-        close={() => setShowNewBlipDrawer(false)}
-      />
+      <>
+        <Show
+          when={useDrawerMenu()}
+          fallback={
+            <Menu
+              triggerIcon="account_circle"
+              triggerButtonSize="sm"
+              triggerClass="user-menu"
+              dropdownMenuProps={{ modal: false }}
+              items={menuItems()}
+              Header={MenuHeader}
+            />
+          }>
+          <button
+            type="button"
+            class="user-menu"
+            aria-label="User menu"
+            onClick={() => setShowMobileMenuDrawer(true)}>
+            <Icon name="account_circle" />
+          </button>
+          <Drawer
+            side="bottom"
+            open={showMobileMenuDrawer()}
+            onOpenChange={open => setShowMobileMenuDrawer(open)}
+            class="user-menu-drawer"
+            showTrigger={false}
+            contentRef={setMobileMenuContentElement}
+            contentProps={{
+              onOpenAutoFocus: event => event.preventDefault(),
+            }}
+            showClose={false}>
+            <Stack
+              class="user-menu-drawer-shell"
+              style={mobileMenuBackground()}
+              gap="0.75rem">
+              <div class="handle" />
+              <div class="user-menu-drawer-summary">{MenuHeader()}</div>
+              <Stack
+                class="user-menu-drawer-items"
+                gap="0.5rem">
+                <For each={menuItems()}>
+                  {item => (
+                    <button
+                      type="button"
+                      class="user-menu-drawer-item"
+                      onClick={() => {
+                        void item.onClick()
+                      }}>
+                      {item.iconNode || (item.icon ? <Icon name={item.icon} /> : null)}
+                      <span>{item.label}</span>
+                    </button>
+                  )}
+                </For>
+              </Stack>
+            </Stack>
+          </Drawer>
+        </Show>
+        <ProfileDrawer
+          open={showProfileDrawer()}
+          onOpenChange={open => setShowProfileDrawer(open)}
+        />
+        <BlipEditor
+          open={showNewBlipDrawer()}
+          onPanelOpenChange={open => setShowNewBlipDrawer(open)}
+          close={() => setShowNewBlipDrawer(false)}
+        />
+      </>
     </Show>
   )
 }

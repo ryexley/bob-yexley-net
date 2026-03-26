@@ -1,0 +1,57 @@
+.blip-reaction-summary-list {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.blip-reaction-summary-pill {
+  align-items: center;
+  background: color-mix(in srgb, var(--colors-mono-02) 88%, transparent);
+  border: 1px solid var(--colors-mono-05);
+  border-radius: 999px;
+  color: var(--colors-mono-09);
+  display: inline-flex;
+  gap: 0.25rem;
+  line-height: 1;
+  min-height: 1.45rem;
+  padding: 0.1rem 0.38rem;
+
+  &.reacted {
+    background: rgba(var(--colors-info-rgb), 0.25);
+    border-color: color-mix(in srgb, var(--colors-info) 60%, var(--colors-mono-05) 40%);
+    box-shadow: 0 0 0 0.0625rem rgba(var(--colors-info-rgb), 0.18);
+    color: var(--colors-mono-10);
+  }
+
+  .emoji {
+    font-size: 0.85rem;
+  }
+
+  .count {
+    font-size: 0.6875rem;
+    font-weight: 500;
+  }
+}
+
+.blip-reaction-summary-button {
+  cursor: pointer;
+  transition: var(--transitions-primary);
+
+  &:hover:not(:disabled) {
+    border-color: color-mix(in srgb, var(--colors-info) 75%, var(--colors-mono-05) 25%);
+    transform: translateY(-0.03125rem);
+  }
+
+  &:disabled {
+    cursor: wait;
+    opacity: 0.8;
+  }
+}
+
+.tooltip-content.blip-reaction-summary-tooltip {
+  max-width: 18rem;
+}

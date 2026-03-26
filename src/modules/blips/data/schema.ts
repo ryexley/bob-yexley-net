@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { blipReactionSummarySchema } from "@/modules/blips/data/reactions-schema"
 
 export const BLIP_TYPES = {
   ROOT: "root",
@@ -26,6 +27,9 @@ export const blipSchema = z
       "flagged",
     ]),
     tags: z.array(z.string()).optional(),
+    reactions_count: z.number().int().nonnegative().optional(),
+    my_reaction_count: z.number().int().nonnegative().optional(),
+    reactions: z.array(blipReactionSummarySchema).optional(),
     created_at: z.string(),
     updated_at: z.string(),
   })

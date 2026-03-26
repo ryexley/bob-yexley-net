@@ -114,6 +114,12 @@
       }
     }
 
+    .activity {
+      button {
+        height: 1.625rem;
+      }
+    }
+
     .updates-indicator {
       align-items: center;
       background: transparent;
@@ -152,4 +158,19 @@
 
 .blip--unpublished {
   opacity: 0.25;
+}
+
+.blip-meta-row {
+  align-items: flex-start;
+  display: flex;
+  gap: 0.75rem;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.blip-meta-row-start {
+  align-items: center;
+  display: inline-flex;
+  flex: 1;
+  min-width: 0;
 }

@@ -51,6 +51,7 @@ export interface DrawerProps {
   subtitle?: string
   subtitleClass?: string
 
+  contentProps?: Omit<ComponentProps<typeof DrawerPrimitive.Content>, "as" | "ref" | "class">
   contentClass?: string
   children: ValidComponent | Component | JSX.Element | HTMLElement
 }
@@ -105,6 +106,7 @@ export function Drawer(props: DrawerProps) {
     "titleClass",
     "subtitle",
     "subtitleClass",
+    "contentProps",
     "contentClass",
     "children",
   ])
@@ -114,6 +116,9 @@ export function Drawer(props: DrawerProps) {
       local.showTrigger &&
       (isNotEmpty(local.Trigger) || isNotEmpty(local.triggerIcon)),
   )
+  const hasSubtitle = createMemo(() => isNotEmpty(local.subtitle))
+  const hasHeader = createMemo(() => isNotEmpty(local.title) || hasSubtitle())
+  const useTitleOnlyHeaderLayout = createMemo(() => isNotEmpty(local.title) && !hasSubtitle())
 
   // Render the trigger based on what was provided
   const renderTrigger = () => {
@@ -168,7 +173,11 @@ export function Drawer(props: DrawerProps) {
       return (
         <DrawerPrimitive.Close
           aria-label={local.closeAriaLabel}
-          class={cx("drawer-close", local.closeClass)}>
+          class={cx(
+            "drawer-close",
+            useTitleOnlyHeaderLayout() && hasHeader() ? "drawer-close--header" : null,
+            local.closeClass,
+          )}>
           <CloseComponent />
         </DrawerPrimitive.Close>
       )
@@ -178,7 +187,11 @@ export function Drawer(props: DrawerProps) {
       return (
         <DrawerPrimitive.Close
           aria-label={local.closeAriaLabel}
-          class={cx("drawer-close drawer-close--icon", local.closeClass)}>
+          class={cx(
+            "drawer-close drawer-close--icon",
+            useTitleOnlyHeaderLayout() && hasHeader() ? "drawer-close--header" : null,
+            local.closeClass,
+          )}>
           <Icon
             name={local.closeIcon}
             class={cx(local.closeIconClass)}
@@ -197,9 +210,14 @@ export function Drawer(props: DrawerProps) {
       return <HeaderComponent />
     }
 
-    if (local.title || local.subtitle) {
+    if (hasHeader()) {
       return (
-        <header class={cx("drawer-header", local.headerClass)}>
+        <header
+          class={cx(
+            "drawer-header",
+            useTitleOnlyHeaderLayout() ? "drawer-header--title-only" : "drawer-header--stacked",
+            local.headerClass,
+          )}>
           {local.title ? (
             <DrawerPrimitive.Label class={cx("drawer-title", local.titleClass)}>
               {local.title}
@@ -230,6 +248,7 @@ export function Drawer(props: DrawerProps) {
         <DrawerPrimitive.Content
           as="aside"
           ref={element => local.contentRef?.(element as HTMLElement)}
+          {...local.contentProps}
           class={cx(
             "drawer-content",
             local.side,

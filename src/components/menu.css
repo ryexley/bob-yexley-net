@@ -122,10 +122,18 @@
 
       .icon {
         font-size: 1.25rem;
+        flex: 0 0 1.25rem;
+        width: 1.25rem;
+        height: 1.25rem;
       }
 
       .menu-blip-icon {
         --menu-blip-accent: var(--colors-success);
+        display: block;
+        flex: 0 0 1.25rem;
+        width: 1.25rem;
+        height: 1.25rem;
+        transform: translateX(0.0625rem);
       }
 
       .indicator {

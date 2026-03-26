@@ -28,7 +28,7 @@ Do not run it casually in production unless you intend to reset this security la
     - grants
   - Includes helper functions:
     - `app_security.current_session_id()`
-    - `app_security.open_current_session(ttl interval default interval '7 days')`
+    - `app_security.start_session(ttl interval default interval '7 days')`
     - `app_security.revoke_current_session()`
     - `app_security.session_is_valid(max_age interval default interval '7 days')`
     - `app_security.revoke_all_user_sessions(target_user_id uuid default auth.uid())`
@@ -57,13 +57,13 @@ Use Supabase SQL Editor and run each script in order.
 - trigger: `trg_user_sessions_updated_at`
 - functions in `app_security`:
   - `current_session_id()`
-  - `open_current_session(interval)`
+  - `start_session(interval)`
   - `revoke_current_session()`
   - `session_is_valid(interval)`
   - `cleanup_old_sessions(interval)`
   - `revoke_all_user_sessions(uuid)`
 - wrapper RPC functions in `public`:
-  - `open_current_session(interval)`
+  - `start_session(interval)`
   - `revoke_current_session()`
   - `session_is_valid(interval)`
 
@@ -72,7 +72,7 @@ Use Supabase SQL Editor and run each script in order.
 After running the SQL scripts, wire the app to open/revoke sessions:
 
 1. On successful sign-in, call:
-   - `rpc('open_current_session', { ttl: '7 days' })` (or default).
+   - `rpc('start_session', { ttl: '7 days' })` (or default).
 2. On logout/sign-out, call:
    - `rpc('revoke_current_session')`.
 3. Keep client-side session checks as UX guardrails.

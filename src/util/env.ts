@@ -1,7 +1,9 @@
 export function getEnv() {
   return {
-    SUPABASE_URL: process.env.SUPABASE_URL || "",
-    SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY || "",
+    SUPABASE_URL: process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || "",
+    SUPABASE_ANON_KEY:
+      process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY || "",
+    SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY || "",
     WAIVER_ELECTRONIC_CLIENT_ID: process.env.WAIVER_ELECTRONIC_CLIENT_ID || "",
     WAIVER_ELECTRONIC_ACCESS_TOKEN:
       process.env.WAIVER_ELECTRONIC_ACCESS_TOKEN || "",

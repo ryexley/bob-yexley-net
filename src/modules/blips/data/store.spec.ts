@@ -1,0 +1,90 @@
+import { createRoot } from "solid-js"
+import { describe, expect, it } from "vitest"
+import { BLIP_TYPES, type Blip } from "@/modules/blips/data/schema"
+import { blipStore } from "@/modules/blips/data/store"
+
+const makeBlip = (overrides: Partial<Blip> = {}): Blip => ({
+  id: "blip-1",
+  title: null,
+  content: "Test blip",
+  user_id: "user-1",
+  parent_id: null,
+  blip_type: BLIP_TYPES.ROOT,
+  updates_count: 0,
+  published: true,
+  moderation_status: "approved",
+  tags: [],
+  reactions_count: 0,
+  my_reaction_count: 0,
+  reactions: [],
+  created_at: "2026-03-28T12:00:00.000Z",
+  updated_at: "2026-03-28T12:00:00.000Z",
+  ...overrides,
+})
+
+const runInRoot = async (callback: () => Promise<void>) =>
+  await new Promise<void>((resolve, reject) => {
+    createRoot(dispose => {
+      void callback()
+        .then(() => {
+          dispose()
+          resolve()
+        })
+        .catch(error => {
+          dispose()
+          reject(error)
+        })
+    })
+  })
+
+describe("blipStore reaction cache sync", () => {
+  it("keeps a freshly cached active visitor reaction visible after logout sync", async () => {
+    await runInRoot(async () => {
+      const store = blipStore({} as any, { subscribe: false })
+      const blip = makeBlip()
+
+      store.setInitialData([blip])
+
+      store.updateCachedReactionState(blip.id, {
+        reactions: [
+          {
+            emoji: "🔥",
+            count: 1,
+            reacted_by_current_user: true,
+            display_names: ["Bob"],
+          },
+        ],
+        reactions_count: 1,
+        my_reaction_count: 1,
+      })
+
+      await Promise.resolve()
+
+      await store.syncReactionViewer(
+        [blip.id],
+        {
+          id: null,
+          status: null,
+          displayName: null,
+        },
+        {
+          id: "visitor-1",
+          status: "active",
+          displayName: "Bob",
+        },
+      )
+
+      expect(store.entities()).toHaveLength(1)
+      expect(store.entities()[0]?.reactions).toEqual([
+        {
+          emoji: "🔥",
+          count: 1,
+          reacted_by_current_user: false,
+          display_names: ["Bob"],
+        },
+      ])
+      expect(store.entities()[0]?.reactions_count).toBe(1)
+      expect(store.entities()[0]?.my_reaction_count).toBe(0)
+    })
+  })
+})

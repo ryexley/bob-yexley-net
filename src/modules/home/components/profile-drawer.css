@@ -1,0 +1,225 @@
+.profile-drawer {
+  --drawer-header-height: 4rem;
+
+  .drawer-title {
+    font-size: 1.25rem;
+  }
+}
+
+.profile-drawer-close {
+  align-items: center;
+  background: transparent;
+  border: none;
+  border-radius: 0.375rem;
+  color: var(--colors-mono-08);
+  cursor: pointer;
+  display: inline-flex;
+  justify-content: flex-end;
+  padding: var(--drawer-header-safe-top) var(--drawer-header-padding-inline) 0 0;
+  position: absolute;
+  right: 0;
+  top: 0;
+  transition: color 250ms ease-in-out;
+  box-sizing: border-box;
+  width: var(--drawer-close-hit-size);
+  height: calc(var(--drawer-header-height) + var(--drawer-header-safe-top));
+  z-index: 100;
+
+  &:hover {
+    color: var(--colors-resonant-blue);
+  }
+
+  &:focus,
+  &:focus-visible,
+  &:active {
+    outline: none;
+  }
+}
+
+.profile-drawer-shell {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 1rem;
+  margin: 0 auto;
+  max-width: 42rem;
+  min-height: 0;
+  padding: 1rem 1rem 1.25rem;
+  width: 100%;
+}
+
+.profile-drawer-summary {
+  align-items: center;
+  display: flex;
+  gap: 0.875rem;
+}
+
+.profile-drawer-avatar {
+  align-items: center;
+  background: var(--colors-mono-02);
+  border: 0.0625rem solid var(--colors-mono-04);
+  border-radius: 50%;
+  display: inline-flex;
+  flex: 0 0 auto;
+  height: 3.5rem;
+  justify-content: center;
+  position: relative;
+  width: 3.5rem;
+
+  .icon {
+    color: var(--colors-info);
+    font-size: 2.25rem;
+  }
+}
+
+.profile-drawer-avatar-badge {
+  align-items: center;
+  background: var(--colors-mono-01);
+  border-radius: 50%;
+  bottom: -0.125rem;
+  color: var(--colors-info);
+  display: inline-flex;
+  height: 1.125rem;
+  justify-content: center;
+  position: absolute;
+  right: -0.125rem;
+  width: 1.125rem;
+
+  .icon {
+    font-size: 1rem;
+  }
+}
+
+.profile-drawer-summary-copy {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-width: 0;
+}
+
+.profile-drawer-summary-name {
+  color: var(--colors-mono-11);
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.25rem;
+}
+
+.profile-drawer-summary-email {
+  color: var(--colors-mono-08);
+  font-size: 0.875rem;
+  line-height: 1.125rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.button.profile-drawer-edit-toggle {
+  flex: 0 0 auto;
+}
+
+.profile-drawer-form {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  gap: 0.875rem;
+}
+
+.profile-drawer-edit-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+}
+
+.profile-drawer-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.profile-drawer-detail-line {
+  color: var(--colors-mono-10);
+  font-size: 0.9375rem;
+  line-height: 1.35rem;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.profile-drawer-detail-label {
+  color: var(--colors-mono-07);
+}
+
+.profile-drawer-actions {
+  align-items: center;
+  display: flex;
+  gap: 0.75rem;
+  justify-content: space-between;
+  margin-top: auto;
+  padding-top: 0.25rem;
+}
+
+.button.profile-drawer-logout {
+  margin-left: auto;
+}
+
+[data-corvu-drawer-content].profile-drawer:focus,
+[data-corvu-drawer-content].profile-drawer:focus-visible {
+  outline: none;
+}
+
+[data-corvu-drawer-content].profile-drawer[data-side="right"] {
+  width: 20rem;
+  min-width: 20rem;
+}
+
+[data-corvu-drawer-content].profile-drawer[data-side="bottom"] {
+  border-width: 0;
+  inset: 0;
+  height: 100vh;
+  height: 100dvh;
+  max-height: 100dvh;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+@supports (-webkit-touch-callout: none) {
+  [data-corvu-drawer-content].profile-drawer[data-side="bottom"] {
+    height: -webkit-fill-available;
+    max-height: -webkit-fill-available;
+    min-height: -webkit-fill-available;
+  }
+}
+
+html body:has([data-corvu-drawer-content].profile-drawer[data-side="bottom"][data-open]) {
+  overflow: hidden;
+  position: static;
+  width: 100%;
+}
+
+@media (max-width: 40rem) {
+  [data-corvu-drawer-content].profile-drawer[data-side="bottom"] {
+    border-radius: 0;
+  }
+
+  .profile-drawer {
+    --drawer-header-safe-top: env(safe-area-inset-top);
+  }
+
+  .profile-drawer-shell {
+    min-height: 0;
+    padding-bottom: max(1.25rem, env(safe-area-inset-bottom));
+  }
+
+  .profile-drawer-summary {
+    align-items: flex-start;
+  }
+
+  .profile-drawer-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .button.profile-drawer-logout {
+    margin-left: 0;
+  }
+}

@@ -1,11 +1,11 @@
 import { createEffect, createMemo, createSignal, onCleanup } from "solid-js"
 import { useNavigate } from "@solidjs/router"
 import { Title } from "@solidjs/meta"
-import { supabase } from "~/lib/vendor/supabase"
+import { supabase } from "@/lib/vendor/supabase/browser"
+import { Button } from "@/components/button"
 import { Card } from "@/components/card"
 import { Input } from "@/components/input"
 import { Stack } from "@/components/stack"
-import { Button } from "@/components/button"
 import { Callout } from "@/components/callout"
 import { useAuth } from "@/context/auth-context"
 import { ptr } from "@/i18n"
@@ -18,7 +18,7 @@ const tr = ptr("auth.views.login")
 
 export function Login() {
   const navigate = useNavigate()
-  const { isAuthenticated, loading } = useAuth()
+  const { isAdmin, loading } = useAuth()
   const pageBackground = createMemo(() => ({
     background: generateRandomRadialGradients(),
   }))
@@ -40,11 +40,11 @@ export function Login() {
       : tr("submitButton.enabled.label")
   })
   const showLoginPage = createMemo(() => {
-    return !loading() && !isAuthenticated()
+    return !isAdmin()
   })
 
   createEffect(() => {
-    if (loading() || !isAuthenticated()) {
+    if (loading() || !isAdmin()) {
       return
     }
 
@@ -62,7 +62,7 @@ export function Login() {
       return
     }
 
-    const viewport = document.querySelector('meta[name="viewport"]')
+    const viewport = document.querySelector("meta[name=\"viewport\"]")
     if (!(viewport instanceof HTMLMetaElement)) {
       return
     }
@@ -83,29 +83,29 @@ export function Login() {
     })
   })
 
-  const handleSubmit = async (e: Event) => {
-    e?.preventDefault()
-    e?.stopPropagation()
+  const handleSubmit = async (event?: Event) => {
+    event?.preventDefault()
+    event?.stopPropagation()
+    setError("")
+    const normalizedEmail = email().trim()
+    const passwordValue = password()
 
-    if (
-      isEmpty(email()) ||
-      email() !== "bob@yexley.net" ||
-      isEmpty(password())
-    ) {
-      setError("Invalid credentials")
+    if (isEmpty(normalizedEmail) || isEmpty(passwordValue)) {
+      setError(tr("loginFailedError"))
+      return
     }
 
     setSubmitting(true)
     try {
-      const { error } = await supabase.login(email(), password())
+      const { error } = await supabase.login(normalizedEmail, passwordValue)
 
       if (isNotEmpty(error)) {
         throw error
       }
 
       navigate(pages.home)
-    } catch {
-      setError(tr("loginFailedError"))
+    } catch (error) {
+      setError(typeof error === "string" ? error : tr("loginFailedError"))
     } finally {
       setSubmitting(false)
     }
@@ -134,7 +134,8 @@ export function Login() {
                 />
               ) : null}
               <form
-                onSubmit={handleSubmit}
+                method="post"
+                onSubmit={event => void handleSubmit(event)}
                 novalidate>
                 <Stack fullWidth>
                   <Input
@@ -158,8 +159,10 @@ export function Login() {
                     <Button
                       type="submit"
                       disabled={disableSubmitButton()}
-                      class="login-submit-button"
+                      variant="primary"
+                      size="md"
                       label={submitButtonLabel()}
+                      class="login-submit-button"
                     />
                   </Stack>
                 </Stack>

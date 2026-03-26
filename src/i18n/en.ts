@@ -48,7 +48,40 @@ export const en = {
       userMenu: {
         header: { label: "Signed in as" },
         blip: "Blip",
+        profile: "Profile",
         logout: "Sign Out",
+        profileDrawer: {
+          title: "Profile",
+          actions: {
+            close: "Close",
+            edit: "Edit",
+            cancelEdit: "Cancel",
+            save: "Save",
+            saving: "Saving...",
+          },
+          fields: {
+            email: "Email",
+            name: "Name",
+            role: "Role",
+            status: "Account Status",
+            joinedAt: "Joined at",
+          },
+          values: {
+            unavailable: "Unavailable",
+          },
+          status: {
+            active: "Active",
+            pending: "Pending",
+            locked: "Locked",
+            visitor: "Visitor",
+            admin: "Admin",
+            superuser: "Superuser",
+          },
+          notifications: {
+            saveSuccess: "Profile updated.",
+            saveError: "Unable to update your profile right now.",
+          },
+        },
       },
     },
     pageSections: {
@@ -66,6 +99,82 @@ export const en = {
     },
   },
   auth: {
+    components: {
+      visitorAuthModal: {
+        login: {
+          title: "Login",
+          subtitle: "Enter your credentials to interact with the site.",
+        },
+        signup: {
+          title: "Sign Up",
+          subtitle: "Create your visitor account to interact with the site.",
+        },
+        fields: {
+          email: {
+            label: "Email",
+            placeholder: "name@email.com",
+          },
+          pin: {
+            label: "PIN",
+          },
+          name: {
+            label: "Name",
+            placeholder: "What's your name?",
+          },
+        },
+        actions: {
+          cancel: "Nevermind",
+          login: {
+            default: "Login",
+            submitting: "Logging in...",
+          },
+          signUp: {
+            default: "Create account",
+            submitting: "Creating account...",
+          },
+        },
+        modeSwitch: {
+          login: {
+            prefix: "Don't have an account? ",
+            link: "Sign up.",
+          },
+          signup: {
+            prefix: "Already have an account? ",
+            link: "Login.",
+          },
+        },
+        help: {
+          trigger: "What's this?",
+          backAction: "Back",
+          loginContent:
+            "Log in with your email and PIN to interact with the site. If your credentials are not working, verify your PIN and try again.",
+          signupContent:
+            "Create a visitor account with your email, a 6-digit PIN, and your name. Your name is how other visitors will recognize you when you interact.",
+        },
+        errors: {
+          notWired: "Visitor auth flow is not wired yet.",
+          authFailed: "Unable to authenticate.",
+          unexpected: "Unable to authenticate right now.",
+          validation: {
+            loginRequired: "Please provide your email and a 6-digit PIN.",
+            signupRequired:
+              "Please provide your email, name, and a 6-digit PIN.",
+          },
+          codes: {
+            validationLoginRequired: "Please provide your email and a 6-digit PIN.",
+            validationSignupRequired:
+              "Please provide your email, name, and a 6-digit PIN.",
+            invalidEmailOrPin: "Invalid email or PIN. Please try again.",
+            visitorLocked:
+              "Something's not working right now. Text or call or contact me somehow, and we'll get it sorted out.",
+            signupEmailExists: "An account already exists for this email.",
+            signupInvalidEmail: "Please provide a valid email address.",
+            signupUnavailable: "Unable to create visitor account right now.",
+            unexpected: "Unable to authenticate right now.",
+          },
+        },
+      },
+    },
     views: {
       login: {
         pageTitle: "Uuummmm ... you probably don't belong here",
@@ -113,6 +222,7 @@ export const en = {
           backToBlips: "back",
           postUpdate: "Post update",
           hideUpdateComposer: "Hide composer",
+          addReaction: "Add reaction",
         },
         updates: {
           label: "Updates",
@@ -169,6 +279,7 @@ export const en = {
       blip: {
         actions: {
           readMore: "Read more",
+          addReaction: "Add reaction",
         },
         readMoreDialog: {
           closeAriaLabel: "Close dialog",
@@ -221,6 +332,20 @@ export const en = {
             cancel: "Keep draft",
           },
         },
+      },
+    },
+    reactions: {
+      errors: {
+        blipIdRequired: "A blip ID is required to react.",
+        authRequired: "Please log in to react.",
+        visitorLocked:
+          "Something's not working right now. Text or call or contact me somehow, and we'll get it sorted out.",
+        limitReached: "You can add up to 3 reactions per blip. Remove one to add another.",
+        invalidEmoji: "That reaction is not available.",
+        unknown: "Unable to update reactions right now.",
+      },
+      tooltips: {
+        limitReached: "You can only choose three reactions per blip.",
       },
     },
     util: {
