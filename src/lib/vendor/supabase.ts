@@ -78,6 +78,8 @@ export type AuthResult<T = any> = {
   error: string | null
 }
 
+export type AppRole = "superuser" | "admin" | "visitor"
+
 function formatAuthError(error: AuthError): string {
   const errorMessages: Record<string, string> = {
     "Invalid login credentials": "Invalid email or password",
@@ -218,6 +220,49 @@ function Supabase() {
         return {
           data: null,
           error: "An unexpected error occurred while fetching user",
+        }
+      }
+    },
+
+    async getCurrentUserRole(userId?: string): Promise<AuthResult<AppRole>> {
+      try {
+        let targetUserId = userId
+        if (!targetUserId) {
+          const { data: authData, error: authError } =
+            await getClient().auth.getUser()
+
+          if (authError) {
+            return { data: null, error: formatAuthError(authError) }
+          }
+
+          targetUserId = authData?.user?.id
+        }
+
+        if (!targetUserId) {
+          return { data: null, error: "No user ID provided" }
+        }
+
+        const { data, error } = await getClient()
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", targetUserId)
+          .maybeSingle()
+
+        if (error) {
+          return { data: null, error: error.message }
+        }
+
+        const role = data?.role as AppRole | undefined
+        if (!role) {
+          return { data: "visitor", error: null }
+        }
+
+        return { data: role, error: null }
+      } catch (err) {
+        console.error("Get current user role error:", err)
+        return {
+          data: null,
+          error: "An unexpected error occurred while fetching user role",
         }
       }
     },

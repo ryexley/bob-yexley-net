@@ -1,4 +1,4 @@
-import { createEffect, createMemo, createSignal, onCleanup } from "solid-js"
+import { createEffect, createMemo, createSignal } from "solid-js"
 import { useNavigate } from "@solidjs/router"
 import { Title } from "@solidjs/meta"
 import { supabase } from "~/lib/vendor/supabase"

@@ -5,21 +5,38 @@ import {
   onMount,
   useContext,
 } from "solid-js"
-import { supabase } from "@/lib/vendor/supabase"
+import { supabase, type AppRole } from "@/lib/vendor/supabase"
 import { isEmpty, isNotEmpty } from "@/util"
 
 interface AuthContextType {
   user: () => any | null
+  role: () => AppRole | null
   loading: () => boolean
   logout: () => Promise<void>
   isAuthenticated: () => boolean
+  isAdmin: () => boolean
+  isSuperuser: () => boolean
 }
 
 const AuthContext = createContext<AuthContextType>()
 
 export function AuthProvider(props: { children: any }) {
   const [user, setUser] = createSignal(null)
+  const [role, setRole] = createSignal<AppRole | null>(null)
   const [loading, setLoading] = createSignal(true)
+
+  const syncRoleForUser = async (userId: string) => {
+    const { data: userRole, error: roleError } =
+      await supabase.getCurrentUserRole(userId)
+
+    if (isNotEmpty(roleError)) {
+      console.error("Failed to load user role:", roleError)
+      setRole("visitor")
+      return
+    }
+
+    setRole(userRole ?? "visitor")
+  }
 
   onMount(async () => {
     const { data: currentUser } = await supabase?.getUser()
@@ -28,6 +45,7 @@ export function AuthProvider(props: { children: any }) {
       if (supabase.isSessionExpired()) {
         await supabase.logout()
         setUser(null)
+        setRole(null)
         setLoading(false)
         return
       }
@@ -36,11 +54,13 @@ export function AuthProvider(props: { children: any }) {
       if (!isValidServerSession) {
         await supabase.logout()
         setUser(null)
+        setRole(null)
         setLoading(false)
         return
       }
 
       setUser(currentUser)
+      await syncRoleForUser(currentUser.id)
     }
 
     setLoading(false)
@@ -54,12 +74,14 @@ export function AuthProvider(props: { children: any }) {
         if (event === "SIGNED_OUT") {
           supabase.clearSessionStart()
           setUser(null)
+          setRole(null)
           setLoading(false)
           return
         }
 
         if (isEmpty(session?.user)) {
           setUser(null)
+          setRole(null)
           setLoading(false)
           return
         }
@@ -71,6 +93,7 @@ export function AuthProvider(props: { children: any }) {
           if (isNotEmpty(openSessionError)) {
             await supabase.logout()
             setUser(null)
+            setRole(null)
             setLoading(false)
             return
           }
@@ -79,6 +102,7 @@ export function AuthProvider(props: { children: any }) {
         if (supabase.isSessionExpired()) {
           await supabase.logout()
           setUser(null)
+          setRole(null)
           setLoading(false)
           return
         }
@@ -87,11 +111,18 @@ export function AuthProvider(props: { children: any }) {
         if (!isValidServerSession) {
           await supabase.logout()
           setUser(null)
+          setRole(null)
           setLoading(false)
           return
         }
 
-        setUser(session?.user ?? null)
+        const nextUser = session?.user ?? null
+        setUser(nextUser)
+        if (isNotEmpty(nextUser)) {
+          await syncRoleForUser(nextUser.id)
+        } else {
+          setRole(null)
+        }
         setLoading(false)
       })()
     })
@@ -102,13 +133,17 @@ export function AuthProvider(props: { children: any }) {
   const logout = async () => {
     await supabase?.logout()
     setUser(null)
+    setRole(null)
   }
 
   const context = {
     user,
+    role,
     loading,
     logout,
     isAuthenticated: () => isNotEmpty(user()),
+    isAdmin: () => role() === "admin" || role() === "superuser",
+    isSuperuser: () => role() === "superuser",
   }
 
   return (
