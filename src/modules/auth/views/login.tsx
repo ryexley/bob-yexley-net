@@ -1,4 +1,4 @@
-import { createEffect, createMemo, createSignal } from "solid-js"
+import { createEffect, createMemo, createSignal, onCleanup } from "solid-js"
 import { useNavigate } from "@solidjs/router"
 import { Title } from "@solidjs/meta"
 import { supabase } from "~/lib/vendor/supabase"
@@ -49,6 +49,38 @@ export function Login() {
     }
 
     navigate(pages.home, { replace: true })
+  })
+
+  // Keep zoom behavior unchanged across the rest of the site, but lock it on
+  // the login route to avoid mobile/password-manager auto-zoom persistence.
+  createEffect(() => {
+    if (!showLoginPage()) {
+      return
+    }
+
+    if (typeof document === "undefined") {
+      return
+    }
+
+    const viewport = document.querySelector('meta[name="viewport"]')
+    if (!(viewport instanceof HTMLMetaElement)) {
+      return
+    }
+
+    const previousViewportContent = viewport.getAttribute("content")
+    viewport.setAttribute(
+      "content",
+      "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no",
+    )
+
+    onCleanup(() => {
+      if (previousViewportContent == null) {
+        viewport.removeAttribute("content")
+        return
+      }
+
+      viewport.setAttribute("content", previousViewportContent)
+    })
   })
 
   const handleSubmit = async (e: Event) => {
