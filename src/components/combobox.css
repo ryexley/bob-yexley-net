@@ -294,6 +294,7 @@
     max-height: inherit;
     overflow: auto;
     padding: 0.25rem;
+    touch-action: pan-y;
   }
 
   .combobox-section {
@@ -316,6 +317,7 @@
     line-height: 1.25rem;
     outline: none;
     padding: 0.25rem 0.5rem;
+    touch-action: manipulation;
     transition: var(--transitions-primary);
 
     &[data-disabled] {

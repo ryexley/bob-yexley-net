@@ -177,6 +177,9 @@ export default function Toolbar(props: ToolbarProps) {
           <input
             ref={linkHrefInputRef}
             type="url"
+            autocapitalize="none"
+            autocorrect="off"
+            spellcheck={false}
             value={linkHref()}
             class="toolbar-link-input"
             placeholder="https://example.com"
@@ -184,6 +187,9 @@ export default function Toolbar(props: ToolbarProps) {
           />
           <input
             type="text"
+            autocapitalize="none"
+            autocorrect="off"
+            spellcheck={false}
             value={linkText()}
             class="toolbar-link-input"
             placeholder="Link text"

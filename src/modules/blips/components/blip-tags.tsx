@@ -30,6 +30,7 @@ export function BlipTags(props: BlipTagsProps) {
       multiple
       class={cx("blip-tags", local.class)}
       contentClass="blip-tags-content"
+      openOnFocus
       optionValue="value"
       optionTextValue="value"
       optionLabel="value"

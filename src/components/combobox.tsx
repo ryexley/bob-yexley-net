@@ -42,6 +42,7 @@ export type ComboboxProps<Option, OptGroup = never> = Omit<
     helpers: { remove: () => void; label: string },
   ) => JSX.Element
   onInputChange?: (value: string) => void
+  openOnFocus?: boolean
   freeSolo?: boolean
   onCreateOption?: (inputValue: string) => Option | null | undefined
   onOptionsChange?: (options: Option[]) => void
@@ -137,6 +138,7 @@ export function Combobox<Option, OptGroup = never>(
     "renderSection",
     "renderChip",
     "onInputChange",
+    "openOnFocus",
     "freeSolo",
     "onCreateOption",
     "onOptionsChange",
@@ -248,6 +250,33 @@ export function Combobox<Option, OptGroup = never>(
 
     target.value = ""
     target.dispatchEvent(new Event("input", { bubbles: true }))
+  }
+  const openOptionsOnInputFocus = (event: FocusEvent) => {
+    if (!local.openOnFocus) {
+      return
+    }
+
+    const target = event.currentTarget
+    if (!(target instanceof HTMLInputElement)) {
+      return
+    }
+
+    if (target.hasAttribute("disabled") || target.hasAttribute("readonly")) {
+      return
+    }
+
+    if (target.getAttribute("aria-expanded") === "true") {
+      return
+    }
+
+    // Kobalte opens listbox from keyboard interactions; dispatch an ArrowDown
+    // keydown so focus stays in the input and users can type immediately.
+    target.dispatchEvent(
+      new KeyboardEvent("keydown", {
+        key: "ArrowDown",
+        bubbles: true,
+      }),
+    )
   }
   const createNewOption = (
     state: SingleSelectControlState<Option>,
@@ -481,12 +510,15 @@ export function Combobox<Option, OptGroup = never>(
       itemComponent={(itemProps) => (
         <ComboboxPrimitive.Item
           item={itemProps.item}
+          data-corvu-no-drag=""
           class={cx("combobox-item", local.itemClass, {
             "combobox-item-auto-highlighted": shouldAutoHighlightOption(
               itemProps.item.rawValue,
             ),
           })}>
-          <ComboboxPrimitive.ItemLabel class="combobox-item-label">
+          <ComboboxPrimitive.ItemLabel
+            data-corvu-no-drag=""
+            class="combobox-item-label">
             {local.renderItem?.(itemProps.item.rawValue) ??
               getOptionText(
                 itemProps.item.rawValue as Exclude<Option, null>,
@@ -555,6 +587,10 @@ export function Combobox<Option, OptGroup = never>(
               ) : null}
               <ComboboxPrimitive.Input
                 class={cx("combobox-input", local.inputClass)}
+                autocapitalize="none"
+                autocorrect="off"
+                spellcheck={false}
+                onFocus={openOptionsOnInputFocus}
                 onKeyDown={event => {
                   if (selectExistingOptionFromInput(state, event)) {
                     return
@@ -595,6 +631,7 @@ export function Combobox<Option, OptGroup = never>(
             <Icon name="keyboard_arrow_up" />
           </div>
           <ComboboxPrimitive.Listbox
+            data-corvu-no-drag=""
             ref={setListboxRef}
             class="combobox-listbox"
           />

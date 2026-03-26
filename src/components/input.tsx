@@ -29,6 +29,9 @@ export function Input(props: InputProps) {
       ) : null}
       <TextField.Input
         class={cx("input-control", local.inputClass)}
+        autocapitalize="none"
+        autocorrect="off"
+        spellcheck={false}
         {...attrs}
       />
       {isNotEmpty(local.hint) ? (
