@@ -39,6 +39,44 @@ import { windowTitle, withWindow } from "@/util/browser"
 import "./blip.css"
 
 const tr = ptr("blips.views.detail")
+const MAX_SHARE_DESCRIPTION_LENGTH = 180
+const MAX_SHARE_TITLE_LENGTH = 68
+
+const collapseWhitespace = (value: string) => value.replace(/\s+/g, " ").trim()
+
+const stripMarkdownForMeta = (value: string) =>
+  collapseWhitespace(
+    value
+      // Fenced code blocks.
+      .replace(/```[\s\S]*?```/g, " ")
+      // Inline code.
+      .replace(/`([^`]+)`/g, "$1")
+      // Images and links.
+      .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, "$1")
+      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, "$1")
+      // Headings, blockquotes, lists, emphasis.
+      .replace(/^#{1,6}\s+/gm, "")
+      .replace(/^>\s?/gm, "")
+      .replace(/^[*-+]\s+/gm, "")
+      .replace(/^\d+\.\s+/gm, "")
+      .replace(/[*_~]+/g, "")
+      // Bare URLs.
+      .replace(/https?:\/\/\S+/g, " "),
+  )
+
+const truncateForMeta = (value: string, maxLength: number) => {
+  if (value.length <= maxLength) {
+    return value
+  }
+
+  const trimmed = value.slice(0, maxLength).trimEnd()
+  const lastSpace = trimmed.lastIndexOf(" ")
+  if (lastSpace < 40) {
+    return `${trimmed}...`
+  }
+
+  return `${trimmed.slice(0, lastSpace)}...`
+}
 
 export function BlipView() {
   const REALTIME_UPDATE_HIGHLIGHT_MS = 60_000
@@ -97,6 +135,37 @@ export function BlipView() {
   })
 
   const updates = createMemo(() => store.updatesByParent(blip()?.id))
+  const sharePreviewText = createMemo(() => {
+    const content = blip()?.content ?? ""
+    const plainText = stripMarkdownForMeta(content)
+    if (!plainText) {
+      return tr("metaDescription")
+    }
+
+    return plainText
+  })
+  const shareTitle = createMemo(() => {
+    const preview = sharePreviewText()
+    if (!preview || preview === tr("metaDescription")) {
+      return tr("pageTitle")
+    }
+
+    return truncateForMeta(preview, MAX_SHARE_TITLE_LENGTH)
+  })
+  const shareDescription = createMemo(() =>
+    truncateForMeta(sharePreviewText(), MAX_SHARE_DESCRIPTION_LENGTH),
+  )
+  const ogUrl = createMemo(() => {
+    const siteUrl = (import.meta.env.VITE_SITE_URL as string | undefined)
+      ?.trim()
+      .replace(/\/+$/, "")
+    if (!siteUrl) {
+      return ""
+    }
+
+    const path = location.pathname || `/blips/${params.id}`
+    return `${siteUrl}${path.startsWith("/") ? path : `/${path}`}`
+  })
   const visibleRootTags = createMemo(() => {
     const rootBlip = blip()
     if (!rootBlip) {
@@ -300,10 +369,40 @@ export function BlipView() {
 
   return (
     <>
-      <Title>{windowTitle(tr("pageTitle"))}</Title>
+      <Title>{windowTitle(shareTitle())}</Title>
       <Meta
         name="description"
-        content={tr("metaDescription")}
+        content={shareDescription()}
+      />
+      <Meta
+        property="og:type"
+        content="article"
+      />
+      <Meta
+        property="og:title"
+        content={shareTitle()}
+      />
+      <Meta
+        property="og:description"
+        content={shareDescription()}
+      />
+      <Show when={ogUrl()}>
+        <Meta
+          property="og:url"
+          content={ogUrl()}
+        />
+      </Show>
+      <Meta
+        name="twitter:card"
+        content="summary"
+      />
+      <Meta
+        name="twitter:title"
+        content={shareTitle()}
+      />
+      <Meta
+        name="twitter:description"
+        content={shareDescription()}
       />
       <main>
         <PageSection class="blip-detail-page">
