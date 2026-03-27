@@ -91,16 +91,9 @@
       box-shadow: inset 0 0 0 1000px var(--colors-mono-02);
     }
 
-    /* Remove number-input spinners for OTP-like appearance. */
-    &::-webkit-outer-spin-button,
-    &::-webkit-inner-spin-button {
-      -webkit-appearance: none;
-      margin: 0;
-    }
-
-    &[type="number"] {
-      appearance: textfield;
-      -moz-appearance: textfield;
+    &.is-masked {
+      -webkit-text-security: circle;
+      font-size: 2.5rem;
     }
   }
 }

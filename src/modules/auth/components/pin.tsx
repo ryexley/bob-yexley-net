@@ -56,7 +56,16 @@ export function Pin(props: PinProps) {
   createEffect(() => {
     setIsMasked(local.masked ?? true)
   })
-  const pinValue = createMemo(() => normalizePin(local.value ?? internalValue()))
+  const pinValue = createMemo(() =>
+    normalizePin(local.value ?? internalValue()),
+  )
+  const supportsWebkitTextSecurity = createMemo(() => {
+    if (typeof CSS === "undefined" || typeof CSS.supports !== "function") {
+      return false
+    }
+
+    return CSS.supports("-webkit-text-security", "circle")
+  })
   const pinDigits = createMemo(() => {
     const value = pinValue()
     return Array.from({ length: PIN_LENGTH }, (_, idx) => value[idx] ?? "")
@@ -138,8 +147,12 @@ export function Pin(props: PinProps) {
     emitValue(nextDigits.join(""))
   }
 
-  const handleInput = (index: number, event: InputEvent & { currentTarget: HTMLInputElement }) => {
-    const nextDigit = (event.currentTarget.value.match(/\d/g) ?? []).at(-1) ?? ""
+  const handleInput = (
+    index: number,
+    event: InputEvent & { currentTarget: HTMLInputElement },
+  ) => {
+    const nextDigit =
+      (event.currentTarget.value.match(/\d/g) ?? []).at(-1) ?? ""
     setDigitAt(index, nextDigit)
 
     if (!nextDigit) {
@@ -181,7 +194,9 @@ export function Pin(props: PinProps) {
 
   const handlePaste = (event: ClipboardEvent) => {
     event.preventDefault()
-    const pastedDigits = normalizePin(event.clipboardData?.getData("text") ?? "")
+    const pastedDigits = normalizePin(
+      event.clipboardData?.getData("text") ?? "",
+    )
     if (!pastedDigits) {
       return
     }
@@ -207,7 +222,7 @@ export function Pin(props: PinProps) {
             class="pin-label">
             {local.label}
           </label>
-          {local.showMaskToggle ?? true ? (
+          {(local.showMaskToggle ?? true) ? (
             <button
               type="button"
               class={cx("pin-mask-toggle", {
@@ -232,11 +247,14 @@ export function Pin(props: PinProps) {
               ref={element => {
                 inputRefs[index()] = element
               }}
-              type={isMasked() ? "password" : "number"}
+              type={
+                isMasked() && !supportsWebkitTextSecurity()
+                  ? "password"
+                  : "text"
+              }
               inputmode="numeric"
-              min="0"
-              max="9"
-              step="1"
+              pattern="[0-9]*"
+              maxLength={1}
               value={digit}
               name={local.name}
               required={local.required}
@@ -246,7 +264,9 @@ export function Pin(props: PinProps) {
               autocorrect="off"
               spellcheck={false}
               aria-label={`PIN digit ${index() + 1}`}
-              class={cx("pin-input", local.inputClass)}
+              class={cx("pin-input", local.inputClass, {
+                "is-masked": isMasked(),
+              })}
               onInput={event => handleInput(index(), event)}
               onKeyDown={event => handleBackspace(index(), event)}
               onFocus={event => event.currentTarget.select()}

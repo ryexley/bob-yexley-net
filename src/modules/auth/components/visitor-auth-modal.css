@@ -142,10 +142,48 @@
   }
 
   .visitor-auth-form {
+    --transition-duration: 500ms;
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
     padding-top: 1rem;
+    will-change: filter, opacity;
+
+    &[data-mode="login"],
+    &[data-mode="signup"] {
+      animation: visitor-auth-mode-fade var(--transition-duration) ease;
+    }
+  }
+
+  .visitor-auth-signup-row {
+    display: grid;
+    filter: blur(0.2rem);
+    grid-template-rows: 0fr;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(-0.25rem);
+    transition:
+      grid-template-rows var(--transition-duration)
+        cubic-bezier(0.2, 0.8, 0.2, 1),
+      opacity var(--transition-duration) ease,
+      filter var(--transition-duration) ease,
+      transform var(--transition-duration) ease;
+  }
+
+  .visitor-auth-signup-row-inner {
+    min-height: 0;
+    /* Keep collapse clipping, but leave room for input focus outlines. */
+    padding: 0.25rem;
+    margin: -0.25rem;
+    overflow: hidden;
+  }
+
+  .visitor-auth-signup-row.is-active {
+    filter: blur(0);
+    grid-template-rows: 1fr;
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
   }
 
   .visitor-auth-mode-switch {
@@ -246,9 +284,30 @@
   }
 }
 
+@keyframes visitor-auth-mode-fade {
+  from {
+    filter: blur(0.1rem);
+    opacity: 0.94;
+  }
+  to {
+    filter: blur(0);
+    opacity: 1;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .dialog.visitor-auth-modal {
     .visitor-auth-face {
+      transition: none;
+    }
+
+    .visitor-auth-form {
+      animation: none;
+    }
+
+    .visitor-auth-signup-row {
+      filter: none;
+      transform: none;
       transition: none;
     }
   }

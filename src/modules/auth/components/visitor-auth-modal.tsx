@@ -205,6 +205,7 @@ export function VisitorAuthModal(props: VisitorAuthModalProps) {
               <DialogBody>
                 <form
                   class="visitor-auth-form"
+                  data-mode={mode()}
                   onSubmit={handleSubmit}
                   novalidate>
                   <Input
@@ -233,7 +234,12 @@ export function VisitorAuthModal(props: VisitorAuthModalProps) {
                     inputsClass="visitor-auth-pin"
                     inputClass="visitor-auth-pin-input"
                   />
-                  <Show when={isSignupMode()}>
+                  <div
+                    class={cx("visitor-auth-signup-row", {
+                      "is-active": isSignupMode(),
+                    })}
+                    aria-hidden={!isSignupMode()}>
+                    <div class="visitor-auth-signup-row-inner">
                     <Input
                       label={tr("fields.name.label")}
                       type="text"
@@ -245,9 +251,11 @@ export function VisitorAuthModal(props: VisitorAuthModalProps) {
                       }}
                       onInput={event => setDisplayName(event.currentTarget.value)}
                       inputClass="visitor-auth-input"
-                      required
+                      required={isSignupMode()}
+                      disabled={!isSignupMode()}
                     />
-                  </Show>
+                    </div>
+                  </div>
                   <Show when={isNotEmpty(error())}>
                     <p class="visitor-auth-error">{error()}</p>
                   </Show>
