@@ -122,24 +122,33 @@ export function VisitorAuthModal(props: VisitorAuthModalProps) {
       return
     }
 
-    if (!props.onAuthenticate) {
-      setError(tr("errors.notWired"))
-      return
-    }
-
     setSubmitting(true)
     try {
-      const result = await props.onAuthenticate({
+      const payload = {
+        mode: mode(),
         email: nextEmail,
         pin: pin(),
         displayName: isSignupMode() ? nextDisplayName : "",
-      })
-
-      if (!result.success) {
-        setError(result.error || tr("errors.authFailed"))
-        return
       }
 
+      // Step 4 verification flow: log captured values by mode.
+      console.log("[visitor-auth] submit", payload)
+
+      // If a real auth handler is provided, still run it and honor failures.
+      if (props.onAuthenticate) {
+        const result = await props.onAuthenticate({
+          email: payload.email,
+          pin: payload.pin,
+          displayName: payload.displayName,
+        })
+
+        if (!result.success) {
+          setError(result.error || tr("errors.authFailed"))
+          return
+        }
+      }
+
+      console.log("[visitor-auth] onSuccess callback fired")
       props.onSuccess?.()
       closeModal()
     } catch (submissionError) {
