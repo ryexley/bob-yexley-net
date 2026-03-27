@@ -2,120 +2,123 @@
   display: flex;
   flex-direction: column;
   width: 100%;
-}
 
-.pin-label {
-  color: var(--colors-mono-10);
-  font-size: 0.875rem;
-  font-weight: 500;
-  line-height: 1.25rem;
-  user-select: none;
-}
-
-.pin-label-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.pin-mask-toggle {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 1.75rem;
-  height: 1rem;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-  color: var(--colors-mono-09);
-  padding: 0;
-
-  &:hover {
-    color: var(--colors-mono-11);
+  .pin-label {
+    color: var(--colors-mono-10);
+    font-size: 0.875rem;
+    font-weight: 500;
+    line-height: 1.25rem;
+    user-select: none;
   }
 
-  &:focus,
-  &:focus-visible,
-  &:active {
-    box-shadow: none;
+  .pin-label-row {
+    align-items: center;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .pin-mask-toggle {
+    align-items: center;
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    color: var(--colors-mono-09);
+    display: inline-flex;
+    height: 1rem;
+    justify-content: center;
+    padding: 0;
+    width: 1.75rem;
+
+    &:hover {
+      color: var(--colors-mono-11);
+    }
+
+    &:active,
+    &:focus,
+    &:focus-visible {
+      box-shadow: none;
+      outline: none;
+    }
+
+    &.is-active {
+      color: var(--colors-crimson, var(--colors-scarlett));
+    }
+
+    .icon {
+      color: inherit;
+      font-size: 1rem;
+    }
+  }
+
+  .pin-inputs {
+    display: flex;
+    gap: 0.5rem;
+    width: 100%;
+  }
+
+  .pin-input {
+    background-color: var(--colors-mono-02);
+    border: 1px solid var(--colors-mono-07);
+    border-radius: 0.375rem;
+    color: var(--colors-text-primary);
+    flex: 1 1 0;
+    font-size: 1.125rem;
+    height: 2.75rem;
+    line-height: 1;
+    min-width: 0;
+    text-align: center;
     outline: none;
-  }
+    padding: 0.25rem;
+    transition: all var(--transitions-primary);
 
-  &.is-active {
-    color: var(--colors-crimson, var(--colors-scarlett));
-  }
+    &:hover {
+      border-color: var(--colors-mono-09);
+    }
 
-  .icon {
-    font-size: 1rem;
-    color: inherit;
-  }
-}
+    &:focus-visible {
+      outline: 2px solid var(--colors-cool-blue);
+      outline-offset: 2px;
+    }
 
-.pin-inputs {
-  display: flex;
-  gap: 0.5rem;
-  width: 100%;
-}
+    &:disabled {
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
 
-.pin-input {
-  flex: 1 1 0;
-  min-width: 0;
-  height: 2.75rem;
-  border: 1px solid var(--colors-mono-07);
-  border-radius: 0.375rem;
-  background-color: var(--colors-mono-02);
-  color: var(--colors-text-primary);
-  font-size: 1.125rem;
-  line-height: 1;
-  text-align: center;
-  padding: 0.25rem;
-  outline: none;
-  transition: all var(--transitions-primary);
+    /* Suppress browser autofill background tint in dark mode contexts. */
+    &:-webkit-autofill {
+      -webkit-text-fill-color: var(--colors-text-primary);
+      box-shadow: inset 0 0 0 1000px var(--colors-mono-02);
+    }
 
-  &:hover {
-    border-color: var(--colors-mono-09);
-  }
+    /* Remove number-input spinners for OTP-like appearance. */
+    &::-webkit-outer-spin-button,
+    &::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
 
-  &:focus-visible {
-    outline: 2px solid var(--colors-cool-blue);
-    outline-offset: 2px;
-  }
-
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
-
-  /* Suppress browser autofill background tint in dark mode contexts. */
-  &:-webkit-autofill {
-    -webkit-text-fill-color: var(--colors-text-primary);
-    box-shadow: inset 0 0 0 1000px var(--colors-mono-02);
-  }
-
-  /* Remove number-input spinners for OTP-like appearance. */
-  &::-webkit-outer-spin-button,
-  &::-webkit-inner-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
-  }
-
-  &[type="number"] {
-    -moz-appearance: textfield;
+    &[type="number"] {
+      appearance: textfield;
+      -moz-appearance: textfield;
+    }
   }
 }
 
 @media (max-width: 30rem) {
-  .pin-inputs {
-    gap: 0.375rem;
-  }
+  .pin-field {
+    .pin-inputs {
+      gap: 0.375rem;
+    }
 
-  .pin-mask-toggle {
-    width: 2rem;
-    height: 2rem;
-  }
+    .pin-mask-toggle {
+      height: 2rem;
+      width: 2rem;
+    }
 
-  .pin-input {
-    height: 2.5rem;
-    font-size: 1rem;
+    .pin-input {
+      height: 2.5rem;
+      font-size: 1rem;
+    }
   }
 }
