@@ -1,5 +1,5 @@
 import { Dialog as DialogPrimitive } from "@kobalte/core/dialog"
-import { type ParentProps } from "solid-js"
+import { type ParentProps, type JSX } from "solid-js"
 import { Icon } from "@/components/icon"
 import { cx } from "@/util"
 import "./dialog.css"
@@ -11,6 +11,7 @@ type DialogProps = ParentProps<{
   modal?: boolean
   overlayClass?: string
   class?: string
+  style?: JSX.CSSProperties
 }>
 
 export function Dialog(props: DialogProps) {
@@ -22,7 +23,9 @@ export function Dialog(props: DialogProps) {
       onOpenChange={props.onOpenChange}>
       <DialogPrimitive.Portal>
         <DialogPrimitive.Overlay class={cx("dialog-overlay", props.overlayClass)} />
-        <DialogPrimitive.Content class={cx("dialog", props.class)}>
+        <DialogPrimitive.Content
+          class={cx("dialog", props.class)}
+          style={props.style}>
           {props.children}
         </DialogPrimitive.Content>
       </DialogPrimitive.Portal>

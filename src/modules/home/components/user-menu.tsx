@@ -6,6 +6,7 @@ import { IconButton } from "@/components/icon-button"
 import { Menu } from "@/components/menu"
 import { Stack } from "@/components/stack"
 import { ptr } from "@/i18n"
+import { useVisitorAuth } from "@/modules/auth/components/visitor-auth-modal"
 import { isNotEmpty } from "@/util"
 import "./user-menu.css"
 
@@ -13,6 +14,7 @@ const tr = ptr("home.components.userMenu")
 
 export function UserMenu() {
   const { isAuthenticated, user, logout } = useAuth() as any
+  const visitorAuth = useVisitorAuth()
   const [showNewBlipDrawer, setShowNewBlipDrawer] = createSignal(false)
 
   const MenuHeader = createMemo(() => {
@@ -41,6 +43,11 @@ export function UserMenu() {
         triggerClass="user-menu"
         dropdownMenuProps={{ modal: false }}
         items={[
+          {
+            icon: "lock",
+            label: "Visitor Login",
+            onClick: () => visitorAuth.open(),
+          },
           {
             iconNode: (
               <BlipIcon
