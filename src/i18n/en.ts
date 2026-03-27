@@ -66,6 +66,70 @@ export const en = {
     },
   },
   auth: {
+    components: {
+      visitorAuthModal: {
+        login: {
+          title: "Login",
+          subtitle: "Enter your credentials to interact with the site.",
+        },
+        signup: {
+          title: "Sign Up",
+          subtitle: "Create your visitor account to interact with the site.",
+        },
+        fields: {
+          email: {
+            label: "Email",
+            placeholder: "name@email.com",
+          },
+          pin: {
+            label: "PIN",
+          },
+          name: {
+            label: "Name",
+            placeholder: "How should others see your name?",
+          },
+        },
+        actions: {
+          cancel: "Nevermind",
+          login: {
+            default: "Login",
+            submitting: "Logging in...",
+          },
+          signUp: {
+            default: "Create account",
+            submitting: "Creating account...",
+          },
+        },
+        modeSwitch: {
+          login: {
+            prefix: "Don't have an account? ",
+            link: "Sign up.",
+          },
+          signup: {
+            prefix: "Already have an account? ",
+            link: "Login.",
+          },
+        },
+        help: {
+          trigger: "What's this?",
+          backAction: "Back",
+          loginContent:
+            "Log in with your email and PIN to interact with the site. If your credentials are not working, verify your PIN and try again.",
+          signupContent:
+            "Create a visitor account with your email, a 6-digit PIN, and your name. Your name is how other visitors will recognize you when you interact.",
+        },
+        errors: {
+          notWired: "Visitor auth flow is not wired yet.",
+          authFailed: "Unable to authenticate.",
+          unexpected: "Unable to authenticate right now.",
+          validation: {
+            loginRequired: "Please provide your email and a 6-digit PIN.",
+            signupRequired:
+              "Please provide your email, name, and a 6-digit PIN.",
+          },
+        },
+      },
+    },
     views: {
       login: {
         pageTitle: "Uuummmm ... you probably don't belong here",

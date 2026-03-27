@@ -148,6 +148,38 @@
     padding-top: 1rem;
   }
 
+  .visitor-auth-mode-switch {
+    color: var(--colors-mono-09);
+    font-size: 0.75rem;
+    margin: 1rem 0 0 0;
+    text-align: center;
+
+    button {
+      &:hover,
+      &:focus,
+      &:focus-visible {
+        border: none;
+        box-shadow: none;
+        outline: none;
+      }
+    }
+  }
+
+  .visitor-auth-mode-switch-link {
+    background: transparent;
+    border: 0;
+    color: var(--colors-cool-blue);
+    cursor: pointer;
+    font-size: inherit;
+    margin: 0;
+    padding: 0;
+    text-decoration: underline;
+
+    &:hover {
+      color: var(--colors-resonant-blue);
+    }
+  }
+
   .visitor-auth-input,
   .visitor-auth-pin-input {
     &:-webkit-autofill {

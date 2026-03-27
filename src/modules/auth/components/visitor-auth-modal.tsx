@@ -16,6 +16,7 @@ import {
 import { Icon } from "@/components/icon"
 import { Input } from "@/components/input"
 import { Pin } from "@/modules/auth/components/pin"
+import { ptr } from "@/i18n"
 import { generateRandomRadialGradients } from "@/util/image"
 import { clsx as cx, isNotEmpty } from "@/util"
 import "./visitor-auth-modal.css"
@@ -50,12 +51,15 @@ type VisitorAuthContextType = {
   isOpen: () => boolean
 }
 
+type VisitorAuthMode = "login" | "signup"
+
 const [openState, setOpenState] = createSignal(false)
 const [pendingSuccessCallback, setPendingSuccessCallback] = createSignal<
   (() => void) | null
 >(null)
 const [authenticateHandler, setAuthenticateHandler] =
   createSignal<VisitorAuthModalProps["onAuthenticate"]>()
+const tr = ptr("auth.components.visitorAuthModal")
 
 export function VisitorAuthModal(props: VisitorAuthModalProps) {
   let nameInputRef: HTMLInputElement | undefined
@@ -64,11 +68,27 @@ export function VisitorAuthModal(props: VisitorAuthModalProps) {
   const [displayName, setDisplayName] = createSignal("")
   const [submitting, setSubmitting] = createSignal(false)
   const [error, setError] = createSignal("")
+  const [mode, setMode] = createSignal<VisitorAuthMode>("login")
   const [showHelpBack, setShowHelpBack] = createSignal(false)
   const modalBackground = createMemo(() => ({
     "background-image": generateRandomRadialGradients(),
   }))
+  const isSignupMode = createMemo(() => mode() === "signup")
   const disableSubmitButton = createMemo(() => submitting())
+  const title = createMemo(() =>
+    isSignupMode() ? tr("signup.title") : tr("login.title"),
+  )
+  const subtitle = createMemo(() =>
+    isSignupMode() ? tr("signup.subtitle") : tr("login.subtitle"),
+  )
+  const submitLabel = createMemo(() => {
+    if (submitting()) {
+      return isSignupMode()
+        ? tr("actions.signUp.submitting")
+        : tr("actions.login.submitting")
+    }
+    return isSignupMode() ? tr("actions.signUp.default") : tr("actions.login.default")
+  })
 
   const resetForm = () => {
     setEmail("")
@@ -76,6 +96,7 @@ export function VisitorAuthModal(props: VisitorAuthModalProps) {
     setDisplayName("")
     setSubmitting(false)
     setError("")
+    setMode("login")
     setShowHelpBack(false)
   }
 
@@ -92,13 +113,17 @@ export function VisitorAuthModal(props: VisitorAuthModalProps) {
     const nextEmail = email().trim()
     const nextDisplayName = displayName().trim()
 
-    if (!nextEmail || !nextDisplayName || pin().length !== 6) {
-      setError("Please provide email, display name, and a 6-digit PIN.")
+    if (!nextEmail || pin().length !== 6 || (isSignupMode() && !nextDisplayName)) {
+      setError(
+        isSignupMode()
+          ? tr("errors.validation.signupRequired")
+          : tr("errors.validation.loginRequired"),
+      )
       return
     }
 
     if (!props.onAuthenticate) {
-      setError("Visitor auth flow is not wired yet.")
+      setError(tr("errors.notWired"))
       return
     }
 
@@ -107,11 +132,11 @@ export function VisitorAuthModal(props: VisitorAuthModalProps) {
       const result = await props.onAuthenticate({
         email: nextEmail,
         pin: pin(),
-        displayName: nextDisplayName,
+        displayName: isSignupMode() ? nextDisplayName : "",
       })
 
       if (!result.success) {
-        setError(result.error || "Unable to authenticate.")
+        setError(result.error || tr("errors.authFailed"))
         return
       }
 
@@ -119,10 +144,16 @@ export function VisitorAuthModal(props: VisitorAuthModalProps) {
       closeModal()
     } catch (submissionError) {
       console.error("Visitor auth submission failed:", submissionError)
-      setError("Unable to authenticate right now.")
+      setError(tr("errors.unexpected"))
     } finally {
       setSubmitting(false)
     }
+  }
+
+  const toggleMode = () => {
+    setMode(previous => (previous === "login" ? "signup" : "login"))
+    setError("")
+    setShowHelpBack(false)
   }
 
   return (
@@ -148,18 +179,18 @@ export function VisitorAuthModal(props: VisitorAuthModalProps) {
                 <div class="visitor-auth-header-row">
                   <DialogTitle class="visitor-auth-title">
                     <Icon name="shield_lock" />
-                    <h2>Login</h2>
+                    <h2>{title()}</h2>
                   </DialogTitle>
                   <button
                     type="button"
                     class="visitor-auth-help-inline"
                     onClick={() => setShowHelpBack(true)}>
-                    <span>What's this?</span>
+                    <span>{tr("help.trigger")}</span>
                     <Icon name="help" />
                   </button>
                 </div>
                 <DialogDescription class="visitor-auth-subtitle">
-                  Enter your credentials to interact with the site.
+                  {subtitle()}
                 </DialogDescription>
               </DialogHeader>
               <DialogBody>
@@ -168,19 +199,22 @@ export function VisitorAuthModal(props: VisitorAuthModalProps) {
                   onSubmit={handleSubmit}
                   novalidate>
                   <Input
-                    label="Email"
+                    label={tr("fields.email.label")}
                     type="email"
                     autocomplete="off"
-                    placeholder="name@email.com"
+                    placeholder={tr("fields.email.placeholder")}
                     value={email()}
                     onInput={event => setEmail(event.currentTarget.value)}
                     inputClass="visitor-auth-input"
                   />
                   <Pin
-                    label="PIN"
+                    label={tr("fields.pin.label")}
                     value={pin()}
                     onChange={setPin}
                     onComplete={() => {
+                      if (!isSignupMode()) {
+                        return
+                      }
                       queueMicrotask(() => {
                         nameInputRef?.focus()
                         nameInputRef?.select()
@@ -190,19 +224,21 @@ export function VisitorAuthModal(props: VisitorAuthModalProps) {
                     inputsClass="visitor-auth-pin"
                     inputClass="visitor-auth-pin-input"
                   />
-                  <Input
-                    label="Name"
-                    type="text"
-                    autocomplete="off"
-                    placeholder="How should others see your name?"
-                    value={displayName()}
-                    ref={element => {
-                      nameInputRef = element
-                    }}
-                    onInput={event => setDisplayName(event.currentTarget.value)}
-                    inputClass="visitor-auth-input"
-                    required
-                  />
+                  <Show when={isSignupMode()}>
+                    <Input
+                      label={tr("fields.name.label")}
+                      type="text"
+                      autocomplete="off"
+                      placeholder={tr("fields.name.placeholder")}
+                      value={displayName()}
+                      ref={element => {
+                        nameInputRef = element
+                      }}
+                      onInput={event => setDisplayName(event.currentTarget.value)}
+                      inputClass="visitor-auth-input"
+                      required
+                    />
+                  </Show>
                   <Show when={isNotEmpty(error())}>
                     <p class="visitor-auth-error">{error()}</p>
                   </Show>
@@ -210,18 +246,31 @@ export function VisitorAuthModal(props: VisitorAuthModalProps) {
                     <Button
                       type="button"
                       variant="ghost"
-                      label="Nevermind"
+                      label={tr("actions.cancel")}
                       class="visitor-auth-cancel"
                       onClick={closeModal}
                     />
                     <Button
                       type="submit"
                       variant="primary"
-                      label={submitting() ? "Logging in..." : "Login"}
+                      label={submitLabel()}
                       disabled={disableSubmitButton()}
                       class="visitor-auth-submit"
                     />
                   </DialogFooter>
+                  <p class="visitor-auth-mode-switch">
+                    {isSignupMode()
+                      ? tr("modeSwitch.signup.prefix")
+                      : tr("modeSwitch.login.prefix")}
+                    <button
+                      type="button"
+                      class="visitor-auth-mode-switch-link"
+                      onClick={toggleMode}>
+                      {isSignupMode()
+                        ? tr("modeSwitch.signup.link")
+                        : tr("modeSwitch.login.link")}
+                    </button>
+                  </p>
                 </form>
               </DialogBody>
             </section>
@@ -232,14 +281,11 @@ export function VisitorAuthModal(props: VisitorAuthModalProps) {
                   class="visitor-auth-help-back-button"
                   onClick={() => setShowHelpBack(false)}>
                   <Icon name="arrow_back" />
-                  <span>Back</span>
+                  <span>{tr("help.backAction")}</span>
                 </button>
               </div>
               <p class="visitor-auth-help-back-content">
-                We need to know who you are, and we want to not let other people
-                pretend to be you. Enter your email address, a PIN number you
-                want to authenticate with (you need to be able to remember this
-                for later), and a name so others know who you are.
+                {isSignupMode() ? tr("help.signupContent") : tr("help.loginContent")}
               </p>
             </section>
           </div>
