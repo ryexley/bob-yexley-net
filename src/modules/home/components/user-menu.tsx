@@ -13,7 +13,7 @@ import "./user-menu.css"
 const tr = ptr("home.components.userMenu")
 
 export function UserMenu() {
-  const { isAuthenticated, user, logout } = useAuth() as any
+  const { isAdmin, user, logout } = useAuth() as any
   const visitorAuth = useVisitorAuth()
   const [showNewBlipDrawer, setShowNewBlipDrawer] = createSignal(false)
 
@@ -36,7 +36,7 @@ export function UserMenu() {
   })
 
   return (
-    <Show when={isAuthenticated()}>
+    <Show when={isAdmin()}>
       <Menu
         triggerIcon="account_circle"
         triggerButtonSize="sm"

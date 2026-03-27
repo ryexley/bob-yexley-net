@@ -529,3 +529,6 @@ from
 where
   r.parent_id is null
   and r.blip_type = 'root'::text;
+
+-- Ensure view executes with caller context instead of owner privileges.
+alter view public.view_blips set (security_invoker = true);

@@ -22,6 +22,7 @@ import { clsx as cx, isNotEmpty } from "@/util"
 import "./visitor-auth-modal.css"
 
 type VisitorAuthCredentials = {
+  mode: VisitorAuthMode
   email: string
   pin: string
   displayName: string
@@ -131,12 +132,9 @@ export function VisitorAuthModal(props: VisitorAuthModalProps) {
         displayName: isSignupMode() ? nextDisplayName : "",
       }
 
-      // Step 4 verification flow: log captured values by mode.
-      console.log("[visitor-auth] submit", payload)
-
-      // If a real auth handler is provided, still run it and honor failures.
       if (props.onAuthenticate) {
         const result = await props.onAuthenticate({
+          mode: payload.mode,
           email: payload.email,
           pin: payload.pin,
           displayName: payload.displayName,
@@ -148,7 +146,6 @@ export function VisitorAuthModal(props: VisitorAuthModalProps) {
         }
       }
 
-      console.log("[visitor-auth] onSuccess callback fired")
       props.onSuccess?.()
       closeModal()
     } catch (submissionError) {

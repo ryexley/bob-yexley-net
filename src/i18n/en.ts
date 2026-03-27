@@ -233,6 +233,7 @@ export const en = {
       blip: {
         actions: {
           readMore: "Read more",
+          addReaction: "Add reaction",
         },
         readMoreDialog: {
           closeAriaLabel: "Close dialog",

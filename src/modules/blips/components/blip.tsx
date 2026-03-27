@@ -13,9 +13,11 @@ import {
 import { Hashtag, Icon } from "@/components/icon"
 import { MarkdownRenderer as Markdown } from "@/components/markdown/renderer"
 import { Button } from "@/components/button"
+import { useAuth } from "@/context/auth-context"
 // import { Hashtag } from "@/components/icons"
 import { Stack } from "@/components/stack"
 import { BlipActions } from "@/modules/blips/components/blip-actions"
+import { useVisitorAuth } from "@/modules/auth/components/visitor-auth-modal"
 import { formatBlipTimestamp } from "@/modules/blips/util"
 import { ptr } from "@/i18n"
 import { pages } from "@/urls"
@@ -33,6 +35,8 @@ export function Blip(props: {
   const [local] = splitProps(props, ["blip", "tags", "onEdit", "onView"])
   const navigate = useNavigate()
   const preloadRoute = usePreloadRoute()
+  const { isAuthenticated } = useAuth()
+  const visitorAuth = useVisitorAuth()
   let contentRef: HTMLDivElement | undefined
   const [timeTick, setTimeTick] = createSignal(Date.now())
   const [isClipped, setIsClipped] = createSignal(false)
@@ -135,7 +139,12 @@ export function Blip(props: {
               </Show>
             </div>
           </div>
-          <Show when={(local.tags?.length ?? 0) > 0 || hasUpdates()}>
+          <Show
+            when={
+              (local.tags?.length ?? 0) > 0 ||
+              hasUpdates() ||
+              !isAuthenticated()
+            }>
             <footer>
               <div class="tags">
                 <Show when={(local.tags?.length ?? 0) > 0}>
@@ -151,18 +160,35 @@ export function Blip(props: {
                   </ul>
                 </Show>
               </div>
-              <Show when={hasUpdates()}>
-                <button
-                  type="button"
-                  class="updates-indicator"
-                  onClick={event => {
-                    event.stopPropagation()
-                    openDetails()
-                  }}>
-                  <Icon name="chat" />
-                  <span>{local.blip.updates_count ?? 0}</span>
-                </button>
-              </Show>
+              <Stack
+                orient="row"
+                gap="0.5rem"
+                class="activity">
+                <Show when={hasUpdates()}>
+                  <button
+                    type="button"
+                    class="updates-indicator"
+                    onClick={event => {
+                      event.stopPropagation()
+                      openDetails()
+                    }}>
+                    <Icon name="chat" />
+                    <span>{local.blip.updates_count ?? 0}</span>
+                  </button>
+                </Show>
+                <Show when={!isAuthenticated()}>
+                  <button
+                    type="button"
+                    class="reaction-trigger"
+                    aria-label={tr("actions.addReaction")}
+                    onClick={event => {
+                      event.stopPropagation()
+                      visitorAuth.open()
+                    }}>
+                    <Icon name="add_reaction" />
+                  </button>
+                </Show>
+              </Stack>
             </footer>
           </Show>
         </div>

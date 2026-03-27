@@ -2,10 +2,12 @@ import {
   createContext,
   createEffect,
   createSignal,
+  onCleanup,
   onMount,
   useContext,
 } from "solid-js"
 import { supabase, type AppRole } from "@/lib/vendor/supabase"
+import { setVisitorAuthenticateHandler } from "@/modules/auth/components/visitor-auth-modal"
 import { isEmpty, isNotEmpty } from "@/util"
 
 interface AuthContextType {
@@ -39,6 +41,26 @@ export function AuthProvider(props: { children: any }) {
   }
 
   onMount(async () => {
+    setVisitorAuthenticateHandler(async credentials => {
+      if (credentials.mode === "signup") {
+        const { error } = await supabase.visitorSignUp(
+          credentials.email,
+          credentials.pin,
+          credentials.displayName,
+        )
+        return {
+          success: isEmpty(error),
+          error: error ?? undefined,
+        }
+      }
+
+      const { error } = await supabase.visitorLogin(credentials.email, credentials.pin)
+      return {
+        success: isEmpty(error),
+        error: error ?? undefined,
+      }
+    })
+
     const { data: currentUser } = await supabase?.getUser()
 
     if (isNotEmpty(currentUser)) {
@@ -64,6 +86,10 @@ export function AuthProvider(props: { children: any }) {
     }
 
     setLoading(false)
+  })
+
+  onCleanup(() => {
+    setVisitorAuthenticateHandler(undefined)
   })
 
   createEffect(() => {

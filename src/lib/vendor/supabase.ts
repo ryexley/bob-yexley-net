@@ -80,6 +80,18 @@ export type AuthResult<T = any> = {
 
 export type AppRole = "superuser" | "admin" | "visitor"
 
+type VisitorStatus = "pending" | "active" | "locked"
+
+type FailedVisitorLoginAttemptResult = {
+  found: boolean
+  locked: boolean
+  failed_attempts: number
+}
+
+const VISITOR_MAX_FAILED_LOGIN_ATTEMPTS = 5
+const VISITOR_LOCKED_MESSAGE =
+  "Something's not working right now. Text me and we'll get it sorted out."
+
 function formatAuthError(error: AuthError): string {
   const errorMessages: Record<string, string> = {
     "Invalid login credentials": "Invalid email or password",
@@ -184,6 +196,116 @@ function Supabase() {
       }
     },
 
+    async visitorLogin(email: string, pin: string): Promise<AuthResult<User>> {
+      try {
+        const client = getClient()
+        const normalizedEmail = email?.trim().toLowerCase()
+        if (!normalizedEmail || !pin?.trim()) {
+          return { data: null, error: "Email and PIN are required" }
+        }
+
+        const { data, error } = await client.auth.signInWithPassword({
+          email: normalizedEmail,
+          password: pin,
+        })
+
+        if (error) {
+          if (error.message === "Invalid login credentials") {
+            const failedAttempt = await this.recordFailedVisitorLoginAttempt(normalizedEmail)
+            if (failedAttempt.locked) {
+              return { data: null, error: VISITOR_LOCKED_MESSAGE }
+            }
+            return { data: null, error: "Invalid email or PIN" }
+          }
+          return { data: null, error: formatAuthError(error) }
+        }
+
+        const signedInUser = data?.user
+        if (!signedInUser) {
+          return { data: null, error: "Unable to authenticate" }
+        }
+
+        const { data: visitorStatus, error: statusError } = await this.getCurrentVisitorStatus()
+        if (statusError) {
+          await client.auth.signOut()
+          return { data: null, error: statusError }
+        }
+
+        if (visitorStatus === "locked") {
+          await client.auth.signOut()
+          return { data: null, error: VISITOR_LOCKED_MESSAGE }
+        }
+
+        const { error: resetError } = await this.resetCurrentVisitorFailedLoginAttempts()
+        if (resetError) {
+          console.error("Failed to reset visitor failed login attempts:", resetError)
+        }
+
+        setSessionStartedAtMs(Date.now())
+
+        return { data: signedInUser, error: null }
+      } catch (err) {
+        console.error("Visitor login error:", err)
+        return {
+          data: null,
+          error: "An unexpected error occurred during login",
+        }
+      }
+    },
+
+    async visitorSignUp(
+      email: string,
+      pin: string,
+      displayName: string,
+    ): Promise<AuthResult<User>> {
+      try {
+        const client = getClient()
+        const normalizedEmail = email?.trim().toLowerCase()
+        const normalizedDisplayName = displayName?.trim()
+
+        if (!normalizedEmail || !pin?.trim() || !normalizedDisplayName) {
+          return { data: null, error: "Email, PIN, and display name are required" }
+        }
+
+        const { data, error } = await client.auth.signUp({
+          email: normalizedEmail,
+          password: pin,
+          options: {
+            data: {
+              display_name: normalizedDisplayName,
+            },
+          },
+        })
+
+        if (error) {
+          return { data: null, error: formatAuthError(error) }
+        }
+
+        const signedUpUser = data?.user
+        if (!signedUpUser) {
+          return { data: null, error: "Unable to create visitor account" }
+        }
+
+        if (!data?.session) {
+          return {
+            data: null,
+            error:
+              "Sign-up succeeded but no active session was created. Verify email confirmations are disabled for visitor auth.",
+          }
+        }
+
+        setSessionStartedAtMs(Date.now())
+
+        return { data: signedUpUser, error: null }
+      } catch (err) {
+        console.error("Visitor sign-up error:", err)
+        return {
+          data: null,
+          error: "An unexpected error occurred during sign-up",
+        }
+      }
+    },
+
     async logout(): Promise<AuthResult<void>> {
       try {
         await this.revokeCurrentSession()
@@ -202,6 +324,94 @@ function Supabase() {
         return {
           data: null,
           error: "An unexpected error occurred during logout",
+        }
+      }
+    },
+
+    async recordFailedVisitorLoginAttempt(
+      targetEmail: string,
+      maxAttempts: number = VISITOR_MAX_FAILED_LOGIN_ATTEMPTS,
+    ): Promise<FailedVisitorLoginAttemptResult> {
+      const normalizedEmail = targetEmail?.trim().toLowerCase()
+      if (!normalizedEmail) {
+        return { found: false, locked: false, failed_attempts: 0 }
+      }
+
+      try {
+        const client = getClient()
+        const { data, error } = await client.rpc("record_failed_visitor_login_attempt", {
+          target_email: normalizedEmail,
+          max_attempts: maxAttempts,
+        })
+
+        if (error) {
+          console.error("Failed to record visitor login attempt:", error)
+          return { found: false, locked: false, failed_attempts: 0 }
+        }
+
+        return {
+          found: data?.found === true,
+          locked: data?.locked === true,
+          failed_attempts:
+            typeof data?.failed_attempts === "number" ? data.failed_attempts : 0,
+        }
+      } catch (err) {
+        console.error("recordFailedVisitorLoginAttempt error:", err)
+        return { found: false, locked: false, failed_attempts: 0 }
+      }
+    },
+
+    async resetCurrentVisitorFailedLoginAttempts(): Promise<AuthResult<void>> {
+      try {
+        const client = getClient()
+        const { error } = await client.rpc("reset_current_visitor_failed_login_attempts")
+        if (error) {
+          return { data: null, error: error.message }
+        }
+
+        return { data: null, error: null }
+      } catch (err) {
+        console.error("resetCurrentVisitorFailedLoginAttempts error:", err)
+        return {
+          data: null,
+          error: "An unexpected error occurred while resetting login attempts",
+        }
+      }
+    },
+
+    async getCurrentVisitorStatus(): Promise<AuthResult<VisitorStatus>> {
+      try {
+        const client = getClient()
+        const { data: authData, error: authError } = await client.auth.getUser()
+        if (authError) {
+          return { data: null, error: formatAuthError(authError) }
+        }
+
+        const currentUserId = authData?.user?.id
+        if (!currentUserId) {
+          return { data: null, error: "No authenticated visitor session found" }
+        }
+
+        const { data, error } = await client
+          .from("visitors")
+          .select("status")
+          .eq("user_id", currentUserId)
+          .maybeSingle()
+
+        if (error) {
+          return { data: null, error: error.message }
+        }
+
+        if (!data?.status) {
+          return { data: null, error: "Visitor profile not found" }
+        }
+
+        return { data: data.status as VisitorStatus, error: null }
+      } catch (err) {
+        console.error("getCurrentVisitorStatus error:", err)
+        return {
+          data: null,
+          error: "An unexpected error occurred while loading visitor status",
         }
       }
     },

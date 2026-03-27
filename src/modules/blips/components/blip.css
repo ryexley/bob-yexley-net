@@ -114,6 +114,12 @@
       }
     }
 
+    .activity {
+      button {
+        height: 1.625rem;
+      }
+    }
+
     .updates-indicator {
       align-items: center;
       background: transparent;
@@ -135,6 +141,34 @@
       .icon {
         color: currentcolor;
         font-size: 0.9rem;
+      }
+    }
+
+    .reaction-trigger {
+      align-items: center;
+      background: transparent;
+      border: 1px solid var(--colors-mono-05);
+      border-radius: 999px;
+      color: var(--colors-mono-08);
+      cursor: pointer;
+      display: inline-flex;
+      justify-content: center;
+      padding: 0.1rem 0.45rem;
+      transition: var(--transitions-primary);
+
+      &:hover {
+        border-color: var(--colors-links);
+        color: var(--colors-links);
+
+        .icon {
+          transform: scale(1.1) rotate(10deg);
+        }
+      }
+
+      .icon {
+        color: currentcolor;
+        font-size: 1rem;
+        transition: transform 160ms ease;
       }
     }
 
