@@ -6,7 +6,7 @@ import {
   onMount,
   useContext,
 } from "solid-js"
-import { supabase, type AppRole } from "@/lib/vendor/supabase"
+import { supabase, type AppRole } from "@/lib/vendor/supabase/browser"
 import { setVisitorAuthenticateHandler } from "@/modules/auth/components/visitor-auth-modal"
 import { isEmpty, isNotEmpty } from "@/util"
 

@@ -8,9 +8,9 @@
     "lint": "eslint src/ --cache",
     "quality-check": "concurrently --kill-others-on-fail --names \"tsc,eslint\" --prefix-colors \"auto,auto\" \"pnpm compile\" \"pnpm lint\" --color",
     "qc": "pnpm quality-check",
-    "dev": "vinxi dev --port 7808",
+    "dev": "node --env-file=.env.local ./node_modules/vinxi/bin/cli.mjs dev --port 7808",
     "build": "vinxi build",
-    "start": "vinxi start",
+    "start": "node --env-file=.env.local ./node_modules/vinxi/bin/cli.mjs start",
     "component:add": "pnpm dlx shadcn-solid add"
   },
   "dependencies": {

@@ -1,3 +1,15 @@
+/**
+ * Browser-facing Supabase module.
+ *
+ * Trust boundary:
+ * - Safe for browser/runtime usage.
+ * - Uses anon key and user session auth flows.
+ * - Must not use service-role credentials.
+ *
+ * Use this module for:
+ * - interactive auth/login/logout/session checks
+ * - user-scoped reads/writes governed by RLS
+ */
 import {
   createClient,
   type SupabaseClient,
@@ -19,7 +31,7 @@ const SESSION_STARTED_AT_STORAGE_KEY = "auth:session-started-at"
 const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000
 const DEFAULT_SESSION_TTL = "7 days"
 
-// Singleton client instance
+// Singleton browser client instance
 let browserClient: SupabaseClient | null = null
 
 function canUseStorage() {
@@ -73,6 +85,8 @@ export function getClient(): SupabaseClient {
   }
 }
 
+export const getBrowserClient = getClient
+
 export type AuthResult<T = any> = {
   data: T | null
   error: string | null
@@ -90,7 +104,32 @@ type FailedVisitorLoginAttemptResult = {
 
 const VISITOR_MAX_FAILED_LOGIN_ATTEMPTS = 5
 const VISITOR_LOCKED_MESSAGE =
-  "Something's not working right now. Text me and we'll get it sorted out."
+  "Something's not working right now. Text or call or contact me somehow, and we'll get it sorted out."
+
+const emitVisitorAuthTelemetry = (
+  event: "signup" | "login",
+  outcome: "success" | "failure",
+  email: string,
+  reason?: string,
+) => {
+  if (isServer || typeof fetch !== "function") {
+    return
+  }
+
+  void fetch("/api/auth/visitor/telemetry", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({
+      event,
+      outcome,
+      email,
+      reason,
+    }),
+    keepalive: true,
+  }).catch(() => {})
+}
 
 function formatAuthError(error: AuthError): string {
   const errorMessages: Record<string, string> = {
@@ -201,6 +240,12 @@ function Supabase() {
         const client = getClient()
         const normalizedEmail = email?.trim().toLowerCase()
         if (!normalizedEmail || !pin?.trim()) {
+          emitVisitorAuthTelemetry(
+            "login",
+            "failure",
+            normalizedEmail || email,
+            "validation",
+          )
           return { data: null, error: "Email and PIN are required" }
         }
 
@@ -211,12 +256,34 @@ function Supabase() {
 
         if (error) {
           if (error.message === "Invalid login credentials") {
-            const failedAttempt = await this.recordFailedVisitorLoginAttempt(normalizedEmail)
+            const failedAttempt =
+              await this.recordFailedVisitorLoginAttempt(normalizedEmail)
             if (failedAttempt.locked) {
+              emitVisitorAuthTelemetry(
+                "login",
+                "failure",
+                normalizedEmail,
+                "locked",
+              )
               return { data: null, error: VISITOR_LOCKED_MESSAGE }
             }
-            return { data: null, error: "Invalid email or PIN" }
+            emitVisitorAuthTelemetry(
+              "login",
+              "failure",
+              normalizedEmail,
+              "invalid_credentials",
+            )
+            return {
+              data: null,
+              error: "Invalid email or PIN. Please try again.",
+            }
           }
+          emitVisitorAuthTelemetry(
+            "login",
+            "failure",
+            normalizedEmail,
+            error.message,
+          )
           return { data: null, error: formatAuthError(error) }
         }
 
@@ -225,27 +292,46 @@ function Supabase() {
           return { data: null, error: "Unable to authenticate" }
         }
 
-        const { data: visitorStatus, error: statusError } = await this.getCurrentVisitorStatus()
+        const { data: visitorStatus, error: statusError } =
+          await this.getCurrentVisitorStatus()
         if (statusError) {
           await client.auth.signOut()
+          emitVisitorAuthTelemetry(
+            "login",
+            "failure",
+            normalizedEmail,
+            "status_lookup_failed",
+          )
           return { data: null, error: statusError }
         }
 
         if (visitorStatus === "locked") {
           await client.auth.signOut()
+          emitVisitorAuthTelemetry(
+            "login",
+            "failure",
+            normalizedEmail,
+            "locked",
+          )
           return { data: null, error: VISITOR_LOCKED_MESSAGE }
         }
 
-        const { error: resetError } = await this.resetCurrentVisitorFailedLoginAttempts()
+        const { error: resetError } =
+          await this.resetCurrentVisitorFailedLoginAttempts()
         if (resetError) {
-          console.error("Failed to reset visitor failed login attempts:", resetError)
+          console.error(
+            "Failed to reset visitor failed login attempts:",
+            resetError,
+          )
         }
 
         setSessionStartedAtMs(Date.now())
+        emitVisitorAuthTelemetry("login", "success", normalizedEmail)
 
         return { data: signedInUser, error: null }
       } catch (err) {
         console.error("Visitor login error:", err)
+        emitVisitorAuthTelemetry("login", "failure", email, "exception")
         return {
           data: null,
           error: "An unexpected error occurred during login",
@@ -260,45 +346,89 @@ function Supabase() {
     ): Promise<AuthResult<User>> {
       try {
         const client = getClient()
+        if (isServer) {
+          return {
+            data: null,
+            error: "Visitor sign-up must run in the browser.",
+          }
+        }
+
         const normalizedEmail = email?.trim().toLowerCase()
         const normalizedDisplayName = displayName?.trim()
 
         if (!normalizedEmail || !pin?.trim() || !normalizedDisplayName) {
-          return { data: null, error: "Email, PIN, and display name are required" }
-        }
-
-        const { data, error } = await client.auth.signUp({
-          email: normalizedEmail,
-          password: pin,
-          options: {
-            data: {
-              display_name: normalizedDisplayName,
-            },
-          },
-        })
-
-        if (error) {
-          return { data: null, error: formatAuthError(error) }
-        }
-
-        const signedUpUser = data?.user
-        if (!signedUpUser) {
-          return { data: null, error: "Unable to create visitor account" }
-        }
-
-        if (!data?.session) {
+          emitVisitorAuthTelemetry(
+            "signup",
+            "failure",
+            normalizedEmail || email,
+            "validation",
+          )
           return {
             data: null,
-            error:
-              "Sign-up succeeded but no active session was created. Verify email confirmations are disabled for visitor auth.",
+            error: "Email, PIN, and display name are required",
           }
         }
 
-        setSessionStartedAtMs(Date.now())
+        const signupResponse = await fetch("/api/auth/visitor/signup", {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+          },
+          body: JSON.stringify({
+            email: normalizedEmail,
+            pin,
+            displayName: normalizedDisplayName,
+          }),
+        })
 
-        return { data: signedUpUser, error: null }
+        const signupResult = await signupResponse
+          .json()
+          .catch(() => ({
+            success: false,
+            error: "Unable to create visitor account.",
+          }))
+
+        if (!signupResponse.ok || signupResult?.success !== true) {
+          emitVisitorAuthTelemetry(
+            "signup",
+            "failure",
+            normalizedEmail,
+            signupResult?.error || "signup_endpoint_failed",
+          )
+          return {
+            data: null,
+            error: signupResult?.error || "Unable to create visitor account.",
+          }
+        }
+
+        const { data: signInData, error: signInError } =
+          await client.auth.signInWithPassword({
+            email: normalizedEmail,
+            password: pin,
+          })
+
+        if (signInError) {
+          emitVisitorAuthTelemetry(
+            "signup",
+            "failure",
+            normalizedEmail,
+            signInError.message,
+          )
+          return { data: null, error: formatAuthError(signInError) }
+        }
+
+        const signedInUser = signInData?.user
+        if (!signedInUser) {
+          return { data: null, error: "Unable to create visitor account" }
+        }
+
+        setSessionStartedAtMs(Date.now())
+        emitVisitorAuthTelemetry("signup", "success", normalizedEmail)
+
+        return { data: signedInUser, error: null }
       } catch (err) {
         console.error("Visitor sign-up error:", err)
+        emitVisitorAuthTelemetry("signup", "failure", email, "exception")
         return {
           data: null,
           error: "An unexpected error occurred during sign-up",
@@ -339,10 +469,13 @@ function Supabase() {
 
       try {
         const client = getClient()
-        const { data, error } = await client.rpc("record_failed_visitor_login_attempt", {
-          target_email: normalizedEmail,
-          max_attempts: maxAttempts,
-        })
+        const { data, error } = await client.rpc(
+          "record_failed_visitor_login_attempt",
+          {
+            target_email: normalizedEmail,
+            max_attempts: maxAttempts,
+          },
+        )
 
         if (error) {
           console.error("Failed to record visitor login attempt:", error)
@@ -353,7 +486,9 @@ function Supabase() {
           found: data?.found === true,
           locked: data?.locked === true,
           failed_attempts:
-            typeof data?.failed_attempts === "number" ? data.failed_attempts : 0,
+            typeof data?.failed_attempts === "number"
+              ? data.failed_attempts
+              : 0,
         }
       } catch (err) {
         console.error("recordFailedVisitorLoginAttempt error:", err)
@@ -364,7 +499,9 @@ function Supabase() {
     async resetCurrentVisitorFailedLoginAttempts(): Promise<AuthResult<void>> {
       try {
         const client = getClient()
-        const { error } = await client.rpc("reset_current_visitor_failed_login_attempts")
+        const { error } = await client.rpc(
+          "reset_current_visitor_failed_login_attempts",
+        )
         if (error) {
           return { data: null, error: error.message }
         }

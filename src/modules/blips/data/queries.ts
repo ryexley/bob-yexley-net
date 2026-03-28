@@ -306,7 +306,7 @@ export const getBlips = query(async (limit: number = 20, offset: number = 0) => 
     "getBlips",
     { limit, offset },
     async () => {
-      const { getServerClient } = await import("@/lib/vendor/supabase-server")
+      const { getServerClient } = await import("@/lib/vendor/supabase/server")
       const supabase = await getServerClient()
 
       const { data, error } = await supabase
@@ -342,7 +342,7 @@ export const getBlipsByTag = query(async (
     "getBlipsByTag",
     { tag, limit, offset },
     async () => {
-      const { getServerClient } = await import("@/lib/vendor/supabase-server")
+      const { getServerClient } = await import("@/lib/vendor/supabase/server")
       const supabase = await getServerClient()
 
       const { data: directData, error: directError } = await supabase
@@ -424,7 +424,7 @@ export const getBlip = query(async (id: string) => {
     "getBlip",
     { id },
     async () => {
-      const { getServerClient } = await import("@/lib/vendor/supabase-server")
+      const { getServerClient } = await import("@/lib/vendor/supabase/server")
       const supabase = await getServerClient()
 
       const { data, error } = await supabase
@@ -460,7 +460,7 @@ export const getBlipGraph = query(async (id: string): Promise<BlipGraph | null> 
     "getBlipGraph",
     { id },
     async () => {
-      const { getServerClient } = await import("@/lib/vendor/supabase-server")
+      const { getServerClient } = await import("@/lib/vendor/supabase/server")
       const supabase = await getServerClient()
 
       const { data, error } = await supabase

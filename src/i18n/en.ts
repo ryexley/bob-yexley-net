@@ -86,7 +86,7 @@ export const en = {
           },
           name: {
             label: "Name",
-            placeholder: "How should others see your name?",
+            placeholder: "What's your name?",
           },
         },
         actions: {

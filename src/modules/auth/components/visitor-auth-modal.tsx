@@ -5,6 +5,7 @@ import {
   type ParentProps,
 } from "solid-js"
 import { Button } from "@/components/button"
+import { Callout } from "@/components/callout"
 import {
   Dialog,
   DialogBody,
@@ -13,7 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/dialog"
-import { Icon } from "@/components/icon"
+import { Icon, LoadingSpinner } from "@/components/icon"
 import { Input } from "@/components/input"
 import { Pin } from "@/modules/auth/components/pin"
 import { ptr } from "@/i18n"
@@ -64,6 +65,7 @@ const tr = ptr("auth.components.visitorAuthModal")
 
 export function VisitorAuthModal(props: VisitorAuthModalProps) {
   let nameInputRef: HTMLInputElement | undefined
+  let submitButtonRef: HTMLButtonElement | undefined
   const [email, setEmail] = createSignal("")
   const [pin, setPin] = createSignal("")
   const [displayName, setDisplayName] = createSignal("")
@@ -83,12 +85,20 @@ export function VisitorAuthModal(props: VisitorAuthModalProps) {
     isSignupMode() ? tr("signup.subtitle") : tr("login.subtitle"),
   )
   const submitLabel = createMemo(() => {
-    if (submitting()) {
-      return isSignupMode()
-        ? tr("actions.signUp.submitting")
-        : tr("actions.login.submitting")
-    }
     return isSignupMode() ? tr("actions.signUp.default") : tr("actions.login.default")
+  })
+  const submitButtonContent = createMemo(() => {
+    if (!submitting()) {
+      return submitLabel()
+    }
+
+    return (
+      <LoadingSpinner
+        size="1rem"
+        color="currentColor"
+        class="visitor-auth-submit-spinner"
+      />
+    )
   })
 
   const resetForm = () => {
@@ -205,6 +215,13 @@ export function VisitorAuthModal(props: VisitorAuthModalProps) {
                   data-mode={mode()}
                   onSubmit={handleSubmit}
                   novalidate>
+                  <Show when={isNotEmpty(error())}>
+                    <Callout
+                      variant="error"
+                      content={error()}
+                      class="visitor-auth-error"
+                    />
+                  </Show>
                   <Input
                     label={tr("fields.email.label")}
                     type="email"
@@ -219,12 +236,14 @@ export function VisitorAuthModal(props: VisitorAuthModalProps) {
                     value={pin()}
                     onChange={setPin}
                     onComplete={() => {
-                      if (!isSignupMode()) {
-                        return
-                      }
                       queueMicrotask(() => {
-                        nameInputRef?.focus()
-                        nameInputRef?.select()
+                        if (isSignupMode()) {
+                          nameInputRef?.focus()
+                          nameInputRef?.select()
+                          return
+                        }
+
+                        submitButtonRef?.focus()
                       })
                     }}
                     class="visitor-auth-pin-field"
@@ -253,9 +272,6 @@ export function VisitorAuthModal(props: VisitorAuthModalProps) {
                     />
                     </div>
                   </div>
-                  <Show when={isNotEmpty(error())}>
-                    <p class="visitor-auth-error">{error()}</p>
-                  </Show>
                   <DialogFooter class="visitor-auth-actions">
                     <Button
                       type="button"
@@ -267,8 +283,11 @@ export function VisitorAuthModal(props: VisitorAuthModalProps) {
                     <Button
                       type="submit"
                       variant="primary"
-                      label={submitLabel()}
+                      label={submitButtonContent()}
                       disabled={disableSubmitButton()}
+                      ref={element => {
+                        submitButtonRef = element
+                      }}
                       class="visitor-auth-submit"
                     />
                   </DialogFooter>

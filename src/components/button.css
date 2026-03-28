@@ -10,8 +10,10 @@
   transition-duration: 250ms;
   text-shadow: 0 0 0.1875rem rgba(0, 0, 0, 0.85);
 
+  &:focus,
   &:focus-visible {
-    outline: none;
+    outline: 0.0625rem solid var(--colors-cool-blue);
+    outline-offset: 0.0625rem;
   }
 
   &:disabled {

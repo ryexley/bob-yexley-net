@@ -1,3 +1,13 @@
+/**
+ * Server request-scoped Supabase client.
+ *
+ * Trust boundary:
+ * - Server-only usage.
+ * - Uses anon credentials but binds auth/session via request cookies.
+ *
+ * Usage:
+ * - Use in server queries/loaders/actions that must run as the current user.
+ */
 import { createServerClient } from "@supabase/ssr"
 import type { SupabaseClient } from "@supabase/supabase-js"
 import { getEvent, parseCookies, setCookie } from "vinxi/http"

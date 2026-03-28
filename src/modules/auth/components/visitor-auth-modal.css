@@ -260,9 +260,7 @@
   }
 
   .visitor-auth-error {
-    color: var(--colors-scarlett);
-    font-size: 0.75rem;
-    margin: 0;
+    margin-bottom: 0.5rem;
   }
 
   .visitor-auth-actions {
@@ -274,8 +272,15 @@
   }
 
   .visitor-auth-submit {
+    align-items: center;
+    display: inline-flex;
+    justify-content: center;
     margin-left: auto;
     min-width: 7rem;
+  }
+
+  .visitor-auth-submit-spinner {
+    display: block;
   }
 
   .visitor-auth-cancel {
