@@ -1,4 +1,14 @@
-import { createEffect, createMemo, createSignal, For, onCleanup, Show } from "solid-js"
+import {
+  JSX,
+  createEffect,
+  createMemo,
+  createSignal,
+  For,
+  onCleanup,
+  onMount,
+  Show,
+} from "solid-js"
+import { useNavigate } from "@solidjs/router"
 import { BlipEditor } from "~/modules/blips/components/blip-editor"
 import { Drawer } from "@/components/drawer"
 import { useAuth } from "@/context/auth-context"
@@ -7,6 +17,7 @@ import { Blip as BlipIcon, Icon } from "@/components/icon"
 import { Menu } from "@/components/menu"
 import { Stack } from "@/components/stack"
 import { ptr } from "@/i18n"
+import { pages } from "@/urls"
 import { withWindow } from "@/util/browser"
 import { generateRandomRadialGradients } from "@/util/image"
 import { isNotEmpty } from "@/util"
@@ -15,19 +26,33 @@ import "./user-menu.css"
 
 const tr = ptr("home.components.userMenu")
 const MOBILE_MENU_MAX_WIDTH = 768
+type UserMenuItem = {
+  icon?: string
+  iconNode?: JSX.Element
+  label: string
+  onClick: () => void | Promise<void>
+}
 
 export function UserMenu() {
-  const { isAdmin, isAuthenticated, user, visitor, logout } = useAuth() as any
+  const navigate = useNavigate()
+  const { isAdmin, isAuthenticated, isSuperuser, user, visitor, logout } = useAuth() as any
   const viewport = useViewport()
   const [showNewBlipDrawer, setShowNewBlipDrawer] = createSignal(false)
   const [showProfileDrawer, setShowProfileDrawer] = createSignal(false)
   const [showMobileMenuDrawer, setShowMobileMenuDrawer] = createSignal(false)
+  const [hasMounted, setHasMounted] = createSignal(false)
   const [mobileMenuContentElement, setMobileMenuContentElement] =
     createSignal<HTMLElement | null>(null)
-  const useDrawerMenu = createMemo(() => viewport.width() <= MOBILE_MENU_MAX_WIDTH)
+  const useDrawerMenu = createMemo(
+    () => hasMounted() && viewport.width() <= MOBILE_MENU_MAX_WIDTH,
+  )
   const mobileMenuBackground = createMemo(() => ({
     "background-image": generateRandomRadialGradients(),
   }))
+
+  onMount(() => {
+    setHasMounted(true)
+  })
 
   createEffect(() => {
     if (!showMobileMenuDrawer()) {
@@ -82,7 +107,12 @@ export function UserMenu() {
     await logout()
   }
 
-  const MenuHeader = createMemo(() => {
+  const openAdminHome = () => {
+    closeMobileMenu()
+    navigate(pages.admin)
+  }
+
+  const renderMenuHeader = () => {
     return isNotEmpty(user()) ? (
       <Stack
         gap="0"
@@ -93,16 +123,37 @@ export function UserMenu() {
         <div class="email">{user().email}</div>
       </Stack>
     ) : null
-  })
+  }
+  const renderUserMenuTrigger = () => (
+    <span class="user-menu-trigger-content">
+      <Icon name="account_circle" />
+      <span
+        class="user-menu-admin-badge"
+        classList={{
+          "is-hidden": !isSuperuser(),
+        }}
+        aria-hidden="true">
+        <Icon name="shield_person" />
+      </span>
+    </span>
+  )
 
   const menuItems = createMemo(() => {
-    const items = [
+    const items: UserMenuItem[] = [
       {
         icon: "account_circle",
         label: tr("profile"),
         onClick: openProfileDrawer,
       },
     ]
+
+    if (isSuperuser()) {
+      items.push({
+        icon: "shield_person",
+        label: tr("admin"),
+        onClick: openAdminHome,
+      })
+    }
 
     if (isAdmin()) {
       items.push({
@@ -130,18 +181,18 @@ export function UserMenu() {
   })
 
   return (
-    <Show when={isAuthenticated()}>
+    <Show when={hasMounted() && isAuthenticated()}>
       <>
         <Show
           when={useDrawerMenu()}
           fallback={
             <Menu
-              triggerIcon="account_circle"
+              Trigger={renderUserMenuTrigger()}
               triggerButtonSize="sm"
               triggerClass="user-menu"
               dropdownMenuProps={{ modal: false }}
               items={menuItems()}
-              Header={MenuHeader}
+              Header={renderMenuHeader()}
             />
           }>
           <button
@@ -149,7 +200,7 @@ export function UserMenu() {
             class="user-menu"
             aria-label="User menu"
             onClick={() => setShowMobileMenuDrawer(true)}>
-            <Icon name="account_circle" />
+            {renderUserMenuTrigger()}
           </button>
           <Drawer
             side="bottom"
@@ -167,7 +218,7 @@ export function UserMenu() {
               style={mobileMenuBackground()}
               gap="0.75rem">
               <div class="handle" />
-              <div class="user-menu-drawer-summary">{MenuHeader()}</div>
+              <div class="user-menu-drawer-summary">{renderMenuHeader()}</div>
               <Stack
                 class="user-menu-drawer-items"
                 gap="0.5rem">

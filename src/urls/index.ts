@@ -5,7 +5,10 @@ export const pages = {
   blip: (id: string) => `/blips/${id}`,
   blipsTag: (tag: string) => `/blips/tag/${tag}`,
   resume: "/resume/",
+  admin: "/a",
   login: "/a/li",
+  users: "/a/users",
+  visitors: "/a/visitors",
   logout: "/a/lo",
 }
 

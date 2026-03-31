@@ -1,0 +1,91 @@
+.user-status-segmented-control {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  width: 100%;
+}
+
+.user-status-segmented-control-label {
+  color: var(--colors-mono-10);
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.25rem;
+}
+
+.user-status-segmented-control-track {
+  background: var(--colors-mono-02);
+  border: 0.0625rem solid var(--colors-mono-04);
+  border-radius: var(--radius-lg);
+  display: flex;
+  gap: 0;
+  overflow: hidden;
+  padding: 0;
+  width: 100%;
+}
+
+.user-status-segmented-control-item {
+  flex: 1 1 0;
+  min-width: 0;
+  position: relative;
+}
+
+.user-status-segmented-control-item + .user-status-segmented-control-item {
+  border-left: 0.0625rem solid var(--colors-mono-04);
+}
+
+.user-status-segmented-control-item-label {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  color: var(--colors-mono-09);
+  cursor: pointer;
+  display: flex;
+  font-size: 0.875rem;
+  font-weight: 600;
+  justify-content: center;
+  min-height: 2.25rem;
+  padding: 0.4375rem 0.75rem;
+  text-align: center;
+  transition: var(--transitions-primary);
+  user-select: none;
+  width: 100%;
+}
+
+.user-status-segmented-control-item:first-child
+  .user-status-segmented-control-item-label {
+  border-bottom-left-radius: calc(var(--radius-lg) - 0.0625rem);
+  border-top-left-radius: calc(var(--radius-lg) - 0.0625rem);
+}
+
+.user-status-segmented-control-item:last-child
+  .user-status-segmented-control-item-label {
+  border-bottom-right-radius: calc(var(--radius-lg) - 0.0625rem);
+  border-top-right-radius: calc(var(--radius-lg) - 0.0625rem);
+}
+
+.user-status-segmented-control-item:hover .user-status-segmented-control-item-label {
+  color: var(--colors-mono-11);
+}
+
+.user-status-segmented-control-item[data-checked]
+  .user-status-segmented-control-item-label {
+  background: var(--colors-cool-blue);
+  color: var(--colors-mono-11);
+}
+
+.user-status-segmented-control-item[data-checked] + .user-status-segmented-control-item {
+  border-left-color: rgb(from var(--colors-cool-blue) r g b / 0.35);
+}
+
+.user-status-segmented-control[data-disabled]
+  .user-status-segmented-control-item-label {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+@media (max-width: 36rem) {
+  .user-status-segmented-control-track {
+    min-width: 0;
+  }
+}
