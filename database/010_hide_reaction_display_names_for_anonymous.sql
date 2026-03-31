@@ -1,9 +1,8 @@
 -- ============================================================================
--- FILE: 007_update_reactions_in_view_blips.sql
+-- FILE: 010_hide_reaction_display_names_for_anonymous.sql
 -- PURPOSE:
---   Include reaction aggregates for nested update blips returned from
---   public.view_blips so update reactions survive refreshes and sync across
---   devices just like root blip reactions do.
+--   Prevent anonymous clients from receiving reactor display names in
+--   public.view_blips while preserving them for authenticated viewers.
 -- ============================================================================
 
 create or replace view public.view_blips as

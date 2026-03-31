@@ -4,7 +4,7 @@
   align-items: center;
   background: rgba(var(--colors-mono-01-rgb), 0.75);
   border: 0.0625rem solid var(--colors-mono-01);
-  border-radius: 50%;
+  border-radius: var(--radius-round);
   bottom: var(--corner-offset);
   display: flex;
   height: var(--size);
@@ -12,11 +12,14 @@
   position: fixed;
   right: var(--corner-offset);
   width: var(--size);
+}
 
-  .icon {
-    color: var(--colors-info);
-    font-size: 1.5rem;
-  }
+.user-menu-trigger-content {
+  align-items: center;
+  display: inline-flex;
+  height: 100%;
+  justify-content: center;
+  pointer-events: none;
 }
 
 .user-menu-header {
@@ -75,7 +78,7 @@
   .handle {
     align-self: center;
     background: rgba(var(--colors-mono-04-rgb), 0.85);
-    border-radius: 9999px;
+    border-radius: var(--radius-pill);
     display: block;
     height: 0.25rem;
     width: 7rem;
@@ -104,7 +107,7 @@
   backdrop-filter: blur(0.35rem);
   background: rgba(var(--colors-mono-02-rgb), 0.68);
   border: 1px solid rgba(var(--colors-mono-03-rgb), 0.9);
-  border-radius: 0.5rem;
+  border-radius: var(--radius-md);
   color: var(--colors-text-primary);
   cursor: pointer;
   display: flex;

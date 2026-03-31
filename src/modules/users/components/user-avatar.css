@@ -1,0 +1,93 @@
+.user-avatar {
+  align-items: center;
+  color: var(--user-avatar-color, var(--colors-info));
+  display: inline-flex;
+  flex: 0 0 auto;
+  justify-content: center;
+  position: relative;
+
+  .icon {
+    color: inherit;
+    display: block;
+  }
+}
+
+.user-avatar.surface {
+  background: var(--user-avatar-bg, var(--colors-mono-02));
+  border: 0.0625rem solid var(--user-avatar-border, var(--colors-mono-04));
+  border-radius: var(--radius-round);
+}
+
+.user-avatar.bare {
+  background: transparent;
+  border: none;
+}
+
+.user-avatar.sm {
+  height: 1.5rem;
+  width: 1.5rem;
+
+  > .icon {
+    font-size: 1.5rem;
+  }
+
+  .user-avatar-badge {
+    bottom: -0.0625rem;
+    height: 0.75rem;
+    right: -0.125rem;
+    width: 0.75rem;
+
+    .icon {
+      font-size: 0.6875rem;
+    }
+  }
+}
+
+.user-avatar.md {
+  height: 3rem;
+  width: 3rem;
+
+  > .icon {
+    font-size: 2rem;
+  }
+
+  .user-avatar-badge {
+    bottom: -0.125rem;
+    height: 1rem;
+    right: -0.125rem;
+    width: 1rem;
+
+    .icon {
+      font-size: 0.875rem;
+    }
+  }
+}
+
+.user-avatar.lg {
+  height: 3.5rem;
+  width: 3.5rem;
+
+  > .icon {
+    font-size: 2.25rem;
+  }
+
+  .user-avatar-badge {
+    bottom: -0.125rem;
+    height: 1.125rem;
+    right: -0.125rem;
+    width: 1.125rem;
+
+    .icon {
+      font-size: 1rem;
+    }
+  }
+}
+
+.user-avatar-badge {
+  align-items: center;
+  background: var(--user-avatar-badge-bg, var(--colors-mono-01));
+  border-radius: var(--radius-round);
+  display: inline-flex;
+  justify-content: center;
+  position: absolute;
+}

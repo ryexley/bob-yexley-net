@@ -54,42 +54,6 @@
   gap: 0.875rem;
 }
 
-.profile-drawer-avatar {
-  align-items: center;
-  background: var(--colors-mono-02);
-  border: 0.0625rem solid var(--colors-mono-04);
-  border-radius: 50%;
-  display: inline-flex;
-  flex: 0 0 auto;
-  height: 3.5rem;
-  justify-content: center;
-  position: relative;
-  width: 3.5rem;
-
-  .icon {
-    color: var(--colors-info);
-    font-size: 2.25rem;
-  }
-}
-
-.profile-drawer-avatar-badge {
-  align-items: center;
-  background: var(--colors-mono-01);
-  border-radius: 50%;
-  bottom: -0.125rem;
-  color: var(--colors-info);
-  display: inline-flex;
-  height: 1.125rem;
-  justify-content: center;
-  position: absolute;
-  right: -0.125rem;
-  width: 1.125rem;
-
-  .icon {
-    font-size: 1rem;
-  }
-}
-
 .profile-drawer-summary-copy {
   display: flex;
   flex: 1;

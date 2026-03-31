@@ -19,10 +19,18 @@
   line-height: 1;
   min-height: 1.45rem;
   padding: 0.1rem 0.38rem;
+  touch-action: manipulation;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
 
   &.reacted {
     background: rgba(var(--colors-info-rgb), 0.25);
-    border-color: color-mix(in srgb, var(--colors-info) 60%, var(--colors-mono-05) 40%);
+    border-color: color-mix(
+      in srgb,
+      var(--colors-info) 60%,
+      var(--colors-mono-05) 40%
+    );
     box-shadow: 0 0 0 0.0625rem rgba(var(--colors-info-rgb), 0.18);
     color: var(--colors-mono-10);
   }
@@ -42,7 +50,11 @@
   transition: var(--transitions-primary);
 
   &:hover:not(:disabled) {
-    border-color: color-mix(in srgb, var(--colors-info) 75%, var(--colors-mono-05) 25%);
+    border-color: color-mix(
+      in srgb,
+      var(--colors-info) 75%,
+      var(--colors-mono-05) 25%
+    );
     transform: translateY(-0.03125rem);
   }
 
@@ -54,4 +66,55 @@
 
 .tooltip-content.blip-reaction-summary-tooltip {
   max-width: 18rem;
+  padding: 0.75rem;
+
+  .blip-reaction-summary-tooltip-body {
+    text-align: center;
+  }
+
+  .blip-reaction-summary-tooltip-emoji {
+    font-size: 1rem;
+    line-height: 1;
+    margin-bottom: 0.3rem;
+    text-align: center;
+  }
+
+  .blip-reaction-summary-tooltip-names {
+    text-align: center;
+  }
+}
+
+.blip-reaction-summary-popover {
+  background: rgba(var(--colors-mono-01-rgb), 0.95);
+  border: 1px solid var(--colors-mono-04);
+  border-radius: var(--radius-md);
+  box-shadow:
+    0 0.25rem 0.5rem rgb(0 0 0 / 0.24),
+    0 0.125rem 0.25rem rgb(0 0 0 / 0.12);
+  max-width: min(18rem, calc(100vw - 2rem));
+  min-width: 7.5rem;
+  padding: 0.75rem;
+
+  &:focus,
+  &:focus-visible {
+    box-shadow:
+      0 0.25rem 0.5rem rgb(0 0 0 / 0.24),
+      0 0.125rem 0.25rem rgb(0 0 0 / 0.12);
+    outline: none;
+  }
+
+  .blip-reaction-summary-popover-emoji {
+    font-size: 1.125rem;
+    line-height: 1;
+    margin: 0.5rem;
+    text-align: center;
+  }
+
+  .blip-reaction-summary-popover-names {
+    color: var(--colors-mono-11);
+    font-size: 0.75rem;
+    line-height: 1.15rem;
+    text-align: center;
+    text-wrap: pretty;
+  }
 }

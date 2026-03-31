@@ -13,26 +13,19 @@
   border-radius: 0.4rem;
   box-shadow:
     0 0.25rem 0.5rem color-mix(in srgb, var(--colors-mono-00) 24%, transparent),
-    0 0.125rem 0.25rem color-mix(
-      in srgb,
-      var(--colors-mono-00) 12%,
-      transparent
-    );
+    0 0.125rem 0.25rem
+      color-mix(in srgb, var(--colors-mono-00) 12%, transparent);
   color: var(--colors-mono-11);
   font-size: 0.75rem;
   line-height: 1.2;
   max-width: 14rem;
-  padding: 0.45rem 0.6rem;
+  padding: 0.5rem 0.75rem;
   transform-origin: var(--kb-tooltip-content-transform-origin);
   z-index: 40;
 }
 
 .tooltip-arrow {
-  fill: color-mix(
-    in srgb,
-    var(--colors-mono-02) 92%,
-    var(--colors-mono-01) 8%
-  );
+  fill: color-mix(in srgb, var(--colors-mono-02) 92%, var(--colors-mono-01) 8%);
 }
 
 @keyframes tooltip-content-show {

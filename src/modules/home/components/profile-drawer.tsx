@@ -7,6 +7,7 @@ import { useNotify } from "@/components/notification"
 import { useAuth } from "@/context/auth-context"
 import { useSupabase } from "@/context/services-context"
 import { useViewport } from "@/context/viewport"
+import { UserAvatar } from "@/modules/users/components/user-avatar"
 import { ptr } from "@/i18n"
 import { withWindow } from "@/util/browser"
 import { formatLongDate } from "@/util/formatters"
@@ -75,10 +76,6 @@ export function ProfileDrawer(props: ProfileDrawerProps) {
     }
 
     return tr(`status.${roleStatusKey[role]}`)
-  })
-  const showPrivilegedBadge = createMemo(() => {
-    const role = auth.role()
-    return role === "admin" || role === "superuser"
   })
   const drawerSide = createMemo(() =>
     viewport.width() <= 640 ? DrawerPosition.BOTTOM : DrawerPosition.RIGHT,
@@ -247,14 +244,14 @@ export function ProfileDrawer(props: ProfileDrawerProps) {
         </button>
         <div class="profile-drawer-shell">
           <div class="profile-drawer-summary">
-            <div class="profile-drawer-avatar" aria-hidden="true">
-              <Icon name="account_circle" />
-              <Show when={showPrivilegedBadge()}>
-                <span class="profile-drawer-avatar-badge" aria-hidden="true">
-                  <Icon name="shield_person" />
-                </span>
-              </Show>
-            </div>
+            <UserAvatar
+              class="profile-drawer-avatar"
+              role={auth.role()}
+              badgeMode="privileged"
+              size="lg"
+              variant="surface"
+              aria-hidden={true}
+            />
             <div class="profile-drawer-summary-copy">
               <div class="profile-drawer-summary-name">{displayName()}</div>
               <div class="profile-drawer-summary-email">

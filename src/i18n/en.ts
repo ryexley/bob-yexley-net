@@ -47,6 +47,7 @@ export const en = {
       },
       userMenu: {
         header: { label: "Signed in as" },
+        admin: "Admin",
         blip: "Blip",
         profile: "Profile",
         logout: "Sign Out",
@@ -192,6 +193,104 @@ export const en = {
         },
         returnHomeLink: "Get me outta here",
         loginFailedError: "Login failed.",
+      },
+    },
+  },
+  users: {
+    shared: {
+      statuses: {
+        all: "All",
+        pending: "Pending",
+        active: "Active",
+        locked: "Locked",
+      },
+      roles: {
+        visitor: "Visitor",
+        admin: "Admin",
+        superuser: "Superuser",
+      },
+    },
+    components: {
+      userEditDrawer: {
+        title: "Edit User",
+        actions: {
+          close: "Close",
+          cancel: "Cancel",
+          save: "Save",
+          saving: "Saving...",
+        },
+        fields: {
+          email: "Email",
+          joinedAt: "Joined at",
+          role: "Role",
+          status: {
+            label: "Status",
+          },
+          pin: {
+            label: "Reset PIN",
+          },
+          notes: {
+            label: "Notes",
+            placeholder: "Private notes about this user...",
+            hint: "These notes are only visible to superusers.",
+          },
+        },
+        values: {
+          unavailable: "Unavailable",
+        },
+        notifications: {
+          saveSuccess: "User updated.",
+          saveSuccessWithPinReset: "User updated and PIN reset.",
+          saveError: "Unable to update this user right now.",
+        },
+      },
+    },
+    views: {
+      index: {
+        pageTitle: "Users",
+        metaDescription: "Admin user management",
+        kicker: "Superuser",
+        title: "Users",
+        subtitle:
+          "Review visitor accounts, search and filter the list, and update account status, notes, or PINs.",
+        loading: "Loading users...",
+        summary: "Showing {visible} of {total} users",
+        actions: {
+          backToAdmin: "admin",
+          showFilters: "Show filters",
+          hideFilters: "Hide filters",
+          clearFilters: "Clear filters",
+        },
+        sort: {
+          fieldLabel: "Sort by",
+          fields: {
+            createdAt: "Created date",
+            displayName: "Name",
+          },
+          direction: {
+            asc: "Ascending",
+            desc: "Descending",
+          },
+        },
+        filters: {
+          search: {
+            label: "Search",
+            placeholder: "Search by name or email",
+          },
+          status: {
+            label: "Status",
+          },
+        },
+        fields: {
+          joinedAt: "Joined",
+        },
+        values: {
+          unavailable: "Unavailable",
+        },
+        empty: {
+          noUsers: "No users yet.",
+          noMatches: "No users match the current filters.",
+        },
       },
     },
   },
@@ -364,6 +463,29 @@ export const en = {
   admin: {
     layout: {
       subtitle: "admin",
+    },
+    views: {
+      index: {
+        pageTitle: "Admin",
+        metaDescription: "Admin home",
+        kicker: "Superuser",
+        title: "Admin",
+        subtitle: "Manage privileged site areas from one place.",
+        loading: "Loading admin modules...",
+        cards: {
+          users: {
+            title: "Users",
+            description:
+              "Review visitor accounts, update statuses, reset PINs, and keep private notes.",
+            total: "{count} total",
+            statuses: {
+              pending: "{count} pending",
+              active: "{count} active",
+              locked: "{count} locked",
+            },
+          },
+        },
+      },
     },
     pages: {},
     modules: {

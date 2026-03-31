@@ -41,6 +41,17 @@ export function PopoverTrigger(props: PopoverTriggerProps) {
   )
 }
 
+type PopoverAnchorProps = ParentProps<ComponentProps<typeof PopoverPrimitive.Anchor>>
+export function PopoverAnchor(props: PopoverAnchorProps) {
+  return (
+    <PopoverPrimitive.Anchor
+      {...props}
+      class={cx("popover-anchor", props.class)}>
+      {props.children}
+    </PopoverPrimitive.Anchor>
+  )
+}
+
 type PopoverContentProps = ParentProps<
   ComponentProps<typeof PopoverPrimitive.Content> & {
     arrow?: boolean
