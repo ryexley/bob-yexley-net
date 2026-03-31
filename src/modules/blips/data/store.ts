@@ -22,6 +22,27 @@ export const blipId = () =>
 
 const _blipStore = supaStore<Blip>("blips", blipId)
 type Unsubscribe = () => void
+type RealtimeChannelLike = {
+  unsubscribe?: () => Promise<unknown> | unknown
+}
+const activeScopedChannels = new Map<string, RealtimeChannelLike>()
+
+const removeRealtimeChannelSafely = async (
+  supabaseClient: SupabaseClient,
+  channel: RealtimeChannelLike | null | undefined,
+) => {
+  if (!channel) {
+    return
+  }
+
+  try {
+    await channel.unsubscribe?.()
+  } catch {}
+
+  try {
+    await supabaseClient.removeChannel(channel as any)
+  } catch {}
+}
 
 export type BlipUpdateWatchHandlers = {
   onInsert?: (blip: Blip) => void
@@ -43,11 +64,38 @@ export function blipStore(
 ) {
   const store = _blipStore(supabaseClient, options)
   const toUniqueBlipIds = (blipIds: string[]) => [...new Set(blipIds.filter(Boolean))]
-  const sortByCreatedAtDesc = (items: Blip[]) =>
-    [...items].sort(
-      (a, b) =>
-        new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
-    )
+  const entitiesById = createMemo(() => {
+    const byId = new Map<string, Blip>()
+    for (const entity of store.entities()) {
+      byId.set(entity.id, entity)
+    }
+    return byId
+  })
+  const updatesByParentMap = createMemo(() => {
+    const byParent = new Map<string, Blip[]>()
+
+    for (const blip of store.entities()) {
+      if (blip.blip_type !== BLIP_TYPES.UPDATE || !blip.parent_id) {
+        continue
+      }
+
+      const existing = byParent.get(blip.parent_id)
+      if (existing) {
+        existing.push(blip)
+      } else {
+        byParent.set(blip.parent_id, [blip])
+      }
+    }
+
+    for (const updates of byParent.values()) {
+      updates.sort(
+        (a, b) =>
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+      )
+    }
+
+    return byParent
+  })
 
   const drafts = createMemo(() => {
     return store
@@ -64,14 +112,15 @@ export function blipStore(
       return []
     }
 
-    return sortByCreatedAtDesc(
-      store
-        .entities()
-        .filter(
-          blip =>
-            blip.blip_type === BLIP_TYPES.UPDATE && blip.parent_id === parentId,
-        ),
-    )
+    return updatesByParentMap().get(parentId) ?? []
+  }
+
+  const getById = (blipId?: string | null) => {
+    if (!blipId) {
+      return null
+    }
+
+    return entitiesById().get(blipId) ?? null
   }
 
   const mergeIntoCache = (blips: Blip[]) => {
@@ -134,6 +183,7 @@ export function blipStore(
     if (targetIds.length === 0) {
       return
     }
+    const targetIdSet = new Set(targetIds)
 
     const ownEmojisByBlipId = new Map<string, Set<string>>()
     if (nextViewer?.id) {
@@ -165,28 +215,47 @@ export function blipStore(
       }
     }
 
+    let didChange = false
     const nextEntities = store.entities().map(blip => {
-      if (!targetIds.includes(blip.id)) {
+      if (!targetIdSet.has(blip.id)) {
         return blip
       }
 
+      const ownEmojis = ownEmojisByBlipId.get(blip.id) ?? new Set<string>()
       const reactionsWithNextViewer = reconcileViewerReactionState({
         reactions: blip.reactions ?? [],
         previousViewer,
         nextViewer,
-        ownEmojis: ownEmojisByBlipId.get(blip.id) ?? new Set<string>(),
+        ownEmojis,
       })
+      const nextReactionsCount = reactionsWithNextViewer.reduce(
+        (total, reaction) => total + reaction.count,
+        0,
+      )
+      const nextMyReactionCount = ownEmojis.size
+      const currentReactions = JSON.stringify(blip.reactions ?? [])
+      const nextReactions = JSON.stringify(reactionsWithNextViewer)
 
+      if (
+        currentReactions === nextReactions &&
+        (blip.reactions_count ?? 0) === nextReactionsCount &&
+        (blip.my_reaction_count ?? 0) === nextMyReactionCount
+      ) {
+        return blip
+      }
+
+      didChange = true
       return {
         ...blip,
         reactions: reactionsWithNextViewer,
-        reactions_count: reactionsWithNextViewer.reduce(
-          (total, reaction) => total + reaction.count,
-          0,
-        ),
-        my_reaction_count: ownEmojisByBlipId.get(blip.id)?.size ?? 0,
+        reactions_count: nextReactionsCount,
+        my_reaction_count: nextMyReactionCount,
       }
     })
+
+    if (!didChange) {
+      return
+    }
 
     store.setInitialData(nextEntities)
   }
@@ -240,8 +309,14 @@ export function blipStore(
       return () => {}
     }
 
+    const channelKey = `blip-updates-${parentId}`
+    const existingChannel = activeScopedChannels.get(channelKey)
+    if (existingChannel) {
+      void removeRealtimeChannelSafely(supabaseClient, existingChannel)
+    }
+
     const channel = supabaseClient
-      .channel(`blip-updates-${parentId}`)
+      .channel(channelKey)
       .on(
         "postgres_changes" as any,
         {
@@ -309,8 +384,13 @@ export function blipStore(
       )
       .subscribe()
 
+    activeScopedChannels.set(channelKey, channel)
+
     return () => {
-      void supabaseClient.removeChannel(channel)
+      if (activeScopedChannels.get(channelKey) === channel) {
+        activeScopedChannels.delete(channelKey)
+      }
+      void removeRealtimeChannelSafely(supabaseClient, channel)
     }
   }
 
@@ -323,7 +403,13 @@ export function blipStore(
       return () => {}
     }
 
-    let channel = supabaseClient.channel(`blips-watch-${targetIds.slice().sort().join("-")}`)
+    const channelKey = `blips-watch-${targetIds.slice().sort().join("-")}`
+    const existingChannel = activeScopedChannels.get(channelKey)
+    if (existingChannel) {
+      void removeRealtimeChannelSafely(supabaseClient, existingChannel)
+    }
+
+    let channel = supabaseClient.channel(channelKey)
 
     for (const blipId of targetIds) {
       channel = channel.on(
@@ -347,9 +433,13 @@ export function blipStore(
     }
 
     channel.subscribe()
+    activeScopedChannels.set(channelKey, channel)
 
     return () => {
-      void supabaseClient.removeChannel(channel)
+      if (activeScopedChannels.get(channelKey) === channel) {
+        activeScopedChannels.delete(channelKey)
+      }
+      void removeRealtimeChannelSafely(supabaseClient, channel)
     }
   }
 
@@ -379,9 +469,13 @@ export function blipStore(
       pendingRefreshTimers.set(blipId, timeoutId)
     }
 
-    let channel = supabaseClient.channel(
-      `blip-reactions-${targetIds.slice().sort().join("-")}`,
-    )
+    const channelKey = `blip-reactions-${targetIds.slice().sort().join("-")}`
+    const existingChannel = activeScopedChannels.get(channelKey)
+    if (existingChannel) {
+      void removeRealtimeChannelSafely(supabaseClient, existingChannel)
+    }
+
+    let channel = supabaseClient.channel(channelKey)
 
     for (const blipId of targetIds) {
       channel = channel
@@ -412,13 +506,17 @@ export function blipStore(
     }
 
     channel.subscribe()
+    activeScopedChannels.set(channelKey, channel)
 
     return () => {
       for (const timeoutId of pendingRefreshTimers.values()) {
         clearTimeout(timeoutId)
       }
       pendingRefreshTimers.clear()
-      void supabaseClient.removeChannel(channel)
+      if (activeScopedChannels.get(channelKey) === channel) {
+        activeScopedChannels.delete(channelKey)
+      }
+      void removeRealtimeChannelSafely(supabaseClient, channel)
     }
   }
 
@@ -562,6 +660,7 @@ export function blipStore(
     ...store,
     drafts,
     updatesByParent,
+    getById,
     mergeIntoCache,
     removeFromCache,
     watchBlips,

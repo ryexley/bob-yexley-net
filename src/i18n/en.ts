@@ -420,6 +420,7 @@ export const en = {
           publish: "Publish",
           unpublish: "Unpublish",
           delete: "Delete Draft",
+          toggleToolbar: "Toggle formatting toolbar",
         },
         confirmDelete: {
           title: "Delete draft blip?",

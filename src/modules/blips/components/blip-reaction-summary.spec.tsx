@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor, within } from "@solidjs/testing-library"
+import { createSignal } from "solid-js"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { BlipReactionSummary } from "@/modules/blips/components/blip-reaction-summary"
 
@@ -97,13 +98,15 @@ describe("BlipReactionSummary", () => {
       />
     ))
 
-    const button = screen.getByRole("button", { name: "Add 🔥 reaction" })
-    expect(button.className).toContain("tooltip-trigger")
+    return waitFor(() => {
+      const button = screen.getByRole("button", { name: "Add 🔥 reaction" })
+      expect(button.className).toContain("tooltip-trigger")
 
-    const tooltip = screen.getByRole("tooltip")
-    expect(within(tooltip).getByText("Bob, Sue")).toBeTruthy()
-    expect(within(tooltip).getByText("🔥")).toBeTruthy()
-    expect(screen.queryByRole("dialog", { name: "Reactions for 🔥" })).toBeNull()
+      const tooltip = screen.getByRole("tooltip")
+      expect(within(tooltip).getByText("Bob, Sue")).toBeTruthy()
+      expect(within(tooltip).getByText("🔥")).toBeTruthy()
+      expect(screen.queryByRole("dialog", { name: "Reactions for 🔥" })).toBeNull()
+    })
   })
 
   it("does not render desktop tooltip content on mobile", () => {
@@ -143,6 +146,35 @@ describe("BlipReactionSummary", () => {
     ))
 
     expect(screen.queryByText("Bob, Sue")).toBeNull()
+  })
+
+  it("reactively enables desktop tooltip content when auth becomes ready", async () => {
+    const [authenticated, setAuthenticated] = createSignal(false)
+    isAuthenticated.mockImplementation(() => authenticated())
+
+    render(() => (
+      <BlipReactionSummary
+        reactions={[
+          {
+            emoji: "🔥",
+            count: 2,
+            reacted_by_current_user: false,
+            display_names: ["Bob", "Sue"],
+          },
+        ]}
+        onToggleReaction={() => {}}
+      />
+    ))
+
+    expect(screen.queryByRole("tooltip")).toBeNull()
+
+    setAuthenticated(true)
+
+    await waitFor(() => {
+      const button = screen.getByRole("button", { name: "Add 🔥 reaction" })
+      expect(button.className).toContain("tooltip-trigger")
+      expect(within(screen.getByRole("tooltip")).getByText("Bob, Sue")).toBeTruthy()
+    })
   })
 
   it("renders the current user's reaction pill as a removable button", async () => {
@@ -211,9 +243,12 @@ describe("BlipReactionSummary", () => {
     expect(screen.getAllByRole("button", { name: "Add 🔥 reaction" })).toHaveLength(1)
 
     const button = screen.getByRole("button", { name: "Add 🔥 reaction" })
-    await fireEvent.contextMenu(button)
+    await waitFor(async () => {
+      await fireEvent.contextMenu(button)
+      expect(screen.getByRole("dialog", { name: "Reactions for 🔥" })).toBeTruthy()
+    })
 
-    const dialog = await screen.findByRole("dialog", { name: "Reactions for 🔥" })
+    const dialog = screen.getByRole("dialog", { name: "Reactions for 🔥" })
     expect(within(dialog).getByText("Bob, Sue")).toBeTruthy()
     expect(within(dialog).getByText("🔥")).toBeTruthy()
     expect(screen.queryByRole("tooltip")).toBeNull()

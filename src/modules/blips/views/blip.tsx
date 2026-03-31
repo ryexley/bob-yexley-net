@@ -23,9 +23,7 @@ import { useSupabase } from "@/context/services-context"
 import { useAuth } from "@/context/auth-context"
 import { BlipActions } from "@/modules/blips/components/blip-actions"
 import { BlipReactionSummary } from "@/modules/blips/components/blip-reaction-summary"
-import { BlipEditor } from "@/modules/blips/components/blip-editor"
 import { BlipReactionTrigger } from "@/modules/blips/components/blip-reaction-trigger"
-import { BlipUpdateEditor } from "@/modules/blips/components/blip-update-editor"
 import { REACTION_ERROR_I18N_KEY } from "@/modules/blips/data/errors"
 import {
   BLIP_TYPES,
@@ -41,6 +39,7 @@ import {
 } from "@/modules/blips/data/reaction-optimistic"
 import { reactionStore } from "@/modules/blips/data/reactions-store"
 import { UpdateBlip } from "@/modules/blips/components/update-blip"
+import { useBlipComposer } from "@/modules/blips/context/blip-composer-context"
 import { formatBlipTimestamp } from "@/modules/blips/util"
 import { ptr } from "@/i18n"
 import { pages } from "@/urls"
@@ -90,6 +89,7 @@ const truncateForMeta = (value: string, maxLength: number) => {
 
 export function BlipView() {
   const REALTIME_UPDATE_HIGHLIGHT_MS = 60_000
+  let updateInlineMountElement: HTMLDivElement | null = null
   let lastSeededBlipId: string | null = null
   let lastSeededUpdatesForBlipId: string | null = null
   let lastReactionViewerKey: string | null = null
@@ -104,6 +104,15 @@ export function BlipView() {
   const navigate = useNavigate()
   const supabase = useSupabase()
   const notify = useNotify()
+  const {
+    closeActive,
+    isUpdateOpenFor,
+    openEditRoot,
+    openEditUpdate,
+    openNewUpdate,
+    registerUpdateInlineMount,
+    requestCloseActive,
+  } = useBlipComposer()
   const store = blipStore(supabase.client, { subscribe: false })
   const reactions = reactionStore(supabase.client, { subscribe: false })
   const tags = tagStore(supabase.client)
@@ -112,19 +121,12 @@ export function BlipView() {
   const blipQuery = createMemo(() => blipGraphQuery()?.blip ?? null)
   const initialUpdates = createMemo(() => blipGraphQuery()?.updates ?? [])
   const blip = createMemo(() => {
-    const fromStore = store.entities().find(item => item.id === params.id)
+    const fromStore = store.getById(params.id)
     return fromStore ?? blipQuery() ?? null
   })
   const [recentRealtimeUpdateStates, setRecentRealtimeUpdateStates] =
     createSignal<Record<string, { shimmering: boolean }>>({})
-  const [showComposer, setShowComposer] = createSignal(false)
   const [hydratedRootTags, setHydratedRootTags] = createSignal<string[]>([])
-  const [selectedUpdateBlipId, setSelectedUpdateBlipId] = createSignal<
-    string | null
-  >(null)
-  const [updateComposerFocusNonce, setUpdateComposerFocusNonce] = createSignal(0)
-  const [showBlipEditor, setShowBlipEditor] = createSignal(false)
-  const [selectedBlipId, setSelectedBlipId] = createSignal<string | null>(null)
   const [isReactionBusy, setIsReactionBusy] = createSignal(false)
   const [reactionStateOverride, setReactionStateOverride] =
     createSignal<ReactionStateOverride | null>(null)
@@ -207,6 +209,10 @@ export function BlipView() {
     }
     return allUpdates.filter(update => update.published)
   })
+  const showComposer = createMemo(() => isUpdateOpenFor(blip()?.id))
+  const visibleUpdateIds = createMemo(() =>
+    visibleUpdates().map(update => update.id),
+  )
   const watchUpdatesRootId = createMemo(() => {
     const rootBlip = blip()
     if (!rootBlip || rootBlip.blip_type !== BLIP_TYPES.ROOT) {
@@ -216,12 +222,16 @@ export function BlipView() {
     return rootBlip.id
   })
   const reactionWatchKey = createMemo(() => {
+    if (showComposer()) {
+      return ""
+    }
+
     const rootId = watchUpdatesRootId()
     if (!rootId) {
       return ""
     }
 
-    return [rootId, ...visibleUpdates().map(update => update.id)].join("|")
+    return [rootId, ...visibleUpdateIds()].join("|")
   })
   const reactionSignature = createMemo(() => getReactionSignature(blip()?.reactions ?? []))
   const displayBlip = createMemo(() => {
@@ -344,7 +354,7 @@ export function BlipView() {
 
   createEffect(() => {
     if (!canManageUpdates() && showComposer()) {
-      setShowComposer(false)
+      closeActive()
     }
   })
 
@@ -401,6 +411,10 @@ export function BlipView() {
       return
     }
 
+    if (showComposer()) {
+      return
+    }
+
     const nextViewer = {
       id: visitor()?.id ?? null,
       status: visitor()?.status ?? null,
@@ -431,10 +445,7 @@ export function BlipView() {
       return
     }
 
-    const reactionBlipIds = untrack(() => [
-      rootBlip.id,
-      ...visibleUpdates().map(update => update.id),
-    ])
+    const reactionBlipIds = untrack(() => [rootBlip.id, ...visibleUpdateIds()])
     void store.syncReactionViewer(reactionBlipIds, nextViewer, lastReactionViewer)
     lastReactionViewer = nextViewer
   })
@@ -467,26 +478,32 @@ export function BlipView() {
       clearTimeout(timeoutId)
     }
     realtimeUpdateHighlightTimeouts.clear()
+    if (updateInlineMountElement) {
+      registerUpdateInlineMount(params.id, null)
+      updateInlineMountElement = null
+    }
+    if (isUpdateOpenFor(params.id)) {
+      closeActive()
+    }
   })
 
   const handleEditRootBlip = async (rootBlipId: string) => {
     const currentRootBlip = blip()
     if (currentRootBlip?.id === rootBlipId) {
-      // Seed the shared blip store so BlipEditor can resolve requested blipId.
+      // Seed the shared blip store so the shared root editor can resolve requested blipId.
       await store.upsert(currentRootBlip, { cacheOnly: true })
     }
-    setSelectedBlipId(rootBlipId)
-    setShowBlipEditor(true)
-  }
 
-  const closeEditor = () => {
-    setShowBlipEditor(false)
-    setSelectedBlipId(null)
+    openEditRoot(rootBlipId)
   }
 
   const handleEditUpdate = (updateBlipId: string) => {
-    setSelectedUpdateBlipId(updateBlipId)
-    setShowComposer(true)
+    const rootBlipId = blip()?.id
+    if (!rootBlipId) {
+      return
+    }
+
+    openEditUpdate(rootBlipId, updateBlipId)
   }
 
   const handleToggleReaction = async (emoji: string) => {
@@ -672,14 +689,16 @@ export function BlipView() {
                           }
                           onClick={() => {
                             if (showComposer()) {
-                              setShowComposer(false)
-                              setSelectedUpdateBlipId(null)
+                              requestCloseActive()
                               return
                             }
 
-                            setSelectedUpdateBlipId(null)
-                            setShowComposer(true)
-                            setUpdateComposerFocusNonce(previous => previous + 1)
+                            const rootBlipId = blip()?.id
+                            if (!rootBlipId) {
+                              return
+                            }
+
+                            openNewUpdate(rootBlipId)
                           }}
                         />
                       }
@@ -704,20 +723,12 @@ export function BlipView() {
                           </div>
                         </header>
                       </Show>
-
-                      <Show when={canManageUpdates()}>
-                        <BlipUpdateEditor
-                          open={showComposer()}
-                          rootBlipId={blip()?.id}
-                          editingUpdateId={selectedUpdateBlipId()}
-                          focusNonce={updateComposerFocusNonce()}
-                          onRequestClose={() => {
-                            setShowComposer(false)
-                            setSelectedUpdateBlipId(null)
-                          }}
-                        />
-                      </Show>
-
+                      <div
+                        ref={element => {
+                          updateInlineMountElement = element
+                          registerUpdateInlineMount(params.id, element)
+                        }}
+                      />
                       <Show when={visibleUpdates().length > 0}>
                         <ul class="blip-updates-list">
                           <For each={visibleUpdates()}>
@@ -740,17 +751,6 @@ export function BlipView() {
                       </Show>
                     </section>
                   </Show>
-                  <BlipEditor
-                    open={showBlipEditor()}
-                    blipId={selectedBlipId()}
-                    onPanelOpenChange={open => {
-                      setShowBlipEditor(open)
-                      if (!open) {
-                        setSelectedBlipId(null)
-                      }
-                    }}
-                    close={closeEditor}
-                  />
                 </>
               )}
             </Show>

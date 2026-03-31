@@ -25,6 +25,7 @@ export function Signals(props) {
     // isLoading,
   } = blipStore(supabase.client, {
     limit: 4,
+    subscribe: false,
   })
 
   createEffect(() => {

@@ -1,10 +1,10 @@
 import type { Blip as BlipType } from "@/modules/blips/data/schema"
 import { createEffect, createMemo, createSignal, For, splitProps } from "solid-js"
 import { Blip } from "@/modules/blips/components/blip"
-import { BlipEditor } from "@/modules/blips/components/blip-editor"
 import { useAuth } from "@/context/auth-context"
 import { useSupabase } from "@/context/services-context"
 import { tagStore } from "@/modules/blips/data"
+import { useBlipComposer } from "@/modules/blips/context/blip-composer-context"
 import "./blips.css"
 
 export function Blips(props: {
@@ -15,8 +15,7 @@ export function Blips(props: {
   const { isAuthenticated } = useAuth() as any
   const supabase = useSupabase()
   const tags = tagStore(supabase.client)
-  const [showBlipEditor, setShowBlipEditor] = createSignal(false)
-  const [selectedBlipId, setSelectedBlipId] = createSignal<string | null>(null)
+  const { openEditRoot } = useBlipComposer()
   const [hydratedTagsByBlipId, setHydratedTagsByBlipId] = createSignal<
     Record<string, string[]>
   >({})
@@ -53,13 +52,7 @@ export function Blips(props: {
   })
 
   const handleEdit = (blipId: string) => {
-    setSelectedBlipId(blipId)
-    setShowBlipEditor(true)
-  }
-
-  const closeEditor = () => {
-    setShowBlipEditor(false)
-    setSelectedBlipId(null)
+    openEditRoot(blipId)
   }
 
   return (
@@ -80,17 +73,6 @@ export function Blips(props: {
           )}
         </For>
       </ul>
-      <BlipEditor
-        open={showBlipEditor()}
-        blipId={selectedBlipId()}
-        onPanelOpenChange={open => {
-          setShowBlipEditor(open)
-          if (!open) {
-            setSelectedBlipId(null)
-          }
-        }}
-        close={closeEditor}
-      />
     </>
   )
 }

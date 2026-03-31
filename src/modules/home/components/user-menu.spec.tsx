@@ -10,6 +10,8 @@ const {
   notifySuccess,
   notifyError,
   viewportWidth,
+  navigate,
+  openNewRoot,
 } = vi.hoisted(() => ({
   authState: {
     profile: {
@@ -33,6 +35,12 @@ const {
   notifySuccess: vi.fn(),
   notifyError: vi.fn(),
   viewportWidth: vi.fn(() => 1024),
+  navigate: vi.fn(),
+  openNewRoot: vi.fn(),
+}))
+
+vi.mock("@solidjs/router", () => ({
+  useNavigate: () => navigate,
 }))
 
 vi.mock("@/context/auth-context", () => ({
@@ -59,6 +67,12 @@ vi.mock("@/context/services-context", () => ({
 vi.mock("@/context/viewport", () => ({
   useViewport: () => ({
     width: viewportWidth,
+  }),
+}))
+
+vi.mock("@/modules/blips/context/blip-composer-context", () => ({
+  useBlipComposer: () => ({
+    openNewRoot,
   }),
 }))
 
@@ -103,11 +117,6 @@ vi.mock("@/modules/home/components/profile-drawer", () => ({
     <>{props.open && <div data-testid="profile-drawer">Profile drawer</div>}</>,
 }))
 
-vi.mock("~/modules/blips/components/blip-editor", () => ({
-  BlipEditor: (props: any) =>
-    <>{props.open && <div data-testid="blip-editor">Blip editor</div>}</>,
-}))
-
 vi.mock("@/i18n", () => ({
   ptr: (prefix: string) => {
     const values: Record<string, string> = {
@@ -146,6 +155,8 @@ describe("UserMenu", () => {
     notifyError.mockReset()
     viewportWidth.mockReset()
     viewportWidth.mockReturnValue(1024)
+    navigate.mockReset()
+    openNewRoot.mockReset()
   })
 
   it("does not render for signed-out users", () => {
@@ -219,7 +230,7 @@ describe("UserMenu", () => {
     expect(screen.getByTestId("profile-drawer")).toBeTruthy()
   })
 
-  it("opens the blip editor from the admin blip menu item", async () => {
+  it("opens the shared blip composer from the admin blip menu item", async () => {
     authState.profile = {
       ...authState.profile,
       role: "admin",
@@ -230,11 +241,11 @@ describe("UserMenu", () => {
     await fireEvent.click(screen.getByRole("button", { name: "Blip" }))
 
     await waitFor(() => {
-      expect(screen.getByTestId("blip-editor")).toBeTruthy()
+      expect(openNewRoot).toHaveBeenCalledTimes(1)
     })
   })
 
-  it("opens the blip editor from the mobile admin menu", async () => {
+  it("opens the shared blip composer from the mobile admin menu", async () => {
     viewportWidth.mockReturnValue(375)
     authState.profile = {
       ...authState.profile,
@@ -247,7 +258,7 @@ describe("UserMenu", () => {
     await fireEvent.click(screen.getByRole("button", { name: "Blip" }))
 
     await waitFor(() => {
-      expect(screen.getByTestId("blip-editor")).toBeTruthy()
+      expect(openNewRoot).toHaveBeenCalledTimes(1)
     })
   })
 })

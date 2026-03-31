@@ -1,4 +1,12 @@
-import { createEffect, createMemo, createSignal, For, onCleanup, Show } from "solid-js"
+import {
+  createEffect,
+  createMemo,
+  createSignal,
+  For,
+  onCleanup,
+  onMount,
+  Show,
+} from "solid-js"
 import { Popover, PopoverAnchor, PopoverContent } from "@/components/popover"
 import { Tooltip } from "@/components/tooltip"
 import { useAuth } from "@/context/auth-context"
@@ -22,21 +30,35 @@ export function BlipReactionSummary(props: BlipReactionSummaryProps) {
   const auth = useAuth()
   const viewport = useViewport()
   const reactions = () => props.reactions ?? []
+  const [hasMounted, setHasMounted] = createSignal(false)
   const [openPopoverEmoji, setOpenPopoverEmoji] = createSignal<string | null>(null)
   const isMobile = createMemo(() => viewport.width() <= MOBILE_MAX_WIDTH)
   const canViewReactionNames = createMemo(() => auth.isAuthenticated())
   const canUseLongPressPopover = createMemo(() => isMobile() && canViewReactionNames())
-  let longPressTimeout: ReturnType<typeof setTimeout> | null = null
-  let longPressOrigin: { x: number; y: number; emoji: string } | null = null
+  const longPressTimeouts = new Map<string, ReturnType<typeof setTimeout>>()
+  const longPressOrigins = new Map<string, { x: number; y: number }>()
   let longPressOpenedEmoji: string | null = null
 
-  const clearLongPressTimeout = () => {
-    if (longPressTimeout) {
-      clearTimeout(longPressTimeout)
-      longPressTimeout = null
+  onMount(() => {
+    setHasMounted(true)
+  })
+
+  const clearLongPressTimeout = (emoji?: string) => {
+    if (emoji) {
+      const timeoutId = longPressTimeouts.get(emoji)
+      if (timeoutId) {
+        clearTimeout(timeoutId)
+        longPressTimeouts.delete(emoji)
+      }
+      longPressOrigins.delete(emoji)
+      return
     }
 
-    longPressOrigin = null
+    for (const timeoutId of longPressTimeouts.values()) {
+      clearTimeout(timeoutId)
+    }
+    longPressTimeouts.clear()
+    longPressOrigins.clear()
   }
 
   const getReactionNames = (reaction: BlipReactionSummary) =>
@@ -50,31 +72,32 @@ export function BlipReactionSummary(props: BlipReactionSummaryProps) {
       return
     }
 
-    clearLongPressTimeout()
+    clearLongPressTimeout(emoji)
     longPressOpenedEmoji = null
-    longPressOrigin = {
+    longPressOrigins.set(emoji, {
       x: touch.clientX,
       y: touch.clientY,
-      emoji,
-    }
-    longPressTimeout = setTimeout(() => {
+    })
+    const timeoutId = setTimeout(() => {
       longPressOpenedEmoji = emoji
       openReactionPopover(emoji)
-      clearLongPressTimeout()
+      clearLongPressTimeout(emoji)
     }, LONG_PRESS_MS)
+    longPressTimeouts.set(emoji, timeoutId)
   }
 
-  const maybeCancelLongPressForMovement = (touch: Touch) => {
-    if (!longPressOrigin) {
+  const maybeCancelLongPressForMovement = (emoji: string, touch: Touch) => {
+    const origin = longPressOrigins.get(emoji)
+    if (!origin) {
       return
     }
 
     const movedBeyondThreshold =
-      Math.abs(touch.clientX - longPressOrigin.x) > LONG_PRESS_MOVE_THRESHOLD_PX ||
-      Math.abs(touch.clientY - longPressOrigin.y) > LONG_PRESS_MOVE_THRESHOLD_PX
+      Math.abs(touch.clientX - origin.x) > LONG_PRESS_MOVE_THRESHOLD_PX ||
+      Math.abs(touch.clientY - origin.y) > LONG_PRESS_MOVE_THRESHOLD_PX
 
     if (movedBeyondThreshold) {
-      clearLongPressTimeout()
+      clearLongPressTimeout(emoji)
     }
   }
 
@@ -103,17 +126,6 @@ export function BlipReactionSummary(props: BlipReactionSummaryProps) {
     }
   }
 
-  const handleTouchMove = (event: TouchEvent, allowLongPressPopover: boolean) => {
-    if (!allowLongPressPopover) {
-      return
-    }
-
-    const touch = event.touches[0]
-    if (touch) {
-      maybeCancelLongPressForMovement(touch)
-    }
-  }
-
   const handleTouchEnd = (
     event: TouchEvent,
     emoji: string,
@@ -127,7 +139,7 @@ export function BlipReactionSummary(props: BlipReactionSummaryProps) {
     event.preventDefault()
     const opened = longPressOpenedEmoji === emoji
     longPressOpenedEmoji = null
-    clearLongPressTimeout()
+    clearLongPressTimeout(emoji)
     if (!opened && canToggle) {
       toggleReaction(emoji)
     }
@@ -144,6 +156,7 @@ export function BlipReactionSummary(props: BlipReactionSummaryProps) {
 
   onCleanup(() => {
     clearLongPressTimeout()
+    longPressOpenedEmoji = null
   })
 
   return (
@@ -151,23 +164,31 @@ export function BlipReactionSummary(props: BlipReactionSummaryProps) {
       <ul class="blip-reaction-summary-list" aria-label="Reactions">
         <For each={reactions()}>
           {reaction => {
-            const displayNames = getReactionNames(reaction)
-            const tooltipText = formatDisplayNames(displayNames)
-            const showDesktopTooltip = !isMobile() && tooltipText.length > 0
-            const allowLongPressPopover = canUseLongPressPopover() && tooltipText.length > 0
-            const canToggle = Boolean(props.onToggleReaction)
-            const detailsContent = (
+            const displayNames = createMemo(() => getReactionNames(reaction))
+            const tooltipText = createMemo(() => formatDisplayNames(displayNames()))
+            // Desktop tooltip markup is hydration-safe now that viewport state is
+            // aligned between SSR and the initial client render.
+            const showDesktopTooltip = createMemo(
+              () => !isMobile() && tooltipText().length > 0,
+            )
+            const allowLongPressPopover = createMemo(
+              () => hasMounted() && canUseLongPressPopover() && tooltipText().length > 0,
+            )
+            const canToggle = createMemo(() => Boolean(props.onToggleReaction))
+            const renderDetailsContent = () => (
               <div class="blip-reaction-summary-tooltip-body">
                 <div class="blip-reaction-summary-tooltip-emoji" aria-hidden="true">
                   {reaction.emoji}
                 </div>
-                <div class="blip-reaction-summary-tooltip-names">{tooltipText}</div>
+                <div class="blip-reaction-summary-tooltip-names">{tooltipText()}</div>
               </div>
             )
-            const pillClass = cx(
-              "blip-reaction-summary-pill",
-              canToggle && "blip-reaction-summary-button",
-              reaction.reacted_by_current_user && "reacted",
+            const pillClass = createMemo(() =>
+              cx(
+                "blip-reaction-summary-pill",
+                canToggle() && "blip-reaction-summary-button",
+                reaction.reacted_by_current_user && "reacted",
+              ),
             )
             const renderChipContent = () => (
               <>
@@ -175,60 +196,41 @@ export function BlipReactionSummary(props: BlipReactionSummaryProps) {
                 <span class="count">{reaction.count}</span>
               </>
             )
-            const desktopTriggerProps = canToggle
-              ? {
-                  type: "button" as const,
-                  disabled: props.busy,
-                  "aria-label": `${reaction.reacted_by_current_user ? "Remove" : "Add"} ${reaction.emoji} reaction`,
-                  onClick: (event: MouseEvent) => handleReactionClick(event, reaction.emoji),
-                }
-              : undefined
-            const desktopTrigger = canToggle ? (
-              <button class={pillClass} {...desktopTriggerProps}>
-                {renderChipContent()}
-              </button>
-            ) : (
-              <span class={pillClass}>{renderChipContent()}</span>
+            const desktopTriggerProps = createMemo(() =>
+              canToggle()
+                ? {
+                    type: "button" as const,
+                    disabled: props.busy,
+                    "aria-label": `${reaction.reacted_by_current_user ? "Remove" : "Add"} ${reaction.emoji} reaction`,
+                    onClick: (event: MouseEvent) =>
+                      handleReactionClick(event, reaction.emoji),
+                  }
+                : undefined,
             )
-            const desktopChip = showDesktopTooltip ? (
-              <Tooltip
-                content={detailsContent}
-                contentClass="blip-reaction-summary-tooltip"
-                triggerAs={canToggle ? "button" : "span"}
-                triggerClass={pillClass}
-                triggerProps={desktopTriggerProps}>
-                {renderChipContent()}
-              </Tooltip>
-            ) : (
-              desktopTrigger
-            )
+            const desktopTrigger = () =>
+              canToggle() ? (
+                <button class={pillClass()} {...desktopTriggerProps()}>
+                  {renderChipContent()}
+                </button>
+              ) : (
+                <span class={pillClass()}>{renderChipContent()}</span>
+              )
+            const desktopChip = () =>
+              showDesktopTooltip() ? (
+                <Tooltip
+                  content={renderDetailsContent()}
+                  contentClass="blip-reaction-summary-tooltip"
+                  triggerAs={canToggle() ? "button" : "span"}
+                  triggerClass={pillClass()}
+                  triggerProps={desktopTriggerProps()}>
+                  {renderChipContent()}
+                </Tooltip>
+              ) : (
+                desktopTrigger()
+              )
 
-            const chip = (
-              <Show
-                when={props.onToggleReaction}
-                fallback={
-                  <span
-                    class="blip-reaction-summary-pill"
-                    classList={{
-                      reacted: reaction.reacted_by_current_user,
-                    }}
-                    onTouchStart={event =>
-                      handleTouchStart(event, reaction.emoji, allowLongPressPopover)
-                    }
-                    onTouchMove={event => handleTouchMove(event, allowLongPressPopover)}
-                    onTouchEnd={event =>
-                      handleTouchEnd(event, reaction.emoji, false, allowLongPressPopover)
-                    }
-                    onTouchCancel={clearLongPressTimeout}
-                    onContextMenu={event => {
-                      if (allowLongPressPopover) {
-                        event.preventDefault()
-                        openReactionPopover(reaction.emoji)
-                      }
-                    }}>
-                    {renderChipContent()}
-                  </span>
-                }>
+            const chip = () =>
+              canToggle() ? (
                 <button
                   type="button"
                   class="blip-reaction-summary-pill blip-reaction-summary-button"
@@ -239,31 +241,66 @@ export function BlipReactionSummary(props: BlipReactionSummaryProps) {
                   aria-label={`${reaction.reacted_by_current_user ? "Remove" : "Add"} ${reaction.emoji} reaction`}
                   onClick={event => handleReactionClick(event, reaction.emoji)}
                   onTouchStart={event =>
-                    handleTouchStart(event, reaction.emoji, allowLongPressPopover)
+                    handleTouchStart(event, reaction.emoji, allowLongPressPopover())
                   }
-                  onTouchMove={event => handleTouchMove(event, allowLongPressPopover)}
+                  onTouchMove={event => {
+                    if (!allowLongPressPopover()) {
+                      return
+                    }
+
+                    const touch = event.touches[0]
+                    if (touch) {
+                      maybeCancelLongPressForMovement(reaction.emoji, touch)
+                    }
+                  }}
                   onTouchEnd={event =>
-                    handleTouchEnd(event, reaction.emoji, canToggle, allowLongPressPopover)
+                    handleTouchEnd(event, reaction.emoji, canToggle(), allowLongPressPopover())
                   }
-                  onTouchCancel={clearLongPressTimeout}
+                  onTouchCancel={() => clearLongPressTimeout(reaction.emoji)}
                   onContextMenu={event => {
-                    if (allowLongPressPopover) {
+                    if (allowLongPressPopover()) {
                       event.preventDefault()
                       openReactionPopover(reaction.emoji)
                     }
                   }}>
                   {renderChipContent()}
                 </button>
-              </Show>
-            )
+              ) : (
+                <span
+                  class="blip-reaction-summary-pill"
+                  classList={{
+                    reacted: reaction.reacted_by_current_user,
+                  }}
+                  onTouchStart={event =>
+                    handleTouchStart(event, reaction.emoji, allowLongPressPopover())
+                  }
+                  onTouchMove={event => {
+                    if (!allowLongPressPopover()) {
+                      return
+                    }
+
+                    const touch = event.touches[0]
+                    if (touch) {
+                      maybeCancelLongPressForMovement(reaction.emoji, touch)
+                    }
+                  }}
+                  onTouchEnd={event =>
+                    handleTouchEnd(event, reaction.emoji, false, allowLongPressPopover())
+                  }
+                  onTouchCancel={() => clearLongPressTimeout(reaction.emoji)}
+                  onContextMenu={event => {
+                    if (allowLongPressPopover()) {
+                      event.preventDefault()
+                      openReactionPopover(reaction.emoji)
+                    }
+                  }}>
+                  {renderChipContent()}
+                </span>
+              )
 
             return (
               <li class="blip-reaction-summary-item">
-                <Show
-                  when={allowLongPressPopover}
-                  fallback={
-                    desktopChip
-                  }>
+                {allowLongPressPopover() ? (
                   <Popover
                     open={openPopoverEmoji() === reaction.emoji}
                     onOpenChange={open => {
@@ -275,7 +312,7 @@ export function BlipReactionSummary(props: BlipReactionSummaryProps) {
                     placement="top"
                     flip
                     shift={8}>
-                    <PopoverAnchor as="span">{chip}</PopoverAnchor>
+                    <PopoverAnchor as="span">{chip()}</PopoverAnchor>
                     <PopoverContent
                       class="blip-reaction-summary-popover"
                       role="dialog"
@@ -283,10 +320,12 @@ export function BlipReactionSummary(props: BlipReactionSummaryProps) {
                       <div class="blip-reaction-summary-popover-emoji" aria-hidden="true">
                         {reaction.emoji}
                       </div>
-                      <div class="blip-reaction-summary-popover-names">{tooltipText}</div>
+                      <div class="blip-reaction-summary-popover-names">{tooltipText()}</div>
                     </PopoverContent>
                   </Popover>
-                </Show>
+                ) : (
+                  desktopChip()
+                )}
               </li>
             )
           }}

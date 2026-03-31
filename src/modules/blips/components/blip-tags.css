@@ -22,9 +22,24 @@
   }
 }
 
+@media (max-width: 48rem) {
+  .blip-tags {
+    .combobox-input {
+      font-size: 1rem;
+      line-height: 1.5rem;
+
+      &::placeholder {
+        font-size: 1rem;
+      }
+    }
+  }
+}
+
 .blip-tags-content {
   border: 0.0625rem solid var(--colors-mono-04);
   border-radius: 0.5rem;
+  max-height: min(8.5rem, var(--kb-popper-available-height, 8.5rem));
+  pointer-events: auto;
   z-index: 60;
 
   .combobox-item {

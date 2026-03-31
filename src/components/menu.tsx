@@ -2,7 +2,7 @@ import { JSX, splitProps, For, Show, ComponentProps } from "solid-js"
 import { DropdownMenu } from "@kobalte/core/dropdown-menu"
 import { Icon } from "@/components/icon"
 import { IconButtonSize } from "@/components/icon-button"
-import { clsx as cx, isNotEmpty } from "@/util"
+import { clsx as cx } from "@/util"
 import "./menu.css"
 
 type MenuItem = {
@@ -44,9 +44,12 @@ export function Menu(props: MenuProps) {
   ])
 
   const triggerClass = cx("menu-trigger", local.triggerButtonSize, local.triggerClass)
+  const hasTrigger = () => local.Trigger != null
+  const hasHeader = () => local.Header != null
+  const hasFooter = () => local.Footer != null
 
   const renderTrigger = () => {
-    if (isNotEmpty(local.Trigger)) {
+    if (hasTrigger()) {
       if (typeof local.Trigger === "function") {
         return local.Trigger()
       }
@@ -60,7 +63,7 @@ export function Menu(props: MenuProps) {
   }
 
   const renderHeader = () => {
-    if (isNotEmpty(local.Header)) {
+    if (hasHeader()) {
       if (typeof local.Header === "function") {
         return local.Header()
       }
@@ -70,7 +73,7 @@ export function Menu(props: MenuProps) {
   }
 
   const renderFooter = () => {
-    if (isNotEmpty(local.Footer)) {
+    if (hasFooter()) {
       if (typeof local.Footer === "function") {
         return local.Footer()
       }
@@ -87,7 +90,7 @@ export function Menu(props: MenuProps) {
       <DropdownMenu.Portal>
         <DropdownMenu.Content class="menu content">
           <DropdownMenu.Arrow class="menu arrow" />
-          <Show when={isNotEmpty(local.Header)}>
+          <Show when={hasHeader()}>
             <header class="menu-header">{renderHeader()}</header>
             <DropdownMenu.Separator class="menu-separator" />
           </Show>
@@ -103,7 +106,7 @@ export function Menu(props: MenuProps) {
               </DropdownMenu.Item>
             )}
           </For>
-          <Show when={isNotEmpty(local.Footer)}>
+          <Show when={hasFooter()}>
             <DropdownMenu.Separator class="menu-separator" />
             <footer class="menu-footer">{renderFooter()}</footer>
           </Show>

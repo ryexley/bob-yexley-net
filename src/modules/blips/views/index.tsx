@@ -34,6 +34,7 @@ export function BlipsView() {
 
   const store = blipStore(supabase.client, {
     limit: BLIPS_PAGE_SIZE,
+    subscribe: false,
   })
   const { entities: blips, setInitialData } = store
   const rootFeedBlips = createMemo(() =>

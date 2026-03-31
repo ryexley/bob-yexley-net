@@ -21,18 +21,15 @@ interface ViewportContextValue {
 const ViewportContext = createContext<ViewportContextValue>()
 
 export function ViewportProvider(props: ParentProps) {
-  let currentHeight = DEFAULT_VIEWPORT_HEIGHT
-  let currentWidth = DEFAULT_VIEWPORT_WIDTH
-
-  withWindow(window => {
-    currentHeight = window.innerHeight
-    currentWidth = window.innerWidth
-  })
-
-  const [height, setHeight] = createSignal(currentHeight)
-  const [width, setWidth] = createSignal(currentWidth)
+  const [height, setHeight] = createSignal(DEFAULT_VIEWPORT_HEIGHT)
+  const [width, setWidth] = createSignal(DEFAULT_VIEWPORT_WIDTH)
 
   onMount(() => {
+    withWindow(window => {
+      setHeight(window.innerHeight)
+      setWidth(window.innerWidth)
+    })
+
     const handleWindowResize = debounce(() => {
       withWindow(window => {
         setHeight(window.innerHeight)

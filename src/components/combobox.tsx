@@ -185,6 +185,7 @@ export function Combobox<Option, OptGroup = never>(
   const [showScrollHintTop, setShowScrollHintTop] = createSignal(false)
   const [showScrollHintBottom, setShowScrollHintBottom] = createSignal(false)
   const SCROLL_HINT_EPSILON = 1
+  let suppressOpenOnNextInputFocus = false
   const mergedOptions = createMemo(() => {
     const baseOptions = toArray(
       resolveMaybeAccessor(
@@ -253,6 +254,11 @@ export function Combobox<Option, OptGroup = never>(
   }
   const openOptionsOnInputFocus = (event: FocusEvent) => {
     if (!local.openOnFocus) {
+      return
+    }
+
+    if (suppressOpenOnNextInputFocus) {
+      suppressOpenOnNextInputFocus = false
       return
     }
 
@@ -602,6 +608,9 @@ export function Combobox<Option, OptGroup = never>(
             </div>
             <ComboboxPrimitive.Trigger
               class={cx("combobox-trigger", local.triggerClass)}
+              onPointerDown={() => {
+                suppressOpenOnNextInputFocus = true
+              }}
               aria-label="Toggle options">
               <Icon name="keyboard_arrow_down" />
             </ComboboxPrimitive.Trigger>

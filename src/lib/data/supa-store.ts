@@ -7,6 +7,7 @@ import {
   Setter,
 } from "solid-js"
 import { isAfter, subMinutes } from "date-fns"
+import { persistedStorage } from "@/lib/data/persisted-storage"
 
 // Generic types for any entity
 export type BaseEntity = {
@@ -90,6 +91,9 @@ export function supaStore<T extends BaseEntity>(
   const DRAFT_STORAGE_KEY = `${tableName}-drafts`
   const HYDRATION_KEY = `${tableName}-hydrated`
 
+  const readDrafts = (): DraftHash<T> =>
+    persistedStorage.getItem<DraftHash<T>>(DRAFT_STORAGE_KEY) ?? {}
+
   // Centralized cache management
   const cache = {
     load(): boolean {
@@ -99,164 +103,98 @@ export function supaStore<T extends BaseEntity>(
     },
 
     save(data: T[]): void {
-      if (typeof window === "undefined") {
-        return
-      }
-
       const now = new Date()
       setLastFetch(now)
 
-      try {
-        localStorage.setItem(
-          STORAGE_KEY,
-          JSON.stringify({
-            data,
-            timestamp: now.toISOString(),
-          }),
-        )
-      } catch (err) {
-        console.error(`Error saving ${tableName} cache:`, err)
-      }
+      void persistedStorage.setItem(STORAGE_KEY, {
+        data,
+        timestamp: now.toISOString(),
+      } satisfies CacheData<T>)
     },
 
     clear(): void {
-      if (typeof window === "undefined") {
-        return
-      }
-
       setLastFetch(null)
-      try {
-        localStorage.removeItem(STORAGE_KEY)
-      } catch (err) {
-        console.error(`Error clearing ${tableName} cache:`, err)
-      }
+      void persistedStorage.removeItem(STORAGE_KEY)
     },
 
     isValid(cacheMinutes: number): boolean {
-      if (typeof window === "undefined") {
+      const cached = persistedStorage.getItem<CacheData<T>>(STORAGE_KEY)
+      if (!cached?.timestamp) {
         return false
       }
 
-      // Check localStorage directly for cache validity
-      try {
-        const cached = localStorage.getItem(STORAGE_KEY)
-        if (!cached) {
-          return false
-        }
+      const cacheDate = new Date(cached.timestamp)
+      const expiryDate = subMinutes(new Date(), cacheMinutes)
 
-        const { timestamp }: CacheData<T> = JSON.parse(cached)
-        const cacheDate = new Date(timestamp)
-        const expiryDate = subMinutes(new Date(), cacheMinutes)
-
-        return isAfter(cacheDate, expiryDate)
-      } catch {
-        return false
-      }
+      return isAfter(cacheDate, expiryDate)
     },
   }
 
   // Draft management - hash based
   const draft = {
     save(entity: T): void {
-      if (typeof window === "undefined") {
-        return
-      }
-
       if (!entity.id) {
         console.warn(`Cannot save ${tableName} draft without ID`)
         return
       }
 
-      try {
-        const drafts = this.loadAll()
-        drafts[entity.id] = {
+      const drafts = readDrafts()
+      void persistedStorage.setItem(DRAFT_STORAGE_KEY, {
+        ...drafts,
+        [entity.id]: {
           entity,
           savedAt: new Date().toISOString(),
-        }
-        localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(drafts))
-      } catch (err) {
-        console.error(`Error saving ${tableName} draft:`, err)
-      }
+        },
+      } satisfies DraftHash<T>)
     },
 
     load(entityId: string): T | null {
-      if (typeof window === "undefined") {
-        return null
-      }
-
-      try {
-        const drafts = this.loadAll()
-        return drafts[entityId]?.entity || null
-      } catch (err) {
-        console.error(`Error loading ${tableName} draft:`, err)
-        return null
-      }
+      const drafts = readDrafts()
+      return drafts[entityId]?.entity || null
     },
 
     loadAll(): DraftHash<T> {
-      if (typeof window === "undefined") {
-        return {}
-      }
-
-      try {
-        const draftsData = localStorage.getItem(DRAFT_STORAGE_KEY)
-        if (draftsData) {
-          return JSON.parse(draftsData) as DraftHash<T>
-        }
-      } catch (err) {
-        console.error(`Error loading ${tableName} drafts:`, err)
-      }
-      return {}
+      return { ...readDrafts() }
     },
 
     clear(entityId: string): void {
-      if (typeof window === "undefined") {
+      const drafts = readDrafts()
+      if (!(entityId in drafts)) {
         return
       }
 
-      try {
-        const drafts = this.loadAll()
-        delete drafts[entityId]
+      const nextDrafts = { ...drafts }
+      delete nextDrafts[entityId]
 
-        if (Object.keys(drafts).length === 0) {
-          localStorage.removeItem(DRAFT_STORAGE_KEY)
-        } else {
-          localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(drafts))
-        }
-      } catch (err) {
-        console.error(`Error clearing ${tableName} draft:`, err)
+      if (Object.keys(nextDrafts).length === 0) {
+        void persistedStorage.removeItem(DRAFT_STORAGE_KEY)
+        return
       }
+
+      void persistedStorage.setItem(DRAFT_STORAGE_KEY, nextDrafts)
     },
 
     clearAll(): void {
-      if (typeof window === "undefined") {
-        return
-      }
-
-      try {
-        localStorage.removeItem(DRAFT_STORAGE_KEY)
-      } catch (err) {
-        console.error(`Error clearing all ${tableName} drafts:`, err)
-      }
+      void persistedStorage.removeItem(DRAFT_STORAGE_KEY)
     },
 
     exists(entityId: string): boolean {
-      const drafts = this.loadAll()
+      const drafts = readDrafts()
       return !!drafts[entityId]
     },
 
     hasAny(): boolean {
-      const drafts = this.loadAll()
+      const drafts = readDrafts()
       return Object.keys(drafts).length > 0
     },
 
     count(): number {
-      const drafts = this.loadAll()
+      const drafts = readDrafts()
       return Object.keys(drafts).length
     },
 
     getAllIds(): string[] {
-      const drafts = this.loadAll()
+      const drafts = readDrafts()
       return Object.keys(drafts)
     },
   }
@@ -827,6 +765,7 @@ export function supaStore<T extends BaseEntity>(
           subscriptionCount--
           if (subscriptionCount === 0 && activeSubscription) {
             try {
+              void activeSubscription.unsubscribe?.()
               supabaseClient.removeChannel(activeSubscription)
               activeSubscription = null
             } catch (err) {

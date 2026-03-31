@@ -1,10 +1,12 @@
 .blip-update-editor-shell {
   display: grid;
+  flex: 1;
   grid-template-rows: minmax(0, 0fr);
   opacity: 0;
   pointer-events: none;
   transform: translateY(-0.35rem);
   transition: var(--transitions-primary);
+  width: 100%;
   will-change: grid-template-rows, opacity, transform;
 
   &.is-open {
@@ -16,41 +18,76 @@
 }
 
 .blip-update-editor-layer {
-  position: relative;
-}
-
-.blip-update-editor-backdrop {
-  display: none;
-}
-
-.blip-update-editor-shell-inner {
   display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  min-height: 0;
-  overflow: visible;
-  padding-bottom: 0;
+  position: relative;
+  width: 100%;
 }
 
-.blip-update-editor-shell.is-open .blip-update-editor-shell-inner {
-  padding-bottom: 0.75rem;
+.blip-update-editor-overlay {
+  &.dialog-overlay {
+    background: rgba(var(--colors-mono-01-rgb), 0.72);
+  }
+}
+
+.blip-update-editor-dialog {
+  &.dialog {
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    color: inherit;
+    display: flex;
+    gap: 0;
+    max-height: none;
+    max-width: none;
+    min-width: 0;
+    outline: none;
+    overflow: visible;
+    padding: 0;
+    width: auto;
+
+    &:focus,
+    &:focus-visible {
+      outline: none;
+    }
+  }
+}
+
+.blip-update-editor-dialog-frame {
+  display: flex;
+  height: 100%;
+  width: 100%;
+}
+
+.blip-update-editor-surface {
+  &.blip-editor-shell {
+    gap: 0.25rem !important;
+  }
+
+  width: 100%;
+  min-height: 0;
+}
+
+.blip-update-editor-body {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.blip-update-editor-form {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  width: 100%;
 }
 
 .blip-update-editor-top-row {
   align-items: center;
   display: flex;
   gap: 1rem;
-  justify-content: space-between;
-}
-
-.blip-update-editor-close {
-  pointer-events: auto;
-  margin: 0;
-
-  .icon {
-    color: var(--colors-mono-08);
-    font-size: 0.95rem;
-  }
+  justify-content: flex-start;
+  margin-bottom: -0.25rem;
 }
 
 .blip-update-editor-mode-label {
@@ -62,124 +99,65 @@
   text-transform: uppercase;
 }
 
-.blip-update-editor {
-  width: 100%;
-}
-
-.blip-update-editor-body {
+.blip-update-editor-dialog-title {
+  border: 0;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  height: 1px;
+  margin: -1px;
   overflow: hidden;
-}
-
-.button.blip-update-editor-save {
-  background: rgba(var(--colors-mono-01-rgb), 0.75);
-  border: 0.0625rem solid var(--colors-mono-01);
-  border-radius: 999rem;
-  color: var(--colors-resonant-blue);
-  padding-left: 0.625rem;
-  padding-right: 0.625rem;
-  text-shadow: none;
-
-  &:hover {
-    background: rgba(var(--colors-mono-01-rgb), 0.9);
-  }
-
-  .icon {
-    color: var(--colors-resonant-blue);
-    font-size: 1rem;
-  }
-}
-
-.blip-update-editor-delete {
-  .icon {
-    color: rgba(var(--colors-error-rgb), 0.75);
-    font-size: 1.1rem;
-  }
-}
-
-.blip-update-editor-actions {
-  align-items: center;
-  display: flex;
-  gap: 0.25rem;
-}
-
-.blip-update-editor-publish {
-  &.published {
-    .icon {
-      color: var(--colors-success);
-    }
-  }
-
-  &.unpublished {
-    .icon {
-      color: var(--colors-warning);
-    }
-  }
+  padding: 0;
+  position: absolute;
+  white-space: nowrap;
+  width: 1px;
 }
 
 @media (max-width: 48rem) {
-  .blip-update-editor-layer {
-    inset: 0;
-    opacity: 0;
+  .blip-update-editor-dialog-frame {
     overscroll-behavior: contain;
-    pointer-events: none;
-    position: fixed;
-    transition: opacity 200ms ease;
-    z-index: 20;
-
-    &.is-open {
-      opacity: 1;
-      pointer-events: auto;
-    }
-  }
-
-  .blip-update-editor-backdrop {
-    background: rgba(var(--colors-mono-01-rgb), 0.72);
-    border: 0;
-    display: block;
-    inset: 0;
-    margin: 0;
-    padding: 0;
-    position: absolute;
+    flex: 1;
+    min-height: 0;
     width: 100%;
   }
 
-  .blip-update-editor-shell {
-    bottom: calc(var(--blip-keyboard-inset, 0px) + 2rem);
-    left: 0.5rem;
-    position: absolute;
-    right: 0.5rem;
-    top: 0.5rem;
-    transform: translateY(-0.15rem);
-
-    &.is-open {
-      transform: translateY(0);
+  .blip-update-editor-dialog {
+    &.dialog {
+      --dialog-transform-base: none;
+      --dialog-transform-enter: translateY(0.5rem);
+      --dialog-transform-exit: translateY(0.5rem);
+      bottom: var(--blip-keyboard-inset, 0px);
+      left: 0;
+      max-width: none;
+      right: 0;
+      top: 0;
+      transform: none;
+      width: 100vw;
     }
   }
 
-  .blip-update-editor-shell-inner {
-    background: var(--colors-mono-02);
-    border: 1px solid var(--colors-mono-04);
-    border-radius: 0.5rem;
-    height: 100%;
-    max-height: none;
+  .blip-update-editor-shell {
+    flex: 1;
     min-height: 0;
-    padding: 0.5rem;
+    height: 100%;
   }
 
-  .blip-update-editor-body {
+  .blip-update-editor-dialog {
+    &.dialog {
+      .blip-update-editor-surface {
+        border-radius: 0;
+        height: 100%;
+      }
+    }
+  }
+
+  .blip-update-editor-form {
     display: flex;
     flex: 1;
     min-height: 0;
     overflow: hidden;
   }
 
-  .blip-update-editor {
-    display: flex;
-    flex: 1;
-    min-height: 0;
-  }
-
-  .blip-update-editor {
+  .blip-update-editor-form {
     .markdown-editor {
       display: flex;
       flex: 1;
@@ -190,18 +168,22 @@
         display: flex;
         flex: 1;
         flex-direction: column;
-        gap: 0 !important;
+        gap: 0.75rem !important;
         height: 100%;
         min-height: 0;
       }
 
       .editor-container {
+        background: rgba(var(--colors-mono-01-rgb), 0.32);
+        border: 0.0625rem solid var(--colors-mono-04);
+        border-radius: var(--radius-md);
         display: flex;
         flex: 1;
         flex-direction: column;
         height: 100%;
         max-height: none;
         min-height: 0;
+        overflow: hidden;
 
         > [data-placeholder] {
           display: flex;
@@ -221,9 +203,53 @@
           min-height: 100%;
         }
       }
+    }
 
-      .status-bar {
-        margin-top: auto;
+    .blip-editor-control-pill {
+      .blip-editor-control-pill-content {
+        padding: 0.625rem 0.9375rem 0.625rem 0.75rem;
+      }
+
+      .icon-button.xs {
+        --size: 2.875rem;
+
+        .icon {
+          font-size: 1.5rem;
+        }
+      }
+    }
+
+    .blip-editor-close {
+      .icon {
+        font-size: 1.5rem;
+      }
+    }
+
+    .blip-editor-toolbar-toggle {
+      height: 2.875rem;
+      padding-inline: 0.75rem;
+
+      .icon {
+        font-size: 1.125rem;
+      }
+    }
+
+    .blip-editor-control-pill-right {
+      gap: 0.5rem;
+    }
+
+    .blip-editor-status-slot {
+      height: 2.5rem;
+      min-width: 2.5rem;
+    }
+
+    .blip-editor-status-indicator {
+      .status-saved-icon {
+        font-size: 1.5rem;
+      }
+
+      .blip-editor-status-spinner {
+        --size: 2rem;
       }
     }
   }

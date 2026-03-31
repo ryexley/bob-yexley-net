@@ -51,7 +51,18 @@ interface MarkdownEditorProps {
   statusFading?: boolean
   statusActions?: Component<any>
   statusContext?: any
-  BelowEditor?: Component
+  BelowEditor?: Component<MarkdownEditorBelowEditorProps>
+}
+
+export type MarkdownEditorBelowEditorProps = {
+  onToggleToolbar: () => void
+  toolbarVisible: boolean
+  statusText?: string
+  statusIcon?: JSX.Element
+  showStatus?: boolean
+  statusFading?: boolean
+  statusActions?: Component<any>
+  statusContext?: any
 }
 
 const propDefaults = {
@@ -88,8 +99,11 @@ export function MarkdownEditor(props: MarkdownEditorProps) {
   let editorRef: HTMLDivElement | undefined
   let editorInstance: Editor | undefined
   let editorKeydownCleanup: (() => void) | undefined
+  let focusRetryTimeout: ReturnType<typeof setTimeout> | undefined
   let pendingFocusAfterMount = false
   let lastHandledFocusNonce: number | undefined
+  let disposed = false
+  let editorCreateGeneration = 0
   const [activeFormats, setActiveFormats] = createSignal<string[]>([])
   const [disabledFormats, setDisabledFormats] = createSignal<string[]>([])
   const [selectedText, setSelectedText] = createSignal("")
@@ -136,6 +150,25 @@ export function MarkdownEditor(props: MarkdownEditorProps) {
     setSelectedLinkRangeTo(linkSelectionState.rangeTo)
   }
 
+  const clearFocusRetryTimeout = () => {
+    if (focusRetryTimeout) {
+      clearTimeout(focusRetryTimeout)
+      focusRetryTimeout = undefined
+    }
+  }
+
+  const scheduleEditorFocus = () => {
+    queueMicrotask(() => {
+      focusEditor()
+    })
+
+    clearFocusRetryTimeout()
+    focusRetryTimeout = setTimeout(() => {
+      focusEditor()
+      focusRetryTimeout = undefined
+    }, 0)
+  }
+
   // Create editor only once when editorRef is available
   // Use untrack to prevent re-running when initialValue changes
   createEffect(() => {
@@ -143,6 +176,7 @@ export function MarkdownEditor(props: MarkdownEditorProps) {
       return
     }
 
+    const generation = ++editorCreateGeneration
     // Capture initialValue once, non-reactively
     const initialValue = local.initialValue || ""
 
@@ -157,9 +191,7 @@ export function MarkdownEditor(props: MarkdownEditorProps) {
           }
 
           pendingFocusAfterMount = false
-          queueMicrotask(() => {
-            focusEditor()
-          })
+          scheduleEditorFocus()
         })
         ctx.get(listenerCtx).markdownUpdated((ctx, markdown) => {
           local.onChange?.(markdown)
@@ -177,6 +209,11 @@ export function MarkdownEditor(props: MarkdownEditorProps) {
       .use(listener)
       .create()
       .then(e => {
+        if (disposed || generation !== editorCreateGeneration) {
+          void e.destroy(true)
+          return
+        }
+
         editorInstance = e
         e.action(ctx => {
           const editorDom = ctx.get(editorViewCtx).dom
@@ -211,6 +248,9 @@ export function MarkdownEditor(props: MarkdownEditorProps) {
         })
         syncToolbarState()
       })
+      .catch(error => {
+        console.error("Failed to create Milkdown editor:", error)
+      })
   })
 
   createEffect(() => {
@@ -234,9 +274,7 @@ export function MarkdownEditor(props: MarkdownEditorProps) {
 
     lastHandledFocusNonce = focusNonce
     if (editorInstance) {
-      queueMicrotask(() => {
-        focusEditor()
-      })
+      scheduleEditorFocus()
       return
     }
 
@@ -244,9 +282,17 @@ export function MarkdownEditor(props: MarkdownEditorProps) {
   })
 
   onCleanup(() => {
+    disposed = true
+    editorCreateGeneration += 1
     pendingFocusAfterMount = false
+    clearFocusRetryTimeout()
     editorKeydownCleanup?.()
-    editorInstance?.destroy()
+    editorKeydownCleanup = undefined
+    const currentEditor = editorInstance
+    editorInstance = undefined
+    if (currentEditor) {
+      void currentEditor.destroy(true)
+    }
   })
 
   const handleToggleToolbar = () => {
@@ -262,6 +308,23 @@ export function MarkdownEditor(props: MarkdownEditorProps) {
     editorInstance.action(ctx => {
       const editorView = ctx.get(editorViewCtx)
       const editorDom = editorView.dom as HTMLElement
+      const proseMirror = (
+        editorDom.matches(".ProseMirror")
+          ? editorDom
+          : editorDom.querySelector(".ProseMirror")
+      ) as HTMLElement | null
+
+      try {
+        editorView.focus()
+      } catch {}
+
+      try {
+        if (proseMirror) {
+          proseMirror.focus({ preventScroll: true })
+          return
+        }
+      } catch {}
+
       try {
         editorDom.focus({ preventScroll: true })
       } catch {
@@ -294,7 +357,18 @@ export function MarkdownEditor(props: MarkdownEditorProps) {
             data-placeholder={local.placeholder}
           />
         </div>
-        <Show when={local.BelowEditor}>{local.BelowEditor?.({})}</Show>
+        <Show when={local.BelowEditor}>
+          {local.BelowEditor?.({
+            onToggleToolbar: handleToggleToolbar,
+            toolbarVisible: toolbarVisible(),
+            statusText: local.statusText,
+            statusIcon: local.statusIcon,
+            showStatus: local.showStatus,
+            statusFading: local.statusFading,
+            statusActions: local.statusActions,
+            statusContext: local.statusContext,
+          })}
+        </Show>
         {local.showStatusBar ? (
           <StatusBar
             onToggleToolbar={handleToggleToolbar}

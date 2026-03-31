@@ -26,7 +26,7 @@ export function BlipActions(props: BlipActionsProps) {
 
   const { isAuthenticated, user } = useAuth()
   const supabase = useSupabase()
-  const store = blipStore(supabase.client)
+  const store = blipStore(supabase.client, { subscribe: false })
 
   const showToolbar = createMemo(() => {
     if (isEmpty(local.blip)) {

@@ -9,7 +9,6 @@ import {
   Show,
 } from "solid-js"
 import { useNavigate } from "@solidjs/router"
-import { BlipEditor } from "~/modules/blips/components/blip-editor"
 import { Drawer } from "@/components/drawer"
 import { useAuth } from "@/context/auth-context"
 import { useViewport } from "@/context/viewport"
@@ -23,6 +22,7 @@ import { withWindow } from "@/util/browser"
 import { generateRandomRadialGradients } from "@/util/image"
 import { isNotEmpty } from "@/util"
 import { ProfileDrawer } from "@/modules/home/components/profile-drawer"
+import { useBlipComposer } from "@/modules/blips/context/blip-composer-context"
 import "./user-menu.css"
 
 const tr = ptr("home.components.userMenu")
@@ -38,7 +38,7 @@ export function UserMenu() {
   const navigate = useNavigate()
   const { isAdmin, isAuthenticated, isSuperuser, user, visitor, logout } = useAuth() as any
   const viewport = useViewport()
-  const [showNewBlipDrawer, setShowNewBlipDrawer] = createSignal(false)
+  const { openNewRoot } = useBlipComposer()
   const [showProfileDrawer, setShowProfileDrawer] = createSignal(false)
   const [showMobileMenuDrawer, setShowMobileMenuDrawer] = createSignal(false)
   const [hasMounted, setHasMounted] = createSignal(false)
@@ -100,7 +100,7 @@ export function UserMenu() {
 
   const openBlipEditor = () => {
     closeMobileMenu()
-    setShowNewBlipDrawer(true)
+    openNewRoot()
   }
 
   const handleLogout = async () => {
@@ -239,11 +239,6 @@ export function UserMenu() {
         <ProfileDrawer
           open={showProfileDrawer()}
           onOpenChange={open => setShowProfileDrawer(open)}
-        />
-        <BlipEditor
-          open={showNewBlipDrawer()}
-          onPanelOpenChange={open => setShowNewBlipDrawer(open)}
-          close={() => setShowNewBlipDrawer(false)}
         />
       </>
     </Show>
