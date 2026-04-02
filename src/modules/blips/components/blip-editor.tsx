@@ -3,6 +3,7 @@ import {
   createMemo,
   createSignal,
   For,
+  on,
   onCleanup,
   splitProps,
   Show,
@@ -55,7 +56,6 @@ type SaveStatus =
 type EditorView = "picker" | "editor"
 
 const tr = ptr("blips.components.blipEditor")
-
 export function BlipEditor(props: BlipEditorProps) {
   const [local] = splitProps(props, [
     "open",
@@ -121,6 +121,8 @@ export function BlipEditor(props: BlipEditorProps) {
   const focusBridge = createEditorFocusBridge({
     defaultDelayMs: FOCUS_AFTER_OPEN_DELAY_MS,
     requestEditorFocus,
+    shouldAutoFocusOnOpen: () => true,
+    shouldUseFocusProxy: () => true,
   })
 
   const preventEditorBlur = (event: MouseEvent | TouchEvent) => {
@@ -491,108 +493,114 @@ export function BlipEditor(props: BlipEditorProps) {
   })
 
   // Reset state when drawer closes
-  createEffect(() => {
-    if (local.open) {
-      hasOpenedAtLeastOnce = true
-      setSkipClosePersist(false)
-      setIsEditorMounted(true)
-      if (resetStateTimeout) {
-        clearTimeout(resetStateTimeout)
-        resetStateTimeout = null
-      }
-      return
-    }
+  createEffect(
+    on(
+      () => local.open,
+      open => {
+        if (open) {
+          hasOpenedAtLeastOnce = true
+          setSkipClosePersist(false)
+          setIsEditorMounted(true)
+          focusBridge.cancelTextInputSessionCleanup()
+          if (resetStateTimeout) {
+            clearTimeout(resetStateTimeout)
+            resetStateTimeout = null
+          }
+          return
+        }
 
-    // Ignore initial closed state while mounted; only run close logic after
-    // the drawer has been opened at least once in this mounted lifecycle.
-    if (!hasOpenedAtLeastOnce) {
-      return
-    }
+        // Ignore initial closed state while mounted; only run close logic after
+        // the drawer has been opened at least once in this mounted lifecycle.
+        if (!hasOpenedAtLeastOnce) {
+          return
+        }
 
-    const closingBlipId = currentBlipId()
-    const closingContent = content()
-    const cachedContent = lastCachedContent()
-    const dbSavedContent = lastDbSavedContent()
-    const closingTagValues = selectedTagValues()
-    const dbSavedTagValues = lastDbSavedTagValues()
-    const userId = user()?.id
+        const closingBlipId = currentBlipId()
+        const closingContent = content()
+        const cachedContent = lastCachedContent()
+        const dbSavedContent = lastDbSavedContent()
+        const closingTagValues = selectedTagValues()
+        const dbSavedTagValues = lastDbSavedTagValues()
+        const userId = user()?.id
 
-    // Cancel any pending saves
-    debouncedCacheSave.cancel()
-    debouncedDbSave.cancel()
-    debouncedTagSave.cancel()
+        // Cancel any pending saves
+        debouncedCacheSave.cancel()
+        debouncedDbSave.cancel()
+        debouncedTagSave.cancel()
 
-    if (!skipClosePersist()) {
-      // If there are unsaved changes when closing, persist them immediately.
-      // This prevents losing drafts when users close quickly and refresh.
-      const hasBlipId = Boolean(closingBlipId)
-      const hasContent = closingContent.trim().length > 0
-      const needsCacheSave = closingContent !== cachedContent
-      const needsDbSave = closingContent !== dbSavedContent
-      const needsTagSave = !areTagValuesEqual(closingTagValues, dbSavedTagValues)
+        if (!skipClosePersist()) {
+          // If there are unsaved changes when closing, persist them immediately.
+          // This prevents losing drafts when users close quickly and refresh.
+          const hasBlipId = Boolean(closingBlipId)
+          const hasContent = closingContent.trim().length > 0
+          const needsCacheSave = closingContent !== cachedContent
+          const needsDbSave = closingContent !== dbSavedContent
+          const needsTagSave = !areTagValuesEqual(closingTagValues, dbSavedTagValues)
 
-      if (hasBlipId && hasContent && needsCacheSave) {
-        void store.upsert(
-          {
-            id: closingBlipId!,
-            content: closingContent,
-            ...(userId ? { user_id: userId } : {}),
-            blip_type: BLIP_TYPES.ROOT,
-            parent_id: null,
-          },
-          { cacheOnly: true },
-        )
-      }
+          if (hasBlipId && hasContent && needsCacheSave) {
+            void store.upsert(
+              {
+                id: closingBlipId!,
+                content: closingContent,
+                ...(userId ? { user_id: userId } : {}),
+                blip_type: BLIP_TYPES.ROOT,
+                parent_id: null,
+              },
+              { cacheOnly: true },
+            )
+          }
 
-      if (hasBlipId && hasContent && needsDbSave && userId) {
-        void store.upsert({
-          id: closingBlipId!,
-          content: closingContent,
-          user_id: userId,
-          blip_type: BLIP_TYPES.ROOT,
-          parent_id: null,
-        })
-      }
+          if (hasBlipId && hasContent && needsDbSave && userId) {
+            void store.upsert({
+              id: closingBlipId!,
+              content: closingContent,
+              user_id: userId,
+              blip_type: BLIP_TYPES.ROOT,
+              parent_id: null,
+            })
+          }
 
-      if (hasBlipId && needsTagSave && userId) {
-        void persistTagsToDatabase(closingBlipId!, closingTagValues)
-      }
-    }
+          if (hasBlipId && needsTagSave && userId) {
+            void persistTagsToDatabase(closingBlipId!, closingTagValues)
+          }
+        }
 
-    // Clear timeouts
-    focusBridge.clearScheduledFocus()
-    if (hideStatusTimeout) {
-      clearTimeout(hideStatusTimeout)
-    }
-    if (fadeStatusTimeout) {
-      clearTimeout(fadeStatusTimeout)
-    }
+        // Clear timeouts
+        focusBridge.clearTextInputSession("blipEditor.close")
+        if (hideStatusTimeout) {
+          clearTimeout(hideStatusTimeout)
+        }
+        if (fadeStatusTimeout) {
+          clearTimeout(fadeStatusTimeout)
+        }
 
-    // Small delay to allow drawer animation to complete
-    resetStateTimeout = setTimeout(() => {
-      // If the drawer has reopened, skip this stale close-reset.
-      if (local.open) {
-        resetStateTimeout = null
-        return
-      }
+        // Small delay to allow drawer animation to complete
+        resetStateTimeout = setTimeout(() => {
+          // If the drawer has reopened, skip this stale close-reset.
+          if (local.open) {
+            resetStateTimeout = null
+            return
+          }
 
-      setCurrentBlipId(null)
-      setContent("")
-      setLastCachedContent("")
-      setLastDbSavedContent("")
-      setHasPersistedCurrentBlip(false)
-      setLastDbSavedTagValues([])
-      setSaveStatus("idle")
-      setEditorView("editor")
-      setSelectedTags([])
-      setShowStatus(false)
-      setStatusFading(false)
-      setSkipClosePersist(false)
-      setIsEditorMounted(false)
-      restoreEditorDocumentInteractionState()
-      resetStateTimeout = null
-    }, TIME.HALF_SECOND)
-  })
+          setCurrentBlipId(null)
+          setContent("")
+          setLastCachedContent("")
+          setLastDbSavedContent("")
+          setHasPersistedCurrentBlip(false)
+          setLastDbSavedTagValues([])
+          setSaveStatus("idle")
+          setEditorView("editor")
+          setSelectedTags([])
+          setShowStatus(false)
+          setStatusFading(false)
+          setSkipClosePersist(false)
+          setIsEditorMounted(false)
+          restoreEditorDocumentInteractionState()
+          resetStateTimeout = null
+        }, TIME.HALF_SECOND)
+      },
+    ),
+  )
   // Cleanup on unmount
   onCleanup(() => {
     debouncedCacheSave.cancel()
@@ -602,7 +610,7 @@ export function BlipEditor(props: BlipEditorProps) {
       clearTimeout(resetStateTimeout)
       resetStateTimeout = null
     }
-    focusBridge.clearScheduledFocus()
+    focusBridge.clearTextInputSession("blipEditor.cleanup")
     if (hideStatusTimeout) {
       clearTimeout(hideStatusTimeout)
     }
@@ -876,6 +884,7 @@ export function BlipEditor(props: BlipEditorProps) {
         <EditorShell
           focusProxyRef={focusBridge.setFocusProxyRef}
           focusProxyAriaLabel={tr("placeholder")}
+          showFocusProxy
           Header={
             <Show when={editorView() === "picker"}>
               <div class="blip-editor-picker-header">
@@ -903,6 +912,7 @@ export function BlipEditor(props: BlipEditorProps) {
                 <MarkdownEditor
                   instanceKey="blip-editor"
                   focusNonce={editorFocusNonce()}
+                  focusCaretPlacement="end"
                   placeholder={tr("placeholder")}
                   initialValue={content()}
                   onChange={handleContentChange}

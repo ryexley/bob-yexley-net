@@ -1,6 +1,6 @@
 .blip-editor-overlay {
   &.dialog-overlay {
-    background: rgba(var(--colors-mono-01-rgb), 0.72);
+    background: rgba(var(--colors-mono-01-rgb), 0.75);
   }
 }
 
@@ -41,18 +41,9 @@
   gap: 0.75rem;
   min-height: 0;
   overflow: hidden;
-  padding: 0.75rem;
+  padding: 0.25rem 0.75rem 0.75rem;
   position: relative;
   width: 100%;
-
-  .handle {
-    align-self: center;
-    background: var(--colors-mono-04);
-    border-radius: 9999px;
-    flex: 0 0 auto;
-    height: 0.25rem;
-    width: 6rem;
-  }
 }
 
 .blip-editor-focus-proxy {
@@ -426,8 +417,8 @@
       }
 
       .blip-editor-toolbar-toggle {
-        height: 2.875rem;
-        padding-inline: 0.75rem;
+        height: 2.125rem;
+        padding-inline: 0.5rem;
 
         .icon {
           font-size: 1.125rem;
@@ -477,11 +468,8 @@
     box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.32);
     max-height: min(44rem, calc(100dvh - 2rem));
     min-height: 16rem;
+    padding-top: 0.75rem;
     width: 100%;
-
-    .handle {
-      display: none;
-    }
   }
 
   .blip-editor-body {
@@ -490,5 +478,17 @@
 
   .blip-editor-form {
     overflow: visible;
+  }
+}
+
+@media (max-width: calc(48rem - 0.001rem)) {
+  .blip-editor-overlay {
+    &.dialog-overlay {
+      background: var(--colors-mono-02);
+    }
+  }
+
+  body.blip-composer-open {
+    background: var(--colors-mono-02);
   }
 }

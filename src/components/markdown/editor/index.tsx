@@ -19,7 +19,8 @@ import { commonmark } from "@milkdown/preset-commonmark"
 import { listener, listenerCtx } from "@milkdown/plugin-listener"
 import { emoji } from "@milkdown/plugin-emoji"
 import { history } from "@milkdown/prose/history"
-import { clsx as cx, isEmpty } from "@/util"
+import { TextSelection } from "@milkdown/prose/state"
+import { clsx as cx } from "@/util"
 import { withWindow } from "@/util/browser"
 import { Stack } from "@/components/stack"
 import { placeholder } from "./plugins/placeholder"
@@ -38,9 +39,11 @@ import "./styles.css"
 interface MarkdownEditorProps {
   instanceKey: string
   focusNonce?: number
+  focusCaretPlacement?: "start" | "end"
   initialValue?: string
   placeholder?: string
   onChange?: (markdown: string) => void
+  onEditorReady?: () => void
   showToolbar?: boolean
   showStatusBar?: boolean
   class?: string
@@ -70,19 +73,85 @@ const propDefaults = {
   showStatusBar: true,
 }
 
-const toolbarVisibleStorageKey = (instanceKey: string) =>
-  isEmpty(instanceKey)
-    ? "markdown-editor:toolbar-visible"
-    : `markdown-editor:${instanceKey}:toolbar-visible`
+export const TOOLBAR_VISIBLE_STORAGE_KEY = "markdown-editor:toolbar-visible"
+
+const isLegacyToolbarVisibleStorageKey = (key: string) =>
+  key.startsWith("markdown-editor:") &&
+  key.endsWith(":toolbar-visible") &&
+  key !== TOOLBAR_VISIBLE_STORAGE_KEY
+
+const getLegacyToolbarVisibleStorageKeys = (
+  storage: Pick<Storage, "length" | "key">,
+) => {
+  const keys: string[] = []
+
+  for (let index = 0; index < storage.length; index += 1) {
+    const key = storage.key(index)
+    if (key && isLegacyToolbarVisibleStorageKey(key)) {
+      keys.push(key)
+    }
+  }
+
+  return keys
+}
+
+export const readToolbarVisiblePreference = (
+  storage: Pick<Storage, "getItem" | "setItem" | "removeItem" | "length" | "key"> | undefined,
+  fallback: boolean,
+) => {
+  if (!storage) {
+    return fallback
+  }
+
+  const sharedValue = storage.getItem(TOOLBAR_VISIBLE_STORAGE_KEY)
+  const legacyKeys = getLegacyToolbarVisibleStorageKeys(storage)
+
+  if (sharedValue !== null) {
+    for (const key of legacyKeys) {
+      storage.removeItem(key)
+    }
+
+    return sharedValue !== "false"
+  }
+
+  let migratedLegacyValue: string | null = null
+  for (const key of legacyKeys) {
+    migratedLegacyValue ??= storage.getItem(key)
+    storage.removeItem(key)
+  }
+
+  if (migratedLegacyValue !== null) {
+    storage.setItem(TOOLBAR_VISIBLE_STORAGE_KEY, migratedLegacyValue)
+    return migratedLegacyValue !== "false"
+  }
+
+  return fallback
+}
+
+export const writeToolbarVisiblePreference = (
+  storage: Pick<Storage, "setItem" | "removeItem" | "length" | "key"> | undefined,
+  value: boolean,
+) => {
+  if (!storage) {
+    return
+  }
+
+  storage.setItem(TOOLBAR_VISIBLE_STORAGE_KEY, String(value))
+  for (const key of getLegacyToolbarVisibleStorageKeys(storage)) {
+    storage.removeItem(key)
+  }
+}
 
 export function MarkdownEditor(props: MarkdownEditorProps) {
   const propsWithDefaults = mergeProps(propDefaults, props)
   const [local, rest] = splitProps(propsWithDefaults, [
     "instanceKey",
     "focusNonce",
+    "focusCaretPlacement",
     "initialValue",
     "placeholder",
     "onChange",
+    "onEditorReady",
     "showToolbar",
     "showStatusBar",
     "class",
@@ -100,7 +169,7 @@ export function MarkdownEditor(props: MarkdownEditorProps) {
   let editorInstance: Editor | undefined
   let editorKeydownCleanup: (() => void) | undefined
   let focusRetryTimeout: ReturnType<typeof setTimeout> | undefined
-  let pendingFocusAfterMount = false
+  let pendingFocusAfterMount: "start" | "end" | null = null
   let lastHandledFocusNonce: number | undefined
   let disposed = false
   let editorCreateGeneration = 0
@@ -117,12 +186,7 @@ export function MarkdownEditor(props: MarkdownEditorProps) {
   const [linkEditorRequestNonce, setLinkEditorRequestNonce] = createSignal(0)
   const [toolbarVisible, setToolbarVisible] = createSignal(
     withWindow(
-      () => {
-        return (
-          localStorage.getItem(toolbarVisibleStorageKey(local.instanceKey)) !==
-          "false"
-        )
-      },
+      () => readToolbarVisiblePreference(localStorage, local.showToolbar),
       () => local.showToolbar,
     ),
   )
@@ -157,14 +221,16 @@ export function MarkdownEditor(props: MarkdownEditorProps) {
     }
   }
 
-  const scheduleEditorFocus = () => {
+  const scheduleEditorFocus = (
+    caretPlacement: "start" | "end" = local.focusCaretPlacement ?? "start",
+  ) => {
     queueMicrotask(() => {
-      focusEditor()
+      focusEditor(caretPlacement)
     })
 
     clearFocusRetryTimeout()
     focusRetryTimeout = setTimeout(() => {
-      focusEditor()
+      focusEditor(caretPlacement)
       focusRetryTimeout = undefined
     }, 0)
   }
@@ -186,12 +252,14 @@ export function MarkdownEditor(props: MarkdownEditorProps) {
         ctx.set(defaultValueCtx, initialValue)
         ctx.update(prosePluginsCtx, prev => [...prev, history()])
         ctx.get(listenerCtx).mounted(() => {
-          if (!pendingFocusAfterMount) {
+          local.onEditorReady?.()
+          if (pendingFocusAfterMount === null) {
             return
           }
 
-          pendingFocusAfterMount = false
-          scheduleEditorFocus()
+          const caretPlacement = pendingFocusAfterMount
+          pendingFocusAfterMount = null
+          scheduleEditorFocus(caretPlacement)
         })
         ctx.get(listenerCtx).markdownUpdated((ctx, markdown) => {
           local.onChange?.(markdown)
@@ -255,10 +323,7 @@ export function MarkdownEditor(props: MarkdownEditorProps) {
 
   createEffect(() => {
     withWindow(() => {
-      localStorage.setItem(
-        toolbarVisibleStorageKey(local.instanceKey),
-        String(toolbarVisible()),
-      )
+      writeToolbarVisiblePreference(localStorage, toolbarVisible())
     })
   })
 
@@ -274,17 +339,17 @@ export function MarkdownEditor(props: MarkdownEditorProps) {
 
     lastHandledFocusNonce = focusNonce
     if (editorInstance) {
-      scheduleEditorFocus()
+      scheduleEditorFocus(local.focusCaretPlacement ?? "start")
       return
     }
 
-    pendingFocusAfterMount = true
+    pendingFocusAfterMount = local.focusCaretPlacement ?? "start"
   })
 
   onCleanup(() => {
     disposed = true
     editorCreateGeneration += 1
-    pendingFocusAfterMount = false
+    pendingFocusAfterMount = null
     clearFocusRetryTimeout()
     editorKeydownCleanup?.()
     editorKeydownCleanup = undefined
@@ -300,13 +365,20 @@ export function MarkdownEditor(props: MarkdownEditorProps) {
     setToolbarVisible(visible)
   }
 
-  const focusEditor = () => {
+  const focusEditor = (caretPlacement: "start" | "end" = "start") => {
     if (!editorInstance) {
       return
     }
 
     editorInstance.action(ctx => {
       const editorView = ctx.get(editorViewCtx)
+      if (caretPlacement === "end") {
+        const end = editorView.state.doc.content.size
+        const transaction = editorView.state.tr.setSelection(
+          TextSelection.create(editorView.state.doc, end),
+        )
+        editorView.dispatch(transaction.scrollIntoView())
+      }
       const editorDom = editorView.dom as HTMLElement
       const proseMirror = (
         editorDom.matches(".ProseMirror")

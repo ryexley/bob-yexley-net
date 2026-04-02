@@ -1,5 +1,6 @@
 import {
   createContext,
+  createEffect,
   createMemo,
   createSignal,
   onCleanup,
@@ -29,7 +30,6 @@ type BlipComposerContextValue = {
 }
 
 const BlipComposerContext = createContext<BlipComposerContextValue>()
-
 export function BlipComposerProvider(props: ParentProps) {
   const [activeKind, setActiveKind] = createSignal<BlipComposerKind | null>(null)
   const [hasRootHost, setHasRootHost] = createSignal(false)
@@ -51,6 +51,19 @@ export function BlipComposerProvider(props: ParentProps) {
     createSignal<HTMLDivElement | null>(null)
   const [updateFocusNonce, setUpdateFocusNonce] = createSignal(0)
   const [updateCloseRequestNonce, setUpdateCloseRequestNonce] = createSignal(0)
+
+  createEffect(() => {
+    if (typeof document === "undefined") {
+      return
+    }
+
+    const isComposerOpen = rootOpen() || updateOpen()
+    document.body.classList.toggle("blip-composer-open", isComposerOpen)
+
+    onCleanup(() => {
+      document.body.classList.remove("blip-composer-open")
+    })
+  })
 
   const ensureRootHost = () => {
     if (!hasRootHost()) {
@@ -225,10 +238,15 @@ export function BlipComposerProvider(props: ParentProps) {
 }
 
 export function useBlipComposer() {
-  const context = useContext(BlipComposerContext)
+  const context = useOptionalBlipComposer()
   if (!context) {
     throw new Error("useBlipComposer must be used within a BlipComposerProvider")
   }
 
+  return context
+}
+
+export function useOptionalBlipComposer() {
+  const context = useContext(BlipComposerContext)
   return context
 }

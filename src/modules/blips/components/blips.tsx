@@ -4,7 +4,7 @@ import { Blip } from "@/modules/blips/components/blip"
 import { useAuth } from "@/context/auth-context"
 import { useSupabase } from "@/context/services-context"
 import { tagStore } from "@/modules/blips/data"
-import { useBlipComposer } from "@/modules/blips/context/blip-composer-context"
+import { useOptionalBlipComposer } from "@/modules/blips/context/blip-composer-context"
 import "./blips.css"
 
 export function Blips(props: {
@@ -15,7 +15,7 @@ export function Blips(props: {
   const { isAuthenticated } = useAuth() as any
   const supabase = useSupabase()
   const tags = tagStore(supabase.client)
-  const { openEditRoot } = useBlipComposer()
+  const composer = useOptionalBlipComposer()
   const [hydratedTagsByBlipId, setHydratedTagsByBlipId] = createSignal<
     Record<string, string[]>
   >({})
@@ -52,7 +52,7 @@ export function Blips(props: {
   })
 
   const handleEdit = (blipId: string) => {
-    openEditRoot(blipId)
+    composer?.openEditRoot(blipId)
   }
 
   return (

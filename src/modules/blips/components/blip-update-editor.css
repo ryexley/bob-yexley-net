@@ -25,7 +25,7 @@
 
 .blip-update-editor-overlay {
   &.dialog-overlay {
-    background: rgba(var(--colors-mono-01-rgb), 0.72);
+    background: rgba(var(--colors-mono-01-rgb), 0.75);
   }
 }
 
@@ -49,6 +49,14 @@
     &:focus,
     &:focus-visible {
       outline: none;
+    }
+  }
+}
+
+@media (max-width: calc(48rem - 0.001rem)) {
+  .blip-update-editor-overlay {
+    &.dialog-overlay {
+      background: var(--colors-mono-02);
     }
   }
 }
@@ -226,8 +234,8 @@
     }
 
     .blip-editor-toolbar-toggle {
-      height: 2.875rem;
-      padding-inline: 0.75rem;
+      height: 2.125rem;
+      padding-inline: 0.5rem;
 
       .icon {
         font-size: 1.125rem;

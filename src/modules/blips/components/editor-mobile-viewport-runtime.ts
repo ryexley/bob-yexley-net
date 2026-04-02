@@ -79,8 +79,10 @@ export function useEditorMobileViewportRuntime(
     }
 
     const updateViewportMetrics = () => {
-      options.setKeyboardInsetPx(getKeyboardInsetPx())
-      options.setViewportTopPx?.(getViewportTopPx())
+      const keyboardInsetPx = getKeyboardInsetPx()
+      const viewportTopPx = getViewportTopPx()
+      options.setKeyboardInsetPx(keyboardInsetPx)
+      options.setViewportTopPx?.(viewportTopPx)
     }
 
     updateViewportMetrics()

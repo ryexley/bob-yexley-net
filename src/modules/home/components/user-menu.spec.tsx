@@ -12,32 +12,42 @@ const {
   viewportWidth,
   navigate,
   openNewRoot,
-} = vi.hoisted(() => ({
-  authState: {
-    profile: {
-      user: { id: "user-1", email: "visitor@example.com" },
-      role: "visitor",
-      roleCreatedAt: "2026-03-01T10:00:00.000Z",
-      roleUpdatedAt: "2026-03-01T10:00:00.000Z",
-      visitor: {
-        id: "visitor-1",
-        displayName: "Bob",
-        status: "active",
-        failedLoginAttempts: 0,
-        notes: null,
-        createdAt: "2026-03-01T10:00:00.000Z",
-      },
-    } as any,
-  },
-  replaceProfile: vi.fn(),
-  logout: vi.fn(async () => undefined),
-  updateCurrentVisitorDisplayName: vi.fn(),
-  notifySuccess: vi.fn(),
-  notifyError: vi.fn(),
-  viewportWidth: vi.fn(() => 1024),
-  navigate: vi.fn(),
-  openNewRoot: vi.fn(),
-}))
+  clearActiveTextInputSession,
+  cancelTextInputCleanup,
+} = vi.hoisted(() => {
+  const cancelTextInputCleanup = vi.fn()
+
+  return {
+    authState: {
+      profile: {
+        user: { id: "user-1", email: "visitor@example.com" },
+        role: "visitor",
+        roleCreatedAt: "2026-03-01T10:00:00.000Z",
+        roleUpdatedAt: "2026-03-01T10:00:00.000Z",
+        visitor: {
+          id: "visitor-1",
+          displayName: "Bob",
+          status: "active",
+          failedLoginAttempts: 0,
+          notes: null,
+          createdAt: "2026-03-01T10:00:00.000Z",
+        },
+      } as any,
+    },
+    replaceProfile: vi.fn(),
+    logout: vi.fn(async () => undefined),
+    updateCurrentVisitorDisplayName: vi.fn(),
+    notifySuccess: vi.fn(),
+    notifyError: vi.fn(),
+    viewportWidth: vi.fn(() => 1024),
+    navigate: vi.fn(),
+    openNewRoot: vi.fn(),
+    clearActiveTextInputSession: vi.fn(() => ({
+      cancel: cancelTextInputCleanup,
+    })),
+    cancelTextInputCleanup,
+  }
+})
 
 vi.mock("@solidjs/router", () => ({
   useNavigate: () => navigate,
@@ -71,9 +81,13 @@ vi.mock("@/context/viewport", () => ({
 }))
 
 vi.mock("@/modules/blips/context/blip-composer-context", () => ({
-  useBlipComposer: () => ({
+  useOptionalBlipComposer: () => ({
     openNewRoot,
   }),
+}))
+
+vi.mock("@/modules/blips/components/editor-focus-bridge", () => ({
+  clearActiveTextInputSession,
 }))
 
 vi.mock("@/components/notification", () => ({
@@ -157,6 +171,8 @@ describe("UserMenu", () => {
     viewportWidth.mockReturnValue(1024)
     navigate.mockReset()
     openNewRoot.mockReset()
+    clearActiveTextInputSession.mockClear()
+    cancelTextInputCleanup.mockClear()
   })
 
   it("does not render for signed-out users", () => {
@@ -217,6 +233,9 @@ describe("UserMenu", () => {
     expect(screen.getByTestId("mobile-user-menu")).toBeTruthy()
     expect(screen.getByRole("button", { name: "Profile" })).toBeTruthy()
     expect(screen.getByRole("button", { name: "Sign Out" })).toBeTruthy()
+    expect(clearActiveTextInputSession).toHaveBeenCalledWith(
+      "userMenu.mobileDrawer.beforeOpen",
+    )
   })
 
   it("opens the profile drawer from the mobile menu", async () => {

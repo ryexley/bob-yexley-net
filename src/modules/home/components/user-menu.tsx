@@ -22,7 +22,8 @@ import { withWindow } from "@/util/browser"
 import { generateRandomRadialGradients } from "@/util/image"
 import { isNotEmpty } from "@/util"
 import { ProfileDrawer } from "@/modules/home/components/profile-drawer"
-import { useBlipComposer } from "@/modules/blips/context/blip-composer-context"
+import { clearActiveTextInputSession } from "@/modules/blips/components/editor-focus-bridge"
+import { useOptionalBlipComposer } from "@/modules/blips/context/blip-composer-context"
 import "./user-menu.css"
 
 const tr = ptr("home.components.userMenu")
@@ -38,12 +39,15 @@ export function UserMenu() {
   const navigate = useNavigate()
   const { isAdmin, isAuthenticated, isSuperuser, user, visitor, logout } = useAuth() as any
   const viewport = useViewport()
-  const { openNewRoot } = useBlipComposer()
+  const composer = useOptionalBlipComposer()
   const [showProfileDrawer, setShowProfileDrawer] = createSignal(false)
   const [showMobileMenuDrawer, setShowMobileMenuDrawer] = createSignal(false)
   const [hasMounted, setHasMounted] = createSignal(false)
   const [mobileMenuContentElement, setMobileMenuContentElement] =
     createSignal<HTMLElement | null>(null)
+  let mobileMenuTextInputCleanupHandle:
+    | ReturnType<typeof clearActiveTextInputSession>
+    | null = null
   const useDrawerMenu = createMemo(
     () => hasMounted() && viewport.width() <= MOBILE_MENU_MAX_WIDTH,
   )
@@ -53,6 +57,17 @@ export function UserMenu() {
 
   onMount(() => {
     setHasMounted(true)
+  })
+
+  const cancelMobileMenuTextInputCleanup = () => {
+    if (mobileMenuTextInputCleanupHandle) {
+      mobileMenuTextInputCleanupHandle.cancel()
+      mobileMenuTextInputCleanupHandle = null
+    }
+  }
+
+  onCleanup(() => {
+    cancelMobileMenuTextInputCleanup()
   })
 
   createEffect(() => {
@@ -90,6 +105,7 @@ export function UserMenu() {
   })
 
   const closeMobileMenu = () => {
+    cancelMobileMenuTextInputCleanup()
     setShowMobileMenuDrawer(false)
   }
 
@@ -100,7 +116,7 @@ export function UserMenu() {
 
   const openBlipEditor = () => {
     closeMobileMenu()
-    openNewRoot()
+    composer?.openNewRoot()
   }
 
   const handleLogout = async () => {
@@ -196,13 +212,24 @@ export function UserMenu() {
             type="button"
             class="user-menu"
             aria-label="User menu"
-            onClick={() => setShowMobileMenuDrawer(true)}>
+            onClick={() => {
+              cancelMobileMenuTextInputCleanup()
+              mobileMenuTextInputCleanupHandle = clearActiveTextInputSession(
+                "userMenu.mobileDrawer.beforeOpen",
+              )
+              setShowMobileMenuDrawer(true)
+            }}>
             {renderUserMenuTrigger()}
           </button>
           <Drawer
             side="bottom"
             open={showMobileMenuDrawer()}
-            onOpenChange={open => setShowMobileMenuDrawer(open)}
+            onOpenChange={open => {
+              if (!open) {
+                cancelMobileMenuTextInputCleanup()
+              }
+              setShowMobileMenuDrawer(open)
+            }}
             class="user-menu-drawer"
             showTrigger={false}
             contentRef={setMobileMenuContentElement}
