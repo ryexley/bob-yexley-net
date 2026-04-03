@@ -22,6 +22,8 @@ import { history } from "@milkdown/prose/history"
 import { TextSelection } from "@milkdown/prose/state"
 import { clsx as cx } from "@/util"
 import { withWindow } from "@/util/browser"
+import { debounce } from "@/util/debounce"
+import { TIME } from "@/util/enums"
 import { Stack } from "@/components/stack"
 import { highlight } from "./plugins/highlight"
 import { placeholder } from "./plugins/placeholder"
@@ -45,6 +47,7 @@ interface MarkdownEditorProps {
   placeholder?: string
   onChange?: (markdown: string) => void
   onEditorReady?: () => void
+  onContentMetricsChange?: (metrics: MarkdownEditorContentMetrics) => void
   showToolbar?: boolean
   showStatusBar?: boolean
   class?: string
@@ -67,6 +70,31 @@ export type MarkdownEditorBelowEditorProps = {
   statusFading?: boolean
   statusActions?: Component<any>
   statusContext?: any
+}
+
+export type MarkdownEditorContentMetrics = {
+  characterCount: number
+  wordCount: number
+  paragraphCount: number
+}
+
+export const getMarkdownEditorContentMetrics = (
+  markdown: string,
+): MarkdownEditorContentMetrics => {
+  const normalized = markdown.trim()
+  if (!normalized) {
+    return {
+      characterCount: 0,
+      wordCount: 0,
+      paragraphCount: 0,
+    }
+  }
+
+  return {
+    characterCount: normalized.length,
+    wordCount: normalized.split(/\s+/).filter(Boolean).length,
+    paragraphCount: normalized.split(/\n\s*\n/).filter(Boolean).length,
+  }
 }
 
 const propDefaults = {
@@ -153,6 +181,7 @@ export function MarkdownEditor(props: MarkdownEditorProps) {
     "placeholder",
     "onChange",
     "onEditorReady",
+    "onContentMetricsChange",
     "showToolbar",
     "showStatusBar",
     "class",
@@ -230,6 +259,10 @@ export function MarkdownEditor(props: MarkdownEditorProps) {
     }
   }
 
+  const emitContentMetrics = debounce((markdown: string) => {
+    local.onContentMetricsChange?.(getMarkdownEditorContentMetrics(markdown))
+  }, TIME.TWO_POINT_FIVE_SECONDS)
+
   const scheduleEditorFocus = (
     caretPlacement: "start" | "end" = local.focusCaretPlacement ?? "start",
   ) => {
@@ -262,6 +295,7 @@ export function MarkdownEditor(props: MarkdownEditorProps) {
         ctx.update(prosePluginsCtx, prev => [...prev, history()])
         ctx.get(listenerCtx).mounted(() => {
           local.onEditorReady?.()
+          emitContentMetrics(initialValue)
           if (pendingFocusAfterMount === null) {
             return
           }
@@ -272,6 +306,7 @@ export function MarkdownEditor(props: MarkdownEditorProps) {
         })
         ctx.get(listenerCtx).markdownUpdated((ctx, markdown) => {
           local.onChange?.(markdown)
+          emitContentMetrics(markdown)
         })
         ctx.get(listenerCtx).selectionUpdated(() => {
           syncToolbarState()
@@ -361,6 +396,7 @@ export function MarkdownEditor(props: MarkdownEditorProps) {
     editorCreateGeneration += 1
     pendingFocusAfterMount = null
     clearFocusRetryTimeout()
+    emitContentMetrics.cancel()
     editorKeydownCleanup?.()
     editorKeydownCleanup = undefined
     const currentEditor = editorInstance

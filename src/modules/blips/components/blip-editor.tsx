@@ -13,6 +13,8 @@ import { Stack } from "@/components/stack"
 import {
   MarkdownEditor,
   type MarkdownEditorBelowEditorProps,
+  type MarkdownEditorContentMetrics,
+  getMarkdownEditorContentMetrics,
 } from "@/components/markdown/editor"
 import { IconButton } from "@/components/icon-button"
 import { Blip as BlipIcon, Icon, LoadingSpinner } from "@/components/icon"
@@ -32,6 +34,7 @@ import { debounce } from "@/util/debounce"
 import { TIME } from "@/util/enums"
 import { useSupabase } from "@/context/services-context"
 import { useAuth } from "@/context/auth-context"
+import { useViewport } from "@/context/viewport"
 import { BLIP_TYPES, type Blip } from "@/modules/blips/data/schema"
 import { blipId, blipStore, tagStore } from "@/modules/blips/data"
 import { slugify } from "@/util/formatters"
@@ -56,6 +59,69 @@ type SaveStatus =
 type EditorView = "picker" | "editor"
 
 const tr = ptr("blips.components.blipEditor")
+const DESKTOP_LAYOUT_BREAKPOINT_PX = 768
+const DESKTOP_SHELL_MIN_WIDTH_PX = 25 * 16
+const DESKTOP_SHELL_MAX_WIDTH_PX = 48 * 16
+const DESKTOP_SHELL_MIN_HEIGHT_PX = 16 * 16
+const DESKTOP_SHELL_MAX_HEIGHT_PX = 44 * 16
+const DESKTOP_SHELL_VIEWPORT_MARGIN_PX = 32
+
+type BlipEditorDesktopSizePreset = {
+  minCharacters: number
+  minWords: number
+  widthPx: number
+  maxHeightPx: number
+}
+
+const clampNumber = (value: number, min: number, max: number) =>
+  Math.min(max, Math.max(min, value))
+
+const BLIP_EDITOR_DESKTOP_SIZE_PRESETS: Record<
+  "compact" | "roomy" | "article" | "essay",
+  BlipEditorDesktopSizePreset
+> = {
+  compact: {
+    minCharacters: 0,
+    minWords: 0,
+    widthPx: DESKTOP_SHELL_MIN_WIDTH_PX,
+    maxHeightPx: 26 * 16,
+  },
+  roomy: {
+    minCharacters: 420,
+    minWords: 75,
+    widthPx: 34 * 16,
+    maxHeightPx: 32 * 16,
+  },
+  article: {
+    minCharacters: 1200,
+    minWords: 220,
+    widthPx: 42 * 16,
+    maxHeightPx: 38 * 16,
+  },
+  essay: {
+    minCharacters: 2200,
+    minWords: 380,
+    widthPx: DESKTOP_SHELL_MAX_WIDTH_PX,
+    maxHeightPx: DESKTOP_SHELL_MAX_HEIGHT_PX,
+  },
+}
+
+export const getDesktopSizePreset = (metrics: MarkdownEditorContentMetrics) => {
+  const presetEntries = Object.values(BLIP_EDITOR_DESKTOP_SIZE_PRESETS)
+
+  return presetEntries.reduce((selectedPreset, preset) => {
+    const meetsCharacterThreshold =
+      metrics.characterCount >= preset.minCharacters
+    const meetsWordThreshold = metrics.wordCount >= preset.minWords
+
+    if (meetsCharacterThreshold || meetsWordThreshold) {
+      return preset
+    }
+
+    return selectedPreset
+  }, BLIP_EDITOR_DESKTOP_SIZE_PRESETS.compact)
+}
+
 export function BlipEditor(props: BlipEditorProps) {
   const [local] = splitProps(props, [
     "open",
@@ -65,6 +131,7 @@ export function BlipEditor(props: BlipEditorProps) {
   ])
   const supabase = useSupabase()
   const { user } = useAuth() as any
+  const viewport = useViewport()
   const confirm = useConfirm()
 
   const store = blipStore(supabase.client, { subscribe: false })
@@ -86,6 +153,8 @@ export function BlipEditor(props: BlipEditorProps) {
   const [keyboardInsetPx, setKeyboardInsetPx] = createSignal<number>(0)
   const [viewportTopPx, setViewportTopPx] = createSignal<number>(0)
   const [isEditorMounted, setIsEditorMounted] = createSignal(false)
+  const [contentMetrics, setContentMetrics] =
+    createSignal<MarkdownEditorContentMetrics>(getMarkdownEditorContentMetrics(""))
   const [selectedTags, setSelectedTags] = createSignal<BlipTagOption[]>([])
   const [tagOptions, setTagOptions] = createSignal<BlipTagOption[]>([])
   const [lastDbSavedTagValues, setLastDbSavedTagValues] = createSignal<string[]>(
@@ -192,6 +261,7 @@ export function BlipEditor(props: BlipEditorProps) {
     setLastCachedContent("")
     setLastDbSavedContent("")
     setHasPersistedCurrentBlip(false)
+    setContentMetrics(getMarkdownEditorContentMetrics(""))
     setSelectedTags([])
     setLastDbSavedTagValues([])
     setSaveStatus("idle")
@@ -206,6 +276,7 @@ export function BlipEditor(props: BlipEditorProps) {
     setLastCachedContent(selectedContent)
     setLastDbSavedContent(assumePersisted ? selectedContent : "")
     setHasPersistedCurrentBlip(assumePersisted)
+    setContentMetrics(getMarkdownEditorContentMetrics(selectedContent))
     setSelectedTags([])
     setLastDbSavedTagValues([])
     setSaveStatus("idle")
@@ -587,6 +658,7 @@ export function BlipEditor(props: BlipEditorProps) {
           setLastCachedContent("")
           setLastDbSavedContent("")
           setHasPersistedCurrentBlip(false)
+          setContentMetrics(getMarkdownEditorContentMetrics(""))
           setLastDbSavedTagValues([])
           setSaveStatus("idle")
           setEditorView("editor")
@@ -729,6 +801,56 @@ export function BlipEditor(props: BlipEditorProps) {
   const hasPendingChanges = () =>
     content() !== lastCachedContent() ||
     !areTagValuesEqual(selectedTagValues(), lastDbSavedTagValues())
+
+  const handleContentMetricsChange = (
+    nextMetrics: MarkdownEditorContentMetrics,
+  ) => {
+    setContentMetrics(current =>
+      current.characterCount === nextMetrics.characterCount &&
+      current.wordCount === nextMetrics.wordCount &&
+      current.paragraphCount === nextMetrics.paragraphCount
+        ? current
+        : nextMetrics,
+    )
+  }
+
+  const desktopShellSize = createMemo(() => {
+    if (
+      viewport.width() < DESKTOP_LAYOUT_BREAKPOINT_PX ||
+      editorView() !== "editor"
+    ) {
+      return null
+    }
+
+    const preset = getDesktopSizePreset(contentMetrics())
+    const viewportWidthCap = clampNumber(
+      viewport.width() - DESKTOP_SHELL_VIEWPORT_MARGIN_PX,
+      DESKTOP_SHELL_MIN_WIDTH_PX,
+      DESKTOP_SHELL_MAX_WIDTH_PX,
+    )
+    const viewportHeightCap = clampNumber(
+      viewport.height() - DESKTOP_SHELL_VIEWPORT_MARGIN_PX,
+      DESKTOP_SHELL_MIN_HEIGHT_PX,
+      DESKTOP_SHELL_MAX_HEIGHT_PX,
+    )
+
+    return {
+      widthPx: Math.min(preset.widthPx, viewportWidthCap),
+      maxHeightPx: Math.min(preset.maxHeightPx, viewportHeightCap),
+    }
+  })
+
+  const desktopShellStyle = createMemo<Record<string, string>>(() => {
+    const shellSize = desktopShellSize()
+    if (!shellSize) {
+      return {}
+    }
+
+    return {
+      "--blip-editor-shell-width": `${shellSize.widthPx}px`,
+      "--blip-editor-shell-max-height": `${shellSize.maxHeightPx}px`,
+    }
+  })
 
   useEditorMobileViewportRuntime({
     isOpen: () => local.open,
@@ -876,6 +998,7 @@ export function BlipEditor(props: BlipEditorProps) {
         style={{
           "--blip-editor-keyboard-inset": `${keyboardInsetPx()}px`,
           "--blip-editor-viewport-top": `${viewportTopPx()}px`,
+          ...desktopShellStyle(),
         }}
         contentProps={{
           onOpenAutoFocus: handleDialogOpenAutoFocus,
@@ -916,6 +1039,7 @@ export function BlipEditor(props: BlipEditorProps) {
                   placeholder={tr("placeholder")}
                   initialValue={content()}
                   onChange={handleContentChange}
+                  onContentMetricsChange={handleContentMetricsChange}
                   BelowEditor={EditorControls}
                   statusIcon={getStatusIcon()}
                   showStatus={showStatus()}

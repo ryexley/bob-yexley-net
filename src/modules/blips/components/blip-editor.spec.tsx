@@ -1,7 +1,10 @@
 import { fireEvent, render, screen, waitFor } from "@solidjs/testing-library"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { BLIP_TYPES, type Blip } from "@/modules/blips/data/schema"
-import { BlipEditor } from "@/modules/blips/components/blip-editor"
+import {
+  BlipEditor,
+  getDesktopSizePreset,
+} from "@/modules/blips/components/blip-editor"
 
 const { state, toggleToolbar } = vi.hoisted(() => ({
   state: {
@@ -9,6 +12,7 @@ const { state, toggleToolbar } = vi.hoisted(() => ({
     entities: [] as Blip[],
   },
   toggleToolbar: vi.fn(),
+  lastMarkdownEditorProps: null as any,
 }))
 
 vi.mock("@/context/services-context", () => ({
@@ -20,6 +24,13 @@ vi.mock("@/context/services-context", () => ({
 vi.mock("@/context/auth-context", () => ({
   useAuth: () => ({
     user: () => ({ id: "user-1" }),
+  }),
+}))
+
+vi.mock("@/context/viewport", () => ({
+  useViewport: () => ({
+    width: () => 1440,
+    height: () => 900,
   }),
 }))
 
@@ -49,23 +60,29 @@ vi.mock("@/modules/blips/components/blip-tags", () => ({
   BlipTags: () => <div data-testid="mock-blip-tags">tags</div>,
 }))
 
-vi.mock("@/components/markdown/editor", () => ({
-  MarkdownEditor: (props: any) => (
-    <div
-      data-testid="mock-markdown-editor"
-      data-focus-nonce={String(props.focusNonce ?? 0)}>
-      <div>editor</div>
-      {props.BelowEditor?.({
-        onToggleToolbar: toggleToolbar,
-        toolbarVisible: false,
-        statusIcon: props.statusIcon,
-        showStatus: props.showStatus,
-        statusFading: props.statusFading,
-        statusContext: props.statusContext,
-      })}
-    </div>
-  ),
-}))
+vi.mock("@/components/markdown/editor", async importOriginal => {
+  const actual = await importOriginal<typeof import("@/components/markdown/editor")>()
+
+  return {
+    ...actual,
+    MarkdownEditor: (props: any) => (
+      <div
+        data-testid="mock-markdown-editor"
+        data-focus-nonce={String(props.focusNonce ?? 0)}>
+        {(state.lastMarkdownEditorProps = props) && null}
+        <div>editor</div>
+        {props.BelowEditor?.({
+          onToggleToolbar: toggleToolbar,
+          toolbarVisible: false,
+          statusIcon: props.statusIcon,
+          showStatus: props.showStatus,
+          statusFading: props.statusFading,
+          statusContext: props.statusContext,
+        })}
+      </div>
+    ),
+  }
+})
 
 vi.mock("@/i18n", () => ({
   ptr: (prefix: string) => {
@@ -118,6 +135,7 @@ describe("BlipEditor", () => {
     state.drafts = []
     state.entities = []
     toggleToolbar.mockReset()
+    state.lastMarkdownEditorProps = null
     window.scrollTo = vi.fn()
     Object.defineProperty(window, "matchMedia", {
       writable: true,
@@ -215,5 +233,135 @@ describe("BlipEditor", () => {
 
     await fireEvent.click(closeButton!)
     expect(onPanelOpenChange).toHaveBeenCalledWith(false)
+  })
+
+  it("applies the compact desktop shell size by default and expands when content metrics cross thresholds", async () => {
+    render(() => (
+      <BlipEditor
+        open
+        onPanelOpenChange={() => undefined}
+        close={() => undefined}
+      />
+    ))
+
+    await waitFor(() => {
+      expect(screen.getByTestId("mock-markdown-editor")).toBeTruthy()
+    })
+
+    const dialog = document.querySelector(".blip-editor-dialog") as HTMLElement | null
+    expect(dialog).toBeTruthy()
+    expect(dialog?.style.getPropertyValue("--blip-editor-shell-width")).toBe("400px")
+    expect(dialog?.style.getPropertyValue("--blip-editor-shell-max-height")).toBe(
+      "416px",
+    )
+
+    state.lastMarkdownEditorProps.onContentMetricsChange({
+      characterCount: 1300,
+      wordCount: 240,
+      paragraphCount: 6,
+    })
+
+    await waitFor(() => {
+      expect(dialog?.style.getPropertyValue("--blip-editor-shell-width")).toBe(
+        "672px",
+      )
+      expect(dialog?.style.getPropertyValue("--blip-editor-shell-max-height")).toBe(
+        "608px",
+      )
+    })
+
+    state.lastMarkdownEditorProps.onContentMetricsChange({
+      characterCount: 2400,
+      wordCount: 420,
+      paragraphCount: 12,
+    })
+
+    await waitFor(() => {
+      expect(dialog?.style.getPropertyValue("--blip-editor-shell-width")).toBe(
+        "768px",
+      )
+      expect(dialog?.style.getPropertyValue("--blip-editor-shell-max-height")).toBe(
+        "704px",
+      )
+    })
+  })
+
+  it("sizes the desktop shell immediately for an existing long-form blip", async () => {
+    state.entities = [
+      makeDraft({
+        id: "blip-42",
+        content: Array.from({ length: 450 }, () => "word").join(" "),
+      }),
+    ]
+
+    render(() => (
+      <BlipEditor
+        open
+        blipId="blip-42"
+        onPanelOpenChange={() => undefined}
+        close={() => undefined}
+      />
+    ))
+
+    await waitFor(() => {
+      expect(screen.getByTestId("mock-markdown-editor")).toBeTruthy()
+    })
+
+    const dialog = document.querySelector(".blip-editor-dialog") as HTMLElement | null
+    expect(dialog).toBeTruthy()
+
+    await waitFor(() => {
+      expect(dialog?.style.getPropertyValue("--blip-editor-shell-width")).toBe(
+        "768px",
+      )
+      expect(dialog?.style.getPropertyValue("--blip-editor-shell-max-height")).toBe(
+        "704px",
+      )
+    })
+  })
+})
+
+describe("getDesktopSizePreset", () => {
+  it("stays compact below the first threshold", () => {
+    expect(
+      getDesktopSizePreset({
+        characterCount: 419,
+        wordCount: 74,
+        paragraphCount: 2,
+      }),
+    ).toEqual({
+      minCharacters: 0,
+      minWords: 0,
+      widthPx: 400,
+      maxHeightPx: 416,
+    })
+  })
+
+  it("promotes to the highest matching preset from either character or word thresholds", () => {
+    expect(
+      getDesktopSizePreset({
+        characterCount: 500,
+        wordCount: 390,
+        paragraphCount: 4,
+      }),
+    ).toEqual({
+      minCharacters: 2200,
+      minWords: 380,
+      widthPx: 768,
+      maxHeightPx: 704,
+    })
+
+    expect(
+      getDesktopSizePreset({
+        characterCount: 1300,
+        wordCount: 100,
+        paragraphCount: 5,
+      }),
+    ).toEqual({
+      minCharacters: 1200,
+      minWords: 220,
+      widthPx: 672,
+      maxHeightPx: 608,
+    })
   })
 })

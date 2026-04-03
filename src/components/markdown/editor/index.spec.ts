@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 import {
   TOOLBAR_VISIBLE_STORAGE_KEY,
+  getMarkdownEditorContentMetrics,
   readToolbarVisiblePreference,
   writeToolbarVisiblePreference,
 } from "@/components/markdown/editor"
@@ -76,6 +77,28 @@ describe("markdown editor toolbar visibility preference", () => {
 
     expect(storage.dump()).toEqual({
       [TOOLBAR_VISIBLE_STORAGE_KEY]: "true",
+    })
+  })
+})
+
+describe("getMarkdownEditorContentMetrics", () => {
+  it("returns zeroed metrics for empty content", () => {
+    expect(getMarkdownEditorContentMetrics("   ")).toEqual({
+      characterCount: 0,
+      wordCount: 0,
+      paragraphCount: 0,
+    })
+  })
+
+  it("counts characters, words, and paragraphs from normalized markdown", () => {
+    expect(
+      getMarkdownEditorContentMetrics(
+        "First paragraph with a few words.\n\nSecond paragraph\non two lines.",
+      ),
+    ).toEqual({
+      characterCount: 65,
+      wordCount: 11,
+      paragraphCount: 2,
     })
   })
 })

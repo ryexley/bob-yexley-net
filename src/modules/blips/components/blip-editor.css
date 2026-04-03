@@ -5,6 +5,9 @@
 }
 
 .blip-editor-dialog {
+  --blip-editor-shell-width: min(25rem, calc(100vw - 2rem));
+  --blip-editor-shell-max-height: min(44rem, calc(100dvh - 2rem));
+
   &.dialog {
     background: transparent;
     border: 0;
@@ -450,11 +453,17 @@
 @media (min-width: 48rem) {
   .blip-editor-dialog {
     &.dialog {
+      --resize-transition-duration: 1s;
+      --resize-transition-easing: cubic-bezier(0.3, 0, 0.1, 1);
       left: 50%;
       max-width: calc(100vw - 2rem);
       top: 50%;
+      transition:
+        width var(--resize-transition-duration) var(--resize-transition-easing),
+        max-width var(--resize-transition-duration)
+          var(--resize-transition-easing);
       transform: translate(-50%, -50%);
-      width: min(25rem, calc(100vw - 2rem));
+      width: var(--blip-editor-shell-width);
     }
   }
 
@@ -466,9 +475,11 @@
     border: 0.0625rem solid var(--colors-mono-04);
     border-radius: var(--radius-lg);
     box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.32);
-    max-height: min(44rem, calc(100dvh - 2rem));
+    max-height: var(--blip-editor-shell-max-height);
     min-height: 16rem;
     padding-top: 0.75rem;
+    transition:
+      max-height var(--resize-transition-duration) var(--resize-transition-easing);
     width: 100%;
   }
 
