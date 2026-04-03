@@ -7,9 +7,12 @@ import { formattingOptions } from "./formatting-config"
 
 type LinkSelectionState = {
   selectedText: string
+  selectedLinkText: string
+  selectionRangeFrom?: number
+  selectionRangeTo?: number
   selectedLinkHref: string
-  rangeFrom?: number
-  rangeTo?: number
+  selectedLinkRangeFrom?: number
+  selectedLinkRangeTo?: number
 }
 
 const wordCharacterPattern = /[a-zA-Z0-9._-]/
@@ -77,8 +80,8 @@ const getWordAtCursor = ($from: any): Partial<LinkSelectionState> => {
   }
 
   result.selectedText = selectedText
-  result.rangeFrom = parentStart + segment.startOffset + left
-  result.rangeTo = parentStart + segment.startOffset + right
+  result.selectionRangeFrom = parentStart + segment.startOffset + left
+  result.selectionRangeTo = parentStart + segment.startOffset + right
 
   return result
 }
@@ -125,6 +128,7 @@ export function getDisabledFormats(editor: Editor): string[] {
 export function getLinkSelectionState(editor: Editor): LinkSelectionState {
   const selectionState: LinkSelectionState = {
     selectedText: "",
+    selectedLinkText: "",
     selectedLinkHref: "",
   }
 
@@ -133,10 +137,19 @@ export function getLinkSelectionState(editor: Editor): LinkSelectionState {
     const schema = ctx.get(schemaCtx)
     const linkMark = schema.marks.link
     const { from, to, empty, $from } = state.selection
-    selectionState.selectedText = empty ? "" : state.doc.textBetween(from, to, " ")
     if (!empty) {
-      selectionState.rangeFrom = from
-      selectionState.rangeTo = to
+      selectionState.selectedText = state.doc.textBetween(from, to, " ")
+      selectionState.selectedLinkText = selectionState.selectedText
+      selectionState.selectionRangeFrom = from
+      selectionState.selectionRangeTo = to
+      selectionState.selectedLinkRangeFrom = from
+      selectionState.selectedLinkRangeTo = to
+    } else {
+      const cursorWord = getWordAtCursor($from)
+      selectionState.selectedText = cursorWord.selectedText ?? ""
+      selectionState.selectedLinkText = selectionState.selectedText
+      selectionState.selectionRangeFrom = cursorWord.selectionRangeFrom
+      selectionState.selectionRangeTo = cursorWord.selectionRangeTo
     }
 
     if (!linkMark) {
@@ -149,10 +162,6 @@ export function getLinkSelectionState(editor: Editor): LinkSelectionState {
       selectionState.selectedLinkHref = activeMark?.attrs?.href ?? ""
 
       if (!selectionState.selectedLinkHref) {
-        const cursorWord = getWordAtCursor($from)
-        selectionState.selectedText = cursorWord.selectedText ?? ""
-        selectionState.rangeFrom = cursorWord.rangeFrom
-        selectionState.rangeTo = cursorWord.rangeTo
         return
       }
 
@@ -203,7 +212,7 @@ export function getLinkSelectionState(editor: Editor): LinkSelectionState {
         endIndex += 1
       }
 
-      selectionState.selectedText = textNodes
+      selectionState.selectedLinkText = textNodes
         .slice(startIndex, endIndex + 1)
         .map(node => node.text ?? "")
         .join("")
@@ -219,8 +228,8 @@ export function getLinkSelectionState(editor: Editor): LinkSelectionState {
         endOffset += parent.child(i).nodeSize
       }
 
-      selectionState.rangeFrom = parentStart + startOffset
-      selectionState.rangeTo = parentStart + endOffset
+      selectionState.selectedLinkRangeFrom = parentStart + startOffset
+      selectionState.selectedLinkRangeTo = parentStart + endOffset
       return
     }
 

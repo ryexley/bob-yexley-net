@@ -23,6 +23,7 @@ import { TextSelection } from "@milkdown/prose/state"
 import { clsx as cx } from "@/util"
 import { withWindow } from "@/util/browser"
 import { Stack } from "@/components/stack"
+import { highlight } from "./plugins/highlight"
 import { placeholder } from "./plugins/placeholder"
 import {
   applyFormat,
@@ -175,7 +176,13 @@ export function MarkdownEditor(props: MarkdownEditorProps) {
   let editorCreateGeneration = 0
   const [activeFormats, setActiveFormats] = createSignal<string[]>([])
   const [disabledFormats, setDisabledFormats] = createSignal<string[]>([])
-  const [selectedText, setSelectedText] = createSignal("")
+  const [selectedLinkText, setSelectedLinkText] = createSignal("")
+  const [selectionRangeFrom, setSelectionRangeFrom] = createSignal<
+    number | undefined
+  >(undefined)
+  const [selectionRangeTo, setSelectionRangeTo] = createSignal<
+    number | undefined
+  >(undefined)
   const [selectedLinkHref, setSelectedLinkHref] = createSignal("")
   const [selectedLinkRangeFrom, setSelectedLinkRangeFrom] = createSignal<
     number | undefined
@@ -208,10 +215,12 @@ export function MarkdownEditor(props: MarkdownEditorProps) {
     setActiveFormats(getActiveFormats(editorInstance))
     setDisabledFormats(getDisabledFormats(editorInstance))
     const linkSelectionState = getLinkSelectionState(editorInstance)
-    setSelectedText(linkSelectionState.selectedText)
+    setSelectedLinkText(linkSelectionState.selectedLinkText)
+    setSelectionRangeFrom(linkSelectionState.selectionRangeFrom)
+    setSelectionRangeTo(linkSelectionState.selectionRangeTo)
     setSelectedLinkHref(linkSelectionState.selectedLinkHref)
-    setSelectedLinkRangeFrom(linkSelectionState.rangeFrom)
-    setSelectedLinkRangeTo(linkSelectionState.rangeTo)
+    setSelectedLinkRangeFrom(linkSelectionState.selectedLinkRangeFrom)
+    setSelectedLinkRangeTo(linkSelectionState.selectedLinkRangeTo)
   }
 
   const clearFocusRetryTimeout = () => {
@@ -272,6 +281,7 @@ export function MarkdownEditor(props: MarkdownEditorProps) {
         })
       })
       .use(commonmark)
+      .use(highlight)
       .use(placeholder(local.placeholder))
       .use(emoji)
       .use(listener)
@@ -416,7 +426,9 @@ export function MarkdownEditor(props: MarkdownEditorProps) {
             visible={toolbarVisible()}
             activeFormats={activeFormats()}
             disabledFormats={disabledFormats()}
-            selectedText={selectedText()}
+            selectedLinkText={selectedLinkText()}
+            selectionRangeFrom={selectionRangeFrom()}
+            selectionRangeTo={selectionRangeTo()}
             selectedLinkHref={selectedLinkHref()}
             selectedLinkRangeFrom={selectedLinkRangeFrom()}
             selectedLinkRangeTo={selectedLinkRangeTo()}

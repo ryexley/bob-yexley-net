@@ -16,6 +16,7 @@ import {
   insertHrCommand,
   toggleLinkCommand,
 } from "@milkdown/preset-commonmark"
+import { toggleHighlightCommand } from "./plugins/highlight"
 
 export interface FormattingOption {
   key: string
@@ -101,6 +102,52 @@ export const formattingOptions: FormattingOption[] = [
       commands.call(toggleEmphasisCommand.key)
     },
     isActive: ctx => hasMark(ctx, "emphasis"),
+    group: 1,
+  },
+  {
+    key: "highlight",
+    icon: "stylus_highlighter",
+    handler: (
+      ctx,
+      payload?: {
+        rangeFrom?: number
+        rangeTo?: number
+      },
+    ) => {
+      const commands = ctx.get(commandsCtx)
+      const view = ctx.get(editorViewCtx)
+      const state = view.state
+      const schema = ctx.get(schemaCtx)
+      const highlightMark = schema.marks.highlight
+      if (!highlightMark) {
+        return
+      }
+
+      const { from, to, empty } = state.selection
+      const hasExplicitRange =
+        typeof payload?.rangeFrom === "number" &&
+        typeof payload?.rangeTo === "number" &&
+        payload.rangeTo > payload.rangeFrom
+      const targetFrom = empty && hasExplicitRange ? payload.rangeFrom : from
+      const targetTo = empty && hasExplicitRange ? payload.rangeTo : to
+
+      if (targetTo <= targetFrom) {
+        commands.call(toggleHighlightCommand.key)
+        return
+      }
+
+      const tr = state.doc.rangeHasMark(targetFrom, targetTo, highlightMark)
+        ? state.tr.removeMark(targetFrom, targetTo, highlightMark)
+        : state.tr.addMark(
+            targetFrom,
+            targetTo,
+            highlightMark.create(),
+          )
+
+      view.dispatch(tr.scrollIntoView())
+      view.focus()
+    },
+    isActive: ctx => hasMark(ctx, "highlight"),
     group: 1,
   },
   {

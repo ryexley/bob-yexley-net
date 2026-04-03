@@ -1,13 +1,21 @@
-import { marked, type MarkedOptions } from "marked"
+import { Marked } from "marked"
 import { rendererExtensions } from "./extensions"
+import { highlightExtension } from "./extensions/highlight"
 
-const createBlipMarkedOptions = (): MarkedOptions => {
+const createBlipMarked = () => {
+  const marked = new Marked()
   const renderer = new marked.Renderer()
   for (const extension of rendererExtensions) {
     extension.extendRenderer(renderer)
   }
 
-  return { renderer }
+  marked.use({ renderer, extensions: [highlightExtension] })
+
+  return marked
 }
 
-export const blipMarkedOptions = createBlipMarkedOptions()
+const blipMarked = createBlipMarked()
+
+export const parseBlipMarkdown = (content: string) => {
+  return blipMarked.parse(content) as string
+}

@@ -15,7 +15,9 @@ interface ToolbarProps {
   visible?: boolean
   activeFormats: string[]
   disabledFormats: string[]
-  selectedText: string
+  selectedLinkText: string
+  selectionRangeFrom?: number
+  selectionRangeTo?: number
   selectedLinkHref: string
   selectedLinkRangeFrom?: number
   selectedLinkRangeTo?: number
@@ -48,7 +50,7 @@ export default function Toolbar(props: ToolbarProps) {
   const openLinkEditor = () => {
     setShowLinkEditor(true)
     setLinkHref(props.selectedLinkHref || "")
-    setLinkText(props.selectedText || "")
+    setLinkText(props.selectedLinkText || "")
   }
 
   const handleLinkClick = () => {
@@ -139,6 +141,14 @@ export default function Toolbar(props: ToolbarProps) {
                 onClick={() =>
                   option.key === "link"
                     ? handleLinkClick()
+                    : option.key === "highlight"
+                      ? (
+                          closeLinkEditor(),
+                          props.onFormatApply(option.key, {
+                            rangeFrom: props.selectionRangeFrom,
+                            rangeTo: props.selectionRangeTo,
+                          })
+                        )
                     : (closeLinkEditor(), props.onFormatApply(option.key))
                 }
                 // Preserve editor focus/selection so commands apply correctly.

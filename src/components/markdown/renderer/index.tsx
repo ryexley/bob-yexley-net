@@ -1,7 +1,6 @@
-import { marked } from "marked"
 import { createMemo, splitProps } from "solid-js"
 import { clsx as cx } from "@/util"
-import { blipMarkedOptions } from "./marked-blips"
+import { parseBlipMarkdown } from "./marked-blips"
 import "./styles.css"
 
 type MarkdownRendererProps = {
@@ -13,7 +12,7 @@ export function MarkdownRenderer(props: MarkdownRendererProps) {
   const [local] = splitProps(props, ["content", "class"])
 
   const html = createMemo(() => {
-    return marked.parse(local.content || "", blipMarkedOptions) as string
+    return parseBlipMarkdown(local.content || "")
   })
 
   return (
