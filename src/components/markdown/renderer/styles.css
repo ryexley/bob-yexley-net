@@ -1,2 +1,127 @@
 .rendered-markdown {
+  overflow-wrap: break-word;
+
+  > :first-child {
+    margin-top: 0;
+  }
+
+  > :last-child {
+    margin-bottom: 0;
+  }
+
+  p {
+    margin: 0 0 1rem;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    margin: 1.25rem 0 0.75rem;
+    font-weight: 600;
+    line-height: 1.25;
+  }
+
+  h1 {
+    font-size: 1.625rem;
+  }
+
+  h2 {
+    font-size: 1.375rem;
+  }
+
+  h3 {
+    font-size: 1.1875rem;
+  }
+
+  h4,
+  h5,
+  h6 {
+    font-size: 1rem;
+  }
+
+  ul,
+  ol {
+    margin: 0 0 1rem;
+    padding-inline-start: 1.5rem;
+  }
+
+  ul {
+    list-style: disc;
+
+    ul {
+      list-style: circle;
+    }
+  }
+
+  ol {
+    list-style: decimal;
+
+    ol {
+      list-style: lower-alpha;
+    }
+  }
+
+  li {
+    margin: 0.15rem 0;
+  }
+
+  blockquote {
+    margin: 0 0 1rem;
+  }
+
+  hr {
+    margin: 1rem 0;
+  }
+
+  a {
+    text-underline-offset: 0.125rem;
+  }
+
+  pre,
+  code {
+    font-family:
+      ui-monospace,
+      sfmono-regular,
+      sf mono,
+      menlo,
+      consolas,
+      liberation mono,
+      monospace;
+  }
+
+  code {
+    background: var(--colors-mono-03);
+    border-radius: var(--radius-xs);
+    font-size: 0.875em;
+    overflow-wrap: anywhere;
+    padding: 0.1rem 0.25rem;
+    word-break: break-word;
+  }
+
+  pre {
+    background: var(--colors-mono-02);
+    border: 1px solid var(--colors-mono-04);
+    border-radius: var(--radius-sm);
+    margin: 0 0 1rem;
+    max-width: 100%;
+    overflow-x: auto;
+    padding: 0.75rem;
+
+    code {
+      background: transparent;
+      border-radius: 0;
+      overflow-wrap: normal;
+      padding: 0;
+      white-space: inherit;
+      word-break: normal;
+    }
+  }
+
+  img {
+    border-radius: var(--radius-sm);
+    margin: 0.5rem 0 1rem;
+  }
 }

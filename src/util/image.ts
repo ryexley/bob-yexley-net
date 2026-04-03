@@ -63,7 +63,10 @@ export function parseDimension(dimension, baseFontSize = 16) {
     if (
       trimmed.endsWith("%") ||
       trimmed.endsWith("vw") ||
-      trimmed.endsWith("vh")
+      trimmed.endsWith("vh") ||
+      trimmed.endsWith("svh") ||
+      trimmed.endsWith("dvh") ||
+      trimmed.endsWith("lvh")
     ) {
       return trimmed
     }

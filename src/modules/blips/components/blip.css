@@ -79,31 +79,50 @@
   footer {
     align-items: center;
     display: flex;
+    gap: 1rem;
     justify-content: space-between;
     width: 100%;
 
     .tags {
-      align-items: center;
+      align-items: flex-start;
       display: flex;
+      flex: 1;
+      flex-wrap: nowrap;
       gap: 0.25rem;
       justify-content: start;
+      min-width: 0;
+
+      .icon {
+        align-items: center;
+        display: inline-flex;
+        flex-shrink: 0;
+        line-height: 1;
+      }
 
       .tag-list {
-        align-items: center;
+        align-items: flex-start;
+        column-gap: 0.25rem;
         display: flex;
-        gap: 0.25rem;
+        flex: 1;
+        flex-wrap: wrap;
+        row-gap: 0.125rem;
         justify-content: start;
         list-style: none;
         margin: 0;
+        min-width: 0;
         padding: 0;
 
         .tag {
           color: var(--colors-mono-08);
           font-size: 0.75rem;
           font-style: italic;
+          line-height: 1.15;
+          white-space: nowrap;
 
           a {
             color: var(--colors-mono-08);
+            line-height: inherit;
+            white-space: inherit;
             transition: var(--transitions-primary);
 
             &:hover {
@@ -115,6 +134,9 @@
     }
 
     .activity {
+      flex-shrink: 0;
+      margin-left: auto;
+
       button {
         height: 1.625rem;
       }

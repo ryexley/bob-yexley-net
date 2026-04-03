@@ -31,7 +31,7 @@ export function Hero(props) {
       {...props}>
       <UnsplashImage
         imageId={imageId}
-        height="100vh"
+        height="100svh"
         width="100%"
         alt="East Tennessee moutains/woods"
         eager={true}
@@ -39,7 +39,7 @@ export function Hero(props) {
         brightness={0.5}
         blur={0}
       />
-      <div class="min-h-[calc(100vh-var(--main-header-height))] w-full flex gap-8 flex-col items-center justify-center">
+      <div class="min-h-[calc(100svh-var(--main-header-height))] w-full flex gap-8 flex-col items-center justify-center">
         <div class="flex items-center justify-center">
           <CloudinaryImage
             imageId="crys-and-i_i0aulu"
