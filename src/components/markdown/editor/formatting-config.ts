@@ -5,6 +5,7 @@ import {
   schemaCtx,
 } from "@milkdown/core"
 import { redo, redoDepth, undo, undoDepth } from "@milkdown/prose/history"
+import { liftListItem, sinkListItem } from "@milkdown/prose/schema-list"
 import { TextSelection } from "@milkdown/prose/state"
 import {
   toggleStrongCommand,
@@ -130,6 +131,56 @@ export const formattingOptions: FormattingOption[] = [
       commands.call(wrapInOrderedListCommand.key)
     },
     isActive: ctx => hasAncestorNode(ctx, "ordered_list"),
+    group: 3,
+  },
+  {
+    key: "indent",
+    icon: "format_indent_increase",
+    handler: ctx => {
+      const view = ctx.get(editorViewCtx)
+      const schema = ctx.get(schemaCtx)
+      const listItem = schema.nodes.list_item
+      if (!listItem) {
+        return
+      }
+
+      sinkListItem(listItem)(view.state, view.dispatch)
+    },
+    isDisabled: ctx => {
+      const state = ctx.get(editorStateCtx)
+      const schema = ctx.get(schemaCtx)
+      const listItem = schema.nodes.list_item
+      if (!listItem) {
+        return true
+      }
+
+      return !sinkListItem(listItem)(state)
+    },
+    group: 3,
+  },
+  {
+    key: "outdent",
+    icon: "format_indent_decrease",
+    handler: ctx => {
+      const view = ctx.get(editorViewCtx)
+      const schema = ctx.get(schemaCtx)
+      const listItem = schema.nodes.list_item
+      if (!listItem) {
+        return
+      }
+
+      liftListItem(listItem)(view.state, view.dispatch)
+    },
+    isDisabled: ctx => {
+      const state = ctx.get(editorStateCtx)
+      const schema = ctx.get(schemaCtx)
+      const listItem = schema.nodes.list_item
+      if (!listItem) {
+        return true
+      }
+
+      return !liftListItem(listItem)(state)
+    },
     group: 3,
   },
   {

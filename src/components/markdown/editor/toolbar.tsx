@@ -26,7 +26,7 @@ interface ToolbarProps {
 
 export default function Toolbar(props: ToolbarProps) {
   const [showLinkEditor, setShowLinkEditor] = createSignal(false)
-  const [linkHref, setLinkHref] = createSignal("https://")
+  const [linkHref, setLinkHref] = createSignal("")
   const [linkText, setLinkText] = createSignal("")
   const linkIsActive = createMemo(() => props.activeFormats.includes("link"))
   const pressedFormats = createMemo(() => {
@@ -47,7 +47,7 @@ export default function Toolbar(props: ToolbarProps) {
 
   const openLinkEditor = () => {
     setShowLinkEditor(true)
-    setLinkHref(props.selectedLinkHref || "https://")
+    setLinkHref(props.selectedLinkHref || "")
     setLinkText(props.selectedText || "")
   }
 

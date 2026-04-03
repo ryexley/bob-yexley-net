@@ -46,6 +46,10 @@
   ol {
     margin: 0 0 1rem;
     padding-inline-start: 1.5rem;
+
+    p {
+      margin: 0;
+    }
   }
 
   ul {
