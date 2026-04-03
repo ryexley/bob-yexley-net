@@ -68,7 +68,7 @@ const stripMarkdownForMeta = (value: string) =>
       .replace(/^>\s?/gm, "")
       .replace(/^[*-+]\s+/gm, "")
       .replace(/^\d+\.\s+/gm, "")
-      .replace(/[*_~]+/g, "")
+      .replace(/[*_=~]+/g, "")
       // Bare URLs.
       .replace(/https?:\/\/\S+/g, " "),
   )
@@ -584,7 +584,7 @@ export function BlipView() {
         </Show>
         <Meta
           name="twitter:card"
-          content="summary"
+          content="summary_large_image"
         />
         <Meta
           name="twitter:title"

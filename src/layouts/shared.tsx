@@ -1,5 +1,5 @@
 import { For } from "solid-js"
-import { Link } from "@solidjs/meta"
+import { Link, Meta } from "@solidjs/meta"
 
 export const links = [
   {
@@ -50,6 +50,47 @@ export const links = [
   },
 ]
 
+const DEFAULT_SOCIAL_IMAGE_PATH = "/og-image.jpg"
+
+const getDefaultSocialImageUrl = () => {
+  const siteUrl = (import.meta.env.VITE_SITE_URL as string | undefined)?.trim()
+  if (!siteUrl) {
+    return DEFAULT_SOCIAL_IMAGE_PATH
+  }
+
+  return new URL(DEFAULT_SOCIAL_IMAGE_PATH, siteUrl).toString()
+}
+
 export function SharedHeadContent() {
-  return <For each={links}>{link => <Link {...(link as any)} />}</For>
+  const socialImageUrl = getDefaultSocialImageUrl()
+
+  return (
+    <>
+      <For each={links}>{link => <Link {...(link as any)} />}</For>
+      <Meta
+        property="og:image"
+        content={socialImageUrl}
+      />
+      <Meta
+        property="og:image:type"
+        content="image/jpeg"
+      />
+      <Meta
+        property="og:image:width"
+        content="1200"
+      />
+      <Meta
+        property="og:image:height"
+        content="630"
+      />
+      <Meta
+        name="twitter:card"
+        content="summary_large_image"
+      />
+      <Meta
+        name="twitter:image"
+        content={socialImageUrl}
+      />
+    </>
+  )
 }
