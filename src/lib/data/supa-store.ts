@@ -381,7 +381,7 @@ export function supaStore<T extends BaseEntity>(
         async () => {
           const { data, error: updateError } = await supabaseClient
             .from(tableName)
-            .update(updates)
+            .update(updates as any)
             .eq("id", id)
             .select()
             .single()

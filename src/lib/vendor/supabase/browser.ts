@@ -12,12 +12,12 @@
  */
 import {
   createClient,
-  type SupabaseClient,
   type User,
   type AuthError,
 } from "@supabase/supabase-js"
 import { createBrowserClient } from "@supabase/ssr"
 import { isServer } from "solid-js/web"
+import type { AppSupabaseClient, Database } from "@/lib/vendor/supabase/types"
 import {
   type AppRole,
   type UserProfile,
@@ -53,15 +53,15 @@ const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000
 const DEFAULT_SESSION_TTL = "7 days"
 
 // Singleton browser client instance
-let browserClient: SupabaseClient | null = null
+let browserClient: AppSupabaseClient | null = null
 
-export function getClient(): SupabaseClient {
+export function getClient(): AppSupabaseClient {
   if (isServer) {
     // Server fallback client without request auth context.
-    return createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+    return createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY)
   } else {
     if (isEmpty(browserClient)) {
-      browserClient = createBrowserClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+      browserClient = createBrowserClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY)
     }
 
     return browserClient

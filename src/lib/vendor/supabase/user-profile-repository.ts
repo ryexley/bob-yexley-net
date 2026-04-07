@@ -1,5 +1,6 @@
-import type { SupabaseClient, User } from "@supabase/supabase-js"
+import type { User } from "@supabase/supabase-js"
 import { AUTH_RPC } from "@/lib/vendor/supabase/auth-rpc-names"
+import type { AppSupabaseClient } from "@/lib/vendor/supabase/types"
 import {
   buildUserProfile,
   selectUserProfileRecord,
@@ -14,7 +15,7 @@ export type AuthResult<T = any> = {
 type SessionUser = Pick<User, "id" | "email">
 
 type UserProfileRepositoryDeps = {
-  getClient: () => SupabaseClient
+  getClient: () => AppSupabaseClient
   getSessionUser: () => Promise<AuthResult<User>>
 }
 

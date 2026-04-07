@@ -8,12 +8,13 @@
  * Usage:
  * - Use for privileged operations (e.g. admin user creation).
  */
-import { createClient, type SupabaseClient } from "@supabase/supabase-js"
+import { createClient } from "@supabase/supabase-js"
 import { getEnv } from "@/util/env"
+import type { AppSupabaseClient, Database } from "@/lib/vendor/supabase/types"
 
-let adminClient: SupabaseClient | null = null
+let adminClient: AppSupabaseClient | null = null
 
-export function getAdminClient(): SupabaseClient {
+export function getAdminClient(): AppSupabaseClient {
   if (!adminClient) {
     const env = getEnv()
     const supabaseUrl = env.SUPABASE_URL || import.meta.env.VITE_SUPABASE_URL || ""
@@ -35,7 +36,7 @@ export function getAdminClient(): SupabaseClient {
       )
     }
 
-    adminClient = createClient(supabaseUrl, serviceRoleKey, {
+    adminClient = createClient<Database>(supabaseUrl, serviceRoleKey, {
       auth: {
         autoRefreshToken: false,
         persistSession: false,

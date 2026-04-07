@@ -24,6 +24,10 @@ app.config.timestamp_*.js
 # Temp
 gitignore
 .eslintcache
+.supabase/
+supabase/.branches/
+supabase/.temp/
+supabase/.env.keys
 
 # System Files
 .DS_Store

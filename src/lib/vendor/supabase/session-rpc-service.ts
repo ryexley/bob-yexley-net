@@ -1,5 +1,6 @@
-import type { SupabaseClient } from "@supabase/supabase-js"
 import { AUTH_RPC } from "@/lib/vendor/supabase/auth-rpc-names"
+import type { AppSupabaseClient } from "@/lib/vendor/supabase/types"
+import type { Json } from "@/types/database.types"
 
 export type AuthResult<T = any> = {
   data: T | null
@@ -12,8 +13,17 @@ type FailedVisitorLoginAttemptResult = {
   failed_attempts: number
 }
 
+const isFailedVisitorLoginAttemptResult = (
+  value: Json | null,
+): value is FailedVisitorLoginAttemptResult =>
+  typeof value === "object" &&
+  value !== null &&
+  "found" in value &&
+  "locked" in value &&
+  "failed_attempts" in value
+
 type SessionRpcServiceDeps = {
-  getClient: () => SupabaseClient
+  getClient: () => AppSupabaseClient
 }
 
 export function createSessionRpcService({ getClient }: SessionRpcServiceDeps) {
@@ -104,11 +114,15 @@ export function createSessionRpcService({ getClient }: SessionRpcServiceDeps) {
           return { found: false, locked: false, failed_attempts: 0 }
         }
 
+        if (!isFailedVisitorLoginAttemptResult(data)) {
+          return { found: false, locked: false, failed_attempts: 0 }
+        }
+
         return {
-          found: data?.found === true,
-          locked: data?.locked === true,
+          found: data.found === true,
+          locked: data.locked === true,
           failed_attempts:
-            typeof data?.failed_attempts === "number" ? data.failed_attempts : 0,
+            typeof data.failed_attempts === "number" ? data.failed_attempts : 0,
         }
       } catch (error) {
         console.error("recordFailedVisitorLoginAttempt error:", error)

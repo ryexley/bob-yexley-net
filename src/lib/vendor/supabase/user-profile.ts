@@ -1,4 +1,5 @@
-import type { SupabaseClient, User } from "@supabase/supabase-js"
+import type { User } from "@supabase/supabase-js"
+import type { AppSupabaseClient } from "@/lib/vendor/supabase/types"
 
 export type AppRole = "superuser" | "admin" | "visitor"
 export type VisitorStatus = "pending" | "active" | "locked"
@@ -96,7 +97,7 @@ const mapUserProfileRow = (
 }
 
 async function selectUserProfileFromView(
-  supabase: SupabaseClient,
+  supabase: AppSupabaseClient,
   userId: string,
 ): Promise<ProfileLookupResult> {
   if (userProfileViewAvailable === false) {
@@ -138,7 +139,7 @@ async function selectUserProfileFromView(
 }
 
 async function selectUserProfileFromTables(
-  supabase: SupabaseClient,
+  supabase: AppSupabaseClient,
   userId: string,
 ): Promise<ProfileLookupResult> {
   const { data: roleData, error: roleError } = await supabase
@@ -188,7 +189,7 @@ async function selectUserProfileFromTables(
 }
 
 export async function selectUserProfileRecord(
-  supabase: SupabaseClient,
+  supabase: AppSupabaseClient,
   userId: string,
 ): Promise<ProfileLookupResult> {
   const fromView = await selectUserProfileFromView(supabase, userId)

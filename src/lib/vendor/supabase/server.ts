@@ -9,8 +9,8 @@
  * - Use in server queries/loaders/actions that must run as the current user.
  */
 import { createServerClient } from "@supabase/ssr"
-import type { SupabaseClient } from "@supabase/supabase-js"
 import { getEvent, parseCookies, setCookie } from "vinxi/http"
+import type { AppSupabaseClient, Database } from "@/lib/vendor/supabase/types"
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY
@@ -25,8 +25,8 @@ const isHeadersSentError = (error: unknown): boolean =>
   "code" in error &&
   (error as { code?: string }).code === "ERR_HTTP_HEADERS_SENT"
 
-export async function getServerClient(): Promise<SupabaseClient> {
-  const client = createServerClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+export async function getServerClient(): Promise<AppSupabaseClient> {
+  const client = createServerClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, {
     cookies: {
       getAll() {
         const cookies = parseCookies()
