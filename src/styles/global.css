@@ -187,6 +187,52 @@ fieldset {
   padding: 0;
 }
 
+.thin-scrollbar {
+  --thin-scrollbar-color: var(--colors-cool-blue);
+  --thin-scrollbar-transparency: 40%;
+
+  @supports selector(::-webkit-scrollbar) {
+    &::-webkit-scrollbar {
+      height: 0.125rem;
+      width: 0.125rem;
+    }
+
+    &::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: transparent;
+      border-radius: 999px;
+    }
+
+    &:hover {
+      &::-webkit-scrollbar-thumb {
+        background: color-mix(
+          in srgb,
+          var(--thin-scrollbar-color) var(--thin-scrollbar-transparency),
+          transparent
+        );
+      }
+    }
+  }
+
+  @supports not selector(::-webkit-scrollbar) {
+    /* Keep Firefox at a stable native size and only change color on interaction. */
+    scrollbar-color: transparent transparent;
+    scrollbar-width: thin;
+
+    &:hover {
+      scrollbar-color: color-mix(
+          in srgb,
+          var(--thin-scrollbar-color) var(--thin-scrollbar-transparency),
+          transparent
+        )
+        transparent;
+    }
+  }
+}
+
 /*
 @media (min-width: 30rem) {
   main:not(.no-chrome) {

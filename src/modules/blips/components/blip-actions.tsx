@@ -24,7 +24,7 @@ export function BlipActions(props: BlipActionsProps) {
   const confirm = useConfirm()
   const [isTogglingPublish, setIsTogglingPublish] = createSignal(false)
 
-  const { isAuthenticated, user } = useAuth()
+  const { isAuthenticated, isSuperuser, user } = useAuth()
   const supabase = useSupabase()
   const store = blipStore(supabase.client, { subscribe: false })
 
@@ -35,6 +35,10 @@ export function BlipActions(props: BlipActionsProps) {
 
     if (!isAuthenticated()) {
       return false
+    }
+
+    if (isSuperuser()) {
+      return true
     }
 
     // Drafts created locally can briefly exist without user_id in cache.

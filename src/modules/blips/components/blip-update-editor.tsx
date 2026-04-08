@@ -686,7 +686,7 @@ export function BlipUpdateEditor(props: BlipUpdateEditorProps) {
     const status = saveStatus()
 
     if (status === "saving-db") {
-      return <LoadingSpinner size="0.75rem" />
+      return <LoadingSpinner class="blip-editor-status-spinner" />
     }
 
     if (status === "saved-db") {

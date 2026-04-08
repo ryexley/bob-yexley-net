@@ -58,7 +58,7 @@ export function ReactionPicker(props: ReactionPickerProps) {
           disableOutsidePointerEvents
           onPointerDownOutside={handlePointerDownOutside}>
           <div class="reaction-picker-shell">
-            <div class="reaction-picker-body">
+            <div class="reaction-picker-body thin-scrollbar">
               <div class="reaction-picker-grid">
                 <For each={REACTION_EMOJI_SET}>
                   {emoji => (

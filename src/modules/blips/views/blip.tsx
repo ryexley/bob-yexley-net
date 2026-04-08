@@ -116,7 +116,7 @@ export function BlipView() {
   const store = blipStore(supabase.client, { subscribe: false })
   const reactions = reactionStore(supabase.client, { subscribe: false })
   const tags = tagStore(supabase.client)
-  const { isAuthenticated, user, visitor, loading } = useAuth() as any
+  const { isAuthenticated, isSuperuser, user, visitor, loading } = useAuth() as any
   const blipGraphQuery = createAsync(() => getBlipGraph(params.id))
   const blipQuery = createMemo(() => blipGraphQuery()?.blip ?? null)
   const initialUpdates = createMemo(() => blipGraphQuery()?.updates ?? [])
@@ -140,7 +140,11 @@ export function BlipView() {
       return false
     }
 
-    // Mirror the toolbar behavior: authenticated owner-only controls.
+    if (isSuperuser()) {
+      return true
+    }
+
+    // Admin controls remain owner-scoped.
     return user()?.id === rootBlip.user_id
   })
   const detailContainerWidthClass = createMemo(() => {

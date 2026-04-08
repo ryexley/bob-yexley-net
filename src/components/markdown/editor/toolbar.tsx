@@ -1,10 +1,4 @@
-import {
-  For,
-  Show,
-  createEffect,
-  createMemo,
-  createSignal,
-} from "solid-js"
+import { For, Show, createEffect, createMemo, createSignal } from "solid-js"
 import { ToggleGroup } from "@kobalte/core"
 import { Icon } from "@/components/icon"
 import { clsx as cx } from "@/util"
@@ -130,7 +124,7 @@ export default function Toolbar(props: ToolbarProps) {
       <ToggleGroup.Root
         multiple
         value={pressedFormats()}
-        class="toolbar-content"
+        class="toolbar-content thin-scrollbar"
         aria-orientation="horizontal">
         <For each={formattingOptions}>
           {(option, index) => (
@@ -142,14 +136,12 @@ export default function Toolbar(props: ToolbarProps) {
                   option.key === "link"
                     ? handleLinkClick()
                     : option.key === "highlight"
-                      ? (
-                          closeLinkEditor(),
-                          props.onFormatApply(option.key, {
-                            rangeFrom: props.selectionRangeFrom,
-                            rangeTo: props.selectionRangeTo,
-                          })
-                        )
-                    : (closeLinkEditor(), props.onFormatApply(option.key))
+                      ? (closeLinkEditor(),
+                        props.onFormatApply(option.key, {
+                          rangeFrom: props.selectionRangeFrom,
+                          rangeTo: props.selectionRangeTo,
+                        }))
+                      : (closeLinkEditor(), props.onFormatApply(option.key))
                 }
                 // Preserve editor focus/selection so commands apply correctly.
                 onMouseDown={e => e.preventDefault()}
@@ -169,7 +161,10 @@ export default function Toolbar(props: ToolbarProps) {
       <div
         class={cx("toolbar-link-editor", { open: showLinkEditor() })}
         onKeyDown={event => {
-          if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+          if (
+            (event.metaKey || event.ctrlKey) &&
+            event.key.toLowerCase() === "k"
+          ) {
             event.preventDefault()
             closeLinkEditor()
             return

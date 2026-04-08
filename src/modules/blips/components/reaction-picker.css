@@ -58,21 +58,6 @@
   overflow-y: auto;
   padding: 0.08rem 0 0.12rem 0.08rem;
   scrollbar-gutter: stable;
-  scrollbar-width: thin;
-  scrollbar-color: color-mix(in srgb, var(--colors-mono-06) 55%, transparent) transparent;
-}
-
-.reaction-picker-body::-webkit-scrollbar {
-  width: 0.125rem;
-}
-
-.reaction-picker-body::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.reaction-picker-body::-webkit-scrollbar-thumb {
-  background: color-mix(in srgb, var(--colors-mono-06) 55%, transparent);
-  border-radius: 999px;
 }
 
 .reaction-picker-note {
@@ -114,7 +99,11 @@
 
   &.active {
     background: rgba(var(--colors-info-rgb), 0.25);
-    border-color: color-mix(in srgb, var(--colors-info) 60%, var(--colors-mono-05) 40%);
+    border-color: color-mix(
+      in srgb,
+      var(--colors-info) 60%,
+      var(--colors-mono-05) 40%
+    );
     box-shadow: inset 0 0 0 0.0625rem rgba(var(--colors-info-rgb), 0.18);
   }
 }
