@@ -22,7 +22,7 @@
   overflow-x: auto;
   overflow-y: hidden;
   padding: 0.25rem;
-  scrollbar-width: thin;
+  scrollbar-width: 0.125rem;
   -webkit-overflow-scrolling: touch;
 }
 
