@@ -1,10 +1,12 @@
 import type { Blip } from "@/modules/blips/data/schema"
 import { createEffect, createMemo, createSignal, onCleanup, onMount } from "solid-js"
+import { Icon } from "@/components/icon"
 import { MarkdownRenderer as Markdown } from "@/components/markdown/renderer"
 import { useNotify } from "@/components/notification"
 import { useAuth } from "@/context/auth-context"
 import { useSupabase } from "@/context/services-context"
 import { BlipActions } from "@/modules/blips/components/blip-actions"
+import { BlipCommentTrigger } from "@/modules/blips/components/blip-comment-trigger"
 import { BlipReactionSummary } from "@/modules/blips/components/blip-reaction-summary"
 import { BlipReactionTrigger } from "@/modules/blips/components/blip-reaction-trigger"
 import {
@@ -16,6 +18,8 @@ import {
 import { REACTION_ERROR_I18N_KEY } from "@/modules/blips/data/errors"
 import { reactionStore } from "@/modules/blips/data/reactions-store"
 import { blipStore } from "@/modules/blips/data/store"
+import { BlipCommentThread } from "@/modules/blips/components/blip-comment-thread"
+import { useBlipComposer } from "@/modules/blips/context/blip-composer-context"
 import { formatBlipTimestamp } from "@/modules/blips/util"
 import { ptr } from "@/i18n"
 import "./update-blip.css"
@@ -24,15 +28,17 @@ const tr = ptr("blips.components.blip")
 
 export function UpdateBlip(props: {
   blip: Blip
+  comments?: Blip[]
   isRecentRealtime?: boolean
   isShimmering?: boolean
   onEdit?: (blipId: string) => void
 }) {
   const supabase = useSupabase()
-  const { isAuthenticated, visitor } = useAuth()
+  const { isAuthenticated, userProfile, userSystem } = useAuth()
   const notify = useNotify()
   const blips = blipStore(supabase.client, { subscribe: false })
   const reactions = reactionStore(supabase.client, { subscribe: false })
+  const composer = useBlipComposer()
   const [timeTick, setTimeTick] = createSignal(Date.now())
   const [isReactionBusy, setIsReactionBusy] = createSignal(false)
   const [reactionStateOverride, setReactionStateOverride] =
@@ -90,7 +96,7 @@ export function UpdateBlip(props: {
       myReactionCount: previousCount,
       emoji,
       nextActive: !hasActiveReaction,
-      visitorDisplayName: visitor()?.displayName ?? null,
+      visitorDisplayName: userProfile()?.displayName ?? null,
     })
     const applyVisibleReactionState = (next: ReactionStateOverride) => {
       setReactionStateOverride(next)
@@ -101,8 +107,8 @@ export function UpdateBlip(props: {
     applyVisibleReactionState(optimisticOverride)
 
     const result = await reactions.toggleReaction(props.blip.id, emoji, {
-      visitorId: visitor()?.id ?? null,
-      visitorStatus: visitor()?.status ?? null,
+      profileId: userProfile()?.id ?? null,
+      status: userSystem()?.status ?? null,
       currentCount: previousCount,
       hasActiveReaction,
     })
@@ -126,23 +132,32 @@ export function UpdateBlip(props: {
 
   return (
     <li
-      class="update-blip"
-      classList={{
-        "update-blip--recent-realtime": props.isRecentRealtime === true,
-        "update-blip--shimmering": props.isShimmering === true,
-        "update-blip--unpublished": !props.blip.published,
-      }}>
-      <header class="update-blip-header">
-        <span class="update-blip-timestamp">
-          {timestampLabel()}
-        </span>
-      </header>
-      <div class="update-blip-content">
-        <Markdown content={props.blip.content ?? ""} />
-      </div>
-      <footer class="update-blip-footer">
-        <div class="update-blip-footer-start">
+      class="update-blip-stack">
+      <article
+        class="update-blip"
+        classList={{
+          "update-blip--recent-realtime": props.isRecentRealtime === true,
+          "update-blip--shimmering": props.isShimmering === true,
+          "update-blip--unpublished": !props.blip.published,
+        }}>
+        <header class="update-blip-header">
+          <span class="update-blip-kind">
+            <Icon
+              name="chat"
+              class="update-blip-kind-icon"
+            />
+            <span>{tr("modeLabel")}</span>
+          </span>
+          <span class="update-blip-timestamp">
+            {timestampLabel()}
+          </span>
+        </header>
+        <div class="update-blip-content">
+          <Markdown content={props.blip.content ?? ""} />
+        </div>
+        <footer>
           <BlipReactionSummary
+            class="reactions"
             reactions={displayBlip().reactions}
             busy={isReactionBusy()}
             onToggleReaction={
@@ -153,27 +168,39 @@ export function UpdateBlip(props: {
                 : undefined
             }
           />
-        </div>
-        <div class="update-blip-footer-end">
-          <BlipActions
-            blip={props.blip}
-            onEdit={props.onEdit}
-          />
-          <BlipReactionTrigger
-            blip={displayBlip()}
-            triggerAriaLabel={tr("actions.addReaction")}
-            onReactionStateChange={next => {
-              const nextState = {
-                reactions: next.reactions,
-                my_reaction_count: next.myReactionCount,
-                reactions_count: next.reactionsCount,
-              }
-              setReactionStateOverride(nextState)
-              blips.updateCachedReactionState(props.blip.id, nextState)
-            }}
-          />
-        </div>
-      </footer>
+          <div class="actions">
+            <BlipActions
+              blip={props.blip}
+              onEdit={props.onEdit}
+              fullWidth={false}
+              class="update-blip-actions"
+            />
+            <BlipReactionTrigger
+              blip={displayBlip()}
+              triggerAriaLabel={tr("actions.addReaction")}
+              onReactionStateChange={next => {
+                const nextState = {
+                  reactions: next.reactions,
+                  my_reaction_count: next.myReactionCount,
+                  reactions_count: next.reactionsCount,
+                }
+                setReactionStateOverride(nextState)
+                blips.updateCachedReactionState(props.blip.id, nextState)
+              }}
+            />
+            {props.blip.allow_comments !== false ? (
+              <BlipCommentTrigger
+                onCompose={() => composer.openNewComment(props.blip.id)}
+              />
+            ) : null}
+          </div>
+        </footer>
+      </article>
+      <BlipCommentThread
+        parentBlip={props.blip}
+        comments={props.comments ?? []}
+        showHeader={false}
+      />
     </li>
   )
 }

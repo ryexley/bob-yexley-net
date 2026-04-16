@@ -2,7 +2,9 @@ import { createEffect, createMemo, createSignal, onCleanup, Show } from "solid-j
 import { Drawer, DrawerPosition } from "@/components/drawer"
 import { Button } from "@/components/button"
 import { Icon } from "@/components/icon"
+import { InfoTooltip } from "@/components/info-tooltip"
 import { useNotify } from "@/components/notification"
+import { Switch } from "@/components/switch"
 import { Pin } from "@/modules/auth/components/pin"
 import { UserAvatar } from "@/modules/users/components/user-avatar"
 import { UserRoleSegmentedControl } from "@/modules/users/components/user-role-segmented-control"
@@ -28,6 +30,7 @@ export function UserEditDrawer(props: UserEditDrawerProps) {
   const notify = useNotify()
   const [role, setRole] = createSignal<AdminUserRecord["role"]>("visitor")
   const [status, setStatus] = createSignal<AdminUserRecord["status"]>("pending")
+  const [trusted, setTrusted] = createSignal(false)
   const [notes, setNotes] = createSignal("")
   const [pin, setPin] = createSignal("")
   const [isSaving, setIsSaving] = createSignal(false)
@@ -51,6 +54,10 @@ export function UserEditDrawer(props: UserEditDrawerProps) {
     const timestamp = currentUser()?.createdAt
     return timestamp ? formatLongDate(timestamp) ?? tr("values.unavailable") : tr("values.unavailable")
   })
+  const isTrustedManagedByRole = createMemo(() => {
+    const currentRole = role()
+    return currentRole === "admin" || currentRole === "superuser"
+  })
   const isDirty = createMemo(() => {
     const user = currentUser()
     if (!user) {
@@ -60,6 +67,7 @@ export function UserEditDrawer(props: UserEditDrawerProps) {
     return (
       role() !== user.role ||
       status() !== user.status ||
+      trusted() !== user.trusted ||
       notes() !== (user.notes ?? "") ||
       pin().length > 0
     )
@@ -68,6 +76,7 @@ export function UserEditDrawer(props: UserEditDrawerProps) {
   const resetForm = () => {
     setRole(currentUser()?.role ?? "visitor")
     setStatus(currentUser()?.status ?? "pending")
+    setTrusted(currentUser()?.trusted ?? false)
     setNotes(currentUser()?.notes ?? "")
     setPin("")
   }
@@ -181,6 +190,7 @@ export function UserEditDrawer(props: UserEditDrawerProps) {
     const result = await updateAdminUserRecord(user.userId, {
       role: role(),
       status: status(),
+      trusted: trusted(),
       notes: notes(),
       pin: pin(),
     })
@@ -228,6 +238,9 @@ export function UserEditDrawer(props: UserEditDrawerProps) {
             <UserAvatar
               class="user-edit-drawer-avatar"
               role={role()}
+              displayName={currentUser()?.displayName ?? currentUser()?.email ?? null}
+              avatarSeed={currentUser()?.avatarSeed ?? null}
+              avatarVersion={currentUser()?.avatarVersion ?? null}
               size="lg"
               variant="surface"
               aria-hidden={true}
@@ -273,6 +286,21 @@ export function UserEditDrawer(props: UserEditDrawerProps) {
                 class="user-edit-drawer-status"
               />
             </div>
+
+            <Switch
+              checked={trusted() || isTrustedManagedByRole()}
+              disabled={isSaving() || isTrustedManagedByRole()}
+              onChange={setTrusted}
+              label={tr("fields.trusted.label")}
+              containerClass="user-edit-drawer-trusted"
+              endContent={
+                <InfoTooltip
+                  info={tr("fields.trusted.tooltip")}
+                  contentClass="user-edit-drawer-trusted-tooltip"
+                  aria-label={tr("fields.trusted.tooltipAriaLabel")}
+                />
+              }
+            />
 
             <div class="user-edit-drawer-fieldset">
               <Pin

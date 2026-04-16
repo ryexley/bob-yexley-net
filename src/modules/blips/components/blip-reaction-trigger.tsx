@@ -32,7 +32,7 @@ const tr = ptr("blips.reactions")
 
 export function BlipReactionTrigger(props: BlipReactionTriggerProps) {
   const supabase = useSupabase()
-  const { isAuthenticated, visitor } = useAuth()
+  const { isAuthenticated, userProfile, userSystem } = useAuth()
   const visitorAuth = useVisitorAuth()
   const notify = useNotify()
   const reactions = reactionStore(supabase.client, { subscribe: false })
@@ -148,7 +148,7 @@ export function BlipReactionTrigger(props: BlipReactionTriggerProps) {
       myReactionCount: previousCount,
       emoji,
       nextActive: !currentlyActive,
-      visitorDisplayName: visitor()?.displayName ?? null,
+      visitorDisplayName: userProfile()?.displayName ?? null,
     })
 
     setBusy(true)
@@ -160,8 +160,8 @@ export function BlipReactionTrigger(props: BlipReactionTriggerProps) {
       reactionsCount: optimisticOverride.reactions_count,
     })
     const result = await reactions.toggleReaction(props.blip.id, emoji, {
-      visitorId: visitor()?.id ?? null,
-      visitorStatus: visitor()?.status ?? null,
+      profileId: userProfile()?.id ?? null,
+      status: userSystem()?.status ?? null,
       currentCount: previousCount,
       hasActiveReaction: currentlyActive,
     })

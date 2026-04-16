@@ -57,8 +57,13 @@ export const en = {
             close: "Close",
             edit: "Edit",
             cancelEdit: "Cancel",
+            regenerateAvatar: "Re-generate avatar colors",
             save: "Save",
             saving: "Saving...",
+          },
+          tooltips: {
+            regenerateAvatar:
+              "Re-generate your icon colors. Feel free to do this as many times as you like until you get a combination and pattern that you like.",
           },
           fields: {
             email: "Email",
@@ -226,6 +231,11 @@ export const en = {
           status: {
             label: "Status",
           },
+          trusted: {
+            label: "Trusted",
+            tooltip: "Trusted active users can publish comments without going through moderation.",
+            tooltipAriaLabel: "What trusted means",
+          },
           pin: {
             label: "Reset PIN",
           },
@@ -283,6 +293,10 @@ export const en = {
         },
         fields: {
           joinedAt: "Joined",
+          trusted: {
+            trustedTooltip: "This visitor is trusted",
+            untrustedTooltip: "This visitor is not yet trusted",
+          },
         },
         values: {
           unavailable: "Unavailable",
@@ -322,6 +336,10 @@ export const en = {
           postUpdate: "Post update",
           hideUpdateComposer: "Hide composer",
           addReaction: "Add reaction",
+        },
+        sort: {
+          toggleToOldest: "Show updates and root comments oldest first",
+          toggleToNewest: "Show updates and root comments newest first",
         },
         updates: {
           label: "Updates",
@@ -376,9 +394,12 @@ export const en = {
     },
     components: {
       blip: {
+        modeLabel: "Update",
         actions: {
           readMore: "Read more",
           addReaction: "Add reaction",
+          updatesTooltip: "{count, plural, one {# update} other {# updates}}",
+          commentsTooltip: "{count, plural, one {# comment} other {# comments}}",
         },
         readMoreDialog: {
           closeAriaLabel: "Close dialog",
@@ -431,6 +452,71 @@ export const en = {
             confirming: "Deleting...",
             cancel: "Keep draft",
           },
+        },
+      },
+      commentEditor: {
+        modeLabel: "Comment",
+        titles: {
+          new: "New comment",
+          edit: "Edit comment",
+        },
+        placeholder: "Write a comment...",
+        actions: {
+          close: "Close",
+          delete: "Delete comment",
+          save: "Save comment",
+          saving: "Saving...",
+          toggleToolbar: "Toggle formatting toolbar",
+        },
+        confirmDelete: {
+          title: "Delete comment?",
+          prompt: "This permanently deletes the comment.",
+          actions: {
+            confirm: "Delete",
+            confirming: "Deleting...",
+            cancel: "Cancel",
+          },
+        },
+        errors: {
+          deleteFailed: "Unable to delete this comment right now.",
+        },
+      },
+      commentThread: {
+        title: "Comments",
+        disabled: "Comments are currently disabled for this blip.",
+        unknownAuthor: "Visitor",
+        statuses: {
+          pending: "Pending review",
+          rejected: "Rejected",
+        },
+        actions: {
+          addComment: "Add comment",
+          enableComments: "Enable comments",
+          disableComments: "Disable comments",
+          toolbarAriaLabel: "Comment actions",
+          edit: "Edit",
+          editTooltip: "Edit comment",
+          delete: "Delete",
+          deleteTooltip: "Delete comment",
+          approve: "Approve",
+          approveTooltip: "Approve and publish comment",
+          unpublish: "Unpublish",
+          unpublishTooltip: "Unpublish comment",
+          reject: "Reject",
+          rejectTooltip: "Reject comment",
+        },
+        confirmDelete: {
+          title: "Delete comment?",
+          prompt: "This permanently deletes the comment and cannot be undone.",
+          actions: {
+            confirm: "Delete",
+            confirming: "Deleting...",
+            cancel: "Cancel",
+          },
+        },
+        errors: {
+          deleteFailed: "Unable to delete this comment right now.",
+          moderationFailed: "Unable to update this comment right now.",
         },
       },
     },

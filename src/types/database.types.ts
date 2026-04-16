@@ -76,6 +76,7 @@ export type Database = {
       }
       blips: {
         Row: {
+          allow_comments: boolean
           blip_type: string
           content: string | null
           created_at: string | null
@@ -88,6 +89,7 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          allow_comments?: boolean
           blip_type?: string
           content?: string | null
           created_at?: string | null
@@ -100,6 +102,7 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          allow_comments?: boolean
           blip_type?: string
           content?: string | null
           created_at?: string | null
@@ -134,21 +137,21 @@ export type Database = {
           created_at: string
           emoji: string
           id: string
-          visitor_id: string
+          user_profile_id: string
         }
         Insert: {
           blip_id: string
           created_at?: string
           emoji: string
           id?: string
-          visitor_id: string
+          user_profile_id: string
         }
         Update: {
           blip_id?: string
           created_at?: string
           emoji?: string
           id?: string
-          visitor_id?: string
+          user_profile_id?: string
         }
         Relationships: [
           {
@@ -166,17 +169,17 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "reactions_visitor_id_fkey"
-            columns: ["visitor_id"]
+            foreignKeyName: "reactions_user_profile_id_fkey"
+            columns: ["user_profile_id"]
             isOneToOne: false
             referencedRelation: "view_user"
-            referencedColumns: ["visitor_id"]
+            referencedColumns: ["profile_id"]
           },
           {
-            foreignKeyName: "reactions_visitor_id_fkey"
-            columns: ["visitor_id"]
+            foreignKeyName: "reactions_user_profile_id_fkey"
+            columns: ["user_profile_id"]
             isOneToOne: false
-            referencedRelation: "visitors"
+            referencedRelation: "user_profile"
             referencedColumns: ["id"]
           },
         ]
@@ -250,41 +253,88 @@ export type Database = {
         }
         Relationships: []
       }
-      visitors: {
+      user_profile: {
         Row: {
+          avatar_seed: string
+          avatar_version: number
           created_at: string
           display_name: string
-          failed_login_attempts: number
           id: string
-          notes: string | null
-          status: Database["public"]["Enums"]["visitor_status"]
+          updated_at: string
           user_id: string
         }
         Insert: {
+          avatar_seed?: string
+          avatar_version?: number
           created_at?: string
           display_name: string
-          failed_login_attempts?: number
           id?: string
-          notes?: string | null
-          status?: Database["public"]["Enums"]["visitor_status"]
+          updated_at?: string
           user_id: string
         }
         Update: {
+          avatar_seed?: string
+          avatar_version?: number
           created_at?: string
           display_name?: string
-          failed_login_attempts?: number
           id?: string
-          notes?: string | null
-          status?: Database["public"]["Enums"]["visitor_status"]
+          updated_at?: string
           user_id?: string
         }
         Relationships: []
+      }
+      user_system: {
+        Row: {
+          created_at: string
+          failed_login_attempts: number
+          notes: string | null
+          status: Database["public"]["Enums"]["visitor_status"]
+          trusted: boolean
+          updated_at: string
+          user_profile_id: string
+        }
+        Insert: {
+          created_at?: string
+          failed_login_attempts?: number
+          notes?: string | null
+          status?: Database["public"]["Enums"]["visitor_status"]
+          trusted?: boolean
+          updated_at?: string
+          user_profile_id: string
+        }
+        Update: {
+          created_at?: string
+          failed_login_attempts?: number
+          notes?: string | null
+          status?: Database["public"]["Enums"]["visitor_status"]
+          trusted?: boolean
+          updated_at?: string
+          user_profile_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_system_user_profile_id_fkey"
+            columns: ["user_profile_id"]
+            isOneToOne: true
+            referencedRelation: "user_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_system_user_profile_id_fkey"
+            columns: ["user_profile_id"]
+            isOneToOne: true
+            referencedRelation: "view_user"
+            referencedColumns: ["profile_id"]
+          },
+        ]
       }
     }
     Views: {
       view_blips: {
         Row: {
+          allow_comments: boolean | null
           blip_type: string | null
+          comments: Json | null
           content: string | null
           created_at: string | null
           id: string | null
@@ -318,18 +368,47 @@ export type Database = {
           },
         ]
       }
+      view_public_user: {
+        Row: {
+          avatar_seed: string | null
+          avatar_version: number | null
+          display_name: string | null
+          profile_id: string | null
+          status: Database["public"]["Enums"]["visitor_status"] | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
+      view_reactions_public: {
+        Row: {
+          blip_id: string | null
+          created_at: string | null
+          display_name: string | null
+          emoji: string | null
+          id: string | null
+          user_id: string | null
+          user_profile_id: string | null
+        }
+        Relationships: []
+      }
       view_user: {
         Row: {
+          avatar_seed: string | null
+          avatar_version: number | null
+          display_name: string | null
+          failed_login_attempts: number | null
+          notes: string | null
+          profile_created_at: string | null
+          profile_id: string | null
+          profile_updated_at: string | null
           role: Database["public"]["Enums"]["app_role"] | null
           role_created_at: string | null
           role_updated_at: string | null
+          status: Database["public"]["Enums"]["visitor_status"] | null
+          system_created_at: string | null
+          system_updated_at: string | null
+          trusted: boolean | null
           user_id: string | null
-          visitor_created_at: string | null
-          visitor_display_name: string | null
-          visitor_failed_login_attempts: number | null
-          visitor_id: string | null
-          visitor_notes: string | null
-          visitor_status: Database["public"]["Enums"]["visitor_status"] | null
         }
         Relationships: []
       }
@@ -350,10 +429,6 @@ export type Database = {
       session_is_valid: { Args: { max_age?: string }; Returns: boolean }
       start_session: { Args: { ttl?: string }; Returns: undefined }
       sync_visitor_state: { Args: never; Returns: undefined }
-      update_profile: {
-        Args: { next_display_name: string }
-        Returns: undefined
-      }
     }
     Enums: {
       app_role: "superuser" | "admin" | "visitor"

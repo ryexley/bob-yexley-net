@@ -1,5 +1,4 @@
 import type { User } from "@supabase/supabase-js"
-import { AUTH_RPC } from "@/lib/vendor/supabase/auth-rpc-names"
 import type { AppSupabaseClient } from "@/lib/vendor/supabase/types"
 import {
   buildUserProfile,
@@ -153,7 +152,7 @@ export function createUserProfileRepository({
       }
     },
 
-    async updateCurrentVisitorDisplayName(
+    async updateCurrentUserDisplayName(
       displayName: string,
       sessionUser?: SessionUser | null,
     ): Promise<AuthResult<UserProfile>> {
@@ -173,12 +172,20 @@ export function createUserProfileRepository({
       }
 
       try {
-        const { error } = await getClient().rpc(AUTH_RPC.updateProfile, {
-          next_display_name: normalizedDisplayName,
-        })
+        const { data, error } = await getClient()
+          .from("user_profile")
+          .update({
+            display_name: normalizedDisplayName,
+          })
+          .eq("user_id", currentSessionUser.id)
+          .select("id")
+          .maybeSingle()
 
         if (error) {
           return { data: null, error: error.message }
+        }
+        if (!data) {
+          return { data: null, error: "User profile not found" }
         }
 
         clearCachedUserProfile()
@@ -196,10 +203,68 @@ export function createUserProfileRepository({
 
         return refreshedProfile
       } catch (error) {
-        console.error("Update current visitor display name error:", error)
+        console.error("Update current user display name error:", error)
         return {
           data: null,
           error: "An unexpected error occurred while updating display name",
+        }
+      }
+    },
+
+    async updateCurrentUserAvatarVersion(
+      nextAvatarVersion: number,
+      sessionUser?: SessionUser | null,
+    ): Promise<AuthResult<UserProfile>> {
+      if (!Number.isInteger(nextAvatarVersion) || nextAvatarVersion < 1) {
+        return { data: null, error: "Avatar version must be a positive integer" }
+      }
+
+      const sessionUserResult = await resolveSessionUser(sessionUser)
+      if (sessionUserResult.error) {
+        return { data: null, error: sessionUserResult.error }
+      }
+
+      const currentSessionUser = sessionUserResult.data
+      if (!currentSessionUser?.id) {
+        return { data: null, error: "User not authenticated" }
+      }
+
+      try {
+        const { data, error } = await getClient()
+          .from("user_profile")
+          .update({
+            avatar_version: nextAvatarVersion,
+          })
+          .eq("user_id", currentSessionUser.id)
+          .select("id")
+          .maybeSingle()
+
+        if (error) {
+          return { data: null, error: error.message }
+        }
+        if (!data) {
+          return { data: null, error: "User profile not found" }
+        }
+
+        clearCachedUserProfile()
+        const refreshedProfile = await repository.getUserProfile(currentSessionUser)
+        if (refreshedProfile.error) {
+          return { data: null, error: refreshedProfile.error }
+        }
+
+        if (!refreshedProfile.data) {
+          return {
+            data: null,
+            error: "Updated profile could not be reloaded",
+          }
+        }
+
+        return refreshedProfile
+      } catch (error) {
+        console.error("Update current user avatar version error:", error)
+        return {
+          data: null,
+          error: "An unexpected error occurred while updating avatar version",
         }
       }
     },

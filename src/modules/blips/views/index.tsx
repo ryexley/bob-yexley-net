@@ -27,7 +27,7 @@ export function BlipsView() {
   let reactionViewerBaselineCaptured = false
   const navigate = useNavigate()
   const supabase = useSupabase()
-  const { isAuthenticated, visitor, loading } = useAuth() as any
+  const { isAuthenticated, userProfile, userSystem, loading } = useAuth() as any
   const [isLoadingMore, setIsLoadingMore] = createSignal(false)
   const [hasMore, setHasMore] = createSignal(true)
   let showMoreButtonRef: HTMLButtonElement | undefined
@@ -103,9 +103,9 @@ export function BlipsView() {
     }
 
     const nextViewer = {
-      id: visitor()?.id ?? null,
-      status: visitor()?.status ?? null,
-      displayName: visitor()?.displayName ?? null,
+      id: userProfile()?.id ?? null,
+      status: userSystem()?.status ?? null,
+      displayName: userProfile()?.displayName ?? null,
     }
     const nextViewerKey = [
       nextViewer.id ?? "__anon__",

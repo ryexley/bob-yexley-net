@@ -3,6 +3,7 @@ import { query } from "@solidjs/router"
 import {
   BLIP_TYPES,
   type Blip,
+  type BlipAuthor,
 } from "@/modules/blips/data/schema"
 import type { BlipReactionSummary } from "@/modules/blips/data/reactions-schema"
 
@@ -14,21 +15,35 @@ type ViewTagRow = {
 
 type ViewTagValue = ViewTagRow | string
 
+type ViewAuthorValue = {
+  profile_id?: string | null
+  display_name?: string | null
+  avatar_seed?: string | null
+  avatar_version?: number | null
+}
+
+type ViewCommentRow = Omit<Blip, "tags" | "updates_count" | "reactions"> & {
+  author?: ViewAuthorValue | null
+}
+
 type ViewUpdateRow = Omit<Blip, "tags" | "updates_count"> & {
   tags?: ViewTagValue[] | null
   updates_count?: number | null
   reactions_count?: number | null
   my_reaction_count?: number | null
   reactions?: ViewReactionValue[] | null
+  comments?: ViewCommentRow[] | null
 }
 
 type ViewBlipRow = Omit<Blip, "tags" | "updates_count"> & {
   tags?: ViewTagValue[] | null
   updates_count?: number | null
+  comments_count?: number | null
   updates?: ViewUpdateRow[] | null
   reactions_count?: number | null
   my_reaction_count?: number | null
   reactions?: ViewReactionValue[] | null
+  comments?: ViewCommentRow[] | null
 }
 
 type ViewReactionValue = {
@@ -41,10 +56,8 @@ type ViewReactionValue = {
 type VisibleReactionRow = {
   blip_id?: string | null
   emoji?: string | null
-  visitor?: {
-    user_id?: string | null
-    display_name?: string | null
-  } | null
+  user_id?: string | null
+  display_name?: string | null
 }
 
 export type BlipReactionState = {
@@ -54,8 +67,12 @@ export type BlipReactionState = {
 }
 
 export type BlipGraph = {
-  blip: Blip
-  updates: Blip[]
+  blip: ThreadedBlip
+  updates: ThreadedBlip[]
+}
+
+export type ThreadedBlip = Blip & {
+  comments: Blip[]
 }
 
 type QuerySummary = Record<string, unknown>
@@ -265,14 +282,16 @@ const VIEW_BLIPS_SELECT = [
   "created_at",
   "updated_at",
   "blip_type",
+  "allow_comments",
   "tags",
   "updates_count",
+  "comments_count",
   "reactions_count",
   "my_reaction_count",
   "reactions",
 ].join(", ")
 
-const VIEW_BLIP_GRAPH_SELECT = `${VIEW_BLIPS_SELECT}, updates`
+const VIEW_BLIP_GRAPH_SELECT = `${VIEW_BLIPS_SELECT}, comments, updates`
 
 const mapTagNames = (tags?: ViewTagValue[] | null): string[] =>
   [
@@ -288,6 +307,20 @@ const mapTagNames = (tags?: ViewTagValue[] | null): string[] =>
     ),
   ].sort()
 
+const mapAuthor = (author?: ViewAuthorValue | null): BlipAuthor | undefined => {
+  if (!author) {
+    return undefined
+  }
+
+  return {
+    profile_id: author.profile_id ?? null,
+    display_name: author.display_name ?? null,
+    avatar_seed: author.avatar_seed ?? null,
+    avatar_version:
+      typeof author.avatar_version === "number" ? author.avatar_version : null,
+  }
+}
+
 const mapViewBlipRow = (row: ViewBlipRow): Blip => ({
   id: row.id,
   parent_id: row.parent_id,
@@ -299,11 +332,14 @@ const mapViewBlipRow = (row: ViewBlipRow): Blip => ({
   created_at: row.created_at,
   updated_at: row.updated_at,
   blip_type: row.blip_type,
+  allow_comments: row.allow_comments ?? true,
   tags: mapTagNames(row.tags),
   updates_count: row.updates_count ?? 0,
+  comments_count: row.comments_count ?? 0,
   reactions_count: row.reactions_count ?? 0,
   my_reaction_count: row.my_reaction_count ?? 0,
   reactions: mapReactionSummaries(row.reactions),
+  author: mapAuthor(row.author),
 })
 
 const mapReactionSummaries = (
@@ -363,11 +399,11 @@ export const buildBlipReactionStates = (
       }
 
     current.count += 1
-    if (row.visitor?.user_id && row.visitor.user_id === currentUserId) {
+    if (row.user_id && row.user_id === currentUserId) {
       current.reacted_by_current_user = true
     }
 
-    const displayName = row.visitor?.display_name?.trim()
+    const displayName = row.display_name?.trim()
     if (displayName && !current.display_names.includes(displayName)) {
       current.display_names.push(displayName)
       current.display_names.sort()
@@ -420,8 +456,8 @@ export async function getBlipReactionState(
 
   const currentUserId = await getCurrentUserId(supabase)
   const { data, error } = await supabase
-    .from("reactions")
-    .select("blip_id, emoji, visitor:visitors!inner(user_id, display_name)")
+    .from("view_reactions_public")
+    .select("blip_id, emoji, user_id, display_name")
     .eq("blip_id", blipId)
 
   if (error) {
@@ -446,8 +482,8 @@ export async function getBlipReactionStates(
 
   const currentUserId = await getCurrentUserId(supabase)
   const { data, error } = await supabase
-    .from("reactions")
-    .select("blip_id, emoji, visitor:visitors!inner(user_id, display_name)")
+    .from("view_reactions_public")
+    .select("blip_id, emoji, user_id, display_name")
     .in("blip_id", targetIds)
 
   if (error) {
@@ -461,7 +497,7 @@ export async function getBlipReactionStates(
   )
 }
 
-export const mapViewUpdateRows = (rows?: ViewUpdateRow[] | null): Blip[] =>
+export const mapViewCommentRows = (rows?: ViewCommentRow[] | null): Blip[] =>
   (rows ?? []).map(row => ({
     id: row.id,
     parent_id: row.parent_id,
@@ -473,11 +509,36 @@ export const mapViewUpdateRows = (rows?: ViewUpdateRow[] | null): Blip[] =>
     created_at: row.created_at,
     updated_at: row.updated_at,
     blip_type: row.blip_type,
+    allow_comments: row.allow_comments ?? true,
+    tags: [],
+    updates_count: 0,
+    comments_count: 0,
+    reactions_count: 0,
+    my_reaction_count: 0,
+    reactions: [],
+    author: mapAuthor(row.author),
+  }))
+
+export const mapViewUpdateRows = (rows?: ViewUpdateRow[] | null): ThreadedBlip[] =>
+  (rows ?? []).map(row => ({
+    id: row.id,
+    parent_id: row.parent_id,
+    user_id: row.user_id,
+    title: row.title,
+    content: row.content,
+    published: row.published,
+    moderation_status: row.moderation_status,
+    created_at: row.created_at,
+    updated_at: row.updated_at,
+    blip_type: row.blip_type,
+    allow_comments: row.allow_comments ?? true,
     tags: mapTagNames(row.tags),
     updates_count: row.updates_count ?? 0,
+    comments_count: 0,
     reactions_count: row.reactions_count ?? 0,
     my_reaction_count: row.my_reaction_count ?? 0,
     reactions: mapReactionSummaries(row.reactions),
+    comments: mapViewCommentRows(row.comments),
   }))
 
 const isRootBlip = (blip: Pick<Blip, "parent_id" | "blip_type">) =>
@@ -647,12 +708,17 @@ export const getBlip = query(async (id: string) => {
   )
 }, "blip")
 
-export const getBlipGraph = query(async (id: string): Promise<BlipGraph | null> => {
+export const getBlipGraph = query(async (
+  id: string,
+  viewerKey: string = "",
+): Promise<BlipGraph | null> => {
   "use server"
+
+  void viewerKey
 
   return withQueryMetrics(
     "getBlipGraph",
-    { id },
+    { id, viewerKey },
     async () => {
       const { getServerClient } = await import("@/lib/vendor/supabase/server")
       const supabase = await getServerClient()
@@ -677,7 +743,10 @@ export const getBlipGraph = query(async (id: string): Promise<BlipGraph | null> 
       }
 
       return {
-        blip: root,
+        blip: {
+          ...root,
+          comments: mapViewCommentRows((data as unknown as ViewBlipRow).comments),
+        },
         updates: mapViewUpdateRows((data as unknown as ViewBlipRow).updates),
       }
     },

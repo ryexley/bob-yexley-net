@@ -10,6 +10,7 @@ import {
   type ParentProps,
 } from "solid-js"
 import { BlipEditor } from "@/modules/blips/components/blip-editor"
+import { BlipCommentEditor } from "@/modules/blips/components/blip-comment-editor"
 import { BlipUpdateEditor } from "@/modules/blips/components/blip-update-editor"
 
 type BlipComposerKind = "root" | "update" | "comment"
@@ -20,12 +21,19 @@ type BlipComposerContextValue = {
   openEditRoot: (blipId: string) => void
   openNewUpdate: (rootBlipId: string) => void
   openEditUpdate: (rootBlipId: string, updateBlipId: string) => void
+  openNewComment: (parentBlipId: string) => void
+  openEditComment: (parentBlipId: string, commentBlipId: string) => void
   registerUpdateInlineMount: (
     rootBlipId: string,
     element: HTMLDivElement | null,
   ) => void
+  registerCommentInlineMount: (
+    parentBlipId: string,
+    element: HTMLDivElement | null,
+  ) => void
   requestCloseActive: () => void
   isUpdateOpenFor: (rootBlipId?: string | null) => boolean
+  isCommentOpenFor: (parentBlipId?: string | null) => boolean
   closeActive: () => void
 }
 
@@ -34,6 +42,7 @@ export function BlipComposerProvider(props: ParentProps) {
   const [activeKind, setActiveKind] = createSignal<BlipComposerKind | null>(null)
   const [hasRootHost, setHasRootHost] = createSignal(false)
   const [hasUpdateHost, setHasUpdateHost] = createSignal(false)
+  const [hasCommentHost, setHasCommentHost] = createSignal(false)
   const [rootOpen, setRootOpen] = createSignal(false)
   const [rootTargetBlipId, setRootTargetBlipId] = createSignal<string | null>(
     null,
@@ -51,13 +60,25 @@ export function BlipComposerProvider(props: ParentProps) {
     createSignal<HTMLDivElement | null>(null)
   const [updateFocusNonce, setUpdateFocusNonce] = createSignal(0)
   const [updateCloseRequestNonce, setUpdateCloseRequestNonce] = createSignal(0)
+  const [commentOpen, setCommentOpen] = createSignal(false)
+  const [commentParentBlipId, setCommentParentBlipId] = createSignal<string | null>(
+    null,
+  )
+  const [commentEditingBlipId, setCommentEditingBlipId] = createSignal<string | null>(
+    null,
+  )
+  const [commentFocusNonce, setCommentFocusNonce] = createSignal(0)
+  const [commentCloseRequestNonce, setCommentCloseRequestNonce] = createSignal(0)
+  const [commentInlineMounts, setCommentInlineMounts] = createSignal<
+    Record<string, HTMLDivElement | null>
+  >({})
 
   createEffect(() => {
     if (typeof document === "undefined") {
       return
     }
 
-    const isComposerOpen = rootOpen() || updateOpen()
+    const isComposerOpen = rootOpen() || updateOpen() || commentOpen()
     document.body.classList.toggle("blip-composer-open", isComposerOpen)
 
     onCleanup(() => {
@@ -74,6 +95,12 @@ export function BlipComposerProvider(props: ParentProps) {
   const ensureUpdateHost = () => {
     if (!hasUpdateHost()) {
       setHasUpdateHost(true)
+    }
+  }
+
+  const ensureCommentHost = () => {
+    if (!hasCommentHost()) {
+      setHasCommentHost(true)
     }
   }
 
@@ -101,9 +128,24 @@ export function BlipComposerProvider(props: ParentProps) {
     setUpdateInlineMount(null)
   }
 
+  const clearCommentInlineMountRegistry = () => {
+    setCommentInlineMounts({})
+  }
+
+  const resetCommentHostState = () => {
+    setCommentOpen(false)
+  }
+
+  const resetCommentHostSessionState = () => {
+    resetCommentHostState()
+    setCommentParentBlipId(null)
+    setCommentEditingBlipId(null)
+  }
+
   const openNewRoot = () => {
     ensureRootHost()
     resetUpdateHostSessionState()
+    resetCommentHostSessionState()
     setRootTargetBlipId(null)
     setActiveKind("root")
     setRootOpen(true)
@@ -112,6 +154,7 @@ export function BlipComposerProvider(props: ParentProps) {
   const openEditRoot = (blipId: string) => {
     ensureRootHost()
     resetUpdateHostSessionState()
+    resetCommentHostSessionState()
     setRootTargetBlipId(blipId)
     setActiveKind("root")
     setRootOpen(true)
@@ -121,6 +164,7 @@ export function BlipComposerProvider(props: ParentProps) {
     ensureUpdateHost()
     setRootOpen(false)
     setRootTargetBlipId(null)
+    resetCommentHostSessionState()
     setUpdateRootBlipId(rootBlipId)
     setUpdateEditingUpdateId(null)
     setUpdateFocusNonce(previous => previous + 1)
@@ -132,6 +176,7 @@ export function BlipComposerProvider(props: ParentProps) {
     ensureUpdateHost()
     setRootOpen(false)
     setRootTargetBlipId(null)
+    resetCommentHostSessionState()
     setUpdateRootBlipId(rootBlipId)
     setUpdateEditingUpdateId(updateBlipId)
     setUpdateFocusNonce(previous => previous + 1)
@@ -155,10 +200,41 @@ export function BlipComposerProvider(props: ParentProps) {
     }
   }
 
+  const registerCommentInlineMount = (
+    parentBlipId: string,
+    element: HTMLDivElement | null,
+  ) => {
+    setCommentInlineMounts(previous => {
+      if (!element) {
+        if (!(parentBlipId in previous)) {
+          return previous
+        }
+
+        const next = { ...previous }
+        delete next[parentBlipId]
+        return next
+      }
+
+      if (previous[parentBlipId] === element) {
+        return previous
+      }
+
+      return {
+        ...previous,
+        [parentBlipId]: element,
+      }
+    })
+  }
+
   const requestCloseActive = () => {
     const kind = activeKind()
     if (kind === "update") {
       setUpdateCloseRequestNonce(previous => previous + 1)
+      return
+    }
+
+    if (kind === "comment") {
+      setCommentCloseRequestNonce(previous => previous + 1)
       return
     }
 
@@ -171,9 +247,38 @@ export function BlipComposerProvider(props: ParentProps) {
     Boolean(rootBlipId) &&
     updateRootBlipId() === rootBlipId
 
+  const openNewComment = (parentBlipId: string) => {
+    ensureCommentHost()
+    resetRootHostSessionState()
+    resetUpdateHostSessionState()
+    setCommentParentBlipId(parentBlipId)
+    setCommentEditingBlipId(null)
+    setCommentFocusNonce(previous => previous + 1)
+    setActiveKind("comment")
+    setCommentOpen(true)
+  }
+
+  const openEditComment = (parentBlipId: string, commentBlipId: string) => {
+    ensureCommentHost()
+    resetRootHostSessionState()
+    resetUpdateHostSessionState()
+    setCommentParentBlipId(parentBlipId)
+    setCommentEditingBlipId(commentBlipId)
+    setCommentFocusNonce(previous => previous + 1)
+    setActiveKind("comment")
+    setCommentOpen(true)
+  }
+
+  const isCommentOpenFor = (parentBlipId?: string | null) =>
+    activeKind() === "comment" &&
+    commentOpen() &&
+    Boolean(parentBlipId) &&
+    commentParentBlipId() === parentBlipId
+
   const closeActive = () => {
     resetRootHostState()
     resetUpdateHostState()
+    resetCommentHostState()
     setActiveKind(null)
   }
 
@@ -181,11 +286,14 @@ export function BlipComposerProvider(props: ParentProps) {
     setActiveKind(null)
     resetRootHostSessionState()
     resetUpdateHostSessionState()
+    resetCommentHostSessionState()
     clearUpdateInlineMountRegistry()
+    clearCommentInlineMountRegistry()
   })
 
   const showRootHost = createMemo(() => hasRootHost())
   const showUpdateHost = createMemo(() => hasUpdateHost())
+  const showCommentHost = createMemo(() => hasCommentHost())
 
   return (
     <BlipComposerContext.Provider
@@ -195,9 +303,13 @@ export function BlipComposerProvider(props: ParentProps) {
         openEditRoot,
         openNewUpdate,
         openEditUpdate,
+        openNewComment,
+        openEditComment,
         registerUpdateInlineMount,
+        registerCommentInlineMount,
         requestCloseActive,
         isUpdateOpenFor,
+        isCommentOpenFor,
         closeActive,
       }}>
       {props.children}
@@ -231,6 +343,26 @@ export function BlipComposerProvider(props: ParentProps) {
           focusNonce={updateFocusNonce()}
           closeRequestNonce={updateCloseRequestNonce()}
           onRequestClose={closeActive}
+        />
+      </Show>
+      <Show when={showCommentHost()}>
+        <BlipCommentEditor
+          open={commentOpen()}
+          parentBlipId={commentParentBlipId()}
+          editingCommentId={commentEditingBlipId()}
+          desktopMount={
+            commentParentBlipId()
+              ? commentInlineMounts()[commentParentBlipId()!] ?? null
+              : null
+          }
+          focusNonce={commentFocusNonce()}
+          closeRequestNonce={commentCloseRequestNonce()}
+          onRequestClose={closeActive}
+          onAfterClose={() => {
+            if (!commentOpen()) {
+              resetCommentHostSessionState()
+            }
+          }}
         />
       </Show>
     </BlipComposerContext.Provider>

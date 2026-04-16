@@ -19,6 +19,7 @@ type BlipReactionSummaryProps = {
   reactions?: BlipReactionSummary[]
   onToggleReaction?: (emoji: string) => void
   busy?: boolean
+  class?: string
 }
 
 const LONG_PRESS_MS = 500
@@ -161,7 +162,7 @@ export function BlipReactionSummary(props: BlipReactionSummaryProps) {
 
   return (
     <Show when={reactions().length > 0}>
-      <ul class="blip-reaction-summary-list" aria-label="Reactions">
+      <ul class={cx("blip-reaction-summary-list", props.class)} aria-label="Reactions">
         <For each={reactions()}>
           {reaction => {
             const displayNames = createMemo(() => getReactionNames(reaction))

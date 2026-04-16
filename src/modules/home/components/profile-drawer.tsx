@@ -2,8 +2,10 @@ import { createEffect, createMemo, createSignal, onCleanup, Show } from "solid-j
 import { Drawer, DrawerPosition } from "@/components/drawer"
 import { Button } from "@/components/button"
 import { Icon } from "@/components/icon"
+import { IconButton } from "@/components/icon-button"
 import { Input } from "@/components/input"
 import { useNotify } from "@/components/notification"
+import { Tooltip } from "@/components/tooltip"
 import { useAuth } from "@/context/auth-context"
 import { useSupabase } from "@/context/services-context"
 import { useViewport } from "@/context/viewport"
@@ -36,19 +38,20 @@ export function ProfileDrawer(props: ProfileDrawerProps) {
   const [isEditing, setIsEditing] = createSignal(false)
   const [draftDisplayName, setDraftDisplayName] = createSignal("")
   const [isSaving, setIsSaving] = createSignal(false)
+  const [isRefreshingAvatar, setIsRefreshingAvatar] = createSignal(false)
   const [isLoggingOut, setIsLoggingOut] = createSignal(false)
   const [isMounted, setIsMounted] = createSignal(props.open)
   const [contentElement, setContentElement] = createSignal<HTMLElement | null>(null)
   let closeUnmountTimeout: ReturnType<typeof setTimeout> | null = null
 
   const displayName = createMemo(
-    () => auth.visitor()?.displayName ?? auth.user()?.email ?? tr("values.unavailable"),
+    () => auth.userProfile()?.displayName ?? auth.user()?.email ?? tr("values.unavailable"),
   )
 
   const resolvedStatus = createMemo(() => {
-    const visitorStatus = auth.visitor()?.status
-    if (visitorStatus) {
-      return tr(`status.${visitorStatus}`)
+    const userStatus = auth.userSystem()?.status
+    if (userStatus) {
+      return tr(`status.${userStatus}`)
     }
 
     const role = auth.role()
@@ -60,7 +63,7 @@ export function ProfileDrawer(props: ProfileDrawerProps) {
   })
 
   const joinedAt = createMemo(() => {
-    const timestamp = auth.visitor()?.createdAt ?? auth.profile()?.roleCreatedAt ?? null
+    const timestamp = auth.userProfile()?.createdAt ?? auth.profile()?.roleCreatedAt ?? null
     if (!timestamp) {
       return tr("values.unavailable")
     }
@@ -68,7 +71,11 @@ export function ProfileDrawer(props: ProfileDrawerProps) {
     return formatLongDate(timestamp) ?? tr("values.unavailable")
   })
 
-  const canEditName = createMemo(() => Boolean(auth.visitor()?.id))
+  const canEditName = createMemo(() => Boolean(auth.userProfile()?.id))
+  const canRegenerateAvatar = createMemo(() => Boolean(auth.userProfile()?.id))
+  const isAvatarActionBusy = createMemo(
+    () => isSaving() || isRefreshingAvatar(),
+  )
   const resolvedRole = createMemo(() => {
     const role = auth.role()
     if (!role) {
@@ -96,7 +103,7 @@ export function ProfileDrawer(props: ProfileDrawerProps) {
 
   const resetEditingState = () => {
     setIsEditing(false)
-    setDraftDisplayName(auth.visitor()?.displayName ?? "")
+    setDraftDisplayName(auth.userProfile()?.displayName ?? "")
   }
 
   const requestClose = () => {
@@ -111,9 +118,9 @@ export function ProfileDrawer(props: ProfileDrawerProps) {
   }
 
   createEffect(() => {
-    auth.visitor()?.displayName
+    auth.userProfile()?.displayName
     if (!isEditing()) {
-      setDraftDisplayName(auth.visitor()?.displayName ?? "")
+      setDraftDisplayName(auth.userProfile()?.displayName ?? "")
     }
   })
 
@@ -191,7 +198,7 @@ export function ProfileDrawer(props: ProfileDrawerProps) {
     }
 
     setIsSaving(true)
-    const { data, error } = await supabase.updateCurrentVisitorDisplayName(
+    const { data, error } = await supabase.updateCurrentUserDisplayName(
       draftDisplayName(),
     )
     setIsSaving(false)
@@ -222,6 +229,29 @@ export function ProfileDrawer(props: ProfileDrawerProps) {
     props.onOpenChange(false)
   }
 
+  const handleRegenerateAvatar = async () => {
+    if (!canRegenerateAvatar() || isAvatarActionBusy()) {
+      return
+    }
+
+    const nextAvatarVersion = (auth.userProfile()?.avatarVersion ?? 1) + 1
+    setIsRefreshingAvatar(true)
+    const { data, error } = await supabase.updateCurrentUserAvatarVersion(
+      nextAvatarVersion,
+    )
+    setIsRefreshingAvatar(false)
+
+    if (error || !data) {
+      notify.error({
+        title: tr("notifications.saveError"),
+        content: error ?? tr("notifications.saveError"),
+      })
+      return
+    }
+
+    auth.replaceProfile(data)
+  }
+
   return (
     <Show when={isMounted()}>
       <Drawer
@@ -244,38 +274,39 @@ export function ProfileDrawer(props: ProfileDrawerProps) {
         </button>
         <div class="profile-drawer-shell">
           <div class="profile-drawer-summary">
-            <UserAvatar
-              class="profile-drawer-avatar"
-              role={auth.role()}
-              badgeMode="privileged"
-              size="lg"
-              variant="surface"
-              aria-hidden={true}
-            />
+            <div class="profile-drawer-avatar-stack">
+              <UserAvatar
+                class="profile-drawer-avatar"
+                role={auth.role()}
+                displayName={auth.userProfile()?.displayName ?? auth.user()?.email ?? null}
+                avatarSeed={auth.userProfile()?.avatarSeed ?? null}
+                avatarVersion={auth.userProfile()?.avatarVersion ?? null}
+                badgeMode="privileged"
+                size="lg"
+                variant="surface"
+                aria-hidden={true}
+              />
+              <Show when={canRegenerateAvatar()}>
+                <Tooltip content={tr("tooltips.regenerateAvatar")}>
+                  <IconButton
+                    size="xs"
+                    icon="autorenew"
+                    class="profile-drawer-avatar-regenerate"
+                    aria-label={tr("actions.regenerateAvatar")}
+                    disabled={isAvatarActionBusy()}
+                    onClick={() => {
+                      void handleRegenerateAvatar()
+                    }}
+                  />
+                </Tooltip>
+              </Show>
+            </div>
             <div class="profile-drawer-summary-copy">
               <div class="profile-drawer-summary-name">{displayName()}</div>
               <div class="profile-drawer-summary-email">
                 {auth.user()?.email ?? tr("values.unavailable")}
               </div>
             </div>
-            {canEditName() ? (
-              <Button
-                variant="outline"
-                size="sm"
-                icon={isEditing() ? "close" : "person_edit"}
-                label={isEditing() ? tr("actions.cancelEdit") : tr("actions.edit")}
-                class="profile-drawer-edit-toggle"
-                onClick={() => {
-                  if (isEditing()) {
-                    resetEditingState()
-                    return
-                  }
-
-                  setDraftDisplayName(auth.visitor()?.displayName ?? "")
-                  setIsEditing(true)
-                }}
-              />
-            ) : null}
           </div>
 
           <form class="profile-drawer-form" onSubmit={handleSave}>
@@ -345,27 +376,56 @@ export function ProfileDrawer(props: ProfileDrawerProps) {
             </Show>
 
             <div class="profile-drawer-actions">
-              {isEditing() && canEditName() ? (
-                <Button
-                  type="submit"
-                  variant="primary"
-                  size="sm"
-                  label={isSaving() ? tr("actions.saving") : tr("actions.save")}
-                  disabled={isSaving()}
-                />
-              ) : null}
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                icon="logout"
-                label={auth.isAuthenticated() ? trMenu("logout") : ""}
-                class="profile-drawer-logout"
-                onClick={() => {
-                  void handleLogout()
-                }}
-                disabled={isLoggingOut()}
-              />
+              <div class="profile-drawer-actions-start">
+                {canEditName() ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    icon={isEditing() ? undefined : "person_edit"}
+                    label={isEditing() ? tr("actions.cancelEdit") : tr("actions.edit")}
+                    class="profile-drawer-edit-toggle"
+                    disabled={isSaving() || isRefreshingAvatar()}
+                    onClick={() => {
+                      if (isEditing()) {
+                        resetEditingState()
+                        return
+                      }
+
+                      setDraftDisplayName(auth.userProfile()?.displayName ?? "")
+                      setIsEditing(true)
+                    }}
+                  />
+                ) : null}
+              </div>
+              <div class="profile-drawer-actions-end">
+                <Show
+                  when={isEditing() && canEditName()}
+                  fallback={
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      icon="logout"
+                      label={auth.isAuthenticated() ? trMenu("logout") : ""}
+                      class="profile-drawer-logout"
+                      onClick={() => {
+                        void handleLogout()
+                      }}
+                      disabled={isLoggingOut()}
+                    />
+                  }>
+                  <Button
+                    type="submit"
+                    variant="primary"
+                    size="sm"
+                    autofocus
+                    label={isSaving() ? tr("actions.saving") : tr("actions.save")}
+                    class="profile-drawer-save"
+                    disabled={isSaving() || isRefreshingAvatar()}
+                  />
+                </Show>
+              </div>
             </div>
           </form>
         </div>

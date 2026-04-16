@@ -15,8 +15,8 @@ type ReactionActionResult = {
 }
 
 type ReactionActor = {
-  visitorId: string | null
-  visitorStatus: "pending" | "active" | "locked" | null
+  profileId: string | null
+  status: "pending" | "active" | "locked" | null
   currentCount: number
   hasActiveReaction: boolean
 }
@@ -40,7 +40,7 @@ export function reactionStore(
     try {
       const { data, error } = await supabaseClient
         .from("reactions")
-        .select("id, blip_id, visitor_id, emoji, created_at")
+        .select("id, blip_id, user_profile_id, emoji, created_at")
         .eq("blip_id", blipId)
         .order("created_at", { ascending: false })
 
@@ -69,11 +69,11 @@ export function reactionStore(
       return { data: null, error: REACTION_ERROR.INVALID_EMOJI }
     }
 
-    if (!actor.visitorId) {
+    if (!actor.profileId) {
       return { data: null, error: REACTION_ERROR.AUTH_REQUIRED }
     }
 
-    if (actor.visitorStatus === "locked") {
+    if (actor.status === "locked") {
       return { data: null, error: REACTION_ERROR.VISITOR_LOCKED }
     }
 
@@ -83,7 +83,7 @@ export function reactionStore(
           .from("reactions")
           .delete()
           .eq("blip_id", blipId)
-          .eq("visitor_id", actor.visitorId)
+          .eq("user_profile_id", actor.profileId)
           .eq("emoji", emoji)
 
         if (error) {
@@ -106,7 +106,7 @@ export function reactionStore(
 
       const { error } = await supabaseClient.from("reactions").insert({
         blip_id: blipId,
-        visitor_id: actor.visitorId,
+        user_profile_id: actor.profileId,
         emoji,
       })
 

@@ -88,3 +88,105 @@ describe("blipStore reaction cache sync", () => {
     })
   })
 })
+
+describe("blipStore comment ordering", () => {
+  it("sorts comments newest first within each parent", async () => {
+    await runInRoot(async () => {
+      const store = blipStore({} as any, { subscribe: false })
+      const rootId = "root-1"
+
+      store.setInitialData([
+        makeBlip({ id: rootId }),
+        makeBlip({
+          id: "comment-oldest",
+          parent_id: rootId,
+          blip_type: BLIP_TYPES.COMMENT,
+          created_at: "2026-03-28T12:00:00.000Z",
+        }),
+        makeBlip({
+          id: "comment-newest",
+          parent_id: rootId,
+          blip_type: BLIP_TYPES.COMMENT,
+          created_at: "2026-03-28T12:02:00.000Z",
+        }),
+        makeBlip({
+          id: "comment-middle",
+          parent_id: rootId,
+          blip_type: BLIP_TYPES.COMMENT,
+          created_at: "2026-03-28T12:01:00.000Z",
+        }),
+      ])
+
+      await Promise.resolve()
+
+      expect(store.commentsByParent(rootId).map(comment => comment.id)).toEqual([
+        "comment-newest",
+        "comment-middle",
+        "comment-oldest",
+      ])
+    })
+  })
+})
+
+describe("blipStore scoped comment replacement", () => {
+  it("replaces cached comments for targeted parents without touching others", async () => {
+    await runInRoot(async () => {
+      const store = blipStore({} as any, { subscribe: false })
+      const rootId = "root-1"
+      const updateId = "update-1"
+      const otherRootId = "root-2"
+
+      store.setInitialData([
+        makeBlip({ id: rootId }),
+        makeBlip({
+          id: updateId,
+          parent_id: rootId,
+          blip_type: BLIP_TYPES.UPDATE,
+        }),
+        makeBlip({ id: otherRootId }),
+        makeBlip({
+          id: "pending-root-comment",
+          parent_id: rootId,
+          blip_type: BLIP_TYPES.COMMENT,
+          moderation_status: "pending",
+          published: false,
+        }),
+        makeBlip({
+          id: "pending-update-comment",
+          parent_id: updateId,
+          blip_type: BLIP_TYPES.COMMENT,
+          moderation_status: "pending",
+          published: false,
+        }),
+        makeBlip({
+          id: "other-parent-comment",
+          parent_id: otherRootId,
+          blip_type: BLIP_TYPES.COMMENT,
+        }),
+      ])
+
+      store.replaceCommentsForParents(
+        [rootId, updateId],
+        [
+          makeBlip({
+            id: "public-root-comment",
+            parent_id: rootId,
+            blip_type: BLIP_TYPES.COMMENT,
+            moderation_status: "approved",
+            published: true,
+          }),
+        ],
+      )
+
+      await Promise.resolve()
+
+      expect(store.commentsByParent(rootId).map(comment => comment.id)).toEqual([
+        "public-root-comment",
+      ])
+      expect(store.commentsByParent(updateId)).toEqual([])
+      expect(store.commentsByParent(otherRootId).map(comment => comment.id)).toEqual([
+        "other-parent-comment",
+      ])
+    })
+  })
+})

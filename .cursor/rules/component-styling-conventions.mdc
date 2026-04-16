@@ -1,0 +1,40 @@
+---
+description: Component styling and class naming conventions
+globs: **/*.{ts,tsx}
+alwaysApply: false
+---
+
+# Component Styling And Class Naming
+
+- When adding or updating UI code, prefer styling through existing component root selectors and nested CSS rather than inventing new class names for specificity.
+- Do not create long one-off class names whose only purpose is to target a single element for styling.
+- Add a new class only when it represents a real semantic or reusable element in the component structure.
+- When a component already has a root class, use that root plus nested selectors as the first approach for styling related children.
+
+## Preferred
+
+```tsx
+<div class="profile-drawer-avatar-stack">
+  <Tooltip content="...">
+    <IconButton class="profile-drawer-avatar-regenerate" />
+  </Tooltip>
+</div>
+```
+
+```css
+.profile-drawer-avatar-stack {
+  .tooltip-trigger {
+    position: absolute;
+  }
+}
+```
+
+## Avoid
+
+```tsx
+<Tooltip
+  content="..."
+  triggerClass="profile-drawer-avatar-regenerate-trigger">
+  <IconButton class="profile-drawer-avatar-regenerate" />
+</Tooltip>
+```

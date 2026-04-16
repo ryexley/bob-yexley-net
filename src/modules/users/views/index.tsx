@@ -6,7 +6,9 @@ import { Icon, LoadingSpinner } from "@/components/icon"
 import { Input } from "@/components/input"
 import { Select, type SelectOption } from "@/components/select"
 import { Stack } from "@/components/stack"
+import { Tooltip } from "@/components/tooltip"
 import { useAuth } from "@/context/auth-context"
+import { RequiresSuperUser } from "@/modules/auth/components/requires-role"
 import { UserAvatar } from "@/modules/users/components/user-avatar"
 import { UserEditDrawer } from "@/modules/users/components/user-edit-drawer"
 import { UserStatusSegmentedControl } from "@/modules/users/components/user-status-segmented-control"
@@ -203,13 +205,17 @@ export function UsersView() {
         auth.replaceProfile({
           ...currentProfile,
           role: updatedUser.role,
-          visitor: {
-            ...currentProfile.visitor,
-            id: updatedUser.visitorId,
+          profile: {
+            ...currentProfile.profile,
+            id: updatedUser.profileId,
             displayName: updatedUser.displayName,
+            createdAt: updatedUser.createdAt,
+          },
+          system: {
+            ...currentProfile.system,
             status: updatedUser.status,
             notes: updatedUser.notes,
-            createdAt: updatedUser.createdAt,
+            trusted: updatedUser.trusted ?? null,
           },
         })
       }
@@ -238,14 +244,21 @@ export function UsersView() {
             </div>
           </div>
 
-          <Show
-            when={hasQueryResult() && auth.isSuperuser()}
+          <RequiresSuperUser
             fallback={
               <div class="users-view-loading-state">
                 <LoadingSpinner size="2rem" />
                 <p>{tr("loading")}</p>
               </div>
             }>
+            <Show
+              when={hasQueryResult()}
+              fallback={
+                <div class="users-view-loading-state">
+                  <LoadingSpinner size="2rem" />
+                  <p>{tr("loading")}</p>
+                </div>
+              }>
             <Stack
               orient="row"
               align="center"
@@ -349,6 +362,9 @@ export function UsersView() {
                           <UserAvatar
                             class="users-view-card-avatar"
                             role={user.role}
+                            displayName={user.displayName ?? user.email ?? null}
+                            avatarSeed={user.avatarSeed ?? null}
+                            avatarVersion={user.avatarVersion ?? null}
                             size="md"
                             variant="surface"
                             aria-hidden={true}
@@ -379,6 +395,20 @@ export function UsersView() {
                           class="users-view-role-text"
                           data-role={user.role}>
                           {trSharedRoles(user.role)}
+                          <Show when={user.role === "visitor"}>
+                            <Tooltip
+                              content={
+                                user.trusted
+                                  ? tr("fields.trusted.trustedTooltip")
+                                  : tr("fields.trusted.untrustedTooltip")
+                              }>
+                              <Icon
+                                name={user.trusted ? "verified" : "verified_off"}
+                                class="users-view-role-trust-icon"
+                                data-trusted={user.trusted ? "true" : "false"}
+                              />
+                            </Tooltip>
+                          </Show>
                         </span>
                       </div>
                     </button>
@@ -386,7 +416,8 @@ export function UsersView() {
                 </For>
               </div>
             </Show>
-          </Show>
+            </Show>
+          </RequiresSuperUser>
         </div>
 
         <UserEditDrawer

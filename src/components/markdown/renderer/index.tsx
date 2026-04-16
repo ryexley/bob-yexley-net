@@ -18,6 +18,8 @@ export function MarkdownRenderer(props: MarkdownRendererProps) {
   return (
     <div
       class={cx("rendered-markdown", local.class)}
+      // parseBlipMarkdown is the single sanitizing boundary for rendered markdown.
+      // eslint-disable-next-line solid/no-innerhtml
       innerHTML={html()}
     />
   )

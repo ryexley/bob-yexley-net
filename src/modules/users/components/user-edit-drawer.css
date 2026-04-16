@@ -135,6 +135,18 @@
   max-width: 18.75rem;
 }
 
+.user-edit-drawer-trusted {
+  max-width: 18.75rem;
+
+  .info-tooltip-icon {
+    font-size: 0.875rem;
+  }
+}
+
+.tooltip-content.user-edit-drawer-trusted-tooltip {
+  z-index: 140;
+}
+
 .user-edit-drawer-notes-field {
   display: flex;
   flex-direction: column;

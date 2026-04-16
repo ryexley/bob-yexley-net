@@ -174,7 +174,7 @@
 .users-view-list {
   display: grid;
   gap: 1rem;
-  grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(18.5rem, 1fr));
 }
 
 .users-view-card {
@@ -185,6 +185,8 @@
   display: flex;
   flex-direction: column;
   gap: 0.875rem;
+  height: 100%;
+  min-height: 8.75rem;
   padding: 1rem;
   text-align: left;
   transition: var(--transitions-primary);
@@ -284,6 +286,7 @@
   display: flex;
   gap: 0.75rem;
   justify-content: space-between;
+  margin-top: auto;
 }
 
 .users-view-card-meta-copy {
@@ -314,10 +317,20 @@
   display: inline-flex;
   font-size: 0.625rem;
   font-weight: 700;
+  gap: 0.2rem;
   justify-content: center;
   letter-spacing: 0.06em;
   line-height: 1.2rem;
   text-transform: uppercase;
+}
+
+.users-view-role-trust-icon {
+  color: var(--colors-error);
+  font-size: 0.9rem;
+}
+
+.users-view-role-trust-icon[data-trusted="true"] {
+  color: var(--colors-info);
 }
 
 .users-view-role-text[data-role="visitor"] {

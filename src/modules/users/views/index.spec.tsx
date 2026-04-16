@@ -16,13 +16,21 @@ const {
       role: "superuser",
       roleCreatedAt: "2026-03-01T10:00:00.000Z",
       roleUpdatedAt: "2026-03-01T10:00:00.000Z",
-      visitor: {
-        id: "visitor-1",
+      profile: {
+        id: "profile-1",
         displayName: "Bob Yexley",
+        avatarSeed: null,
+        avatarVersion: 1,
+        createdAt: "2026-03-29T03:42:00.000Z",
+        updatedAt: "2026-03-29T03:42:00.000Z",
+      },
+      system: {
         status: "active",
         failedLoginAttempts: 0,
         notes: "owner",
+        trusted: true,
         createdAt: "2026-03-29T03:42:00.000Z",
+        updatedAt: "2026-03-29T03:42:00.000Z",
       },
     } as any,
   },
@@ -34,7 +42,7 @@ const {
       users: [
         {
           userId: "user-1",
-          visitorId: "visitor-1",
+          profileId: "profile-1",
           role: "superuser",
           email: "bob@yexley.net",
           displayName: "Bob Yexley",
@@ -44,7 +52,7 @@ const {
         },
         {
           userId: "user-2",
-          visitorId: "visitor-2",
+          profileId: "profile-2",
           role: "visitor",
           email: "crystal@yexley.net",
           displayName: "Crystal",
@@ -76,7 +84,8 @@ vi.mock("@/context/auth-context", () => ({
   useAuth: () => ({
     profile: () => authState.profile,
     user: () => authState.profile?.user ?? null,
-    visitor: () => authState.profile?.visitor ?? null,
+    userProfile: () => authState.profile?.profile ?? null,
+    userSystem: () => authState.profile?.system ?? null,
     role: () => authState.profile?.role ?? null,
     loading: () => false,
     replaceProfile,
@@ -202,13 +211,21 @@ describe("UsersView", () => {
       role: "superuser",
       roleCreatedAt: "2026-03-01T10:00:00.000Z",
       roleUpdatedAt: "2026-03-01T10:00:00.000Z",
-      visitor: {
-        id: "visitor-1",
+      profile: {
+        id: "profile-1",
         displayName: "Bob Yexley",
+        avatarSeed: null,
+        avatarVersion: 1,
+        createdAt: "2026-03-29T03:42:00.000Z",
+        updatedAt: "2026-03-29T03:42:00.000Z",
+      },
+      system: {
         status: "active",
         failedLoginAttempts: 0,
         notes: "owner",
+        trusted: true,
         createdAt: "2026-03-29T03:42:00.000Z",
+        updatedAt: "2026-03-29T03:42:00.000Z",
       },
     } as any
 
@@ -217,7 +234,7 @@ describe("UsersView", () => {
       users: [
         {
           userId: "user-1",
-          visitorId: "visitor-1",
+          profileId: "profile-1",
           role: "superuser",
           email: "bob@yexley.net",
           displayName: "Bob Yexley",
@@ -227,7 +244,7 @@ describe("UsersView", () => {
         },
         {
           userId: "user-2",
-          visitorId: "visitor-2",
+          profileId: "profile-2",
           role: "visitor",
           email: "crystal@yexley.net",
           displayName: "Crystal",
@@ -248,11 +265,12 @@ describe("UsersView", () => {
 
     const updatedUser: AdminUserRecord = {
       userId: "user-2",
-      visitorId: "visitor-2",
+      profileId: "profile-2",
       role: "admin",
       email: "crystal@yexley.net",
       displayName: "Crystal",
       status: "locked",
+      trusted: true,
       notes: "updated",
       createdAt: "2026-03-30T21:01:00.000Z",
     }
@@ -272,11 +290,12 @@ describe("UsersView", () => {
 
     const updatedUser: AdminUserRecord = {
       userId: "user-1",
-      visitorId: "visitor-1",
+      profileId: "profile-1",
       role: "admin",
       email: "bob@yexley.net",
       displayName: "Bob Yexley",
       status: "locked",
+      trusted: true,
       notes: "new internal note",
       createdAt: "2026-03-29T03:42:00.000Z",
     }
@@ -287,13 +306,16 @@ describe("UsersView", () => {
       expect(replaceProfile).toHaveBeenCalledWith({
         ...authState.profile,
         role: "admin",
-        visitor: {
-          ...authState.profile.visitor,
-          id: "visitor-1",
+        profile: {
+          ...authState.profile.profile,
+          id: "profile-1",
           displayName: "Bob Yexley",
+          createdAt: "2026-03-29T03:42:00.000Z",
+        },
+        system: {
+          ...authState.profile.system,
           status: "locked",
           notes: "new internal note",
-          createdAt: "2026-03-29T03:42:00.000Z",
         },
       })
     })

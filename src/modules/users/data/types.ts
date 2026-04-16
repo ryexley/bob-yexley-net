@@ -1,12 +1,15 @@
-import type { AppRole, VisitorStatus } from "@/lib/vendor/supabase/browser"
+import type { AppRole, UserStatus } from "@/lib/vendor/supabase/browser"
 
 export type AdminUserRecord = {
   userId: string
-  visitorId: string
+  profileId: string
   role: AppRole
   email: string | null
   displayName: string
-  status: VisitorStatus
+  status: UserStatus
+  trusted?: boolean
+  avatarSeed?: string | null
+  avatarVersion?: number | null
   notes: string | null
   createdAt: string
 }
@@ -19,7 +22,8 @@ export type AdminUsersQueryResult = {
 
 export type AdminUserUpdateInput = {
   role: AppRole
-  status: VisitorStatus
+  status: UserStatus
+  trusted: boolean
   notes: string
   pin?: string
 }
@@ -31,6 +35,6 @@ export type AdminUserUpdateResult = {
   pinWasReset: boolean
 }
 
-export type UserStatusFilter = VisitorStatus | "all"
+export type UserStatusFilter = UserStatus | "all"
 export type UserSortField = "createdAt" | "displayName"
 export type SortDirection = "asc" | "desc"

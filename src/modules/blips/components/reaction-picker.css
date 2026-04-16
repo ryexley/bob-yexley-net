@@ -1,18 +1,21 @@
 .reaction-trigger {
   align-items: center;
-  background: transparent;
+  background: color-mix(in srgb, var(--colors-mono-02) 88%, transparent);
   border: 1px solid var(--colors-mono-05);
   border-radius: 999px;
   color: var(--colors-mono-08);
   cursor: pointer;
   display: inline-flex;
+  line-height: 1;
+  min-height: 1.5rem;
   justify-content: center;
-  padding: 0.1rem 0.45rem;
+  padding: 0.14rem 0.38rem;
   transition: var(--transitions-primary);
 
   &:hover {
     border-color: var(--colors-links);
     color: var(--colors-links);
+    transform: translateY(-0.03125rem);
 
     .icon {
       transform: scale(1.1) rotate(10deg);

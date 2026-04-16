@@ -37,7 +37,8 @@ type UserMenuItem = {
 
 export function UserMenu() {
   const navigate = useNavigate()
-  const { isAdmin, isAuthenticated, isSuperuser, user, visitor, logout } = useAuth() as any
+  const { isAdmin, isAuthenticated, isSuperuser, user, userProfile, logout } =
+    useAuth() as any
   const viewport = useViewport()
   const composer = useOptionalBlipComposer()
   const [showProfileDrawer, setShowProfileDrawer] = createSignal(false)
@@ -136,7 +137,7 @@ export function UserMenu() {
         fullWidth
         class="user-menu-header">
         <div class="label">{tr("header.label")}</div>
-        <div class="name">{visitor()?.displayName ?? user().email}</div>
+        <div class="name">{userProfile()?.displayName ?? user().email}</div>
         <div class="email">{user().email}</div>
       </Stack>
     ) : null
@@ -145,8 +146,11 @@ export function UserMenu() {
     <UserAvatar
       class="user-menu-trigger-content"
       role={isSuperuser() ? "superuser" : null}
-      size="sm"
-      variant="bare"
+      displayName={userProfile()?.displayName ?? user()?.email ?? null}
+      avatarSeed={userProfile()?.avatarSeed ?? null}
+      avatarVersion={userProfile()?.avatarVersion ?? null}
+      size="md"
+      variant="surface"
       aria-hidden={true}
     />
   )

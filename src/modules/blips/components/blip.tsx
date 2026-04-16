@@ -14,6 +14,7 @@ import {
 import { Hashtag, Icon } from "@/components/icon"
 import { MarkdownRenderer as Markdown } from "@/components/markdown/renderer"
 import { useNotify } from "@/components/notification"
+import { Tooltip } from "@/components/tooltip"
 import { Button } from "@/components/button"
 import { Stack } from "@/components/stack"
 import { useAuth } from "@/context/auth-context"
@@ -47,7 +48,7 @@ export function Blip(props: {
   const [local] = splitProps(props, ["blip", "tags", "onEdit", "onView"])
   const navigate = useNavigate()
   const preloadRoute = usePreloadRoute()
-  const { isAuthenticated, visitor } = useAuth()
+  const { isAuthenticated, userProfile, userSystem } = useAuth()
   const supabase = useSupabase()
   const notify = useNotify()
   const blips = blipStore(supabase.client, { subscribe: false })
@@ -78,6 +79,7 @@ export function Blip(props: {
   })
   const canOpenDetails = () => isClipped() || typeof local.onView === "function"
   const hasUpdates = () => (local.blip.updates_count ?? 0) > 0
+  const hasComments = () => (local.blip.comments_count ?? 0) > 0
 
   createEffect(() => {
     local.blip.id
@@ -155,7 +157,7 @@ export function Blip(props: {
       myReactionCount: previousCount,
       emoji,
       nextActive: !hasActiveReaction,
-      visitorDisplayName: visitor()?.displayName ?? null,
+      visitorDisplayName: userProfile()?.displayName ?? null,
     })
     const applyVisibleReactionState = (next: ReactionStateOverride) => {
       setReactionStateOverride(next)
@@ -166,8 +168,8 @@ export function Blip(props: {
     applyVisibleReactionState(optimisticOverride)
 
     const result = await reactions.toggleReaction(local.blip.id, emoji, {
-      visitorId: visitor()?.id ?? null,
-      visitorStatus: visitor()?.status ?? null,
+      profileId: userProfile()?.id ?? null,
+      status: userSystem()?.status ?? null,
       currentCount: previousCount,
       hasActiveReaction,
     })
@@ -249,16 +251,44 @@ export function Blip(props: {
               gap="0.5rem"
               class="activity">
               <Show when={hasUpdates()}>
-                <button
-                  type="button"
-                  class="updates-indicator"
-                  onClick={event => {
-                    event.stopPropagation()
-                    openDetails()
-                  }}>
-                  <Icon name="chat" />
-                  <span>{local.blip.updates_count ?? 0}</span>
-                </button>
+                <Tooltip
+                  content={tr("actions.updatesTooltip", {
+                    count: local.blip.updates_count ?? 0,
+                  })}>
+                  <button
+                    type="button"
+                    class="activity-indicator updates-indicator"
+                    aria-label={tr("actions.updatesTooltip", {
+                      count: local.blip.updates_count ?? 0,
+                    })}
+                    onClick={event => {
+                      event.stopPropagation()
+                      openDetails()
+                    }}>
+                    <Icon name="chat" />
+                    <span>{local.blip.updates_count ?? 0}</span>
+                  </button>
+                </Tooltip>
+              </Show>
+              <Show when={hasComments()}>
+                <Tooltip
+                  content={tr("actions.commentsTooltip", {
+                    count: local.blip.comments_count ?? 0,
+                  })}>
+                  <button
+                    type="button"
+                    class="activity-indicator comments-indicator"
+                    aria-label={tr("actions.commentsTooltip", {
+                      count: local.blip.comments_count ?? 0,
+                    })}
+                    onClick={event => {
+                      event.stopPropagation()
+                      openDetails()
+                    }}>
+                    <Icon name="forum" />
+                    <span>{local.blip.comments_count ?? 0}</span>
+                  </button>
+                </Tooltip>
               </Show>
               <BlipReactionTrigger
                 blip={displayBlip()}

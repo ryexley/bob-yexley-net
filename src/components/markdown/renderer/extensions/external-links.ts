@@ -11,7 +11,7 @@ const INTERNAL_HOSTS = new Set([
 const escapeAttribute = (value: string) =>
   value
     .replaceAll("&", "&amp;")
-    .replaceAll('"', "&quot;")
+    .replaceAll("\"", "&quot;")
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;")
 
@@ -63,7 +63,7 @@ export const externalLinksExtension: RendererExtension = {
       const title = token.title || ""
       const text = this.parser.parseInline(token.tokens)
       const targetAttrs = isExternalHref(href)
-        ? ' target="_blank" rel="noopener noreferrer"'
+        ? " target=\"_blank\" rel=\"noopener noreferrer\""
         : ""
       const titleAttr = title ? ` title="${escapeAttribute(title)}"` : ""
 

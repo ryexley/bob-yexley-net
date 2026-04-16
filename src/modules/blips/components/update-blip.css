@@ -1,11 +1,17 @@
+.update-blip-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  list-style: none;
+}
+
 .update-blip {
-  background: color-mix(in srgb, var(--colors-mono-02) 55%, transparent);
+  background: var(--blip-detail-update-surface);
   border: 1px solid var(--colors-mono-04);
   border-radius: 0.5rem;
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
-  list-style: none;
   overflow: hidden;
   padding: 0.5rem 0.75rem;
   position: relative;
@@ -69,7 +75,23 @@
 
 .update-blip-header {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+}
+
+.update-blip-kind {
+  align-items: center;
+  color: var(--colors-mono-05);
+  display: inline-flex;
+  font-size: 0.75rem;
+  font-weight: 600;
+  gap: 0.25rem;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+
+  .update-blip-kind-icon {
+    color: var(--colors-info);
+    font-size: 0.875rem;
+  }
 }
 
 .update-blip-timestamp {
@@ -87,45 +109,40 @@
   font-size: 0.9rem;
 }
 
-.update-blip-footer {
-  align-items: center;
-  display: flex;
-  gap: 0.75rem;
-  justify-content: space-between;
-  width: 100%;
-}
-
-.update-blip-footer-start {
-  align-items: center;
-  display: inline-flex;
-  flex: 1;
-  min-width: 0;
-}
-
-.update-blip-footer-end {
-  align-items: center;
-  display: inline-flex;
-  flex-shrink: 0;
-  gap: 0.5rem;
-
-  > button {
-    height: 1.625rem;
+.update-blip {
+  footer {
+    align-items: center;
+    display: flex;
+    justify-content: flex-start;
+    margin-top: 0.5rem;
+    width: 100%;
   }
-}
 
-.update-blip-footer {
-  .blip-actions {
+  .reactions {
+    margin-right: auto;
+  }
+
+  .actions {
+    align-items: center;
+    display: inline-flex;
+    flex-wrap: nowrap;
+    gap: 0.3rem;
+    justify-content: flex-start;
+    margin-left: auto;
+  }
+
+  .update-blip-actions {
     margin: 0;
     min-height: 1.75rem;
     opacity: 0;
     pointer-events: none;
     transition: var(--transitions-primary);
   }
-}
 
-.update-blip:is(:hover, :focus-within) .update-blip-footer .blip-actions {
-  opacity: 1;
-  pointer-events: auto;
+  &:is(:hover, :focus-within) .update-blip-actions {
+    opacity: 1;
+    pointer-events: auto;
+  }
 }
 
 .update-blip--shimmering .update-blip-content :is(
@@ -164,8 +181,8 @@
 }
 
 @media (max-width: 40rem) {
-  .update-blip-footer {
-    .blip-actions {
+  .update-blip {
+    .update-blip-actions {
       opacity: 1;
       pointer-events: auto;
     }
@@ -201,8 +218,8 @@
 }
 
 @media (hover: none), (pointer: coarse) {
-  .update-blip-footer {
-    .blip-actions {
+  .update-blip {
+    .update-blip-actions {
       opacity: 1;
       pointer-events: auto;
     }

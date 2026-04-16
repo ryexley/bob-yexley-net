@@ -21,7 +21,8 @@ import { isEmpty, isNotEmpty } from "@/util"
 interface AuthContextType {
   profile: () => UserProfile | null
   user: () => UserProfile["user"] | null
-  visitor: () => UserProfile["visitor"] | null
+  userProfile: () => UserProfile["profile"] | null
+  userSystem: () => UserProfile["system"] | null
   role: () => AppRole | null
   loading: () => boolean
   replaceProfile: (profile: UserProfile | null) => void
@@ -40,7 +41,8 @@ export function AuthProvider(props: { children: any }) {
   const [initialSnapshotApplied, setInitialSnapshotApplied] = createSignal(false)
   const initialProfile = createAsync(() => getUserProfile())
   const user = createMemo(() => profile()?.user ?? null)
-  const visitor = createMemo(() => profile()?.visitor ?? null)
+  const userProfile = createMemo(() => profile()?.profile ?? null)
+  const userSystem = createMemo(() => profile()?.system ?? null)
   const role = createMemo(() => profile()?.role ?? null)
 
   const clearAuthState = () => {
@@ -180,7 +182,8 @@ export function AuthProvider(props: { children: any }) {
   const context = {
     profile,
     user,
-    visitor,
+    userProfile,
+    userSystem,
     role,
     loading,
     replaceProfile: applyAuthProfile,

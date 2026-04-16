@@ -21,6 +21,7 @@ import type { AppSupabaseClient, Database } from "@/lib/vendor/supabase/types"
 import {
   type AppRole,
   type UserProfile,
+  type UserStatus,
   type VisitorStatus,
 } from "@/lib/vendor/supabase/user-profile"
 import {
@@ -40,6 +41,7 @@ import {
   VISITOR_AUTH_ERROR,
   isVisitorAuthErrorCode,
 } from "@/lib/auth/visitor-auth-errors"
+import { resolveBrowserSupabaseUrl } from "@/lib/vendor/supabase/browser-url"
 import { isEmpty } from "@/util"
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL
@@ -61,7 +63,13 @@ export function getClient(): AppSupabaseClient {
     return createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY)
   } else {
     if (isEmpty(browserClient)) {
-      browserClient = createBrowserClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY)
+      browserClient = createBrowserClient<Database>(
+        resolveBrowserSupabaseUrl(
+          SUPABASE_URL,
+          typeof window === "undefined" ? null : window.location.hostname,
+        ),
+        SUPABASE_ANON_KEY,
+      )
     }
 
     return browserClient
@@ -259,9 +267,8 @@ function Supabase() {
 
         const { data: profile, error: profileError } =
           await this.getUserProfile(signedInUser)
-        const visitorStatus = profile?.visitor.status ?? null
-        const statusError =
-          profileError ?? (!visitorStatus ? "Visitor profile not found" : null)
+        const userStatus = profile?.system.status ?? null
+        const statusError = profileError ?? (!userStatus ? "User profile not found" : null)
         if (statusError) {
           await client.auth.signOut()
           userProfiles.clearCachedUserProfile()
@@ -274,7 +281,7 @@ function Supabase() {
           return { data: null, error: VISITOR_AUTH_ERROR.UNEXPECTED }
         }
 
-        if (visitorStatus === "locked") {
+        if (userStatus === "locked") {
           await client.auth.signOut()
           userProfiles.clearCachedUserProfile()
           emitVisitorAuthTelemetry(
@@ -447,23 +454,23 @@ function Supabase() {
       return sessionRpc.resetCurrentVisitorFailedLoginAttempts()
     },
 
-    async getCurrentVisitorStatus(): Promise<AuthResult<VisitorStatus>> {
+    async getCurrentUserStatus(): Promise<AuthResult<UserStatus>> {
       try {
         const { data: profile, error } = await this.getUserProfile()
         if (error) {
           return { data: null, error }
         }
 
-        if (!profile?.visitor.status) {
-          return { data: null, error: "Visitor profile not found" }
+        if (!profile?.system.status) {
+          return { data: null, error: "User profile not found" }
         }
 
-        return { data: profile.visitor.status, error: null }
+        return { data: profile.system.status, error: null }
       } catch (err) {
-        console.error("getCurrentVisitorStatus error:", err)
+        console.error("getCurrentUserStatus error:", err)
         return {
           data: null,
-          error: "An unexpected error occurred while loading visitor status",
+          error: "An unexpected error occurred while loading user status",
         }
       }
     },
@@ -483,11 +490,18 @@ function Supabase() {
       return userProfiles.getUserProfile(sessionUser)
     },
 
-    async updateCurrentVisitorDisplayName(
+    async updateCurrentUserDisplayName(
       displayName: string,
       sessionUser?: Pick<User, "id" | "email"> | null,
     ): Promise<AuthResult<UserProfile>> {
-      return userProfiles.updateCurrentVisitorDisplayName(displayName, sessionUser)
+      return userProfiles.updateCurrentUserDisplayName(displayName, sessionUser)
+    },
+
+    async updateCurrentUserAvatarVersion(
+      nextAvatarVersion: number,
+      sessionUser?: Pick<User, "id" | "email"> | null,
+    ): Promise<AuthResult<UserProfile>> {
+      return userProfiles.updateCurrentUserAvatarVersion(nextAvatarVersion, sessionUser)
     },
 
     peekUserProfile(userId: string | null | undefined): UserProfile | null {
@@ -537,4 +551,4 @@ function Supabase() {
 
 // Export singleton instance
 export const supabase = Supabase()
-export type { AppRole, UserProfile, VisitorStatus }
+export type { AppRole, UserProfile, UserStatus, VisitorStatus }

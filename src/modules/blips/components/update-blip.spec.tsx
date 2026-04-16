@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor } from "@solidjs/testing-library"
+import { For } from "solid-js"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { UpdateBlip } from "@/modules/blips/components/update-blip"
 import { BLIP_TYPES, type Blip } from "@/modules/blips/data/schema"
@@ -16,10 +17,12 @@ vi.mock("@/components/notification", () => ({
 vi.mock("@/context/auth-context", () => ({
   useAuth: () => ({
     isAuthenticated: () => true,
-    visitor: () => ({
-      id: "visitor-1",
-      status: "active",
+    userProfile: () => ({
+      id: "profile-1",
       displayName: "Bob",
+    }),
+    userSystem: () => ({
+      status: "active",
     }),
   }),
 }))
@@ -27,6 +30,24 @@ vi.mock("@/context/auth-context", () => ({
 vi.mock("@/context/services-context", () => ({
   useSupabase: () => ({
     client: {},
+  }),
+}))
+
+vi.mock("@/context/viewport", () => ({
+  useViewport: () => ({
+    width: () => 1440,
+    height: () => 900,
+  }),
+}))
+
+vi.mock("@/modules/blips/context/blip-composer-context", () => ({
+  useBlipComposer: () => ({
+    openEditRoot: vi.fn(),
+    openEditUpdate: vi.fn(),
+    openEditComment: vi.fn(),
+    openNewComment: vi.fn(),
+    isUpdateOpenFor: () => false,
+    closeActive: vi.fn(),
   }),
 }))
 
@@ -48,6 +69,27 @@ vi.mock("@/modules/blips/components/blip-reaction-trigger", () => ({
       add-reaction
     </button>
   ),
+}))
+
+vi.mock("@/modules/blips/components/blip-reaction-summary", () => ({
+  BlipReactionSummary: (props: any) => (
+    <>
+      <For each={props.reactions ?? []}>
+        {(reaction: any) => (
+          <button
+            type="button"
+            aria-label={`Remove ${reaction.emoji} reaction`}
+            onClick={() => props.onToggleReaction?.(reaction.emoji)}>
+            {reaction.emoji} {reaction.count}
+          </button>
+        )}
+      </For>
+    </>
+  ),
+}))
+
+vi.mock("@/modules/blips/components/blip-comment-thread", () => ({
+  BlipCommentThread: () => <div data-testid="blip-comment-thread" />,
 }))
 
 vi.mock("@/modules/blips/data/reactions-store", () => ({
@@ -125,8 +167,8 @@ describe("UpdateBlip", () => {
 
     await waitFor(() => {
       expect(toggleReaction).toHaveBeenCalledWith("update-1", "🔥", {
-        visitorId: "visitor-1",
-        visitorStatus: "active",
+        profileId: "profile-1",
+        status: "active",
         currentCount: 1,
         hasActiveReaction: true,
       })

@@ -80,6 +80,21 @@ export default function Toolbar(props: ToolbarProps) {
     closeLinkEditor()
   }
 
+  const handleLinkEditorKeyDown = (event: KeyboardEvent) => {
+    if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+      event.preventDefault()
+      closeLinkEditor()
+      return
+    }
+
+    if (!(event.metaKey || event.ctrlKey) || event.key !== "Enter") {
+      return
+    }
+
+    event.preventDefault()
+    handleApplyLink()
+  }
+
   createEffect(() => {
     const requestNonce = props.linkEditorRequestNonce
     if (requestNonce === previousLinkEditorRequestNonce) {
@@ -158,22 +173,9 @@ export default function Toolbar(props: ToolbarProps) {
           )}
         </For>
       </ToggleGroup.Root>
-      <div
+      <form
         class={cx("toolbar-link-editor", { open: showLinkEditor() })}
-        onKeyDown={event => {
-          if (
-            (event.metaKey || event.ctrlKey) &&
-            event.key.toLowerCase() === "k"
-          ) {
-            event.preventDefault()
-            closeLinkEditor()
-            return
-          }
-
-          if (!(event.metaKey || event.ctrlKey) || event.key !== "Enter") {
-            return
-          }
-
+        onSubmit={event => {
           event.preventDefault()
           handleApplyLink()
         }}
@@ -189,6 +191,7 @@ export default function Toolbar(props: ToolbarProps) {
             class="toolbar-link-input"
             placeholder="https://example.com"
             onInput={e => setLinkHref(e.currentTarget.value)}
+            onKeyDown={handleLinkEditorKeyDown}
           />
           <input
             type="text"
@@ -199,6 +202,7 @@ export default function Toolbar(props: ToolbarProps) {
             class="toolbar-link-input"
             placeholder="Link text"
             onInput={e => setLinkText(e.currentTarget.value)}
+            onKeyDown={handleLinkEditorKeyDown}
           />
         </div>
         <div class="toolbar-link-actions">
@@ -229,7 +233,7 @@ export default function Toolbar(props: ToolbarProps) {
             <Icon name="close" />
           </button>
         </div>
-      </div>
+      </form>
     </div>
   )
 }
