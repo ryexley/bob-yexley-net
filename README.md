@@ -34,9 +34,9 @@ This project now uses the Supabase CLI for local database development and schema
 - `pnpm db:bootstrap:visitors` creates the local fixture accounts, including authored-content accounts and visitor accounts with shared PIN `123456`.
 - `pnpm db:bootstrap:fixtures` creates the local fixture accounts, then seeds authored blips, tags, and visitor reactions.
 - `pnpm db:reset:fixtures` rebuilds the local DB from migrations and `seed.sql`, then bootstraps the authored and visitor fixture data.
-- `pnpm dev` starts the local Supabase stack, then starts the app, and stops the local stack again when the dev server exits.
-- `pnpm dev:local` is an alias for the same local-first workflow.
-- `pnpm dev:app` starts only the app server without managing the local Supabase stack.
+- `pnpm dev` starts the app dev server only.
+- `pnpm dev:local` is currently the same as `pnpm dev`.
+- `pnpm dev:app` also starts only the app dev server.
 
 ## Notes
 

@@ -135,13 +135,17 @@ export function Login() {
               ) : null}
               <form
                 method="post"
+                autocomplete="on"
                 onSubmit={event => void handleSubmit(event)}
                 novalidate>
                 <Stack fullWidth>
                   <Input
                     label={tr("emailFieldLabel")}
                     type="email"
+                    name="email"
                     autocomplete="username"
+                    inputmode="email"
+                    enterkeyhint="next"
                     placeholder={tr("emailFieldPlaceholder")}
                     value={email()}
                     onInput={e => setEmail(e.currentTarget.value)}
@@ -149,7 +153,9 @@ export function Login() {
                   <Input
                     label={tr("passwordFieldLabel")}
                     type="password"
+                    name="password"
                     autocomplete="current-password"
+                    enterkeyhint="go"
                     placeholder={tr("passwordFieldPlaceholder")}
                     value={password()}
                     onInput={e => setPassword(e.currentTarget.value)}
