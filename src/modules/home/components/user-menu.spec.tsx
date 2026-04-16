@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor } from "@solidjs/testing-library"
+import { For } from "solid-js"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { UserMenu } from "@/modules/home/components/user-menu"
 
@@ -105,11 +106,13 @@ vi.mock("@/components/menu", () => ({
       </button>
       <div>{props.Header ? props.Header() : null}</div>
       <div>
-        {props.items.map((item: any) => (
-          <button type="button" onClick={() => item.onClick()}>
-            {item.label}
-          </button>
-        ))}
+        <For each={props.items}>
+          {(item: any) => (
+            <button type="button" onClick={() => item.onClick()}>
+              {item.label}
+            </button>
+          )}
+        </For>
       </div>
     </div>
   ),

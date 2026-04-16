@@ -10,6 +10,9 @@ type VisitorRow = {
   user_id: string
   display_name: string
   status: VisitorStatus
+  trusted: boolean
+  avatar_seed: string | null
+  avatar_version: number | null
   notes: string | null
   created_at: string
 }
@@ -29,6 +32,7 @@ const appRoleSchema = z.enum(["visitor", "admin", "superuser"])
 const adminUserUpdateSchema = z.object({
   role: appRoleSchema,
   status: visitorStatusSchema,
+  trusted: z.boolean().optional().default(false),
   notes: z.string().max(4000).optional().default(""),
   pin: z.union([z.literal(""), z.string().regex(/^\d{6}$/)]).optional().default(""),
 })
@@ -142,6 +146,9 @@ const mapAdminUserRecord = (
   email,
   displayName: row.display_name,
   status: row.status,
+  trusted: row.trusted,
+  avatarSeed: row.avatar_seed,
+  avatarVersion: row.avatar_version,
   notes: row.notes,
   createdAt: row.created_at,
 })
@@ -160,7 +167,9 @@ export async function loadAdminUsers(): Promise<AdminUsersQueryResult> {
     const adminClient = getAdminClient()
     const { data, error } = await adminClient
       .from("visitors")
-      .select("id, user_id, display_name, status, notes, created_at")
+      .select(
+        "id, user_id, display_name, status, trusted, avatar_seed, avatar_version, notes, created_at",
+      )
 
     if (error) {
       throw new Error(error.message)
@@ -219,7 +228,9 @@ export async function updateAdminUser(
     const adminClient = getAdminClient()
     const { data: existingVisitor, error: existingVisitorError } = await adminClient
       .from("visitors")
-      .select("id, user_id, display_name, status, notes, created_at")
+      .select(
+        "id, user_id, display_name, status, trusted, avatar_seed, avatar_version, notes, created_at",
+      )
       .eq("user_id", userId)
       .maybeSingle()
 
@@ -282,6 +293,10 @@ export async function updateAdminUser(
     const nextNotes = normalizeNotes(parsed.data.notes)
     const pinWasReset = parsed.data.pin.length > 0
     const nextStatus: VisitorStatus = pinWasReset ? "active" : parsed.data.status
+    const nextTrusted =
+      parsed.data.role === "admin" || parsed.data.role === "superuser"
+        ? true
+        : parsed.data.trusted
 
     const { error: roleUpdateError } = await adminClient
       .from("user_roles")
@@ -323,10 +338,13 @@ export async function updateAdminUser(
       .from("visitors")
       .update({
         status: nextStatus,
+        trusted: nextTrusted,
         notes: nextNotes,
       })
       .eq("user_id", userId)
-      .select("id, user_id, display_name, status, notes, created_at")
+      .select(
+        "id, user_id, display_name, status, trusted, avatar_seed, avatar_version, notes, created_at",
+      )
       .single()
 
     if (updateError) {

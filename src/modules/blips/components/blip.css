@@ -134,12 +134,11 @@
     }
 
     .activity {
+      align-items: center;
+      display: inline-flex;
       flex-shrink: 0;
+      gap: 0.3rem;
       margin-left: auto;
-
-      button {
-        height: 1.625rem;
-      }
     }
 
     .updates-indicator {

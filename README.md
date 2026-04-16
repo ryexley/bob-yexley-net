@@ -25,7 +25,8 @@ This project now uses the Supabase CLI for local database development and schema
 - `pnpm db:status` shows local URLs, keys, and connection details.
 - `pnpm db:reset` rebuilds the local database from migrations and seed data.
 - `pnpm db:pull` pulls the linked remote schema into a baseline migration.
-- `pnpm db:push` applies pending migrations to the linked remote project.
+- `pnpm db:push:local` applies pending migrations to the local database.
+- `pnpm db:push:remote` applies pending migrations to the linked remote project.
 - `pnpm db:diff -- -f <name>` creates a migration from local schema changes.
 - `pnpm db:migration:new -- <name>` creates a blank migration file.
 - `pnpm db:migration:list` lists migrations and applied status.

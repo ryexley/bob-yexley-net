@@ -76,6 +76,7 @@ export type Database = {
       }
       blips: {
         Row: {
+          allow_comments: boolean
           blip_type: string
           content: string | null
           created_at: string | null
@@ -88,6 +89,7 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          allow_comments?: boolean
           blip_type?: string
           content?: string | null
           created_at?: string | null
@@ -100,6 +102,7 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          allow_comments?: boolean
           blip_type?: string
           content?: string | null
           created_at?: string | null
@@ -252,30 +255,39 @@ export type Database = {
       }
       visitors: {
         Row: {
+          avatar_seed: string
+          avatar_version: number
           created_at: string
           display_name: string
           failed_login_attempts: number
           id: string
           notes: string | null
           status: Database["public"]["Enums"]["visitor_status"]
+          trusted: boolean
           user_id: string
         }
         Insert: {
+          avatar_seed?: string
+          avatar_version?: number
           created_at?: string
           display_name: string
           failed_login_attempts?: number
           id?: string
           notes?: string | null
           status?: Database["public"]["Enums"]["visitor_status"]
+          trusted?: boolean
           user_id: string
         }
         Update: {
+          avatar_seed?: string
+          avatar_version?: number
           created_at?: string
           display_name?: string
           failed_login_attempts?: number
           id?: string
           notes?: string | null
           status?: Database["public"]["Enums"]["visitor_status"]
+          trusted?: boolean
           user_id?: string
         }
         Relationships: []
@@ -284,7 +296,9 @@ export type Database = {
     Views: {
       view_blips: {
         Row: {
+          allow_comments: boolean | null
           blip_type: string | null
+          comments: Json | null
           content: string | null
           created_at: string | null
           id: string | null
@@ -323,6 +337,8 @@ export type Database = {
           role: Database["public"]["Enums"]["app_role"] | null
           role_created_at: string | null
           role_updated_at: string | null
+          visitor_avatar_seed: string | null
+          visitor_avatar_version: number | null
           user_id: string | null
           visitor_created_at: string | null
           visitor_display_name: string | null
@@ -330,6 +346,7 @@ export type Database = {
           visitor_id: string | null
           visitor_notes: string | null
           visitor_status: Database["public"]["Enums"]["visitor_status"] | null
+          visitor_trusted: boolean | null
         }
         Relationships: []
       }

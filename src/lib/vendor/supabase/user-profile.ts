@@ -14,6 +14,9 @@ type UserProfileViewRow = {
   visitor_status?: VisitorStatus | null
   visitor_failed_login_attempts?: number | null
   visitor_notes?: string | null
+  visitor_trusted?: boolean | null
+  visitor_avatar_seed?: string | null
+  visitor_avatar_version?: number | null
   visitor_created_at?: string | null
 }
 
@@ -27,6 +30,9 @@ type VisitorRow = {
   status?: VisitorStatus | null
   failed_login_attempts?: number | null
   notes?: string | null
+  trusted?: boolean | null
+  avatar_seed?: string | null
+  avatar_version?: number | null
   created_at?: string | null
 }
 
@@ -40,6 +46,9 @@ export type UserProfileRecord = {
   visitorStatus: VisitorStatus | null
   visitorFailedLoginAttempts: number | null
   visitorNotes: string | null
+  visitorTrusted: boolean | null
+  visitorAvatarSeed: string | null
+  visitorAvatarVersion: number | null
   visitorCreatedAt: string | null
 }
 
@@ -57,6 +66,9 @@ export type UserProfile = {
     status: VisitorStatus | null
     failedLoginAttempts: number | null
     notes: string | null
+    trusted?: boolean | null
+    avatarSeed?: string | null
+    avatarVersion?: number | null
     createdAt: string | null
   }
 }
@@ -92,6 +104,9 @@ const mapUserProfileRow = (
     visitorStatus: row?.visitor_status ?? null,
     visitorFailedLoginAttempts: row?.visitor_failed_login_attempts ?? null,
     visitorNotes: row?.visitor_notes ?? null,
+    visitorTrusted: row?.visitor_trusted ?? null,
+    visitorAvatarSeed: row?.visitor_avatar_seed ?? null,
+    visitorAvatarVersion: row?.visitor_avatar_version ?? null,
     visitorCreatedAt: row?.visitor_created_at ?? null,
   }
 }
@@ -117,6 +132,9 @@ async function selectUserProfileFromView(
         "visitor_status",
         "visitor_failed_login_attempts",
         "visitor_notes",
+        "visitor_trusted",
+        "visitor_avatar_seed",
+        "visitor_avatar_version",
         "visitor_created_at",
       ].join(", "),
     )
@@ -154,7 +172,9 @@ async function selectUserProfileFromTables(
 
   const { data: visitorData, error: visitorError } = await supabase
     .from("visitors")
-    .select("id, display_name, status, failed_login_attempts, notes, created_at")
+    .select(
+      "id, display_name, status, failed_login_attempts, notes, trusted, avatar_seed, avatar_version, created_at",
+    )
     .eq("user_id", userId)
     .maybeSingle()
 
@@ -182,6 +202,9 @@ async function selectUserProfileFromTables(
       visitorStatus: visitor?.status ?? null,
       visitorFailedLoginAttempts: visitor?.failed_login_attempts ?? null,
       visitorNotes: visitor?.notes ?? null,
+      visitorTrusted: visitor?.trusted ?? null,
+      visitorAvatarSeed: visitor?.avatar_seed ?? null,
+      visitorAvatarVersion: visitor?.avatar_version ?? null,
       visitorCreatedAt: visitor?.created_at ?? null,
     },
     error: null,
@@ -222,6 +245,9 @@ export function buildUserProfile(
       status: record.visitorStatus,
       failedLoginAttempts: record.visitorFailedLoginAttempts,
       notes: record.visitorNotes,
+      trusted: record.visitorTrusted,
+      avatarSeed: record.visitorAvatarSeed,
+      avatarVersion: record.visitorAvatarVersion,
       createdAt: record.visitorCreatedAt,
     },
   }

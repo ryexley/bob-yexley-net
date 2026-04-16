@@ -29,9 +29,13 @@ export function clearActiveTextInputSession(
   const followupDelayMs = options.followupDelayMs ?? 120
   let cancelled = false
   let animationFrameId: number | null = null
-  let timeoutId: ReturnType<typeof setTimeout> | null = null
+  let timeoutId: number | null = null
   const blurTargets = () => {
-    if (cancelled) {
+    if (
+      cancelled ||
+      typeof document === "undefined" ||
+      typeof window === "undefined"
+    ) {
       return
     }
 

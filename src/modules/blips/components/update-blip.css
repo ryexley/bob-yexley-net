@@ -91,26 +91,18 @@
   align-items: center;
   display: flex;
   gap: 0.75rem;
-  justify-content: space-between;
+  justify-content: flex-end;
   width: 100%;
-}
-
-.update-blip-footer-start {
-  align-items: center;
-  display: inline-flex;
-  flex: 1;
-  min-width: 0;
 }
 
 .update-blip-footer-end {
   align-items: center;
   display: inline-flex;
+  flex: 1;
   flex-shrink: 0;
-  gap: 0.5rem;
-
-  > button {
-    height: 1.625rem;
-  }
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  justify-content: flex-end;
 }
 
 .update-blip-footer {

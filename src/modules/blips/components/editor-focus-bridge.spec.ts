@@ -37,7 +37,7 @@ describe("clearActiveTextInputSession", () => {
     })
     const proxyBlur = vi.fn()
     activeElement = { blur: activeBlur }
-    const focusProxyRef = { blur: proxyBlur } as HTMLTextAreaElement
+    const focusProxyRef = { blur: proxyBlur } as unknown as HTMLTextAreaElement
 
     clearActiveTextInputSession("editor.close", {
       focusProxyRef,
@@ -62,7 +62,7 @@ describe("clearActiveTextInputSession", () => {
     })
     const proxyBlur = vi.fn()
     activeElement = { blur: activeBlur }
-    const focusProxyRef = { blur: proxyBlur } as HTMLTextAreaElement
+    const focusProxyRef = { blur: proxyBlur } as unknown as HTMLTextAreaElement
 
     const cleanup = clearActiveTextInputSession("editor.close", {
       focusProxyRef,
@@ -117,7 +117,7 @@ describe("createEditorFocusBridge", () => {
       coalesceImmediateFocus: true,
     })
 
-    bridge.setFocusProxyRef({ focus: proxyFocus } as HTMLTextAreaElement)
+    bridge.setFocusProxyRef({ focus: proxyFocus } as unknown as HTMLTextAreaElement)
     bridge.scheduleFocusAfterOpen()
 
     expect(proxyFocus).toHaveBeenCalledTimes(1)
@@ -140,7 +140,7 @@ describe("createEditorFocusBridge", () => {
       shouldAutoFocusOnOpen: () => false,
     })
 
-    bridge.setFocusProxyRef({ focus: proxyFocus } as HTMLTextAreaElement)
+    bridge.setFocusProxyRef({ focus: proxyFocus } as unknown as HTMLTextAreaElement)
     bridge.scheduleFocusAfterOpen()
 
     await Promise.resolve()
@@ -160,7 +160,7 @@ describe("createEditorFocusBridge", () => {
     const focusProxyRef = {
       blur: proxyBlur,
       focus: proxyFocus,
-    } as HTMLTextAreaElement
+    } as unknown as HTMLTextAreaElement
     activeElement = { blur: activeBlur }
 
     const bridge = createEditorFocusBridge({

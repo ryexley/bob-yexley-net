@@ -7,6 +7,9 @@ export type AdminUserRecord = {
   email: string | null
   displayName: string
   status: VisitorStatus
+  trusted?: boolean
+  avatarSeed?: string | null
+  avatarVersion?: number | null
   notes: string | null
   createdAt: string
 }
@@ -20,6 +23,7 @@ export type AdminUsersQueryResult = {
 export type AdminUserUpdateInput = {
   role: AppRole
   status: VisitorStatus
+  trusted: boolean
   notes: string
   pin?: string
 }

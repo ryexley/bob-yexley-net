@@ -5,6 +5,7 @@ import { useNotify } from "@/components/notification"
 import { useAuth } from "@/context/auth-context"
 import { useSupabase } from "@/context/services-context"
 import { BlipActions } from "@/modules/blips/components/blip-actions"
+import { BlipCommentTrigger } from "@/modules/blips/components/blip-comment-trigger"
 import { BlipReactionSummary } from "@/modules/blips/components/blip-reaction-summary"
 import { BlipReactionTrigger } from "@/modules/blips/components/blip-reaction-trigger"
 import {
@@ -16,6 +17,8 @@ import {
 import { REACTION_ERROR_I18N_KEY } from "@/modules/blips/data/errors"
 import { reactionStore } from "@/modules/blips/data/reactions-store"
 import { blipStore } from "@/modules/blips/data/store"
+import { BlipCommentThread } from "@/modules/blips/components/blip-comment-thread"
+import { useBlipComposer } from "@/modules/blips/context/blip-composer-context"
 import { formatBlipTimestamp } from "@/modules/blips/util"
 import { ptr } from "@/i18n"
 import "./update-blip.css"
@@ -24,6 +27,7 @@ const tr = ptr("blips.components.blip")
 
 export function UpdateBlip(props: {
   blip: Blip
+  comments?: Blip[]
   isRecentRealtime?: boolean
   isShimmering?: boolean
   onEdit?: (blipId: string) => void
@@ -33,6 +37,7 @@ export function UpdateBlip(props: {
   const notify = useNotify()
   const blips = blipStore(supabase.client, { subscribe: false })
   const reactions = reactionStore(supabase.client, { subscribe: false })
+  const composer = useBlipComposer()
   const [timeTick, setTimeTick] = createSignal(Date.now())
   const [isReactionBusy, setIsReactionBusy] = createSignal(false)
   const [reactionStateOverride, setReactionStateOverride] =
@@ -141,7 +146,7 @@ export function UpdateBlip(props: {
         <Markdown content={props.blip.content ?? ""} />
       </div>
       <footer class="update-blip-footer">
-        <div class="update-blip-footer-start">
+        <div class="update-blip-footer-end">
           <BlipReactionSummary
             reactions={displayBlip().reactions}
             busy={isReactionBusy()}
@@ -153,8 +158,6 @@ export function UpdateBlip(props: {
                 : undefined
             }
           />
-        </div>
-        <div class="update-blip-footer-end">
           <BlipActions
             blip={props.blip}
             onEdit={props.onEdit}
@@ -172,8 +175,14 @@ export function UpdateBlip(props: {
               blips.updateCachedReactionState(props.blip.id, nextState)
             }}
           />
+          {props.blip.allow_comments !== false ? (
+            <BlipCommentTrigger
+              onCompose={() => composer.openNewComment(props.blip.id)}
+            />
+          ) : null}
         </div>
       </footer>
+      <BlipCommentThread parentBlip={props.blip} comments={props.comments ?? []} />
     </li>
   )
 }

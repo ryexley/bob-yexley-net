@@ -10,9 +10,9 @@ const { state, toggleToolbar } = vi.hoisted(() => ({
   state: {
     drafts: [] as Blip[],
     entities: [] as Blip[],
+    lastMarkdownEditorProps: null as any,
   },
   toggleToolbar: vi.fn(),
-  lastMarkdownEditorProps: null as any,
 }))
 
 vi.mock("@/context/services-context", () => ({

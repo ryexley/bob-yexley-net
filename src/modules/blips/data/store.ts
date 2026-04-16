@@ -50,6 +50,12 @@ export type BlipUpdateWatchHandlers = {
   onDelete?: (blipId: string) => void
 }
 
+export type BlipCommentWatchHandlers = {
+  onInsert?: (blip: Blip) => void
+  onUpdate?: (blip: Blip) => void
+  onDelete?: (blipId: string) => void
+}
+
 type BlipReactionWatchHandlers = {
   onRefresh?: (blipId: string) => void
 }
@@ -96,6 +102,31 @@ export function blipStore(
 
     return byParent
   })
+  const commentsByParentMap = createMemo(() => {
+    const byParent = new Map<string, Blip[]>()
+
+    for (const blip of store.entities()) {
+      if (blip.blip_type !== BLIP_TYPES.COMMENT || !blip.parent_id) {
+        continue
+      }
+
+      const existing = byParent.get(blip.parent_id)
+      if (existing) {
+        existing.push(blip)
+      } else {
+        byParent.set(blip.parent_id, [blip])
+      }
+    }
+
+    for (const comments of byParent.values()) {
+      comments.sort(
+        (a, b) =>
+          new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
+      )
+    }
+
+    return byParent
+  })
 
   const drafts = createMemo(() => {
     return store
@@ -121,6 +152,40 @@ export function blipStore(
     }
 
     return entitiesById().get(blipId) ?? null
+  }
+
+  const commentsByParent = (parentId?: string | null): Blip[] => {
+    if (!parentId) {
+      return []
+    }
+
+    return commentsByParentMap().get(parentId) ?? []
+  }
+
+  const loadCommentAuthor = async (
+    userId?: string | null,
+  ): Promise<Blip["author"] | undefined> => {
+    if (!userId) {
+      return undefined
+    }
+
+    const { data, error } = await supabaseClient
+      .from("visitors")
+      .select("id, display_name, avatar_seed, avatar_version")
+      .eq("user_id", userId)
+      .maybeSingle()
+
+    if (error || !data) {
+      return undefined
+    }
+
+    return {
+      visitor_id: data.id ?? null,
+      display_name: data.display_name ?? null,
+      avatar_seed: data.avatar_seed ?? null,
+      avatar_version:
+        typeof data.avatar_version === "number" ? data.avatar_version : null,
+    }
   }
 
   const mergeIntoCache = (blips: Blip[]) => {
@@ -443,6 +508,106 @@ export function blipStore(
     }
   }
 
+  const watchComments = (
+    parentIds: string[],
+    handlers: BlipCommentWatchHandlers = {},
+  ): Unsubscribe => {
+    const targetIds = toUniqueBlipIds(parentIds)
+    if (targetIds.length === 0) {
+      return () => {}
+    }
+
+    const targetSet = new Set(targetIds)
+    const channelKey = `blip-comments-${targetIds.slice().sort().join("-")}`
+    const existingChannel = activeScopedChannels.get(channelKey)
+    if (existingChannel) {
+      void removeRealtimeChannelSafely(supabaseClient, existingChannel)
+    }
+
+    const handleIncomingUpsert = async (
+      incoming: Blip,
+      onChange?: (blip: Blip) => void,
+    ) => {
+      if (
+        incoming.blip_type !== BLIP_TYPES.COMMENT ||
+        !incoming.parent_id ||
+        !targetSet.has(incoming.parent_id)
+      ) {
+        return
+      }
+
+      const nextComment = {
+        ...incoming,
+        author: incoming.author ?? (await loadCommentAuthor(incoming.user_id)),
+      }
+
+      void store.upsert(nextComment, { cacheOnly: true })
+      onChange?.(nextComment)
+    }
+
+    const channel = supabaseClient
+      .channel(channelKey)
+      .on(
+        "postgres_changes" as any,
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "blips",
+        },
+        (payload: { new: Blip }) => {
+          void handleIncomingUpsert(payload.new, handlers.onInsert)
+        },
+      )
+      .on(
+        "postgres_changes" as any,
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "blips",
+        },
+        (payload: { new: Blip }) => {
+          void handleIncomingUpsert(payload.new, handlers.onUpdate)
+        },
+      )
+      .on(
+        "postgres_changes" as any,
+        {
+          event: "DELETE",
+          schema: "public",
+          table: "blips",
+        },
+        (payload: { old: { id: string } }) => {
+          const deletedId = payload.old.id
+          if (!deletedId) {
+            return
+          }
+
+          const existing = store.entities().find(blip => blip.id === deletedId)
+          if (
+            !existing ||
+            existing.blip_type !== BLIP_TYPES.COMMENT ||
+            !existing.parent_id ||
+            !targetSet.has(existing.parent_id)
+          ) {
+            return
+          }
+
+          removeFromCache(deletedId)
+          handlers.onDelete?.(deletedId)
+        },
+      )
+      .subscribe()
+
+    activeScopedChannels.set(channelKey, channel)
+
+    return () => {
+      if (activeScopedChannels.get(channelKey) === channel) {
+        activeScopedChannels.delete(channelKey)
+      }
+      void removeRealtimeChannelSafely(supabaseClient, channel)
+    }
+  }
+
   const watchReactions = (
     blipIds: string[],
     handlers: BlipReactionWatchHandlers = {},
@@ -597,11 +762,13 @@ export function blipStore(
         : existingBlip.tags
 
     const presentationFields: Partial<Blip> = {
+      allow_comments: existingBlip.allow_comments,
       tags: fallbackTags ?? [],
       updates_count: existingBlip.updates_count,
       reactions_count: existingBlip.reactions_count,
       my_reaction_count: existingBlip.my_reaction_count,
       reactions: existingBlip.reactions,
+      author: existingBlip.author,
     }
 
     const merged = await store.upsert(
@@ -660,11 +827,13 @@ export function blipStore(
     ...store,
     drafts,
     updatesByParent,
+    commentsByParent,
     getById,
     mergeIntoCache,
     removeFromCache,
     watchBlips,
     watchUpdates,
+    watchComments,
     watchReactions,
     refreshReactionState,
     refreshReactionStates,

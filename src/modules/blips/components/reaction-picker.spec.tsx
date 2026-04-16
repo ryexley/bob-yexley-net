@@ -14,7 +14,7 @@ vi.mock("@/components/icon", () => ({
 }))
 
 vi.mock("@/components/popover", () => ({
-  Popover: (props: { children: unknown }) => <div data-testid="popover">{props.children}</div>,
+  Popover: (props: { children: any }) => <div data-testid="popover">{props.children}</div>,
   PopoverTrigger: (props: any) => <button {...props}>{props.children}</button>,
   PopoverContent: (props: any) => (
     <div

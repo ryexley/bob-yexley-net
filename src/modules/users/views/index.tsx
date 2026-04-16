@@ -349,6 +349,9 @@ export function UsersView() {
                           <UserAvatar
                             class="users-view-card-avatar"
                             role={user.role}
+                            displayName={user.displayName ?? user.email ?? null}
+                            avatarSeed={user.avatarSeed ?? null}
+                            avatarVersion={user.avatarVersion ?? null}
                             size="md"
                             variant="surface"
                             aria-hidden={true}

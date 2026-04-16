@@ -1,0 +1,25 @@
+.blip-comment-editor-dialog {
+  max-width: min(44rem, calc(100vw - 2rem));
+}
+
+.blip-comment-editor-header {
+  padding-bottom: 0.25rem;
+}
+
+.blip-comment-editor-body {
+  padding-top: 0;
+}
+
+.blip-comment-editor-controls {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding-top: 0.5rem;
+}
+
+.blip-comment-editor-controls-end {
+  align-items: center;
+  display: inline-flex;
+  gap: 0.5rem;
+}

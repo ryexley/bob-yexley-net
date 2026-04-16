@@ -22,6 +22,7 @@ import { useNotify } from "@/components/notification"
 import { useSupabase } from "@/context/services-context"
 import { useAuth } from "@/context/auth-context"
 import { BlipActions } from "@/modules/blips/components/blip-actions"
+import { BlipCommentTrigger } from "@/modules/blips/components/blip-comment-trigger"
 import { BlipReactionSummary } from "@/modules/blips/components/blip-reaction-summary"
 import { BlipReactionTrigger } from "@/modules/blips/components/blip-reaction-trigger"
 import { REACTION_ERROR_I18N_KEY } from "@/modules/blips/data/errors"
@@ -38,6 +39,7 @@ import {
   type ReactionStateOverride,
 } from "@/modules/blips/data/reaction-optimistic"
 import { reactionStore } from "@/modules/blips/data/reactions-store"
+import { BlipCommentThread } from "@/modules/blips/components/blip-comment-thread"
 import { UpdateBlip } from "@/modules/blips/components/update-blip"
 import { useBlipComposer } from "@/modules/blips/context/blip-composer-context"
 import { formatBlipTimestamp } from "@/modules/blips/util"
@@ -48,6 +50,7 @@ import { windowTitle, withWindow } from "@/util/browser"
 import "./blip.css"
 
 const tr = ptr("blips.views.detail")
+const commentThreadTr = ptr("blips.components.commentThread")
 const MAX_SHARE_DESCRIPTION_LENGTH = 180
 const MAX_SHARE_TITLE_LENGTH = 68
 
@@ -109,6 +112,7 @@ export function BlipView() {
     isUpdateOpenFor,
     openEditRoot,
     openEditUpdate,
+    openNewComment,
     openNewUpdate,
     registerUpdateInlineMount,
     requestCloseActive,
@@ -120,6 +124,10 @@ export function BlipView() {
   const blipGraphQuery = createAsync(() => getBlipGraph(params.id))
   const blipQuery = createMemo(() => blipGraphQuery()?.blip ?? null)
   const initialUpdates = createMemo(() => blipGraphQuery()?.updates ?? [])
+  const initialRootComments = createMemo(() => blipGraphQuery()?.blip.comments ?? [])
+  const initialUpdateComments = createMemo(() =>
+    (blipGraphQuery()?.updates ?? []).flatMap(update => update.comments ?? []),
+  )
   const blip = createMemo(() => {
     const fromStore = store.getById(params.id)
     return fromStore ?? blipQuery() ?? null
@@ -213,6 +221,7 @@ export function BlipView() {
     }
     return allUpdates.filter(update => update.published)
   })
+  const rootComments = createMemo(() => store.commentsByParent(blip()?.id))
   const showComposer = createMemo(() => isUpdateOpenFor(blip()?.id))
   const visibleUpdateIds = createMemo(() =>
     visibleUpdates().map(update => update.id),
@@ -322,6 +331,17 @@ export function BlipView() {
   })
 
   createEffect(() => {
+    const loadedComments = [...initialRootComments(), ...initialUpdateComments()]
+    if (loadedComments.length === 0) {
+      return
+    }
+
+    untrack(() => {
+      store.mergeIntoCache(loadedComments)
+    })
+  })
+
+  createEffect(() => {
     const rootBlip = blip()
     if (!rootBlip || !isAuthenticated() || rootBlip.published) {
       setHydratedRootTags([])
@@ -407,6 +427,16 @@ export function BlipView() {
 
     const reactionBlipIds = watchKey.split("|")
     const unsubscribe = store.watchReactions(reactionBlipIds)
+    onCleanup(unsubscribe)
+  })
+
+  createEffect(() => {
+    const rootId = watchUpdatesRootId()
+    if (!rootId) {
+      return
+    }
+
+    const unsubscribe = store.watchComments([rootId, ...visibleUpdateIds()])
     onCleanup(unsubscribe)
   })
 
@@ -618,143 +648,180 @@ export function BlipView() {
               }>
               {data => (
                 <>
-                  <article class="blip-detail-card">
-                    <header class="blip-detail-header">
-                      <span class="blip-detail-timestamp">
-                        {formatBlipTimestamp(data().created_at)}
-                      </span>
-                    </header>
-                    <div class="blip-detail-content">
-                      <Markdown content={data().content ?? ""} />
-                    </div>
-                    <footer class="blip-detail-footer">
-                      <div class="tags">
-                        <Show when={visibleRootTags().length > 0}>
-                          <Hashtag size="0.85rem" />
-                          <ul class="tag-list">
-                            <For each={visibleRootTags()}>
-                              {tag => (
-                                <li class="tag">
-                                  <A href={pages.blipsTag(tag)}>{tag}</A>
-                                </li>
-                              )}
-                            </For>
-                          </ul>
-                        </Show>
+                  <div class="blip-detail-body">
+                    <article class="blip-detail-card">
+                      <header class="blip-detail-header">
+                        <span class="blip-detail-timestamp">
+                          {formatBlipTimestamp(data().created_at)}
+                        </span>
+                      </header>
+                      <div class="blip-detail-content">
+                        <Markdown content={data().content ?? ""} />
                       </div>
-                      <div class="activity">
-                        <BlipReactionTrigger
-                          blip={displayBlip() ?? data()}
-                          triggerAriaLabel={tr("actions.addReaction")}
-                          onReactionStateChange={next => {
-                            const nextState = {
-                              reactions: next.reactions,
-                              my_reaction_count: next.myReactionCount,
-                              reactions_count: next.reactionsCount,
-                            }
-                            setReactionStateOverride(nextState)
-                            store.updateCachedReactionState(data().id, nextState)
-                          }}
-                        />
-                      </div>
-                    </footer>
-                  </article>
-                  <div class="blip-detail-meta-row">
-                    <div class="blip-detail-meta-row-start">
-                      <BlipReactionSummary
-                        reactions={(displayBlip() ?? data()).reactions}
-                        busy={isReactionBusy()}
-                        onToggleReaction={
-                          isAuthenticated()
-                            ? emoji => {
-                                void handleToggleReaction(emoji)
-                              }
-                            : undefined
-                        }
-                      />
-                    </div>
-                    <BlipActions
-                      blip={data()}
-                      onEdit={handleEditRootBlip}
-                      fullWidth={false}
-                      toolbarExtras={
-                        <Button
-                          variant="ghost"
-                          size="xs"
-                          label={tr("updates.editor.newLabel")}
-                          iconRight="chat_add_on"
-                          class={cx("blip-detail-add-update", {
-                            active: showComposer(),
-                          })}
-                          aria-label={
-                            showComposer()
-                              ? tr("actions.hideUpdateComposer")
-                              : tr("actions.postUpdate")
-                          }
-                          onClick={() => {
-                            if (showComposer()) {
-                              requestCloseActive()
-                              return
-                            }
-
-                            const rootBlipId = blip()?.id
-                            if (!rootBlipId) {
-                              return
-                            }
-
-                            openNewUpdate(rootBlipId)
-                          }}
-                        />
-                      }
-                    />
-                  </div>
-                  <Show
-                    when={
-                      canManageUpdates() ||
-                      visibleUpdates().length > 0 ||
-                      showComposer()
-                    }>
-                    <section class="blip-updates-section">
-                      <Show when={visibleUpdates().length > 0}>
-                        <header class="blip-updates-header">
-                          <div class="blip-updates-chip">
-                            <span class="blip-updates-chip-label">
-                              {tr("updates.label")}
-                            </span>
-                            <span class="blip-updates-chip-count">
-                              {visibleUpdates().length}
-                            </span>
+                      <footer class="blip-detail-footer">
+                        <div class="blip-detail-footer-top-row">
+                          <div class="tags">
+                            <Show when={visibleRootTags().length > 0}>
+                              <Hashtag size="0.85rem" />
+                              <ul class="tag-list">
+                                <For each={visibleRootTags()}>
+                                  {tag => (
+                                    <li class="tag">
+                                      <A href={pages.blipsTag(tag)}>{tag}</A>
+                                    </li>
+                                  )}
+                                </For>
+                              </ul>
+                            </Show>
                           </div>
-                        </header>
-                      </Show>
-                      <div
-                        ref={element => {
-                          updateInlineMountElement = element
-                          registerUpdateInlineMount(params.id, element)
-                        }}
-                      />
-                      <Show when={visibleUpdates().length > 0}>
-                        <ul class="blip-updates-list">
-                          <For each={visibleUpdates()}>
-                            {update => (
-                              <UpdateBlip
-                                blip={update}
-                                onEdit={handleEditUpdate}
-                                isRecentRealtime={
-                                  recentRealtimeUpdateStates()[update.id] !==
-                                  undefined
+                          <BlipActions
+                            blip={data()}
+                            onEdit={handleEditRootBlip}
+                            fullWidth={false}
+                          />
+                        </div>
+                        <hr class="blip-detail-footer-separator" />
+                        <div class="blip-detail-footer-bottom-row">
+                          <div class="blip-detail-reactions">
+                            <BlipReactionSummary
+                              reactions={(displayBlip() ?? data()).reactions}
+                              busy={isReactionBusy()}
+                              onToggleReaction={
+                                isAuthenticated()
+                                  ? emoji => {
+                                      void handleToggleReaction(emoji)
+                                    }
+                                  : undefined
+                              }
+                            />
+                          </div>
+                          <div class="activity">
+                            <BlipReactionTrigger
+                              blip={displayBlip() ?? data()}
+                              triggerAriaLabel={tr("actions.addReaction")}
+                              onReactionStateChange={next => {
+                                const nextState = {
+                                  reactions: next.reactions,
+                                  my_reaction_count: next.myReactionCount,
+                                  reactions_count: next.reactionsCount,
                                 }
-                                isShimmering={
-                                  recentRealtimeUpdateStates()[update.id]
-                                    ?.shimmering === true
-                                }
+                                setReactionStateOverride(nextState)
+                                store.updateCachedReactionState(data().id, nextState)
+                              }}
+                            />
+                            <Show when={data().allow_comments !== false}>
+                              <BlipCommentTrigger
+                                onCompose={() => openNewComment(data().id)}
                               />
-                            )}
-                          </For>
-                        </ul>
+                            </Show>
+                          </div>
+                        </div>
+                      </footer>
+                    </article>
+                    <div class="blip-detail-secondary-stack">
+                      <div class="blip-detail-meta-row">
+                        <div class="blip-detail-meta-row-start">
+                          <Show
+                            when={
+                              visibleUpdates().length > 0 ||
+                              canManageUpdates() ||
+                              showComposer()
+                            }>
+                            <div class="blip-detail-updates-group">
+                              <div class="blip-updates-chip">
+                                <span class="blip-updates-chip-label">
+                                  {tr("updates.label")}
+                                </span>
+                                <span class="blip-updates-chip-count">
+                                  {visibleUpdates().length}
+                                </span>
+                              </div>
+                              <Button
+                                variant="ghost"
+                                size="xs"
+                                label={tr("updates.editor.newLabel")}
+                                iconRight="chat_add_on"
+                                class={cx("blip-detail-add-update", {
+                                  active: showComposer(),
+                                })}
+                                aria-label={
+                                  showComposer()
+                                    ? tr("actions.hideUpdateComposer")
+                                    : tr("actions.postUpdate")
+                                }
+                                onClick={() => {
+                                  if (showComposer()) {
+                                    requestCloseActive()
+                                    return
+                                  }
+
+                                  const rootBlipId = blip()?.id
+                                  if (!rootBlipId) {
+                                    return
+                                  }
+
+                                  openNewUpdate(rootBlipId)
+                                }}
+                              />
+                            </div>
+                          </Show>
+                        </div>
+                        <div class="blip-detail-meta-row-end">
+                          <Show when={data().allow_comments !== false || rootComments().length > 0}>
+                            <div class="blip-comments-chip">
+                              <span class="blip-comments-chip-label">
+                                {commentThreadTr("title")}
+                              </span>
+                              <span class="blip-comments-chip-count">
+                                {rootComments().length}
+                              </span>
+                            </div>
+                          </Show>
+                        </div>
+                      </div>
+                      <BlipCommentThread
+                        parentBlip={blip() ?? data()}
+                        comments={rootComments()}
+                        showHeader={false}
+                      />
+                      <Show
+                        when={
+                          canManageUpdates() ||
+                          visibleUpdates().length > 0 ||
+                          showComposer()
+                        }>
+                        <section class="blip-updates-section">
+                          <div
+                            ref={element => {
+                              updateInlineMountElement = element
+                              registerUpdateInlineMount(params.id, element)
+                            }}
+                          />
+                          <Show when={visibleUpdates().length > 0}>
+                            <ul class="blip-updates-list">
+                              <For each={visibleUpdates()}>
+                                {update => (
+                                  <UpdateBlip
+                                    blip={update}
+                                    comments={store.commentsByParent(update.id)}
+                                    onEdit={handleEditUpdate}
+                                    isRecentRealtime={
+                                      recentRealtimeUpdateStates()[update.id] !==
+                                      undefined
+                                    }
+                                    isShimmering={
+                                      recentRealtimeUpdateStates()[update.id]
+                                        ?.shimmering === true
+                                    }
+                                  />
+                                )}
+                              </For>
+                            </ul>
+                          </Show>
+                        </section>
                       </Show>
-                    </section>
-                  </Show>
+                    </div>
+                  </div>
                 </>
               )}
             </Show>

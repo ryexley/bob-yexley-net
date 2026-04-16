@@ -145,6 +145,9 @@ export function UserMenu() {
     <UserAvatar
       class="user-menu-trigger-content"
       role={isSuperuser() ? "superuser" : null}
+      displayName={visitor()?.displayName ?? user()?.email ?? null}
+      avatarSeed={visitor()?.avatarSeed ?? null}
+      avatarVersion={visitor()?.avatarVersion ?? null}
       size="sm"
       variant="bare"
       aria-hidden={true}

@@ -247,6 +247,9 @@ export function ProfileDrawer(props: ProfileDrawerProps) {
             <UserAvatar
               class="profile-drawer-avatar"
               role={auth.role()}
+              displayName={auth.visitor()?.displayName ?? auth.user()?.email ?? null}
+              avatarSeed={auth.visitor()?.avatarSeed ?? null}
+              avatarVersion={auth.visitor()?.avatarVersion ?? null}
               badgeMode="privileged"
               size="lg"
               variant="surface"

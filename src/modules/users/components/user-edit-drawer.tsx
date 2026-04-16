@@ -28,6 +28,7 @@ export function UserEditDrawer(props: UserEditDrawerProps) {
   const notify = useNotify()
   const [role, setRole] = createSignal<AdminUserRecord["role"]>("visitor")
   const [status, setStatus] = createSignal<AdminUserRecord["status"]>("pending")
+  const [trusted, setTrusted] = createSignal(false)
   const [notes, setNotes] = createSignal("")
   const [pin, setPin] = createSignal("")
   const [isSaving, setIsSaving] = createSignal(false)
@@ -60,6 +61,7 @@ export function UserEditDrawer(props: UserEditDrawerProps) {
     return (
       role() !== user.role ||
       status() !== user.status ||
+      trusted() !== user.trusted ||
       notes() !== (user.notes ?? "") ||
       pin().length > 0
     )
@@ -68,6 +70,7 @@ export function UserEditDrawer(props: UserEditDrawerProps) {
   const resetForm = () => {
     setRole(currentUser()?.role ?? "visitor")
     setStatus(currentUser()?.status ?? "pending")
+    setTrusted(currentUser()?.trusted ?? false)
     setNotes(currentUser()?.notes ?? "")
     setPin("")
   }
@@ -181,6 +184,7 @@ export function UserEditDrawer(props: UserEditDrawerProps) {
     const result = await updateAdminUserRecord(user.userId, {
       role: role(),
       status: status(),
+      trusted: trusted(),
       notes: notes(),
       pin: pin(),
     })
@@ -228,6 +232,9 @@ export function UserEditDrawer(props: UserEditDrawerProps) {
             <UserAvatar
               class="user-edit-drawer-avatar"
               role={role()}
+              displayName={currentUser()?.displayName ?? currentUser()?.email ?? null}
+              avatarSeed={currentUser()?.avatarSeed ?? null}
+              avatarVersion={currentUser()?.avatarVersion ?? null}
               size="lg"
               variant="surface"
               aria-hidden={true}
@@ -273,6 +280,16 @@ export function UserEditDrawer(props: UserEditDrawerProps) {
                 class="user-edit-drawer-status"
               />
             </div>
+
+            <label class="user-edit-drawer-checkbox-field">
+              <input
+                type="checkbox"
+                checked={trusted() || role() === "admin" || role() === "superuser"}
+                disabled={isSaving() || role() === "admin" || role() === "superuser"}
+                onChange={event => setTrusted(event.currentTarget.checked)}
+              />
+              <span>{tr("fields.trusted.label")}</span>
+            </label>
 
             <div class="user-edit-drawer-fieldset">
               <Pin

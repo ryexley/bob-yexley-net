@@ -4,10 +4,23 @@ import { blipReactionSummarySchema } from "@/modules/blips/data/reactions-schema
 export const BLIP_TYPES = {
   ROOT: "root",
   UPDATE: "update",
+  COMMENT: "comment",
 } as const
 
-export const blipTypeSchema = z.enum([BLIP_TYPES.ROOT, BLIP_TYPES.UPDATE])
+export const blipTypeSchema = z.enum([
+  BLIP_TYPES.ROOT,
+  BLIP_TYPES.UPDATE,
+  BLIP_TYPES.COMMENT,
+])
 export type BlipType = z.infer<typeof blipTypeSchema>
+
+export const blipAuthorSchema = z.object({
+  visitor_id: z.string().uuid().nullable(),
+  display_name: z.string().nullable(),
+  avatar_seed: z.string().nullable(),
+  avatar_version: z.number().int().positive().nullable(),
+})
+export type BlipAuthor = z.infer<typeof blipAuthorSchema>
 
 export const blipSchema = z
   .object({
@@ -17,6 +30,7 @@ export const blipSchema = z
     user_id: z.string().nullable(),
     parent_id: z.string().nullable(),
     blip_type: blipTypeSchema,
+    allow_comments: z.boolean().default(true).optional(),
     updates_count: z.number().int().nonnegative().optional(),
     published: z.boolean(),
     moderation_status: z.enum([
@@ -30,6 +44,7 @@ export const blipSchema = z
     reactions_count: z.number().int().nonnegative().optional(),
     my_reaction_count: z.number().int().nonnegative().optional(),
     reactions: z.array(blipReactionSummarySchema).optional(),
+    author: blipAuthorSchema.optional(),
     created_at: z.string(),
     updated_at: z.string(),
   })

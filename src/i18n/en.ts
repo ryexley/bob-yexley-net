@@ -226,6 +226,9 @@ export const en = {
           status: {
             label: "Status",
           },
+          trusted: {
+            label: "Trusted commenter",
+          },
           pin: {
             label: "Reset PIN",
           },
@@ -430,6 +433,55 @@ export const en = {
             confirm: "Delete",
             confirming: "Deleting...",
             cancel: "Keep draft",
+          },
+        },
+      },
+      commentEditor: {
+        titles: {
+          new: "New comment",
+          edit: "Edit comment",
+        },
+        placeholder: "Write a comment...",
+        actions: {
+          close: "Close",
+          delete: "Delete comment",
+          save: "Save comment",
+          saving: "Saving...",
+        },
+        confirmDelete: {
+          title: "Delete comment?",
+          prompt: "This permanently deletes the comment.",
+          actions: {
+            confirm: "Delete",
+            confirming: "Deleting...",
+            cancel: "Cancel",
+          },
+        },
+      },
+      commentThread: {
+        title: "Comments",
+        disabled: "Comments are currently disabled for this blip.",
+        unknownAuthor: "Visitor",
+        statuses: {
+          pending: "Pending review",
+          rejected: "Rejected",
+        },
+        actions: {
+          addComment: "Add comment",
+          enableComments: "Enable comments",
+          disableComments: "Disable comments",
+          edit: "Edit",
+          delete: "Delete",
+          approve: "Approve",
+          reject: "Reject",
+        },
+        confirmDelete: {
+          title: "Delete comment?",
+          prompt: "This permanently deletes the comment and cannot be undone.",
+          actions: {
+            confirm: "Delete",
+            confirming: "Deleting...",
+            cancel: "Cancel",
           },
         },
       },
