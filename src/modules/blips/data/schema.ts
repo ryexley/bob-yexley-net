@@ -15,7 +15,7 @@ export const blipTypeSchema = z.enum([
 export type BlipType = z.infer<typeof blipTypeSchema>
 
 export const blipAuthorSchema = z.object({
-  visitor_id: z.string().uuid().nullable(),
+  profile_id: z.string().uuid().nullable(),
   display_name: z.string().nullable(),
   avatar_seed: z.string().nullable(),
   avatar_version: z.number().int().positive().nullable(),

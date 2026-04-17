@@ -12,13 +12,21 @@ const userProfile: UserProfile = {
   role: "visitor",
   roleCreatedAt: null,
   roleUpdatedAt: null,
-  visitor: {
-    id: "visitor-1",
+  profile: {
+    id: "profile-1",
     displayName: "Bob",
+    avatarSeed: null,
+    avatarVersion: null,
+    createdAt: null,
+    updatedAt: null,
+  },
+  system: {
     status: "pending",
     failedLoginAttempts: 0,
     notes: null,
+    trusted: null,
     createdAt: null,
+    updatedAt: null,
   },
 }
 
@@ -32,7 +40,8 @@ describe("auth-controller", () => {
     ).toMatchObject({
       user: { id: "user-1", email: "user@example.com" },
       role: "visitor",
-      visitor: { id: null, status: null },
+      profile: { id: null },
+      system: { status: null },
     })
   })
 

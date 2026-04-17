@@ -42,13 +42,21 @@ export const buildFallbackProfile = (sessionUser: SessionUser): UserProfile => (
   role: "visitor",
   roleCreatedAt: null,
   roleUpdatedAt: null,
-  visitor: {
+  profile: {
     id: null,
     displayName: null,
+    avatarSeed: null,
+    avatarVersion: null,
+    createdAt: null,
+    updatedAt: null,
+  },
+  system: {
     status: null,
     failedLoginAttempts: null,
     notes: null,
+    trusted: null,
     createdAt: null,
+    updatedAt: null,
   },
 })
 

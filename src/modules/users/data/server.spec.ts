@@ -6,10 +6,12 @@ const {
   serverUserError,
   selectedProfile,
   selectedProfileError,
-  visitorRow,
-  visitorLookupError,
-  updatedVisitorRow,
-  visitorUpdateError,
+  userProfileRow,
+  userProfileLookupError,
+  userSystemRow,
+  userSystemLookupError,
+  updatedUserSystemRow,
+  userSystemUpdateError,
   existingRole,
   existingRoleError,
   upsertRoleError,
@@ -27,28 +29,33 @@ const {
     } as { role: "superuser" | "admin" | "visitor" } | null,
   },
   selectedProfileError: { value: null as string | null },
-  visitorRow: {
+  userProfileRow: {
     value: {
-      id: "visitor-1",
+      id: "profile-1",
       user_id: "user-2",
       display_name: "Crystal",
+      created_at: "2026-03-30T21:01:00.000Z",
+    },
+  },
+  userProfileLookupError: { value: null as { message: string } | null },
+  userSystemRow: {
+    value: {
+      user_profile_id: "profile-1",
       status: "pending",
+      trusted: false,
       notes: "  old note  ",
-      created_at: "2026-03-30T21:01:00.000Z",
     },
   },
-  visitorLookupError: { value: null as { message: string } | null },
-  updatedVisitorRow: {
+  userSystemLookupError: { value: null as { message: string } | null },
+  updatedUserSystemRow: {
     value: {
-      id: "visitor-1",
-      user_id: "user-2",
-      display_name: "Crystal",
+      user_profile_id: "profile-1",
       status: "active",
+      trusted: true,
       notes: "trimmed note",
-      created_at: "2026-03-30T21:01:00.000Z",
     },
   },
-  visitorUpdateError: { value: null as { message: string } | null },
+  userSystemUpdateError: { value: null as { message: string } | null },
   existingRole: { value: "visitor" as "superuser" | "admin" | "visitor" },
   existingRoleError: { value: null as { message: string } | null },
   upsertRoleError: { value: null as { message: string } | null },
@@ -105,14 +112,34 @@ function createSelectBuilder(table: string, columns: string, options?: { count?:
     }
   }
 
-  if (table === "visitors") {
+  if (table === "user_profile") {
     return {
       eq: (_column: string, value: string) => {
-        const row = visitorRow.value && visitorRow.value.user_id === value ? visitorRow.value : null
+        const row =
+          userProfileRow.value && userProfileRow.value.user_id === value
+            ? userProfileRow.value
+            : null
         return {
           maybeSingle: async () => ({
             data: row,
-            error: visitorLookupError.value,
+            error: userProfileLookupError.value,
+          }),
+        }
+      },
+    }
+  }
+
+  if (table === "user_system") {
+    return {
+      eq: (_column: string, value: string) => {
+        const row =
+          userSystemRow.value && userSystemRow.value.user_profile_id === value
+            ? userSystemRow.value
+            : null
+        return {
+          maybeSingle: async () => ({
+            data: row,
+            error: userSystemLookupError.value,
           }),
         }
       },
@@ -122,7 +149,10 @@ function createSelectBuilder(table: string, columns: string, options?: { count?:
   if (table === "user_roles") {
     if (columns === "user_id, role") {
       return Promise.resolve({
-        data: existingRole.value ? [{ user_id: visitorRow.value?.user_id ?? "user-2", role: existingRole.value }] : [],
+        data:
+          existingRole.value
+            ? [{ user_id: userProfileRow.value?.user_id ?? "user-2", role: existingRole.value }]
+            : [],
         error: null,
       })
     }
@@ -131,7 +161,7 @@ function createSelectBuilder(table: string, columns: string, options?: { count?:
       eq: (_column: string, value: string) => ({
         maybeSingle: async () => ({
           data:
-            existingRole.value && value === (visitorRow.value?.user_id ?? "user-2")
+            existingRole.value && value === (userProfileRow.value?.user_id ?? "user-2")
               ? { role: existingRole.value }
               : null,
           error: existingRoleError.value,
@@ -144,7 +174,7 @@ function createSelectBuilder(table: string, columns: string, options?: { count?:
 }
 
 function createUpdateBuilder(table: string) {
-  if (table !== "visitors") {
+  if (table !== "user_system") {
     throw new Error(`Unexpected update on ${table}`)
   }
 
@@ -152,8 +182,8 @@ function createUpdateBuilder(table: string) {
     eq: () => ({
       select: () => ({
         single: async () => ({
-          data: updatedVisitorRow.value,
-          error: visitorUpdateError.value,
+          data: updatedUserSystemRow.value,
+          error: userSystemUpdateError.value,
         }),
       }),
     }),
@@ -165,24 +195,27 @@ beforeEach(() => {
   serverUserError.value = null
   selectedProfile.value = { role: "superuser" }
   selectedProfileError.value = null
-  visitorRow.value = {
-    id: "visitor-1",
+  userProfileRow.value = {
+    id: "profile-1",
     user_id: "user-2",
     display_name: "Crystal",
+    created_at: "2026-03-30T21:01:00.000Z",
+  }
+  userProfileLookupError.value = null
+  userSystemRow.value = {
+    user_profile_id: "profile-1",
     status: "pending",
+    trusted: false,
     notes: "  old note  ",
-    created_at: "2026-03-30T21:01:00.000Z",
   }
-  visitorLookupError.value = null
-  updatedVisitorRow.value = {
-    id: "visitor-1",
-    user_id: "user-2",
-    display_name: "Crystal",
+  userSystemLookupError.value = null
+  updatedUserSystemRow.value = {
+    user_profile_id: "profile-1",
     status: "active",
+    trusted: true,
     notes: "trimmed note",
-    created_at: "2026-03-30T21:01:00.000Z",
   }
-  visitorUpdateError.value = null
+  userSystemUpdateError.value = null
   existingRole.value = "visitor"
   existingRoleError.value = null
   upsertRoleError.value = null
@@ -229,12 +262,13 @@ describe("updateAdminUser", () => {
       success: true,
       data: {
         userId: "user-2",
-        visitorId: "visitor-1",
+        profileId: "profile-1",
         role: "admin",
         email: "crystal@yexley.net",
         displayName: "Crystal",
         status: "active",
         notes: "trimmed note",
+        trusted: true,
         createdAt: "2026-03-30T21:01:00.000Z",
       },
       error: null,
@@ -247,8 +281,8 @@ describe("updateAdminUser", () => {
 
   it("prevents a superuser from removing their own superuser role", async () => {
     serverUserId.value = "user-2"
-    visitorRow.value = {
-      ...visitorRow.value!,
+    userProfileRow.value = {
+      ...userProfileRow.value!,
       user_id: "user-2",
     }
     existingRole.value = "superuser"

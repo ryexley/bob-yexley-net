@@ -47,7 +47,7 @@ export function Blip(props: {
   const [local] = splitProps(props, ["blip", "tags", "onEdit", "onView"])
   const navigate = useNavigate()
   const preloadRoute = usePreloadRoute()
-  const { isAuthenticated, visitor } = useAuth()
+  const { isAuthenticated, userProfile, userSystem } = useAuth()
   const supabase = useSupabase()
   const notify = useNotify()
   const blips = blipStore(supabase.client, { subscribe: false })
@@ -155,7 +155,7 @@ export function Blip(props: {
       myReactionCount: previousCount,
       emoji,
       nextActive: !hasActiveReaction,
-      visitorDisplayName: visitor()?.displayName ?? null,
+      visitorDisplayName: userProfile()?.displayName ?? null,
     })
     const applyVisibleReactionState = (next: ReactionStateOverride) => {
       setReactionStateOverride(next)
@@ -166,8 +166,8 @@ export function Blip(props: {
     applyVisibleReactionState(optimisticOverride)
 
     const result = await reactions.toggleReaction(local.blip.id, emoji, {
-      visitorId: visitor()?.id ?? null,
-      visitorStatus: visitor()?.status ?? null,
+      profileId: userProfile()?.id ?? null,
+      status: userSystem()?.status ?? null,
       currentCount: previousCount,
       hasActiveReaction,
     })

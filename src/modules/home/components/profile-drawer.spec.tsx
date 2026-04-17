@@ -6,7 +6,8 @@ const {
   authState,
   replaceProfile,
   logout,
-  updateCurrentVisitorDisplayName,
+  updateCurrentUserDisplayName,
+  updateCurrentUserAvatarVersion,
   notifySuccess,
   notifyError,
   viewportWidth,
@@ -18,19 +19,28 @@ const {
       role: "visitor",
       roleCreatedAt: "2026-03-01T10:00:00.000Z",
       roleUpdatedAt: "2026-03-01T10:00:00.000Z",
-      visitor: {
-        id: "visitor-1",
+      profile: {
+        id: "profile-1",
         displayName: "Bob",
+        avatarSeed: null,
+        avatarVersion: 1,
+        createdAt: "2026-03-01T10:00:00.000Z",
+        updatedAt: "2026-03-01T10:00:00.000Z",
+      },
+      system: {
         status: "active",
         failedLoginAttempts: 0,
         notes: null,
+        trusted: false,
         createdAt: "2026-03-01T10:00:00.000Z",
+        updatedAt: "2026-03-01T10:00:00.000Z",
       },
     } as any,
   },
   replaceProfile: vi.fn(),
   logout: vi.fn(async () => undefined),
-  updateCurrentVisitorDisplayName: vi.fn(),
+  updateCurrentUserDisplayName: vi.fn(),
+  updateCurrentUserAvatarVersion: vi.fn(),
   notifySuccess: vi.fn(),
   notifyError: vi.fn(),
   viewportWidth: vi.fn(() => 1024),
@@ -43,7 +53,8 @@ vi.mock("@/context/auth-context", () => ({
   useAuth: () => ({
     profile: () => authState.profile,
     user: () => authState.profile?.user ?? null,
-    visitor: () => authState.profile?.visitor ?? null,
+    userProfile: () => authState.profile?.profile ?? null,
+    userSystem: () => authState.profile?.system ?? null,
     role: () => authState.profile?.role ?? null,
     isAuthenticated: () => Boolean(authState.profile?.user),
     replaceProfile,
@@ -53,7 +64,8 @@ vi.mock("@/context/auth-context", () => ({
 
 vi.mock("@/context/services-context", () => ({
   useSupabase: () => ({
-    updateCurrentVisitorDisplayName,
+    updateCurrentUserDisplayName,
+    updateCurrentUserAvatarVersion,
   }),
 }))
 
@@ -68,6 +80,10 @@ vi.mock("@/components/notification", () => ({
     success: notifySuccess,
     error: notifyError,
   }),
+}))
+
+vi.mock("@/components/tooltip", () => ({
+  Tooltip: (props: any) => <>{props.children}</>,
 }))
 
 vi.mock("@/components/drawer", () => ({
@@ -96,8 +112,12 @@ vi.mock("@/i18n", () => ({
       "home.components.userMenu.profileDrawer.actions.close": "Close",
       "home.components.userMenu.profileDrawer.actions.edit": "Edit",
       "home.components.userMenu.profileDrawer.actions.cancelEdit": "Cancel",
+      "home.components.userMenu.profileDrawer.actions.regenerateAvatar":
+        "Re-generate avatar colors",
       "home.components.userMenu.profileDrawer.actions.save": "Save",
       "home.components.userMenu.profileDrawer.actions.saving": "Saving...",
+      "home.components.userMenu.profileDrawer.tooltips.regenerateAvatar":
+        "Re-generate your icon colors. Feel free to do this as many times as you like until you get a combination and pattern that you like.",
       "home.components.userMenu.profileDrawer.fields.email": "Email",
       "home.components.userMenu.profileDrawer.fields.name": "Name",
       "home.components.userMenu.profileDrawer.fields.role": "Role",
@@ -127,20 +147,29 @@ describe("ProfileDrawer", () => {
       role: "visitor",
       roleCreatedAt: "2026-03-01T10:00:00.000Z",
       roleUpdatedAt: "2026-03-01T10:00:00.000Z",
-      visitor: {
-        id: "visitor-1",
+      profile: {
+        id: "profile-1",
         displayName: "Bob",
+        avatarSeed: null,
+        avatarVersion: 1,
+        createdAt: "2026-03-01T10:00:00.000Z",
+        updatedAt: "2026-03-01T10:00:00.000Z",
+      },
+      system: {
         status: "active",
         failedLoginAttempts: 0,
         notes: null,
+        trusted: false,
         createdAt: "2026-03-01T10:00:00.000Z",
+        updatedAt: "2026-03-01T10:00:00.000Z",
       },
     } as any
 
     replaceProfile.mockReset()
     logout.mockReset()
     logout.mockResolvedValue(undefined)
-    updateCurrentVisitorDisplayName.mockReset()
+    updateCurrentUserDisplayName.mockReset()
+    updateCurrentUserAvatarVersion.mockReset()
     notifySuccess.mockReset()
     notifyError.mockReset()
     viewportWidth.mockReset()
@@ -148,7 +177,7 @@ describe("ProfileDrawer", () => {
     latestDrawerProps.value = null
   })
 
-  it("renders the visitor details in read-only mode by default", () => {
+  it("renders the user details in read-only mode by default", () => {
     render(() => <ProfileDrawer open onOpenChange={() => undefined} />)
 
     expect(screen.getByText("Profile")).toBeTruthy()
@@ -193,11 +222,11 @@ describe("ProfileDrawer", () => {
   })
 
   it("enables editing and saves a new display name", async () => {
-    updateCurrentVisitorDisplayName.mockResolvedValue({
+    updateCurrentUserDisplayName.mockResolvedValue({
       data: {
         ...authState.profile,
-        visitor: {
-          ...authState.profile.visitor,
+        profile: {
+          ...authState.profile.profile,
           displayName: "Bobby",
         },
       },
@@ -216,16 +245,46 @@ describe("ProfileDrawer", () => {
     await fireEvent.click(screen.getByRole("button", { name: "Save" }))
 
     await waitFor(() => {
-      expect(updateCurrentVisitorDisplayName).toHaveBeenCalledWith("Bobby")
+      expect(updateCurrentUserDisplayName).toHaveBeenCalledWith("Bobby")
     })
     expect(replaceProfile).toHaveBeenCalledWith(
       expect.objectContaining({
-        visitor: expect.objectContaining({
+        profile: expect.objectContaining({
           displayName: "Bobby",
         }),
       }),
     )
     expect(notifySuccess).toHaveBeenCalled()
+  })
+
+  it("regenerates avatar colors by incrementing avatar version", async () => {
+    updateCurrentUserAvatarVersion.mockResolvedValue({
+      data: {
+        ...authState.profile,
+        profile: {
+          ...authState.profile.profile,
+          avatarVersion: 2,
+        },
+      },
+      error: null,
+    })
+
+    render(() => <ProfileDrawer open onOpenChange={() => undefined} />)
+
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Re-generate avatar colors" }),
+    )
+
+    await waitFor(() => {
+      expect(updateCurrentUserAvatarVersion).toHaveBeenCalledWith(2)
+    })
+    expect(replaceProfile).toHaveBeenCalledWith(
+      expect.objectContaining({
+        profile: expect.objectContaining({
+          avatarVersion: 2,
+        }),
+      }),
+    )
   })
 
   it("closes from the close button", async () => {

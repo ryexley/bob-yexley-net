@@ -1,6 +1,19 @@
-import { placeholderBackgroundColorOptions } from "@/util/image"
-
 const DEFAULT_AVATAR_VERSION = 1
+const AVATAR_PALETTE_VERSION = 2
+const AVATAR_BACKGROUND_COLOR_OPTIONS = [
+  "color-mix(in srgb, var(--colors-safety-orange-01) 30%, transparent)",
+  "color-mix(in srgb, var(--colors-neon-green) 30%, transparent)",
+  "color-mix(in srgb, var(--colors-arctic-lime) 30%, transparent)",
+  "color-mix(in srgb, var(--colors-cool-blue) 30%, transparent)",
+  "color-mix(in srgb, var(--colors-resonant-blue) 30%, transparent)",
+  "color-mix(in srgb, var(--colors-cerise-pink) 30%, transparent)",
+  "color-mix(in srgb, var(--colors-scarlett) 30%, transparent)",
+  "color-mix(in srgb, var(--colors-seance) 30%, transparent)",
+  "color-mix(in srgb, var(--colors-blue-margeurite) 30%, transparent)",
+  "color-mix(in srgb, var(--colors-rebecca-purple) 30%, transparent)",
+  "color-mix(in srgb, var(--colors-mono-01) 30%, transparent)",
+  "color-mix(in srgb, var(--colors-mono-11) 30%, transparent)",
+] as const
 
 const normalizeSeed = (seed?: string | null) => seed?.trim() || "visitor-avatar"
 
@@ -25,7 +38,7 @@ const createSeededRandom = (seed: number) => {
 
 const getPaletteColor = (
   random: () => number,
-  palette: string[] = placeholderBackgroundColorOptions,
+  palette: readonly string[] = AVATAR_BACKGROUND_COLOR_OPTIONS,
 ) => {
   const targetPalette =
     palette.length > 0 ? palette : ["rgba(24, 36, 73, 0.3)", "rgba(33, 34, 37, 0.3)"]
@@ -53,7 +66,11 @@ export const getAvatarBackground = (
   seed?: string | null,
   version: number = DEFAULT_AVATAR_VERSION,
 ) => {
-  const random = createSeededRandom(hashString(`${normalizeSeed(seed)}:${version}`))
+  const random = createSeededRandom(
+    hashString(
+      `${normalizeSeed(seed)}:${version}:palette-${AVATAR_PALETTE_VERSION}`,
+    ),
+  )
   const gradients = Array.from({ length: 4 }, () => {
     const color = getPaletteColor(random)
     const x = Math.round(random() * 100)

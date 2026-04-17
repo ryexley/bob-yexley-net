@@ -1,20 +1,24 @@
 import { z } from "zod"
 import type { AdminUserRecord, AdminUserUpdateResult, AdminUsersQueryResult } from "./types"
-import type { AppRole, VisitorStatus } from "@/lib/vendor/supabase/user-profile"
+import type { AppRole, UserStatus } from "@/lib/vendor/supabase/user-profile"
 import { getAdminClient } from "@/lib/vendor/supabase/admin"
 import { getServerClient } from "@/lib/vendor/supabase/server"
 import { selectUserProfileRecord } from "@/lib/vendor/supabase/user-profile"
 
-type VisitorRow = {
+type UserProfileRow = {
   id: string
   user_id: string
   display_name: string
-  status: VisitorStatus
-  trusted: boolean
   avatar_seed: string | null
   avatar_version: number | null
-  notes: string | null
   created_at: string
+}
+
+type UserSystemRow = {
+  user_profile_id: string
+  status: UserStatus
+  trusted: boolean
+  notes: string | null
 }
 
 type UserRoleRow = {
@@ -27,11 +31,11 @@ type CurrentAdminRequestContext = {
   currentUserId: string | null
 }
 
-const visitorStatusSchema = z.enum(["pending", "active", "locked"])
+const userStatusSchema = z.enum(["pending", "active", "locked"])
 const appRoleSchema = z.enum(["visitor", "admin", "superuser"])
 const adminUserUpdateSchema = z.object({
   role: appRoleSchema,
-  status: visitorStatusSchema,
+  status: userStatusSchema,
   trusted: z.boolean().optional().default(false),
   notes: z.string().max(4000).optional().default(""),
   pin: z.union([z.literal(""), z.string().regex(/^\d{6}$/)]).optional().default(""),
@@ -136,21 +140,22 @@ async function countSuperusers() {
 }
 
 const mapAdminUserRecord = (
-  row: VisitorRow,
+  profileRow: UserProfileRow,
+  systemRow: UserSystemRow | null,
   email: string | null,
   role: AppRole,
 ): AdminUserRecord => ({
-  userId: row.user_id,
-  visitorId: row.id,
+  userId: profileRow.user_id,
+  profileId: profileRow.id,
   role,
   email,
-  displayName: row.display_name,
-  status: row.status,
-  trusted: row.trusted,
-  avatarSeed: row.avatar_seed,
-  avatarVersion: row.avatar_version,
-  notes: row.notes,
-  createdAt: row.created_at,
+  displayName: profileRow.display_name,
+  status: systemRow?.status ?? "pending",
+  trusted: systemRow?.trusted ?? false,
+  avatarSeed: profileRow.avatar_seed,
+  avatarVersion: profileRow.avatar_version,
+  notes: systemRow?.notes ?? null,
+  createdAt: profileRow.created_at,
 })
 
 export async function loadAdminUsers(): Promise<AdminUsersQueryResult> {
@@ -165,27 +170,37 @@ export async function loadAdminUsers(): Promise<AdminUsersQueryResult> {
 
   try {
     const adminClient = getAdminClient()
-    const { data, error } = await adminClient
-      .from("visitors")
-      .select(
-        "id, user_id, display_name, status, trusted, avatar_seed, avatar_version, notes, created_at",
-      )
+    const { data: profileData, error: profileError } = await adminClient
+      .from("user_profile")
+      .select("id, user_id, display_name, avatar_seed, avatar_version, created_at")
 
-    if (error) {
-      throw new Error(error.message)
+    if (profileError) {
+      throw new Error(profileError.message)
     }
 
-    const rows = (data ?? []) as VisitorRow[]
+    const { data: systemData, error: systemError } = await adminClient
+      .from("user_system")
+      .select("user_profile_id, status, trusted, notes")
+
+    if (systemError) {
+      throw new Error(systemError.message)
+    }
+
+    const profileRows = (profileData ?? []) as UserProfileRow[]
+    const systemByProfileId = new Map(
+      ((systemData ?? []) as UserSystemRow[]).map(row => [row.user_profile_id, row]),
+    )
     const emailByUserId = await listAllAuthUsers()
     const roleByUserId = await listAllUserRoles()
 
     return {
       authorized: true,
-      users: rows.map(row =>
+      users: profileRows.map(profileRow =>
         mapAdminUserRecord(
-          row,
-          emailByUserId.get(row.user_id) ?? null,
-          roleByUserId.get(row.user_id) ?? "visitor",
+          profileRow,
+          systemByProfileId.get(profileRow.id) ?? null,
+          emailByUserId.get(profileRow.user_id) ?? null,
+          roleByUserId.get(profileRow.user_id) ?? "visitor",
         ),
       ),
       error: null,
@@ -226,28 +241,41 @@ export async function updateAdminUser(
 
   try {
     const adminClient = getAdminClient()
-    const { data: existingVisitor, error: existingVisitorError } = await adminClient
-      .from("visitors")
-      .select(
-        "id, user_id, display_name, status, trusted, avatar_seed, avatar_version, notes, created_at",
-      )
+    const { data: existingProfile, error: existingProfileError } = await adminClient
+      .from("user_profile")
+      .select("id, user_id, display_name, avatar_seed, avatar_version, created_at")
       .eq("user_id", userId)
       .maybeSingle()
 
-    if (existingVisitorError) {
+    if (existingProfileError) {
       return {
         success: false,
         data: null,
-        error: existingVisitorError.message,
+        error: existingProfileError.message,
         pinWasReset: false,
       }
     }
 
-    if (!existingVisitor) {
+    if (!existingProfile) {
       return {
         success: false,
         data: null,
         error: "User not found.",
+        pinWasReset: false,
+      }
+    }
+
+    const { data: existingSystem, error: existingSystemError } = await adminClient
+      .from("user_system")
+      .select("user_profile_id, status, trusted, notes")
+      .eq("user_profile_id", existingProfile.id)
+      .maybeSingle()
+
+    if (existingSystemError) {
+      return {
+        success: false,
+        data: null,
+        error: existingSystemError.message,
         pinWasReset: false,
       }
     }
@@ -292,7 +320,7 @@ export async function updateAdminUser(
 
     const nextNotes = normalizeNotes(parsed.data.notes)
     const pinWasReset = parsed.data.pin.length > 0
-    const nextStatus: VisitorStatus = pinWasReset ? "active" : parsed.data.status
+    const nextStatus: UserStatus = pinWasReset ? "active" : parsed.data.status
     const nextTrusted =
       parsed.data.role === "admin" || parsed.data.role === "superuser"
         ? true
@@ -334,17 +362,15 @@ export async function updateAdminUser(
       }
     }
 
-    const { data: updatedVisitor, error: updateError } = await adminClient
-      .from("visitors")
+    const { data: updatedSystem, error: updateError } = await adminClient
+      .from("user_system")
       .update({
         status: nextStatus,
         trusted: nextTrusted,
         notes: nextNotes,
       })
-      .eq("user_id", userId)
-      .select(
-        "id, user_id, display_name, status, trusted, avatar_seed, avatar_version, notes, created_at",
-      )
+      .eq("user_profile_id", existingProfile.id)
+      .select("user_profile_id, status, trusted, notes")
       .single()
 
     if (updateError) {
@@ -372,7 +398,8 @@ export async function updateAdminUser(
     return {
       success: true,
       data: mapAdminUserRecord(
-        updatedVisitor as VisitorRow,
+        existingProfile as UserProfileRow,
+        (updatedSystem ?? existingSystem) as UserSystemRow | null,
         authUserResult.user.email ?? null,
         parsed.data.role,
       ),

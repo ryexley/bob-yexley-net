@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
-import { AUTH_RPC } from "@/lib/vendor/supabase/auth-rpc-names"
 import { createUserProfileRepository } from "@/lib/vendor/supabase/user-profile-repository"
 
 const { selectUserProfileRecord, buildUserProfile } = vi.hoisted(() => ({
@@ -20,13 +19,14 @@ describe("user-profile-repository", () => {
 
   it("dedupes concurrent profile loads for the same user", async () => {
     selectUserProfileRecord.mockResolvedValue({
-      data: { role: "visitor", visitorId: "visitor-1" },
+      data: { role: "visitor", profileId: "profile-1" },
       error: null,
     })
     buildUserProfile.mockReturnValue({
       user: { id: "user-1", email: "user@example.com" },
       role: "visitor",
-      visitor: { id: "visitor-1", displayName: "Bob", status: "pending" },
+      profile: { id: "profile-1", displayName: "Bob" },
+      system: { status: "pending" },
     })
 
     const repository = createUserProfileRepository({
@@ -48,13 +48,14 @@ describe("user-profile-repository", () => {
 
   it("serves subsequent requests from the in-memory cache", async () => {
     selectUserProfileRecord.mockResolvedValue({
-      data: { role: "visitor", visitorId: "visitor-1" },
+      data: { role: "visitor", profileId: "profile-1" },
       error: null,
     })
     buildUserProfile.mockReturnValue({
       user: { id: "user-1", email: "user@example.com" },
       role: "visitor",
-      visitor: { id: "visitor-1", displayName: "Bob", status: "pending" },
+      profile: { id: "profile-1", displayName: "Bob" },
+      system: { status: "pending" },
     })
 
     const repository = createUserProfileRepository({
@@ -72,16 +73,19 @@ describe("user-profile-repository", () => {
     expect(repository.peekUserProfile("user-1")?.user.id).toBe("user-1")
   })
 
-  it("updates the current visitor display name and refreshes the cached profile", async () => {
-    const rpc = vi.fn(async () => ({ error: null }))
+  it("updates the current user display name and refreshes the cached profile", async () => {
+    const maybeSingle = vi.fn(async () => ({ data: { id: "profile-1" }, error: null }))
+    const select = vi.fn(() => ({ maybeSingle }))
+    const eq = vi.fn(() => ({ select }))
+    const update = vi.fn(() => ({ eq }))
 
     selectUserProfileRecord
       .mockResolvedValueOnce({
-        data: { role: "visitor", visitorId: "visitor-1" },
+        data: { role: "visitor", profileId: "profile-1" },
         error: null,
       })
       .mockResolvedValueOnce({
-        data: { role: "visitor", visitorId: "visitor-1" },
+        data: { role: "visitor", profileId: "profile-1" },
         error: null,
       })
 
@@ -89,16 +93,18 @@ describe("user-profile-repository", () => {
       .mockReturnValueOnce({
         user: { id: "user-1", email: "user@example.com" },
         role: "visitor",
-        visitor: { id: "visitor-1", displayName: "Bob", status: "pending" },
+        profile: { id: "profile-1", displayName: "Bob" },
+        system: { status: "pending" },
       })
       .mockReturnValueOnce({
         user: { id: "user-1", email: "user@example.com" },
         role: "visitor",
-        visitor: { id: "visitor-1", displayName: "Bobby", status: "pending" },
+        profile: { id: "profile-1", displayName: "Bobby" },
+        system: { status: "pending" },
       })
 
     const repository = createUserProfileRepository({
-      getClient: () => ({ rpc }) as never,
+      getClient: () => ({ from: vi.fn(() => ({ update })) }) as never,
       getSessionUser: async () => ({
         data: { id: "user-1", email: "user@example.com" } as never,
         error: null,
@@ -106,19 +112,20 @@ describe("user-profile-repository", () => {
     })
 
     await repository.getUserProfile()
-    const result = await repository.updateCurrentVisitorDisplayName("  Bobby  ")
+    const result = await repository.updateCurrentUserDisplayName("  Bobby  ")
 
-    expect(rpc).toHaveBeenCalledWith(AUTH_RPC.updateProfile, {
-      next_display_name: "Bobby",
+    expect(update).toHaveBeenCalledWith({
+      display_name: "Bobby",
     })
-    expect(result.data?.visitor.displayName).toBe("Bobby")
-    expect(repository.peekUserProfile("user-1")?.visitor.displayName).toBe("Bobby")
+    expect(eq).toHaveBeenCalledWith("user_id", "user-1")
+    expect(result.data?.profile.displayName).toBe("Bobby")
+    expect(repository.peekUserProfile("user-1")?.profile.displayName).toBe("Bobby")
   })
 
-  it("rejects blank visitor display name updates before calling rpc", async () => {
-    const rpc = vi.fn(async () => ({ error: null }))
+  it("rejects blank user display name updates before calling the database", async () => {
+    const from = vi.fn()
     const repository = createUserProfileRepository({
-      getClient: () => ({ rpc }) as never,
+      getClient: () => ({ from }) as never,
       getSessionUser: async () => ({
         data: { id: "user-1", email: "user@example.com" } as never,
         error: null,
@@ -126,11 +133,72 @@ describe("user-profile-repository", () => {
     })
 
     await expect(
-      repository.updateCurrentVisitorDisplayName("   "),
+      repository.updateCurrentUserDisplayName("   "),
     ).resolves.toEqual({
       data: null,
       error: "Display name is required",
     })
-    expect(rpc).not.toHaveBeenCalled()
+    expect(from).not.toHaveBeenCalled()
+  })
+
+  it("updates the current user avatar version and refreshes the cached profile", async () => {
+    const maybeSingle = vi.fn(async () => ({ data: { id: "profile-1" }, error: null }))
+    const select = vi.fn(() => ({ maybeSingle }))
+    const eq = vi.fn(() => ({ select }))
+    const update = vi.fn(() => ({ eq }))
+
+    selectUserProfileRecord
+      .mockResolvedValueOnce({
+        data: { role: "visitor", profileId: "profile-1" },
+        error: null,
+      })
+      .mockResolvedValueOnce({
+        data: { role: "visitor", profileId: "profile-1" },
+        error: null,
+      })
+
+    buildUserProfile
+      .mockReturnValueOnce({
+        user: { id: "user-1", email: "user@example.com" },
+        role: "visitor",
+        profile: {
+          id: "profile-1",
+          displayName: "Bob",
+          avatarVersion: 1,
+        },
+        system: {
+          status: "pending",
+        },
+      })
+      .mockReturnValueOnce({
+        user: { id: "user-1", email: "user@example.com" },
+        role: "visitor",
+        profile: {
+          id: "profile-1",
+          displayName: "Bob",
+          avatarVersion: 2,
+        },
+        system: {
+          status: "pending",
+        },
+      })
+
+    const repository = createUserProfileRepository({
+      getClient: () => ({ from: vi.fn(() => ({ update })) }) as never,
+      getSessionUser: async () => ({
+        data: { id: "user-1", email: "user@example.com" } as never,
+        error: null,
+      }),
+    })
+
+    await repository.getUserProfile()
+    const result = await repository.updateCurrentUserAvatarVersion(2)
+
+    expect(update).toHaveBeenCalledWith({
+      avatar_version: 2,
+    })
+    expect(eq).toHaveBeenCalledWith("user_id", "user-1")
+    expect(result.data?.profile.avatarVersion).toBe(2)
+    expect(repository.peekUserProfile("user-1")?.profile.avatarVersion).toBe(2)
   })
 })

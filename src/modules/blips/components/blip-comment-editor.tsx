@@ -255,12 +255,12 @@ export function BlipCommentEditor(props: BlipCommentEditorProps) {
           allow_comments: result.data.allow_comments ?? false,
           author:
             existing?.author ??
-            (auth.visitor()?.id
+            (auth.userProfile()?.id
               ? {
-                  visitor_id: auth.visitor()?.id ?? null,
-                  display_name: auth.visitor()?.displayName ?? null,
-                  avatar_seed: auth.visitor()?.avatarSeed ?? null,
-                  avatar_version: auth.visitor()?.avatarVersion ?? null,
+                  profile_id: auth.userProfile()?.id ?? null,
+                  display_name: auth.userProfile()?.displayName ?? null,
+                  avatar_seed: auth.userProfile()?.avatarSeed ?? null,
+                  avatar_version: auth.userProfile()?.avatarVersion ?? null,
                 }
               : undefined),
         },
@@ -470,9 +470,9 @@ export function BlipCommentEditor(props: BlipCommentEditorProps) {
             class="avatar"
             size="md"
             variant="surface"
-            displayName={auth.visitor()?.displayName ?? auth.user()?.email ?? null}
-            avatarSeed={auth.visitor()?.avatarSeed ?? null}
-            avatarVersion={auth.visitor()?.avatarVersion ?? null}
+            displayName={auth.userProfile()?.displayName ?? auth.user()?.email ?? null}
+            avatarSeed={auth.userProfile()?.avatarSeed ?? null}
+            avatarVersion={auth.userProfile()?.avatarVersion ?? null}
           />
         </div>
       </div>

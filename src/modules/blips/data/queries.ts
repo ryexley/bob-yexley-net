@@ -16,7 +16,7 @@ type ViewTagRow = {
 type ViewTagValue = ViewTagRow | string
 
 type ViewAuthorValue = {
-  visitor_id?: string | null
+  profile_id?: string | null
   display_name?: string | null
   avatar_seed?: string | null
   avatar_version?: number | null
@@ -55,10 +55,8 @@ type ViewReactionValue = {
 type VisibleReactionRow = {
   blip_id?: string | null
   emoji?: string | null
-  visitor?: {
-    user_id?: string | null
-    display_name?: string | null
-  } | null
+  user_id?: string | null
+  display_name?: string | null
 }
 
 export type BlipReactionState = {
@@ -313,7 +311,7 @@ const mapAuthor = (author?: ViewAuthorValue | null): BlipAuthor | undefined => {
   }
 
   return {
-    visitor_id: author.visitor_id ?? null,
+    profile_id: author.profile_id ?? null,
     display_name: author.display_name ?? null,
     avatar_seed: author.avatar_seed ?? null,
     avatar_version:
@@ -398,11 +396,11 @@ export const buildBlipReactionStates = (
       }
 
     current.count += 1
-    if (row.visitor?.user_id && row.visitor.user_id === currentUserId) {
+    if (row.user_id && row.user_id === currentUserId) {
       current.reacted_by_current_user = true
     }
 
-    const displayName = row.visitor?.display_name?.trim()
+    const displayName = row.display_name?.trim()
     if (displayName && !current.display_names.includes(displayName)) {
       current.display_names.push(displayName)
       current.display_names.sort()
@@ -455,8 +453,8 @@ export async function getBlipReactionState(
 
   const currentUserId = await getCurrentUserId(supabase)
   const { data, error } = await supabase
-    .from("reactions")
-    .select("blip_id, emoji, visitor:visitors!inner(user_id, display_name)")
+    .from("view_reactions_public")
+    .select("blip_id, emoji, user_id, display_name")
     .eq("blip_id", blipId)
 
   if (error) {
@@ -481,8 +479,8 @@ export async function getBlipReactionStates(
 
   const currentUserId = await getCurrentUserId(supabase)
   const { data, error } = await supabase
-    .from("reactions")
-    .select("blip_id, emoji, visitor:visitors!inner(user_id, display_name)")
+    .from("view_reactions_public")
+    .select("blip_id, emoji, user_id, display_name")
     .in("blip_id", targetIds)
 
   if (error) {

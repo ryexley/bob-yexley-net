@@ -3,7 +3,7 @@ import { z } from "zod"
 export const reactionSchema = z.object({
   id: z.string().uuid(),
   blip_id: z.string(),
-  visitor_id: z.string().uuid(),
+  user_profile_id: z.string().uuid(),
   emoji: z.string().min(1),
   created_at: z.string(),
   // `reactions` table has no updated_at; optional for supaStore compatibility.

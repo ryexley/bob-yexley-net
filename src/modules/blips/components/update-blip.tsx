@@ -33,7 +33,7 @@ export function UpdateBlip(props: {
   onEdit?: (blipId: string) => void
 }) {
   const supabase = useSupabase()
-  const { isAuthenticated, visitor } = useAuth()
+  const { isAuthenticated, userProfile, userSystem } = useAuth()
   const notify = useNotify()
   const blips = blipStore(supabase.client, { subscribe: false })
   const reactions = reactionStore(supabase.client, { subscribe: false })
@@ -95,7 +95,7 @@ export function UpdateBlip(props: {
       myReactionCount: previousCount,
       emoji,
       nextActive: !hasActiveReaction,
-      visitorDisplayName: visitor()?.displayName ?? null,
+      visitorDisplayName: userProfile()?.displayName ?? null,
     })
     const applyVisibleReactionState = (next: ReactionStateOverride) => {
       setReactionStateOverride(next)
@@ -106,8 +106,8 @@ export function UpdateBlip(props: {
     applyVisibleReactionState(optimisticOverride)
 
     const result = await reactions.toggleReaction(props.blip.id, emoji, {
-      visitorId: visitor()?.id ?? null,
-      visitorStatus: visitor()?.status ?? null,
+      profileId: userProfile()?.id ?? null,
+      status: userSystem()?.status ?? null,
       currentCount: previousCount,
       hasActiveReaction,
     })

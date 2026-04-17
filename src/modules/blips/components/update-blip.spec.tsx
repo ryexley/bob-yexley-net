@@ -17,10 +17,12 @@ vi.mock("@/components/notification", () => ({
 vi.mock("@/context/auth-context", () => ({
   useAuth: () => ({
     isAuthenticated: () => true,
-    visitor: () => ({
-      id: "visitor-1",
-      status: "active",
+    userProfile: () => ({
+      id: "profile-1",
       displayName: "Bob",
+    }),
+    userSystem: () => ({
+      status: "active",
     }),
   }),
 }))
@@ -35,6 +37,17 @@ vi.mock("@/context/viewport", () => ({
   useViewport: () => ({
     width: () => 1440,
     height: () => 900,
+  }),
+}))
+
+vi.mock("@/modules/blips/context/blip-composer-context", () => ({
+  useBlipComposer: () => ({
+    openEditRoot: vi.fn(),
+    openEditUpdate: vi.fn(),
+    openEditComment: vi.fn(),
+    openNewComment: vi.fn(),
+    isUpdateOpenFor: () => false,
+    closeActive: vi.fn(),
   }),
 }))
 
@@ -154,8 +167,8 @@ describe("UpdateBlip", () => {
 
     await waitFor(() => {
       expect(toggleReaction).toHaveBeenCalledWith("update-1", "🔥", {
-        visitorId: "visitor-1",
-        visitorStatus: "active",
+        profileId: "profile-1",
+        status: "active",
         currentCount: 1,
         hasActiveReaction: true,
       })

@@ -23,14 +23,14 @@ const createClient = () => {
 }
 
 describe("reactions-store", () => {
-  it("rejects toggles without an authenticated visitor id", async () => {
+  it("rejects toggles without an authenticated profile id", async () => {
     const { client } = createClient()
     const store = reactionStore(client, { subscribe: false })
 
     await expect(
       store.toggleReaction("blip-1", "🔥", {
-        visitorId: null,
-        visitorStatus: "active",
+        profileId: null,
+        status: "active",
         currentCount: 0,
         hasActiveReaction: false,
       }),
@@ -46,8 +46,8 @@ describe("reactions-store", () => {
 
     await expect(
       store.toggleReaction("blip-1", "🔥", {
-        visitorId: "visitor-1",
-        visitorStatus: "active",
+        profileId: "profile-1",
+        status: "active",
         currentCount: 3,
         hasActiveReaction: false,
       }),
@@ -63,8 +63,8 @@ describe("reactions-store", () => {
 
     await expect(
       store.toggleReaction("blip-1", "🔥", {
-        visitorId: "visitor-1",
-        visitorStatus: "active",
+        profileId: "profile-1",
+        status: "active",
         currentCount: 0,
         hasActiveReaction: false,
       }),
@@ -79,7 +79,7 @@ describe("reactions-store", () => {
     expect(insert).toHaveBeenCalledTimes(1)
     expect(insert).toHaveBeenCalledWith({
       blip_id: "blip-1",
-      visitor_id: "visitor-1",
+      user_profile_id: "profile-1",
       emoji: "🔥",
     })
   })
@@ -90,8 +90,8 @@ describe("reactions-store", () => {
 
     await expect(
       store.toggleReaction("blip-1", "🔥", {
-        visitorId: "visitor-1",
-        visitorStatus: "active",
+        profileId: "profile-1",
+        status: "active",
         currentCount: 2,
         hasActiveReaction: true,
       }),
@@ -105,7 +105,7 @@ describe("reactions-store", () => {
 
     expect(remove).toHaveBeenCalledTimes(1)
     expect(deleteChain.eq).toHaveBeenNthCalledWith(1, "blip_id", "blip-1")
-    expect(deleteChain.eq).toHaveBeenNthCalledWith(2, "visitor_id", "visitor-1")
+    expect(deleteChain.eq).toHaveBeenNthCalledWith(2, "user_profile_id", "profile-1")
     expect(deleteChain.eq).toHaveBeenNthCalledWith(3, "emoji", "🔥")
   })
 })

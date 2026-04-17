@@ -3,6 +3,7 @@ import { Meta, Title } from "@solidjs/meta"
 import { createEffect, createMemo, For } from "solid-js"
 import { Icon, LoadingSpinner } from "@/components/icon"
 import { useAuth } from "@/context/auth-context"
+import { RequiresSuperUser } from "@/modules/auth/components/requires-role"
 import { getAdminUsers } from "@/modules/users/data/queries"
 import { ptr } from "@/i18n"
 import { pages } from "@/urls"
@@ -80,44 +81,52 @@ export function AdminHomeView() {
             <h1 class="admin-home-view-title">{tr("title")}</h1>
           </div>
 
-          {isReady() ? (
-            <div class="admin-home-view-grid">
-              <a
-                href={pages.users}
-                class="admin-home-view-card">
-                <div class="admin-home-view-card-header">
-                  <Icon
-                    name="group"
-                    class="admin-home-view-card-icon"
-                  />
-                  <h2 class="admin-home-view-card-title">{tr("cards.users.title")}</h2>
-                </div>
-                <div class="admin-home-view-card-copy">
-                  <p class="admin-home-view-card-description">
-                    {tr("cards.users.description")}
-                  </p>
-                </div>
-                <div class="admin-home-view-card-bubbles">
-                  <For each={statusBubbles()}>
-                    {item => (
-                      <span
-                        class="admin-home-view-status-bubble"
-                        data-status={item.key}>
-                        {tr(`cards.users.statuses.${item.key}`, {
-                          count: item.count,
-                        })}
-                      </span>
-                    )}
-                  </For>
-                </div>
-              </a>
-            </div>
-          ) : (
-            <div class="admin-home-view-loading-state">
-              <LoadingSpinner size="2rem" />
-              <p>{tr("loading")}</p>
-            </div>
-          )}
+          <RequiresSuperUser
+            fallback={
+              <div class="admin-home-view-loading-state">
+                <LoadingSpinner size="2rem" />
+                <p>{tr("loading")}</p>
+              </div>
+            }>
+            {isReady() ? (
+              <div class="admin-home-view-grid">
+                <a
+                  href={pages.users}
+                  class="admin-home-view-card">
+                  <div class="admin-home-view-card-header">
+                    <Icon
+                      name="group"
+                      class="admin-home-view-card-icon"
+                    />
+                    <h2 class="admin-home-view-card-title">{tr("cards.users.title")}</h2>
+                  </div>
+                  <div class="admin-home-view-card-copy">
+                    <p class="admin-home-view-card-description">
+                      {tr("cards.users.description")}
+                    </p>
+                  </div>
+                  <div class="admin-home-view-card-bubbles">
+                    <For each={statusBubbles()}>
+                      {item => (
+                        <span
+                          class="admin-home-view-status-bubble"
+                          data-status={item.key}>
+                          {tr(`cards.users.statuses.${item.key}`, {
+                            count: item.count,
+                          })}
+                        </span>
+                      )}
+                    </For>
+                  </div>
+                </a>
+              </div>
+            ) : (
+              <div class="admin-home-view-loading-state">
+                <LoadingSpinner size="2rem" />
+                <p>{tr("loading")}</p>
+              </div>
+            )}
+          </RequiresSuperUser>
         </div>
       </main>
     </>

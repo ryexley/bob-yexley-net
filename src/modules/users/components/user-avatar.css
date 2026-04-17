@@ -4,7 +4,7 @@
   display: inline-flex;
   flex: 0 0 auto;
   justify-content: center;
-  overflow: hidden;
+  overflow: visible;
   position: relative;
 
   .icon {
@@ -105,6 +105,7 @@
   align-items: center;
   background: var(--user-avatar-badge-bg, var(--colors-mono-01));
   border-radius: var(--radius-round);
+  color: var(--colors-info);
   display: inline-flex;
   justify-content: center;
   position: absolute;

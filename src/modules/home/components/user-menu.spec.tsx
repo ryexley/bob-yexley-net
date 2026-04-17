@@ -7,7 +7,6 @@ const {
   authState,
   replaceProfile,
   logout,
-  updateCurrentVisitorDisplayName,
   notifySuccess,
   notifyError,
   viewportWidth,
@@ -25,19 +24,26 @@ const {
         role: "visitor",
         roleCreatedAt: "2026-03-01T10:00:00.000Z",
         roleUpdatedAt: "2026-03-01T10:00:00.000Z",
-        visitor: {
-          id: "visitor-1",
+      profile: {
+        id: "profile-1",
           displayName: "Bob",
-          status: "active",
+        avatarSeed: null,
+        avatarVersion: 1,
+        createdAt: "2026-03-01T10:00:00.000Z",
+        updatedAt: "2026-03-01T10:00:00.000Z",
+      },
+      system: {
+        status: "active",
           failedLoginAttempts: 0,
           notes: null,
+        trusted: false,
           createdAt: "2026-03-01T10:00:00.000Z",
+        updatedAt: "2026-03-01T10:00:00.000Z",
         },
       } as any,
     },
     replaceProfile: vi.fn(),
     logout: vi.fn(async () => undefined),
-    updateCurrentVisitorDisplayName: vi.fn(),
     notifySuccess: vi.fn(),
     notifyError: vi.fn(),
     viewportWidth: vi.fn(() => 1024),
@@ -58,7 +64,8 @@ vi.mock("@/context/auth-context", () => ({
   useAuth: () => ({
     profile: () => authState.profile,
     user: () => authState.profile?.user ?? null,
-    visitor: () => authState.profile?.visitor ?? null,
+    userProfile: () => authState.profile?.profile ?? null,
+    userSystem: () => authState.profile?.system ?? null,
     role: () => authState.profile?.role ?? null,
     isAuthenticated: () => Boolean(authState.profile?.user),
     isAdmin: () =>
@@ -66,12 +73,6 @@ vi.mock("@/context/auth-context", () => ({
     isSuperuser: () => authState.profile?.role === "superuser",
     replaceProfile,
     logout,
-  }),
-}))
-
-vi.mock("@/context/services-context", () => ({
-  useSupabase: () => ({
-    updateCurrentVisitorDisplayName,
   }),
 }))
 
@@ -154,20 +155,27 @@ describe("UserMenu", () => {
       role: "visitor",
       roleCreatedAt: "2026-03-01T10:00:00.000Z",
       roleUpdatedAt: "2026-03-01T10:00:00.000Z",
-      visitor: {
-        id: "visitor-1",
+      profile: {
+        id: "profile-1",
         displayName: "Bob",
+        avatarSeed: null,
+        avatarVersion: 1,
+        createdAt: "2026-03-01T10:00:00.000Z",
+        updatedAt: "2026-03-01T10:00:00.000Z",
+      },
+      system: {
         status: "active",
         failedLoginAttempts: 0,
         notes: null,
+        trusted: false,
         createdAt: "2026-03-01T10:00:00.000Z",
+        updatedAt: "2026-03-01T10:00:00.000Z",
       },
     } as any
 
     replaceProfile.mockReset()
     logout.mockReset()
     logout.mockResolvedValue(undefined)
-    updateCurrentVisitorDisplayName.mockReset()
     notifySuccess.mockReset()
     notifyError.mockReset()
     viewportWidth.mockReset()

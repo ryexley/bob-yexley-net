@@ -170,8 +170,8 @@ export function blipStore(
     }
 
     const { data, error } = await supabaseClient
-      .from("visitors")
-      .select("id, display_name, avatar_seed, avatar_version")
+      .from("view_public_user")
+      .select("profile_id, display_name, avatar_seed, avatar_version")
       .eq("user_id", userId)
       .maybeSingle()
 
@@ -180,7 +180,7 @@ export function blipStore(
     }
 
     return {
-      visitor_id: data.id ?? null,
+      profile_id: data.profile_id ?? null,
       display_name: data.display_name ?? null,
       avatar_seed: data.avatar_seed ?? null,
       avatar_version:
@@ -256,7 +256,7 @@ export function blipStore(
         const { data, error } = await supabaseClient
           .from("reactions")
           .select("blip_id, emoji")
-          .eq("visitor_id", nextViewer.id)
+          .eq("user_profile_id", nextViewer.id)
           .in("blip_id", targetIds)
 
         if (error) {

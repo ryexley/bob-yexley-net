@@ -57,8 +57,13 @@ export const en = {
             close: "Close",
             edit: "Edit",
             cancelEdit: "Cancel",
+            regenerateAvatar: "Re-generate avatar colors",
             save: "Save",
             saving: "Saving...",
+          },
+          tooltips: {
+            regenerateAvatar:
+              "Re-generate your icon colors. Feel free to do this as many times as you like until you get a combination and pattern that you like.",
           },
           fields: {
             email: "Email",

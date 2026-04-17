@@ -4,6 +4,7 @@ import { MarkdownRenderer as Markdown } from "@/components/markdown/renderer"
 import { useAuth } from "@/context/auth-context"
 import { useSupabase } from "@/context/services-context"
 import { useConfirm } from "@/components/confirm-dialog"
+import { RequiresAdmin } from "@/modules/auth/components/requires-role"
 import { UserAvatar } from "@/modules/users/components/user-avatar"
 import { useBlipComposer } from "@/modules/blips/context/blip-composer-context"
 import { blipStore, type Blip } from "@/modules/blips/data"
@@ -207,26 +208,28 @@ export function BlipCommentThread(props: BlipCommentThreadProps) {
                         onClick={() => handleDelete(comment)}
                       />
                     </Show>
-                    <Show when={canModerate() && comment.moderation_status === "pending"}>
-                      <Button
-                        variant="ghost"
-                        size="xs"
-                        iconLeft="check_circle"
-                        label={tr("actions.approve")}
-                        onClick={() => {
-                          void handleApprove(comment)
-                        }}
-                      />
-                      <Button
-                        variant="ghost"
-                        size="xs"
-                        iconLeft="cancel"
-                        label={tr("actions.reject")}
-                        onClick={() => {
-                          void handleReject(comment)
-                        }}
-                      />
-                    </Show>
+                    <RequiresAdmin>
+                      <Show when={comment.moderation_status === "pending"}>
+                        <Button
+                          variant="ghost"
+                          size="xs"
+                          iconLeft="check_circle"
+                          label={tr("actions.approve")}
+                          onClick={() => {
+                            void handleApprove(comment)
+                          }}
+                        />
+                        <Button
+                          variant="ghost"
+                          size="xs"
+                          iconLeft="cancel"
+                          label={tr("actions.reject")}
+                          onClick={() => {
+                            void handleReject(comment)
+                          }}
+                        />
+                      </Show>
+                    </RequiresAdmin>
                   </div>
                 </li>
               )}

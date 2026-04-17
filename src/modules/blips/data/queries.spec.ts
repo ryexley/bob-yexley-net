@@ -56,26 +56,20 @@ describe("blip queries", () => {
         {
           blip_id: "update-1",
           emoji: "🔥",
-          visitor: {
-            user_id: "user-1",
-            display_name: "Bob",
-          },
+          user_id: "user-1",
+          display_name: "Bob",
         },
         {
           blip_id: "update-1",
           emoji: "🔥",
-          visitor: {
-            user_id: "user-2",
-            display_name: "Sue",
-          },
+          user_id: "user-2",
+          display_name: "Sue",
         },
         {
           blip_id: "update-2",
           emoji: "👍",
-          visitor: {
-            user_id: "user-3",
-            display_name: "Pat",
-          },
+          user_id: "user-3",
+          display_name: "Pat",
         },
       ],
       "user-1",

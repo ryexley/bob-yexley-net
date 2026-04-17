@@ -25,6 +25,7 @@ import { BlipActions } from "@/modules/blips/components/blip-actions"
 import { BlipCommentTrigger } from "@/modules/blips/components/blip-comment-trigger"
 import { BlipReactionSummary } from "@/modules/blips/components/blip-reaction-summary"
 import { BlipReactionTrigger } from "@/modules/blips/components/blip-reaction-trigger"
+import { RequiresAdmin } from "@/modules/auth/components/requires-role"
 import { REACTION_ERROR_I18N_KEY } from "@/modules/blips/data/errors"
 import {
   BLIP_TYPES,
@@ -121,7 +122,8 @@ export function BlipView() {
   const store = blipStore(supabase.client, { subscribe: false })
   const reactions = reactionStore(supabase.client, { subscribe: false })
   const tags = tagStore(supabase.client)
-  const { isAuthenticated, isSuperuser, user, visitor, loading } = useAuth() as any
+  const { isAuthenticated, isAdmin, userProfile, userSystem, loading } =
+    useAuth() as any
   const blipGraphQuery = createAsync(() => getBlipGraph(params.id))
   const blipQuery = createMemo(() => blipGraphQuery()?.blip ?? null)
   const initialUpdates = createMemo(() => blipGraphQuery()?.updates ?? [])
@@ -144,17 +146,7 @@ export function BlipView() {
     ReturnType<typeof setTimeout>
   >()
   const canManageUpdates = createMemo(() => {
-    const rootBlip = blip()
-    if (!rootBlip || !isAuthenticated()) {
-      return false
-    }
-
-    if (isSuperuser()) {
-      return true
-    }
-
-    // Admin controls remain owner-scoped.
-    return user()?.id === rootBlip.user_id
+    return isAuthenticated() && isAdmin()
   })
   const detailContainerWidthClass = createMemo(() => {
     const contentLength = (blip()?.content ?? "").trim().length
@@ -451,9 +443,9 @@ export function BlipView() {
     }
 
     const nextViewer = {
-      id: visitor()?.id ?? null,
-      status: visitor()?.status ?? null,
-      displayName: visitor()?.displayName ?? null,
+      id: userProfile()?.id ?? null,
+      status: userSystem()?.status ?? null,
+      displayName: userProfile()?.displayName ?? null,
     }
     const rootBlip = untrack(() => blip())
     const nextViewerKey = [
@@ -557,7 +549,7 @@ export function BlipView() {
       myReactionCount: previousCount,
       emoji,
       nextActive: !hasActiveReaction,
-      visitorDisplayName: visitor()?.displayName ?? null,
+      visitorDisplayName: userProfile()?.displayName ?? null,
     })
     const applyVisibleReactionState = (next: ReactionStateOverride) => {
       setReactionStateOverride(next)
@@ -568,8 +560,8 @@ export function BlipView() {
     applyVisibleReactionState(optimisticOverride)
 
     const result = await reactions.toggleReaction(currentBlip.id, emoji, {
-      visitorId: visitor()?.id ?? null,
-      visitorStatus: visitor()?.status ?? null,
+      profileId: userProfile()?.id ?? null,
+      status: userSystem()?.status ?? null,
       currentCount: previousCount,
       hasActiveReaction,
     })
@@ -744,33 +736,35 @@ export function BlipView() {
                                   {visibleUpdates().length}
                                 </span>
                               </div>
-                              <Button
-                                variant="ghost"
-                                size="xs"
-                                label={tr("updates.editor.newLabel")}
-                                iconRight="chat_add_on"
-                                class={cx("blip-detail-add-update", {
-                                  active: showComposer(),
-                                })}
-                                aria-label={
-                                  showComposer()
-                                    ? tr("actions.hideUpdateComposer")
-                                    : tr("actions.postUpdate")
-                                }
-                                onClick={() => {
-                                  if (showComposer()) {
-                                    requestCloseActive()
-                                    return
+                              <RequiresAdmin>
+                                <Button
+                                  variant="ghost"
+                                  size="xs"
+                                  label={tr("updates.editor.newLabel")}
+                                  iconRight="chat_add_on"
+                                  class={cx("blip-detail-add-update", {
+                                    active: showComposer(),
+                                  })}
+                                  aria-label={
+                                    showComposer()
+                                      ? tr("actions.hideUpdateComposer")
+                                      : tr("actions.postUpdate")
                                   }
+                                  onClick={() => {
+                                    if (showComposer()) {
+                                      requestCloseActive()
+                                      return
+                                    }
 
-                                  const rootBlipId = blip()?.id
-                                  if (!rootBlipId) {
-                                    return
-                                  }
+                                    const rootBlipId = blip()?.id
+                                    if (!rootBlipId) {
+                                      return
+                                    }
 
-                                  openNewUpdate(rootBlipId)
-                                }}
-                              />
+                                    openNewUpdate(rootBlipId)
+                                  }}
+                                />
+                              </RequiresAdmin>
                             </div>
                           </Show>
                         </div>
