@@ -68,8 +68,18 @@
 }
 
 .blip-update-editor-surface {
+  background: color-mix(
+    in srgb,
+    var(--colors-mono-02) 95%,
+    var(--colors-info) 5%
+  );
+
   &.blip-editor-shell {
     gap: 0.25rem !important;
+  }
+
+  .editor-shell-icon {
+    color: var(--colors-info);
   }
 
   width: 100%;
@@ -99,7 +109,7 @@
 }
 
 .blip-update-editor-mode-label {
-  color: var(--colors-mono-08);
+  color: var(--colors-info);
   font-size: 0.75rem;
   font-weight: 600;
   letter-spacing: 0.01em;

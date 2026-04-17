@@ -104,11 +104,13 @@ export function BlipUpdateEditor(props: BlipUpdateEditorProps) {
   let lastHandledExternalFocusNonce: number | undefined
   let lastHandledCloseRequestNonce: number | undefined
   let hasOpenedAtLeastOnce = false
-  let dismissKeyboardCleanupHandle:
-    | ReturnType<typeof clearActiveTextInputSession>
-    | null = null
+  let dismissKeyboardCleanupHandle: ReturnType<
+    typeof clearActiveTextInputSession
+  > | null = null
   const ANIMATION_MS = 260
-  const isMobileViewport = createMemo(() => viewport.width() <= MOBILE_MAX_WIDTH)
+  const isMobileViewport = createMemo(
+    () => viewport.width() <= MOBILE_MAX_WIDTH,
+  )
 
   const clearStatusTimeouts = () => {
     if (hideStatusTimeout) {
@@ -368,7 +370,8 @@ export function BlipUpdateEditor(props: BlipUpdateEditorProps) {
 
   createEffect(
     on(
-      () => [local.open, local.editingUpdateId, selectedExistingUpdate()] as const,
+      () =>
+        [local.open, local.editingUpdateId, selectedExistingUpdate()] as const,
       ([open, editingUpdateId, existing]) => {
         if (!open) {
           return
@@ -433,7 +436,6 @@ export function BlipUpdateEditor(props: BlipUpdateEditorProps) {
 
           return
         }
-
       },
     ),
   )
@@ -807,6 +809,7 @@ export function BlipUpdateEditor(props: BlipUpdateEditorProps) {
         bodyClass="blip-update-editor-body"
         focusProxyRef={focusBridge.setFocusProxyRef}
         focusProxyAriaLabel={trDetail("updates.placeholder")}
+        icon="chat"
         showFocusProxy={false}
         Header={
           props.useDialogTitle ? (
@@ -815,7 +818,9 @@ export function BlipUpdateEditor(props: BlipUpdateEditorProps) {
             </DialogTitle>
           ) : showDesktopHeader ? (
             <div class="blip-update-editor-top-row">
-              <div class="blip-update-editor-mode-label">{editorModeLabel()}</div>
+              <div class="blip-update-editor-mode-label">
+                {editorModeLabel()}
+              </div>
             </div>
           ) : undefined
         }
@@ -904,11 +909,11 @@ export function BlipUpdateEditor(props: BlipUpdateEditorProps) {
                 onCloseAutoFocus: event => event.preventDefault(),
               }}>
               <div class="blip-update-editor-dialog-frame">
-                  <UpdateEditorSurface
-                    updateId={updateId}
-                    useDialogTitle
-                    isOpen
-                  />
+                <UpdateEditorSurface
+                  updateId={updateId}
+                  useDialogTitle
+                  isOpen
+                />
               </div>
             </Dialog>
           </Show>

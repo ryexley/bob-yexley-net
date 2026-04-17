@@ -15,6 +15,11 @@
 
 .inline-shell {
   --comment-avatar-size: 3rem;
+  --comment-shell-background: color-mix(
+    in srgb,
+    var(--colors-mono-02) 95%,
+    var(--colors-blue-margeurite) 5%
+  );
   --comment-tail-size: 0.8rem;
   --comment-tail-offset-y: 0.125rem;
 
@@ -30,7 +35,7 @@
     width: 100%;
 
     &::after {
-      background: var(--colors-mono-02);
+      background: var(--comment-shell-background);
       border-right: 0.0625rem solid var(--colors-mono-04);
       border-top: 0.0625rem solid var(--colors-mono-04);
       border-radius: 0.125rem;
@@ -79,10 +84,15 @@
 }
 
 .blip-comment-editor-surface.blip-editor-shell {
+  background: var(--comment-shell-background);
   gap: 0.25rem !important;
   min-width: 0;
   width: 100%;
   min-height: 0;
+
+  .editor-shell-icon {
+    color: var(--colors-blue-margeurite);
+  }
 }
 
 .blip-comment-editor-shell {
@@ -113,7 +123,7 @@
 }
 
 .blip-comment-editor-mode-label {
-  color: var(--colors-mono-08);
+  color: var(--colors-blue-margeurite);
   font-size: 0.75rem;
   font-weight: 600;
   letter-spacing: 0.01em;

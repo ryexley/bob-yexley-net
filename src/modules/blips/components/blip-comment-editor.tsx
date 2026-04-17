@@ -425,6 +425,7 @@ export function BlipCommentEditor(props: BlipCommentEditorProps) {
           shellClass="blip-comment-editor-surface"
           bodyClass="blip-comment-editor-body"
           focusProxyAriaLabel={tr("placeholder")}
+          icon="add_comment"
           showFocusProxy={false}
           isOpen={isDesktopEditorOpen()}
           Header={
