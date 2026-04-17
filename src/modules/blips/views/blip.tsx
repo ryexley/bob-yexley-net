@@ -114,6 +114,7 @@ export function BlipView() {
     openEditUpdate,
     openNewComment,
     openNewUpdate,
+    registerCommentInlineMount,
     registerUpdateInlineMount,
     requestCloseActive,
   } = useBlipComposer()
@@ -719,6 +720,13 @@ export function BlipView() {
                       </footer>
                     </article>
                     <div class="blip-detail-secondary-stack">
+                      <div
+                        class="inline-mount"
+                        ref={element =>
+                          registerCommentInlineMount(data().id, element)
+                        }
+                      />
+                      <div class="thread-stack">
                       <div class="blip-detail-meta-row">
                         <div class="blip-detail-meta-row-start">
                           <Show
@@ -767,7 +775,7 @@ export function BlipView() {
                           </Show>
                         </div>
                         <div class="blip-detail-meta-row-end">
-                          <Show when={data().allow_comments !== false || rootComments().length > 0}>
+                          <Show when={rootComments().length > 0}>
                             <div class="blip-comments-chip">
                               <span class="blip-comments-chip-label">
                                 {commentThreadTr("title")}
@@ -783,6 +791,7 @@ export function BlipView() {
                         parentBlip={blip() ?? data()}
                         comments={rootComments()}
                         showHeader={false}
+                        showInlineMount={false}
                       />
                       <Show
                         when={
@@ -820,6 +829,7 @@ export function BlipView() {
                           </Show>
                         </section>
                       </Show>
+                      </div>
                     </div>
                   </div>
                 </>

@@ -61,6 +61,21 @@ a.blip-detail-back-link {
 .blip-detail-secondary-stack {
   display: flex;
   flex-direction: column;
+  gap: 0.75rem;
+
+  .inline-mount {
+    width: 100%;
+
+    &:empty {
+      display: none;
+    }
+  }
+
+  .thread-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
 }
 
 .blip-detail-header {
@@ -322,15 +337,21 @@ a.blip-detail-back-link {
 .button.blip-detail-add-update {
   align-items: center;
   background: rgba(var(--colors-mono-01-rgb), 0.75);
-  border: 0.0625rem solid var(--colors-mono-02);
+  border: 0.0625rem solid color-mix(
+    in srgb,
+    var(--colors-cool-blue) 65%,
+    var(--colors-mono-05) 35%
+  );
   border-radius: 999rem;
   color: var(--colors-cool-blue);
   display: inline-flex;
-  font-weight: 400;
-  gap: 0.25rem;
-  height: 1.625rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  gap: 0.375rem;
+  height: 1.75rem;
   line-height: 1;
   min-width: 4.75rem;
+  padding: 0.25rem 0.5rem;
   text-shadow: none;
 
   &:hover {
@@ -339,7 +360,7 @@ a.blip-detail-back-link {
 
   .icon {
     color: var(--colors-cool-blue);
-    font-size: 1rem;
+    font-size: 1.125rem;
   }
 
   &.active {

@@ -27,6 +27,10 @@ type BlipComposerContextValue = {
     rootBlipId: string,
     element: HTMLDivElement | null,
   ) => void
+  registerCommentInlineMount: (
+    parentBlipId: string,
+    element: HTMLDivElement | null,
+  ) => void
   requestCloseActive: () => void
   isUpdateOpenFor: (rootBlipId?: string | null) => boolean
   isCommentOpenFor: (parentBlipId?: string | null) => boolean
@@ -38,6 +42,7 @@ export function BlipComposerProvider(props: ParentProps) {
   const [activeKind, setActiveKind] = createSignal<BlipComposerKind | null>(null)
   const [hasRootHost, setHasRootHost] = createSignal(false)
   const [hasUpdateHost, setHasUpdateHost] = createSignal(false)
+  const [hasCommentHost, setHasCommentHost] = createSignal(false)
   const [rootOpen, setRootOpen] = createSignal(false)
   const [rootTargetBlipId, setRootTargetBlipId] = createSignal<string | null>(
     null,
@@ -63,6 +68,10 @@ export function BlipComposerProvider(props: ParentProps) {
     null,
   )
   const [commentFocusNonce, setCommentFocusNonce] = createSignal(0)
+  const [commentCloseRequestNonce, setCommentCloseRequestNonce] = createSignal(0)
+  const [commentInlineMounts, setCommentInlineMounts] = createSignal<
+    Record<string, HTMLDivElement | null>
+  >({})
 
   createEffect(() => {
     if (typeof document === "undefined") {
@@ -86,6 +95,12 @@ export function BlipComposerProvider(props: ParentProps) {
   const ensureUpdateHost = () => {
     if (!hasUpdateHost()) {
       setHasUpdateHost(true)
+    }
+  }
+
+  const ensureCommentHost = () => {
+    if (!hasCommentHost()) {
+      setHasCommentHost(true)
     }
   }
 
@@ -113,8 +128,16 @@ export function BlipComposerProvider(props: ParentProps) {
     setUpdateInlineMount(null)
   }
 
-  const resetCommentHostSessionState = () => {
+  const clearCommentInlineMountRegistry = () => {
+    setCommentInlineMounts({})
+  }
+
+  const resetCommentHostState = () => {
     setCommentOpen(false)
+  }
+
+  const resetCommentHostSessionState = () => {
+    resetCommentHostState()
     setCommentParentBlipId(null)
     setCommentEditingBlipId(null)
   }
@@ -177,10 +200,41 @@ export function BlipComposerProvider(props: ParentProps) {
     }
   }
 
+  const registerCommentInlineMount = (
+    parentBlipId: string,
+    element: HTMLDivElement | null,
+  ) => {
+    setCommentInlineMounts(previous => {
+      if (!element) {
+        if (!(parentBlipId in previous)) {
+          return previous
+        }
+
+        const next = { ...previous }
+        delete next[parentBlipId]
+        return next
+      }
+
+      if (previous[parentBlipId] === element) {
+        return previous
+      }
+
+      return {
+        ...previous,
+        [parentBlipId]: element,
+      }
+    })
+  }
+
   const requestCloseActive = () => {
     const kind = activeKind()
     if (kind === "update") {
       setUpdateCloseRequestNonce(previous => previous + 1)
+      return
+    }
+
+    if (kind === "comment") {
+      setCommentCloseRequestNonce(previous => previous + 1)
       return
     }
 
@@ -194,6 +248,7 @@ export function BlipComposerProvider(props: ParentProps) {
     updateRootBlipId() === rootBlipId
 
   const openNewComment = (parentBlipId: string) => {
+    ensureCommentHost()
     resetRootHostSessionState()
     resetUpdateHostSessionState()
     setCommentParentBlipId(parentBlipId)
@@ -204,6 +259,7 @@ export function BlipComposerProvider(props: ParentProps) {
   }
 
   const openEditComment = (parentBlipId: string, commentBlipId: string) => {
+    ensureCommentHost()
     resetRootHostSessionState()
     resetUpdateHostSessionState()
     setCommentParentBlipId(parentBlipId)
@@ -222,7 +278,7 @@ export function BlipComposerProvider(props: ParentProps) {
   const closeActive = () => {
     resetRootHostState()
     resetUpdateHostState()
-    resetCommentHostSessionState()
+    resetCommentHostState()
     setActiveKind(null)
   }
 
@@ -232,10 +288,12 @@ export function BlipComposerProvider(props: ParentProps) {
     resetUpdateHostSessionState()
     resetCommentHostSessionState()
     clearUpdateInlineMountRegistry()
+    clearCommentInlineMountRegistry()
   })
 
   const showRootHost = createMemo(() => hasRootHost())
   const showUpdateHost = createMemo(() => hasUpdateHost())
+  const showCommentHost = createMemo(() => hasCommentHost())
 
   return (
     <BlipComposerContext.Provider
@@ -248,6 +306,7 @@ export function BlipComposerProvider(props: ParentProps) {
         openNewComment,
         openEditComment,
         registerUpdateInlineMount,
+        registerCommentInlineMount,
         requestCloseActive,
         isUpdateOpenFor,
         isCommentOpenFor,
@@ -286,13 +345,24 @@ export function BlipComposerProvider(props: ParentProps) {
           onRequestClose={closeActive}
         />
       </Show>
-      <Show when={commentOpen()}>
+      <Show when={showCommentHost()}>
         <BlipCommentEditor
           open={commentOpen()}
           parentBlipId={commentParentBlipId()}
           editingCommentId={commentEditingBlipId()}
+          desktopMount={
+            commentParentBlipId()
+              ? commentInlineMounts()[commentParentBlipId()!] ?? null
+              : null
+          }
           focusNonce={commentFocusNonce()}
+          closeRequestNonce={commentCloseRequestNonce()}
           onRequestClose={closeActive}
+          onAfterClose={() => {
+            if (!commentOpen()) {
+              resetCommentHostSessionState()
+            }
+          }}
         />
       </Show>
     </BlipComposerContext.Provider>

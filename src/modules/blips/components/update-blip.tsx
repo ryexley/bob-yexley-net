@@ -131,58 +131,65 @@ export function UpdateBlip(props: {
 
   return (
     <li
-      class="update-blip"
-      classList={{
-        "update-blip--recent-realtime": props.isRecentRealtime === true,
-        "update-blip--shimmering": props.isShimmering === true,
-        "update-blip--unpublished": !props.blip.published,
-      }}>
-      <header class="update-blip-header">
-        <span class="update-blip-timestamp">
-          {timestampLabel()}
-        </span>
-      </header>
-      <div class="update-blip-content">
-        <Markdown content={props.blip.content ?? ""} />
-      </div>
-      <footer class="update-blip-footer">
-        <div class="update-blip-footer-end">
-          <BlipReactionSummary
-            reactions={displayBlip().reactions}
-            busy={isReactionBusy()}
-            onToggleReaction={
-              isAuthenticated()
-                ? emoji => {
-                    void handleToggleReaction(emoji)
-                  }
-                : undefined
-            }
-          />
-          <BlipActions
-            blip={props.blip}
-            onEdit={props.onEdit}
-          />
-          <BlipReactionTrigger
-            blip={displayBlip()}
-            triggerAriaLabel={tr("actions.addReaction")}
-            onReactionStateChange={next => {
-              const nextState = {
-                reactions: next.reactions,
-                my_reaction_count: next.myReactionCount,
-                reactions_count: next.reactionsCount,
-              }
-              setReactionStateOverride(nextState)
-              blips.updateCachedReactionState(props.blip.id, nextState)
-            }}
-          />
-          {props.blip.allow_comments !== false ? (
-            <BlipCommentTrigger
-              onCompose={() => composer.openNewComment(props.blip.id)}
-            />
-          ) : null}
+      class="update-blip-stack">
+      <article
+        class="update-blip"
+        classList={{
+          "update-blip--recent-realtime": props.isRecentRealtime === true,
+          "update-blip--shimmering": props.isShimmering === true,
+          "update-blip--unpublished": !props.blip.published,
+        }}>
+        <header class="update-blip-header">
+          <span class="update-blip-timestamp">
+            {timestampLabel()}
+          </span>
+        </header>
+        <div class="update-blip-content">
+          <Markdown content={props.blip.content ?? ""} />
         </div>
-      </footer>
-      <BlipCommentThread parentBlip={props.blip} comments={props.comments ?? []} />
+        <footer class="update-blip-footer">
+          <div class="update-blip-footer-end">
+            <BlipReactionSummary
+              reactions={displayBlip().reactions}
+              busy={isReactionBusy()}
+              onToggleReaction={
+                isAuthenticated()
+                  ? emoji => {
+                      void handleToggleReaction(emoji)
+                    }
+                  : undefined
+              }
+            />
+            <BlipActions
+              blip={props.blip}
+              onEdit={props.onEdit}
+            />
+            <BlipReactionTrigger
+              blip={displayBlip()}
+              triggerAriaLabel={tr("actions.addReaction")}
+              onReactionStateChange={next => {
+                const nextState = {
+                  reactions: next.reactions,
+                  my_reaction_count: next.myReactionCount,
+                  reactions_count: next.reactionsCount,
+                }
+                setReactionStateOverride(nextState)
+                blips.updateCachedReactionState(props.blip.id, nextState)
+              }}
+            />
+            {props.blip.allow_comments !== false ? (
+              <BlipCommentTrigger
+                onCompose={() => composer.openNewComment(props.blip.id)}
+              />
+            ) : null}
+          </div>
+        </footer>
+      </article>
+      <BlipCommentThread
+        parentBlip={props.blip}
+        comments={props.comments ?? []}
+        showHeader={false}
+      />
     </li>
   )
 }

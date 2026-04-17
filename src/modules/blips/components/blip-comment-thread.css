@@ -4,6 +4,14 @@
   gap: 0.75rem;
 }
 
+.blip-comment-thread-inline-mount {
+  width: 100%;
+
+  &:empty {
+    display: none;
+  }
+}
+
 .blip-comment-thread-header {
   align-items: center;
   display: flex;

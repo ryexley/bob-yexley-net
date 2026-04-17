@@ -16,6 +16,7 @@ type BlipCommentThreadProps = {
   parentBlip: Blip
   comments: Blip[]
   showHeader?: boolean
+  showInlineMount?: boolean
 }
 
 const tr = ptr("blips.components.commentThread")
@@ -46,7 +47,10 @@ export function BlipCommentThread(props: BlipCommentThreadProps) {
 
   const canModerate = createMemo(() => auth.isAuthenticated() && auth.isAdmin())
   const showSection = createMemo(
-    () => props.comments.length > 0 || !commentsEnabled(props.parentBlip),
+    () =>
+      props.comments.length > 0 ||
+      !commentsEnabled(props.parentBlip) ||
+      composer.isCommentOpenFor(props.parentBlip.id),
   )
 
   const patchCommentCache = (comment: Blip, updates: Partial<Blip>) => {
@@ -114,6 +118,15 @@ export function BlipCommentThread(props: BlipCommentThreadProps) {
               <span class="blip-comment-thread-count">{props.comments.length}</span>
             </div>
           </header>
+        </Show>
+
+        <Show when={props.showInlineMount !== false}>
+          <div
+            class="blip-comment-thread-inline-mount"
+            ref={element =>
+              composer.registerCommentInlineMount(props.parentBlip.id, element)
+            }
+          />
         </Show>
 
         <Show

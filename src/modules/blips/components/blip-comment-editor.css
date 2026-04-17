@@ -8,6 +8,129 @@
 
 .blip-comment-editor-body {
   padding-top: 0;
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.inline-shell {
+  --comment-avatar-size: 3rem;
+  --comment-tail-size: 0.8rem;
+  --comment-tail-offset-y: 0.125rem;
+
+  align-items: start;
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: minmax(0, 1fr) auto;
+  width: 100%;
+
+  .bubble {
+    min-width: 0;
+    position: relative;
+    width: 100%;
+
+    &::after {
+      background: var(--colors-mono-02);
+      border-right: 0.0625rem solid var(--colors-mono-04);
+      border-top: 0.0625rem solid var(--colors-mono-04);
+      border-radius: 0.125rem;
+      content: "";
+      height: 0.8rem;
+      position: absolute;
+      right: calc(var(--comment-tail-size) / -2);
+      top: calc(
+        ((var(--comment-avatar-size) - var(--comment-tail-size)) / 2) +
+          var(--comment-tail-offset-y)
+      );
+      transform: rotate(45deg);
+      width: var(--comment-tail-size);
+    }
+  }
+
+  &.is-open {
+    .avatar-column {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .avatar-column {
+    align-items: flex-start;
+    display: inline-flex;
+    flex-direction: row;
+    opacity: 0;
+    transform: translateY(-0.35rem);
+    transition:
+      opacity 220ms ease,
+      transform 260ms ease;
+  }
+
+  .avatar-wrap {
+    display: inline-flex;
+    height: var(--comment-avatar-size);
+    width: var(--comment-avatar-size);
+  }
+}
+
+.blip-comment-editor-layer {
+  display: flex;
+  position: relative;
+  width: 100%;
+}
+
+.blip-comment-editor-surface.blip-editor-shell {
+  gap: 0.25rem !important;
+  min-width: 0;
+  width: 100%;
+  min-height: 0;
+}
+
+.blip-comment-editor-shell {
+  display: grid;
+  flex: 1;
+  grid-template-rows: minmax(0, 0fr);
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-0.35rem);
+  transition: var(--transitions-primary);
+  width: 100%;
+  will-change: grid-template-rows, opacity, transform;
+
+  &.is-open {
+    grid-template-rows: minmax(0, 1fr);
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
+  }
+}
+
+.blip-comment-editor-top-row {
+  align-items: center;
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-start;
+  margin-bottom: -0.25rem;
+}
+
+.blip-comment-editor-mode-label {
+  color: var(--colors-mono-08);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  margin: 0 0.25rem;
+  text-transform: uppercase;
+}
+
+.blip-comment-editor-form {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  width: 100%;
+}
+
+.blip-comment-editor-below-editor {
+  gap: 0.5rem;
 }
 
 .blip-comment-editor-controls {
@@ -22,4 +145,16 @@
   align-items: center;
   display: inline-flex;
   gap: 0.5rem;
+}
+
+.inline-shell {
+  .avatar {
+    overflow: visible;
+  }
+}
+
+@media (max-width: calc(48rem - 0.001rem)) {
+  .inline-shell {
+    display: none;
+  }
 }

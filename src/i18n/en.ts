@@ -437,6 +437,7 @@ export const en = {
         },
       },
       commentEditor: {
+        modeLabel: "Comment",
         titles: {
           new: "New comment",
           edit: "Edit comment",

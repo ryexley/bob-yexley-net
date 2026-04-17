@@ -1,3 +1,10 @@
+.update-blip-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  list-style: none;
+}
+
 .update-blip {
   background: color-mix(in srgb, var(--colors-mono-02) 55%, transparent);
   border: 1px solid var(--colors-mono-04);
@@ -5,7 +12,6 @@
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
-  list-style: none;
   overflow: hidden;
   padding: 0.5rem 0.75rem;
   position: relative;
