@@ -331,6 +331,10 @@ export const en = {
           hideUpdateComposer: "Hide composer",
           addReaction: "Add reaction",
         },
+        sort: {
+          toggleToOldest: "Show updates and root comments oldest first",
+          toggleToNewest: "Show updates and root comments newest first",
+        },
         updates: {
           label: "Updates",
           title: "Updates ({count})",

@@ -88,3 +88,42 @@ describe("blipStore reaction cache sync", () => {
     })
   })
 })
+
+describe("blipStore comment ordering", () => {
+  it("sorts comments newest first within each parent", async () => {
+    await runInRoot(async () => {
+      const store = blipStore({} as any, { subscribe: false })
+      const rootId = "root-1"
+
+      store.setInitialData([
+        makeBlip({ id: rootId }),
+        makeBlip({
+          id: "comment-oldest",
+          parent_id: rootId,
+          blip_type: BLIP_TYPES.COMMENT,
+          created_at: "2026-03-28T12:00:00.000Z",
+        }),
+        makeBlip({
+          id: "comment-newest",
+          parent_id: rootId,
+          blip_type: BLIP_TYPES.COMMENT,
+          created_at: "2026-03-28T12:02:00.000Z",
+        }),
+        makeBlip({
+          id: "comment-middle",
+          parent_id: rootId,
+          blip_type: BLIP_TYPES.COMMENT,
+          created_at: "2026-03-28T12:01:00.000Z",
+        }),
+      ])
+
+      await Promise.resolve()
+
+      expect(store.commentsByParent(rootId).map(comment => comment.id)).toEqual([
+        "comment-newest",
+        "comment-middle",
+        "comment-oldest",
+      ])
+    })
+  })
+})

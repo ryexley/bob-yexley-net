@@ -31,6 +31,11 @@ type BlipCommentThreadProps = {
   showInlineMount?: boolean
 }
 
+type BlipCommentListItemProps = {
+  comment: Blip
+  parentBlip: Blip
+}
+
 const tr = ptr("blips.components.commentThread")
 const trBlip = ptr("blips.components.blip")
 const trCommentEditor = ptr("blips.components.commentEditor")
@@ -287,22 +292,14 @@ function BlipCommentCard(props: BlipCommentCardProps) {
   )
 }
 
-export function BlipCommentThread(props: BlipCommentThreadProps) {
+export function BlipCommentListItem(props: BlipCommentListItemProps) {
   const auth = useAuth()
   const supabase = useSupabase()
   const confirm = useConfirm()
-  const composer = useBlipComposer()
   const store = blipStore(supabase.client, { subscribe: false })
-
   const canModerate = createMemo(() => auth.isAuthenticated() && auth.isAdmin())
   const avatarSide = createMemo<"left" | "right">(() =>
     props.parentBlip.blip_type === BLIP_TYPES.UPDATE ? "right" : "left",
-  )
-  const showSection = createMemo(
-    () =>
-      props.comments.length > 0 ||
-      !commentsEnabled(props.parentBlip) ||
-      composer.isCommentOpenFor(props.parentBlip.id),
   )
 
   const patchCommentCache = (comment: Blip, updates: Partial<Blip>) => {
@@ -361,6 +358,35 @@ export function BlipCommentThread(props: BlipCommentThreadProps) {
   }
 
   return (
+    <BlipCommentCard
+      comment={props.comment}
+      parentBlipId={props.parentBlip.id}
+      canModerate={canModerate()}
+      avatarSide={avatarSide()}
+      onDelete={handleDelete}
+      onApprove={comment => {
+        void handleApprove(comment)
+      }}
+      onReject={comment => {
+        void handleReject(comment)
+      }}
+    />
+  )
+}
+
+export function BlipCommentThread(props: BlipCommentThreadProps) {
+  const composer = useBlipComposer()
+  const avatarSide = createMemo<"left" | "right">(() =>
+    props.parentBlip.blip_type === BLIP_TYPES.UPDATE ? "right" : "left",
+  )
+  const showSection = createMemo(
+    () =>
+      props.comments.length > 0 ||
+      !commentsEnabled(props.parentBlip) ||
+      composer.isCommentOpenFor(props.parentBlip.id),
+  )
+
+  return (
     <Show when={showSection()}>
       <section
         class={cx("blip-comment-thread", {
@@ -397,18 +423,9 @@ export function BlipCommentThread(props: BlipCommentThreadProps) {
           <ul class="blip-comment-thread-list">
             <For each={props.comments}>
               {comment => (
-                <BlipCommentCard
+                <BlipCommentListItem
                   comment={comment}
-                  parentBlipId={props.parentBlip.id}
-                  canModerate={canModerate()}
-                  avatarSide={avatarSide()}
-                  onDelete={handleDelete}
-                  onApprove={comment => {
-                    void handleApprove(comment)
-                  }}
-                  onReject={comment => {
-                    void handleReject(comment)
-                  }}
+                  parentBlip={props.parentBlip}
                 />
               )}
             </For>

@@ -17,11 +17,17 @@ import {
 } from "solid-js"
 import { Hashtag, Icon } from "@/components/icon"
 import { Button } from "@/components/button"
+import { IconButton } from "@/components/icon-button"
 import { MarkdownRenderer as Markdown } from "@/components/markdown/renderer"
 import { useNotify } from "@/components/notification"
+import { Tooltip } from "@/components/tooltip"
 import { useSupabase } from "@/context/services-context"
 import { useAuth } from "@/context/auth-context"
 import { BlipActions } from "@/modules/blips/components/blip-actions"
+import {
+  BlipCommentListItem,
+  BlipCommentThread,
+} from "@/modules/blips/components/blip-comment-thread"
 import { BlipCommentTrigger } from "@/modules/blips/components/blip-comment-trigger"
 import { BlipReactionSummary } from "@/modules/blips/components/blip-reaction-summary"
 import { BlipReactionTrigger } from "@/modules/blips/components/blip-reaction-trigger"
@@ -40,10 +46,13 @@ import {
   type ReactionStateOverride,
 } from "@/modules/blips/data/reaction-optimistic"
 import { reactionStore } from "@/modules/blips/data/reactions-store"
-import { BlipCommentThread } from "@/modules/blips/components/blip-comment-thread"
 import { UpdateBlip } from "@/modules/blips/components/update-blip"
 import { useBlipComposer } from "@/modules/blips/context/blip-composer-context"
 import { formatBlipTimestamp } from "@/modules/blips/util"
+import {
+  buildTopLevelActivity,
+  type TopLevelSortDirection,
+} from "@/modules/blips/views/blip-detail-ordering"
 import { ptr } from "@/i18n"
 import { pages } from "@/urls"
 import { clsx as cx } from "@/util"
@@ -139,6 +148,8 @@ export function BlipView() {
     createSignal<Record<string, { shimmering: boolean }>>({})
   const [hydratedRootTags, setHydratedRootTags] = createSignal<string[]>([])
   const [isReactionBusy, setIsReactionBusy] = createSignal(false)
+  const [topLevelSortDirection, setTopLevelSortDirection] =
+    createSignal<TopLevelSortDirection>("desc")
   const [reactionStateOverride, setReactionStateOverride] =
     createSignal<ReactionStateOverride | null>(null)
   const realtimeUpdateHighlightTimeouts = new Map<
@@ -215,7 +226,29 @@ export function BlipView() {
     return allUpdates.filter(update => update.published)
   })
   const rootComments = createMemo(() => store.commentsByParent(blip()?.id))
+  const hasTopLevelActivity = createMemo(
+    () => visibleUpdates().length > 0 || rootComments().length > 0,
+  )
+  const topLevelActivity = createMemo(() =>
+    buildTopLevelActivity({
+      updates: visibleUpdates(),
+      rootComments: rootComments(),
+      direction: topLevelSortDirection(),
+    }),
+  )
+  const topLevelSortTooltip = createMemo(() =>
+    topLevelSortDirection() === "desc"
+      ? tr("sort.toggleToOldest")
+      : tr("sort.toggleToNewest"),
+  )
   const showComposer = createMemo(() => isUpdateOpenFor(blip()?.id))
+  const showActivityMetaRow = createMemo(
+    () =>
+      visibleUpdates().length > 0 ||
+      canManageUpdates() ||
+      showComposer() ||
+      rootComments().length > 0,
+  )
   const visibleUpdateIds = createMemo(() =>
     visibleUpdates().map(update => update.id),
   )
@@ -721,12 +754,7 @@ export function BlipView() {
                       <div class="thread-stack">
                       <div class="blip-detail-meta-row">
                         <div class="blip-detail-meta-row-start">
-                          <Show
-                            when={
-                              visibleUpdates().length > 0 ||
-                              canManageUpdates() ||
-                              showComposer()
-                            }>
+                          <Show when={showActivityMetaRow()}>
                             <div class="blip-detail-updates-group">
                               <div class="blip-updates-chip">
                                 <span class="blip-updates-chip-label">
@@ -779,6 +807,26 @@ export function BlipView() {
                               </span>
                             </div>
                           </Show>
+                          <Show when={hasTopLevelActivity()}>
+                            <Tooltip content={topLevelSortTooltip()}>
+                              <IconButton
+                                size="xs"
+                                icon="list_arrow"
+                                class={cx("blip-detail-sort-toggle", {
+                                  active: topLevelSortDirection() === "asc",
+                                })}
+                                iconClass={cx("blip-detail-sort-toggle-icon", {
+                                  reversed: topLevelSortDirection() === "asc",
+                                })}
+                                aria-label={topLevelSortTooltip()}
+                                onClick={() =>
+                                  setTopLevelSortDirection(direction =>
+                                    direction === "desc" ? "asc" : "desc",
+                                  )
+                                }
+                              />
+                            </Tooltip>
+                          </Show>
                         </div>
                       </div>
                       <div
@@ -787,40 +835,34 @@ export function BlipView() {
                           registerUpdateInlineMount(params.id, element)
                         }}
                       />
-                      <BlipCommentThread
-                        parentBlip={blip() ?? data()}
-                        comments={rootComments()}
-                        showHeader={false}
-                        showInlineMount={false}
-                      />
-                      <Show
-                        when={
-                          canManageUpdates() ||
-                          visibleUpdates().length > 0 ||
-                          showComposer()
-                        }>
-                        <section class="blip-updates-section">
-                          <Show when={visibleUpdates().length > 0}>
-                            <ul class="blip-updates-list">
-                              <For each={visibleUpdates()}>
-                                {update => (
+                      <Show when={hasTopLevelActivity()}>
+                        <section class="blip-activity-section">
+                          <ul class="blip-detail-activity-list">
+                            <For each={topLevelActivity()}>
+                              {activity =>
+                                activity.kind === "comment" ? (
+                                  <BlipCommentListItem
+                                    comment={activity.blip}
+                                    parentBlip={blip() ?? data()}
+                                  />
+                                ) : (
                                   <UpdateBlip
-                                    blip={update}
-                                    comments={store.commentsByParent(update.id)}
+                                    blip={activity.blip}
+                                    comments={store.commentsByParent(activity.blip.id)}
                                     onEdit={handleEditUpdate}
                                     isRecentRealtime={
-                                      recentRealtimeUpdateStates()[update.id] !==
+                                      recentRealtimeUpdateStates()[activity.blip.id] !==
                                       undefined
                                     }
                                     isShimmering={
-                                      recentRealtimeUpdateStates()[update.id]
+                                      recentRealtimeUpdateStates()[activity.blip.id]
                                         ?.shimmering === true
                                     }
                                   />
-                                )}
-                              </For>
-                            </ul>
-                          </Show>
+                                )
+                              }
+                            </For>
+                          </ul>
                         </section>
                       </Show>
                       </div>

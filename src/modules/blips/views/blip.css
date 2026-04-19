@@ -225,6 +225,10 @@ a.blip-detail-back-link {
 
 .blip-detail-meta-row-end {
   justify-content: flex-end;
+
+  .tooltip-trigger {
+    display: inline-flex;
+  }
 }
 
 .blip-detail-updates-group {
@@ -259,6 +263,7 @@ a.blip-detail-back-link {
   }
 }
 
+.blip-activity-section,
 .blip-updates-section {
   display: flex;
   flex-direction: column;
@@ -334,6 +339,43 @@ a.blip-detail-back-link {
   padding: 0 0.2rem;
 }
 
+.icon-button.blip-detail-sort-toggle {
+  background: transparent;
+  border: 0.0625rem solid var(--colors-mono-05);
+  border-radius: 999rem;
+  color: var(--colors-mono-09);
+  height: 1.75rem;
+  width: 1.75rem;
+
+  &:hover {
+    background: color-mix(in srgb, var(--colors-mono-03) 65%, transparent);
+    border-color: var(--colors-mono-06);
+  }
+
+  .icon {
+    color: currentColor;
+    font-size: 1.125rem;
+    transition: transform 180ms ease;
+  }
+
+  &.active {
+    background: color-mix(in srgb, var(--colors-cool-blue) 8%, transparent);
+    border-color: color-mix(
+      in srgb,
+      var(--colors-cool-blue) 65%,
+      var(--colors-mono-05) 35%
+    );
+    box-shadow: 0 0 0 0.0625rem rgb(0 144 255 / 0.16);
+    color: var(--colors-cool-blue);
+  }
+}
+
+.blip-detail-sort-toggle-icon {
+  &.reversed {
+    transform: rotate(180deg);
+  }
+}
+
 .button.blip-detail-add-update {
   align-items: center;
   background: rgba(var(--colors-mono-01-rgb), 0.75);
@@ -373,6 +415,7 @@ a.blip-detail-back-link {
   }
 }
 
+.blip-detail-activity-list,
 .blip-updates-list {
   display: flex;
   flex-direction: column;

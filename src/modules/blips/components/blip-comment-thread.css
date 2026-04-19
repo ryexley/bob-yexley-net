@@ -1,4 +1,5 @@
-.blip-comment-thread {
+.blip-comment-thread,
+.blip-comment-stack {
   --comment-avatar-size: 3rem;
   --comment-thread-gap: 0.5rem;
   --comment-avatar-offset: 0.125rem;
@@ -88,6 +89,16 @@
     .avatar-column {
       margin-right: var(--comment-avatar-offset);
       order: -1;
+    }
+
+    .blip-comment::after {
+      border-bottom: var(--comment-thread-line-width) solid var(--comment-thread-line-color);
+      border-left: var(--comment-thread-line-width) solid var(--comment-thread-line-color);
+      border-right: 0;
+      border-top: 0;
+      left: calc(var(--comment-tail-size) / -2);
+      right: auto;
+      transform: rotate(45deg);
     }
   }
 }
@@ -264,15 +275,6 @@
 
 .blip-comment-thread {
   &.root-comments {
-    .blip-comment::after {
-      border-bottom: var(--comment-thread-line-width) solid var(--comment-thread-line-color);
-      border-left: var(--comment-thread-line-width) solid var(--comment-thread-line-color);
-      border-right: 0;
-      border-top: 0;
-      left: calc(var(--comment-tail-size) / -2);
-      right: auto;
-      transform: rotate(45deg);
-    }
   }
 
   &.update-comments {
