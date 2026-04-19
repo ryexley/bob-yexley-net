@@ -17,7 +17,7 @@ import {
   type ReactionStateOverride,
 } from "@/modules/blips/data/reaction-optimistic"
 import { REACTION_ERROR_I18N_KEY } from "@/modules/blips/data/errors"
-import { blipStore, reactionStore, type Blip } from "@/modules/blips/data"
+import { BLIP_TYPES, blipStore, reactionStore, type Blip } from "@/modules/blips/data"
 import { formatBlipTimestamp } from "@/modules/blips/util"
 import { ptr } from "@/i18n"
 import { clsx as cx } from "@/util"
@@ -54,6 +54,7 @@ type BlipCommentCardProps = {
   comment: Blip
   parentBlipId: string
   canModerate: boolean
+  avatarSide: "left" | "right"
   onDelete: (comment: Blip) => void
   onApprove: (comment: Blip) => void
   onReject: (comment: Blip) => void
@@ -154,11 +155,15 @@ function BlipCommentCard(props: BlipCommentCardProps) {
   }
 
   return (
-    <li class="blip-comment-stack">
+    <li
+      class={cx("blip-comment-stack", {
+        "avatar-left": props.avatarSide === "left",
+        "avatar-right": props.avatarSide === "right",
+      })}>
       <article
         class="blip-comment"
         classList={{
-          "blip-comment--pending": isPendingComment(props.comment),
+          pending: isPendingComment(props.comment),
         }}>
         <header class="blip-comment-header">
           <span class="blip-comment-timestamp">
@@ -262,7 +267,7 @@ function BlipCommentCard(props: BlipCommentCardProps) {
           <UserAvatar
             size="md"
             variant="surface"
-            displayName={props.comment.author?.display_name ?? null}
+            displayName={props.comment.author?.display_name ?? tr("unknownAuthor")}
             avatarSeed={props.comment.author?.avatar_seed ?? null}
             avatarVersion={props.comment.author?.avatar_version ?? null}
           />
@@ -280,6 +285,9 @@ export function BlipCommentThread(props: BlipCommentThreadProps) {
   const store = blipStore(supabase.client, { subscribe: false })
 
   const canModerate = createMemo(() => auth.isAuthenticated() && auth.isAdmin())
+  const avatarSide = createMemo<"left" | "right">(() =>
+    props.parentBlip.blip_type === BLIP_TYPES.UPDATE ? "right" : "left",
+  )
   const showSection = createMemo(
     () =>
       props.comments.length > 0 ||
@@ -344,7 +352,11 @@ export function BlipCommentThread(props: BlipCommentThreadProps) {
 
   return (
     <Show when={showSection()}>
-      <section class="blip-comment-thread">
+      <section
+        class={cx("blip-comment-thread", {
+          "root-comments": avatarSide() === "left",
+          "update-comments": avatarSide() === "right",
+        })}>
         <Show when={props.showHeader !== false}>
           <header class="blip-comment-thread-header">
             <div class="blip-comment-thread-heading">
@@ -379,6 +391,7 @@ export function BlipCommentThread(props: BlipCommentThreadProps) {
                   comment={comment}
                   parentBlipId={props.parentBlip.id}
                   canModerate={canModerate()}
+                  avatarSide={avatarSide()}
                   onDelete={handleDelete}
                   onApprove={comment => {
                     void handleApprove(comment)
