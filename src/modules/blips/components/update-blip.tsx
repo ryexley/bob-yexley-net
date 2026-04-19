@@ -147,22 +147,25 @@ export function UpdateBlip(props: {
         <div class="update-blip-content">
           <Markdown content={props.blip.content ?? ""} />
         </div>
-        <footer class="update-blip-footer">
-          <div class="update-blip-footer-end">
-            <BlipReactionSummary
-              reactions={displayBlip().reactions}
-              busy={isReactionBusy()}
-              onToggleReaction={
-                isAuthenticated()
-                  ? emoji => {
-                      void handleToggleReaction(emoji)
-                    }
-                  : undefined
-              }
-            />
+        <footer>
+          <BlipReactionSummary
+            class="reactions"
+            reactions={displayBlip().reactions}
+            busy={isReactionBusy()}
+            onToggleReaction={
+              isAuthenticated()
+                ? emoji => {
+                    void handleToggleReaction(emoji)
+                  }
+                : undefined
+            }
+          />
+          <div class="actions">
             <BlipActions
               blip={props.blip}
               onEdit={props.onEdit}
+              fullWidth={false}
+              class="update-blip-actions"
             />
             <BlipReactionTrigger
               blip={displayBlip()}

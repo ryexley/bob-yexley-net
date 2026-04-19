@@ -15,12 +15,19 @@ interface BlipActionsProps {
   onEdit?: (blipId: string) => void
   toolbarExtras?: JSX.Element
   fullWidth?: boolean
+  class?: string
 }
 
 const tr = ptr("blips.components.blipActions")
 
 export function BlipActions(props: BlipActionsProps) {
-  const [local] = splitProps(props, ["blip", "onEdit", "toolbarExtras", "fullWidth"])
+  const [local] = splitProps(props, [
+    "blip",
+    "onEdit",
+    "toolbarExtras",
+    "fullWidth",
+    "class",
+  ])
   const confirm = useConfirm()
   const [isTogglingPublish, setIsTogglingPublish] = createSignal(false)
 
@@ -83,7 +90,7 @@ export function BlipActions(props: BlipActionsProps) {
           align="center"
           justify="end"
           fullWidth={local.fullWidth !== false}
-          class="blip-actions"
+          class={["blip-actions", local.class].filter(Boolean).join(" ")}
           gap="0.25rem"
           role="toolbar"
           aria-label={tr("toolbarAriaLabel")}>
