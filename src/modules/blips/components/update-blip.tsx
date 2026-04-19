@@ -1,5 +1,6 @@
 import type { Blip } from "@/modules/blips/data/schema"
 import { createEffect, createMemo, createSignal, onCleanup, onMount } from "solid-js"
+import { Icon } from "@/components/icon"
 import { MarkdownRenderer as Markdown } from "@/components/markdown/renderer"
 import { useNotify } from "@/components/notification"
 import { useAuth } from "@/context/auth-context"
@@ -140,6 +141,13 @@ export function UpdateBlip(props: {
           "update-blip--unpublished": !props.blip.published,
         }}>
         <header class="update-blip-header">
+          <span class="update-blip-kind">
+            <Icon
+              name="chat"
+              class="update-blip-kind-icon"
+            />
+            <span>{tr("modeLabel")}</span>
+          </span>
           <span class="update-blip-timestamp">
             {timestampLabel()}
           </span>

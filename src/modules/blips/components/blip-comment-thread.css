@@ -138,7 +138,23 @@
 
   .blip-comment-header {
     display: flex;
-    justify-content: flex-end;
+    justify-content: space-between;
+  }
+
+  .blip-comment-kind {
+    align-items: center;
+    color: var(--colors-mono-05);
+    display: inline-flex;
+    font-size: 0.75rem;
+    font-weight: 600;
+    gap: 0.25rem;
+    letter-spacing: 0.01em;
+    text-transform: uppercase;
+
+    .blip-comment-kind-icon {
+      color: var(--colors-blue-margeurite);
+      font-size: 0.875rem;
+    }
   }
 
   .blip-comment-timestamp {

@@ -75,7 +75,23 @@
 
 .update-blip-header {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+}
+
+.update-blip-kind {
+  align-items: center;
+  color: var(--colors-mono-05);
+  display: inline-flex;
+  font-size: 0.75rem;
+  font-weight: 600;
+  gap: 0.25rem;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+
+  .update-blip-kind-icon {
+    color: var(--colors-info);
+    font-size: 0.875rem;
+  }
 }
 
 .update-blip-timestamp {

@@ -384,6 +384,7 @@ export const en = {
     },
     components: {
       blip: {
+        modeLabel: "Update",
         actions: {
           readMore: "Read more",
           addReaction: "Add reaction",

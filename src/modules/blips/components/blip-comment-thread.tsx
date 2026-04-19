@@ -1,4 +1,5 @@
 import { For, Show, createEffect, createMemo, createSignal } from "solid-js"
+import { Icon } from "@/components/icon"
 import { IconButton } from "@/components/icon-button"
 import { MarkdownRenderer as Markdown } from "@/components/markdown/renderer"
 import { useNotify } from "@/components/notification"
@@ -32,6 +33,8 @@ type BlipCommentThreadProps = {
 
 const tr = ptr("blips.components.commentThread")
 const trBlip = ptr("blips.components.blip")
+const trCommentEditor = ptr("blips.components.commentEditor")
+const COMMENT_KIND_ICON = "forum"
 
 const isPendingComment = (comment: Blip) =>
   !comment.published || comment.moderation_status === "pending"
@@ -166,6 +169,13 @@ function BlipCommentCard(props: BlipCommentCardProps) {
           pending: isPendingComment(props.comment),
         }}>
         <header class="blip-comment-header">
+          <span class="blip-comment-kind">
+            <Icon
+              name={COMMENT_KIND_ICON}
+              class="blip-comment-kind-icon"
+            />
+            <span>{trCommentEditor("modeLabel")}</span>
+          </span>
           <span class="blip-comment-timestamp">
             {formatBlipTimestamp(props.comment.created_at)}
           </span>
