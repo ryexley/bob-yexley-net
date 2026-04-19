@@ -1,13 +1,23 @@
-import { For, Show, createMemo } from "solid-js"
-import { Button } from "@/components/button"
+import { For, Show, createEffect, createMemo, createSignal } from "solid-js"
+import { IconButton } from "@/components/icon-button"
 import { MarkdownRenderer as Markdown } from "@/components/markdown/renderer"
+import { useNotify } from "@/components/notification"
 import { useAuth } from "@/context/auth-context"
 import { useSupabase } from "@/context/services-context"
 import { useConfirm } from "@/components/confirm-dialog"
 import { RequiresAdmin } from "@/modules/auth/components/requires-role"
+import { BlipReactionSummary } from "@/modules/blips/components/blip-reaction-summary"
+import { BlipReactionTrigger } from "@/modules/blips/components/blip-reaction-trigger"
 import { UserAvatar } from "@/modules/users/components/user-avatar"
 import { useBlipComposer } from "@/modules/blips/context/blip-composer-context"
-import { blipStore, type Blip } from "@/modules/blips/data"
+import {
+  buildOptimisticReactionState,
+  createReactionStateOverride,
+  getReactionSignature,
+  type ReactionStateOverride,
+} from "@/modules/blips/data/reaction-optimistic"
+import { REACTION_ERROR_I18N_KEY } from "@/modules/blips/data/errors"
+import { blipStore, reactionStore, type Blip } from "@/modules/blips/data"
 import { formatBlipTimestamp } from "@/modules/blips/util"
 import { ptr } from "@/i18n"
 import { clsx as cx } from "@/util"
@@ -21,6 +31,7 @@ type BlipCommentThreadProps = {
 }
 
 const tr = ptr("blips.components.commentThread")
+const trBlip = ptr("blips.components.blip")
 
 const isPendingComment = (comment: Blip) =>
   !comment.published || comment.moderation_status === "pending"
@@ -38,6 +49,228 @@ const getWritableBlipFields = (blip: Blip): Partial<Blip> => ({
   blip_type: blip.blip_type,
   allow_comments: blip.allow_comments,
 })
+
+type BlipCommentCardProps = {
+  comment: Blip
+  parentBlipId: string
+  canModerate: boolean
+  onDelete: (comment: Blip) => void
+  onApprove: (comment: Blip) => void
+  onReject: (comment: Blip) => void
+}
+
+function BlipCommentCard(props: BlipCommentCardProps) {
+  const auth = useAuth()
+  const supabase = useSupabase()
+  const notify = useNotify()
+  const composer = useBlipComposer()
+  const blips = blipStore(supabase.client, { subscribe: false })
+  const reactions = reactionStore(supabase.client, { subscribe: false })
+  const [isReactionBusy, setIsReactionBusy] = createSignal(false)
+  const [reactionStateOverride, setReactionStateOverride] =
+    createSignal<ReactionStateOverride | null>(null)
+
+  const reactionSignature = createMemo(() => getReactionSignature(props.comment.reactions ?? []))
+  const displayComment = createMemo(() => {
+    const override = reactionStateOverride()
+    if (!override) {
+      return props.comment
+    }
+
+    return {
+      ...props.comment,
+      reactions: override.reactions,
+      my_reaction_count: override.my_reaction_count,
+      reactions_count: override.reactions_count,
+    }
+  })
+  const canEdit = createMemo(
+    () =>
+      auth.isAuthenticated() &&
+      (auth.user()?.id === props.comment.user_id || auth.isSuperuser()),
+  )
+  const canDelete = createMemo(
+    () =>
+      auth.isAuthenticated() &&
+      (auth.user()?.id === props.comment.user_id || props.canModerate),
+  )
+
+  createEffect(() => {
+    props.comment.id
+    props.comment.my_reaction_count
+    props.comment.reactions_count
+    reactionSignature()
+    setReactionStateOverride(null)
+  })
+
+  const handleToggleReaction = async (emoji: string) => {
+    if (isReactionBusy()) {
+      return
+    }
+
+    const currentComment = displayComment()
+    const previousReactions = currentComment.reactions ?? []
+    const previousCount = currentComment.my_reaction_count ?? 0
+    const hasActiveReaction =
+      previousReactions.find(reaction => reaction.emoji === emoji)?.reacted_by_current_user ??
+      false
+    const optimisticOverride = buildOptimisticReactionState({
+      reactions: previousReactions,
+      myReactionCount: previousCount,
+      emoji,
+      nextActive: !hasActiveReaction,
+      visitorDisplayName: auth.userProfile()?.displayName ?? null,
+    })
+    const applyVisibleReactionState = (next: ReactionStateOverride) => {
+      setReactionStateOverride(next)
+      blips.updateCachedReactionState(props.comment.id, next)
+    }
+
+    setIsReactionBusy(true)
+    applyVisibleReactionState(optimisticOverride)
+
+    const result = await reactions.toggleReaction(props.comment.id, emoji, {
+      profileId: auth.userProfile()?.id ?? null,
+      status: auth.userSystem()?.status ?? null,
+      currentCount: previousCount,
+      hasActiveReaction,
+    })
+
+    setIsReactionBusy(false)
+
+    if (result.error || !result.data) {
+      applyVisibleReactionState(createReactionStateOverride(previousReactions, previousCount))
+      const errorKey =
+        REACTION_ERROR_I18N_KEY[result.error ?? "UNKNOWN"] ??
+        REACTION_ERROR_I18N_KEY.UNKNOWN
+      notify.error({ content: errorKey })
+      return
+    }
+
+    applyVisibleReactionState({
+      ...optimisticOverride,
+      my_reaction_count: result.data.myReactionCount,
+    })
+  }
+
+  return (
+    <li class="blip-comment-stack">
+      <article
+        class="blip-comment"
+        classList={{
+          "blip-comment--pending": isPendingComment(props.comment),
+        }}>
+        <header class="blip-comment-header">
+          <span class="blip-comment-timestamp">
+            {formatBlipTimestamp(props.comment.created_at)}
+          </span>
+        </header>
+        <div class="blip-comment-content">
+          <Markdown content={props.comment.content ?? ""} />
+        </div>
+        <footer>
+          <div class="reactions">
+            <Show when={isPendingComment(props.comment)}>
+              <span class="blip-comment-status pending">
+                {tr("statuses.pending")}
+              </span>
+            </Show>
+            <Show when={props.comment.moderation_status === "rejected"}>
+              <span class="blip-comment-status rejected">
+                {tr("statuses.rejected")}
+              </span>
+            </Show>
+            <BlipReactionSummary
+              class="blip-comment-reactions"
+              reactions={displayComment().reactions}
+              busy={isReactionBusy()}
+              onToggleReaction={
+                auth.isAuthenticated()
+                  ? emoji => {
+                      void handleToggleReaction(emoji)
+                    }
+                  : undefined
+              }
+            />
+          </div>
+          <div class="actions">
+            <div
+              class="blip-comment-actions"
+              role="toolbar"
+              aria-label={tr("actions.toolbarAriaLabel")}>
+              <Show when={canEdit()}>
+                <IconButton
+                  size="xs"
+                  icon="edit_note"
+                  class="edit"
+                  aria-label={tr("actions.edit")}
+                  onClick={() =>
+                    composer.openEditComment(props.parentBlipId, props.comment.id)
+                  }
+                />
+              </Show>
+              <Show when={canDelete()}>
+                <IconButton
+                  size="xs"
+                  icon="delete"
+                  class="delete"
+                  aria-label={tr("actions.delete")}
+                  onClick={() => props.onDelete(props.comment)}
+                />
+              </Show>
+              <RequiresAdmin>
+                <Show when={props.comment.moderation_status === "pending"}>
+                  <IconButton
+                    size="xs"
+                    icon="check_circle"
+                    class="approve"
+                    aria-label={tr("actions.approve")}
+                    onClick={() => {
+                      props.onApprove(props.comment)
+                    }}
+                  />
+                  <IconButton
+                    size="xs"
+                    icon="cancel"
+                    class="reject"
+                    aria-label={tr("actions.reject")}
+                    onClick={() => {
+                      props.onReject(props.comment)
+                    }}
+                  />
+                </Show>
+              </RequiresAdmin>
+            </div>
+            <BlipReactionTrigger
+              blip={displayComment()}
+              triggerAriaLabel={trBlip("actions.addReaction")}
+              onReactionStateChange={next => {
+                const nextState = {
+                  reactions: next.reactions,
+                  my_reaction_count: next.myReactionCount,
+                  reactions_count: next.reactionsCount,
+                }
+                setReactionStateOverride(nextState)
+                blips.updateCachedReactionState(props.comment.id, nextState)
+              }}
+            />
+          </div>
+        </footer>
+      </article>
+      <div class="avatar-column" aria-hidden="true">
+        <div class="avatar-wrap">
+          <UserAvatar
+            size="md"
+            variant="surface"
+            displayName={props.comment.author?.display_name ?? null}
+            avatarSeed={props.comment.author?.avatar_seed ?? null}
+            avatarVersion={props.comment.author?.avatar_version ?? null}
+          />
+        </div>
+      </div>
+    </li>
+  )
+}
 
 export function BlipCommentThread(props: BlipCommentThreadProps) {
   const auth = useAuth()
@@ -142,96 +375,18 @@ export function BlipCommentThread(props: BlipCommentThreadProps) {
           <ul class="blip-comment-thread-list">
             <For each={props.comments}>
               {comment => (
-                <li
-                  class={cx("blip-comment", {
-                    pending: isPendingComment(comment),
-                  })}>
-                  <div class="blip-comment-author-row">
-                    <div class="blip-comment-author">
-                      <UserAvatar
-                        size="sm"
-                        variant="surface"
-                        displayName={comment.author?.display_name ?? null}
-                        avatarSeed={comment.author?.avatar_seed ?? null}
-                        avatarVersion={comment.author?.avatar_version ?? null}
-                        aria-hidden={true}
-                      />
-                      <div class="blip-comment-author-copy">
-                        <span class="blip-comment-author-name">
-                          {comment.author?.display_name ?? tr("unknownAuthor")}
-                        </span>
-                        <span class="blip-comment-timestamp">
-                          {formatBlipTimestamp(comment.created_at)}
-                        </span>
-                      </div>
-                    </div>
-                    <div class="blip-comment-meta">
-                      <Show when={isPendingComment(comment)}>
-                        <span class="blip-comment-status pending">
-                          {tr("statuses.pending")}
-                        </span>
-                      </Show>
-                      <Show when={comment.moderation_status === "rejected"}>
-                        <span class="blip-comment-status rejected">
-                          {tr("statuses.rejected")}
-                        </span>
-                      </Show>
-                    </div>
-                  </div>
-
-                  <div class="blip-comment-content">
-                    <Markdown content={comment.content ?? ""} />
-                  </div>
-
-                  <div class="blip-comment-actions">
-                    <Show
-                      when={
-                        auth.isAuthenticated() &&
-                        (auth.user()?.id === comment.user_id || auth.isSuperuser())
-                      }>
-                      <Button
-                        variant="ghost"
-                        size="xs"
-                        iconLeft="edit_note"
-                        label={tr("actions.edit")}
-                        onClick={() =>
-                          composer.openEditComment(props.parentBlip.id, comment.id)
-                        }
-                      />
-                    </Show>
-                    <Show when={auth.isAuthenticated() && (auth.user()?.id === comment.user_id || canModerate())}>
-                      <Button
-                        variant="ghost"
-                        size="xs"
-                        iconLeft="delete"
-                        label={tr("actions.delete")}
-                        onClick={() => handleDelete(comment)}
-                      />
-                    </Show>
-                    <RequiresAdmin>
-                      <Show when={comment.moderation_status === "pending"}>
-                        <Button
-                          variant="ghost"
-                          size="xs"
-                          iconLeft="check_circle"
-                          label={tr("actions.approve")}
-                          onClick={() => {
-                            void handleApprove(comment)
-                          }}
-                        />
-                        <Button
-                          variant="ghost"
-                          size="xs"
-                          iconLeft="cancel"
-                          label={tr("actions.reject")}
-                          onClick={() => {
-                            void handleReject(comment)
-                          }}
-                        />
-                      </Show>
-                    </RequiresAdmin>
-                  </div>
-                </li>
+                <BlipCommentCard
+                  comment={comment}
+                  parentBlipId={props.parentBlip.id}
+                  canModerate={canModerate()}
+                  onDelete={handleDelete}
+                  onApprove={comment => {
+                    void handleApprove(comment)
+                  }}
+                  onReject={comment => {
+                    void handleReject(comment)
+                  }}
+                />
               )}
             </For>
           </ul>

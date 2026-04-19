@@ -476,6 +476,7 @@ export const en = {
           addComment: "Add comment",
           enableComments: "Enable comments",
           disableComments: "Disable comments",
+          toolbarAriaLabel: "Comment actions",
           edit: "Edit",
           delete: "Delete",
           approve: "Approve",

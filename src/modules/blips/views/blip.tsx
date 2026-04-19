@@ -781,6 +781,12 @@ export function BlipView() {
                           </Show>
                         </div>
                       </div>
+                      <div
+                        ref={element => {
+                          updateInlineMountElement = element
+                          registerUpdateInlineMount(params.id, element)
+                        }}
+                      />
                       <BlipCommentThread
                         parentBlip={blip() ?? data()}
                         comments={rootComments()}
@@ -794,12 +800,6 @@ export function BlipView() {
                           showComposer()
                         }>
                         <section class="blip-updates-section">
-                          <div
-                            ref={element => {
-                              updateInlineMountElement = element
-                              registerUpdateInlineMount(params.id, element)
-                            }}
-                          />
                           <Show when={visibleUpdates().length > 0}>
                             <ul class="blip-updates-list">
                               <For each={visibleUpdates()}>
