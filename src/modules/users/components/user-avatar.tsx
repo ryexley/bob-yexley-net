@@ -1,6 +1,7 @@
 import { Show, createMemo, splitProps } from "solid-js"
 import type { AppRole } from "@/lib/vendor/supabase/browser"
 import { Icon } from "@/components/icon"
+import { Tooltip } from "@/components/tooltip"
 import { getAvatarPresentation } from "@/util/avatar"
 import { cx } from "@/util"
 import "./user-avatar.css"
@@ -46,6 +47,7 @@ export function UserAvatar(props: UserAvatarProps) {
     "variant",
     "badgeMode",
     "class",
+    "aria-hidden",
   ])
   const presentation = createMemo(() =>
     getAvatarPresentation({
@@ -54,8 +56,8 @@ export function UserAvatar(props: UserAvatarProps) {
       avatarVersion: local.avatarVersion,
     }),
   )
-
-  return (
+  const tooltipLabel = createMemo(() => local.displayName?.trim() ?? "")
+  const avatar = () => (
     <span
       class={cx(
         "user-avatar",
@@ -65,6 +67,7 @@ export function UserAvatar(props: UserAvatarProps) {
         local.class,
       )}
       style={presentation().style}
+      aria-hidden={local["aria-hidden"]}
       {...rest}>
       <Show
         when={presentation().initials}
@@ -77,5 +80,14 @@ export function UserAvatar(props: UserAvatarProps) {
         </span>
       </Show>
     </span>
+  )
+
+  return (
+    <Tooltip
+      content={tooltipLabel()}
+      disabled={local["aria-hidden"] || tooltipLabel().length === 0}
+      placement="top">
+      {avatar()}
+    </Tooltip>
   )
 }
