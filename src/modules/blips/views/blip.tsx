@@ -763,14 +763,16 @@ export function BlipView() {
                         <div class="blip-detail-meta-row-start">
                           <Show when={showActivityMetaRow()}>
                             <div class="blip-detail-updates-group">
-                              <div class="blip-updates-chip">
-                                <span class="blip-updates-chip-label">
-                                  {tr("updates.label")}
-                                </span>
-                                <span class="blip-updates-chip-count">
-                                  {visibleUpdates().length}
-                                </span>
-                              </div>
+                              <Show when={visibleUpdates().length > 0}>
+                                <div class="blip-updates-chip">
+                                  <span class="blip-updates-chip-label">
+                                    {tr("updates.label")}
+                                  </span>
+                                  <span class="blip-updates-chip-count">
+                                    {visibleUpdates().length}
+                                  </span>
+                                </div>
+                              </Show>
                               <RequiresAdmin>
                                 <Button
                                   variant="ghost"

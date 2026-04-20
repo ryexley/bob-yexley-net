@@ -83,10 +83,15 @@ function BlipCommentCard(props: BlipCommentCardProps) {
       reactions_count: override.reactions_count,
     }
   })
+  const canApprove = createMemo(
+    () =>
+      props.comment.moderation_status === "pending" ||
+      props.comment.moderation_status === "rejected",
+  )
+  const canReject = createMemo(() => props.comment.moderation_status === "pending")
   const canEdit = createMemo(
     () =>
-      auth.isAuthenticated() &&
-      (auth.user()?.id === props.comment.user_id || auth.isSuperuser()),
+      auth.isAuthenticated() && auth.user()?.id === props.comment.user_id,
   )
   const canDelete = createMemo(
     () =>
@@ -248,7 +253,7 @@ function BlipCommentCard(props: BlipCommentCardProps) {
                     />
                   </Tooltip>
                 </Show>
-                <Show when={props.comment.moderation_status === "pending"}>
+                <Show when={canApprove()}>
                   <Tooltip content={tr("actions.approveTooltip")}>
                     <IconButton
                       size="xs"
@@ -260,6 +265,8 @@ function BlipCommentCard(props: BlipCommentCardProps) {
                       }}
                     />
                   </Tooltip>
+                </Show>
+                <Show when={canReject()}>
                   <Tooltip content={tr("actions.rejectTooltip")}>
                     <IconButton
                       size="xs"
