@@ -229,6 +229,84 @@ a.blip-detail-back-link {
   .tooltip-trigger {
     display: inline-flex;
   }
+
+  .blip-comments-chip {
+    align-items: center;
+    border: 1px solid var(--colors-mono-05);
+    border-radius: 999rem;
+    color: var(--colors-mono-09);
+    display: inline-flex;
+    gap: 0.375rem;
+    padding: 0.25rem 0.25rem 0.25rem 0.5rem;
+  }
+
+  .blip-comments-chip-label {
+    font-size: 0.8125rem;
+    font-weight: 500;
+    line-height: 1;
+  }
+
+  .blip-comments-chip-count {
+    align-items: center;
+    background: var(--colors-info);
+    border-radius: 50%;
+    color: var(--colors-mono-01);
+    display: inline-flex;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    height: 1.25rem;
+    justify-content: center;
+    line-height: 1;
+    min-width: 1.25rem;
+    padding: 0 0.2rem;
+  }
+
+  .tooltip-trigger.blip-detail-sort-toggle {
+    background: transparent;
+    border: 0.0625rem solid var(--colors-mono-05);
+    border-radius: 999rem;
+    color: var(--colors-mono-09);
+    height: 1.75rem;
+    transition:
+      transform 180ms ease,
+      background-color 180ms ease,
+      border-color 180ms ease,
+      box-shadow 180ms ease,
+      color 180ms ease;
+    width: 1.75rem;
+
+    &:hover {
+      background: color-mix(in srgb, var(--colors-mono-03) 65%, transparent);
+      border-color: var(--colors-mono-06);
+    }
+
+    .icon {
+      color: currentColor;
+      font-size: 1.125rem;
+      transition: transform 180ms ease;
+    }
+
+    .blip-detail-sort-toggle-icon {
+      display: inline-flex;
+      transform-origin: center;
+      transition: transform 180ms ease;
+    }
+
+    &[data-direction="asc"] {
+      background: color-mix(in srgb, var(--colors-cool-blue) 8%, transparent);
+      border-color: color-mix(
+        in srgb,
+        var(--colors-cool-blue) 65%,
+        var(--colors-mono-05) 35%
+      );
+      box-shadow: 0 0 0 0.0625rem rgb(0 144 255 / 0.16);
+      color: var(--colors-cool-blue);
+
+      .blip-detail-sort-toggle-icon {
+        transform: rotate(180deg);
+      }
+    }
+  }
 }
 
 .blip-detail-updates-group {
@@ -236,143 +314,36 @@ a.blip-detail-back-link {
   display: inline-flex;
   flex-wrap: wrap;
   gap: 0.5rem;
-}
 
-@media (max-width: 30rem) {
-  .blip-detail-container {
-    max-width: 100%;
+  .blip-updates-chip {
+    align-items: center;
+    border: 1px solid var(--colors-mono-05);
+    border-radius: 999rem;
+    color: var(--colors-mono-09);
+    display: inline-flex;
+    gap: 0.375rem;
+    padding: 0.25rem 0.25rem 0.25rem 0.5rem;
   }
 
-  .blip-detail-meta-row {
-    flex-direction: column;
-    align-items: stretch;
+  .blip-updates-chip-label {
+    font-size: 0.8125rem;
+    font-weight: 500;
+    line-height: 1;
   }
 
-  .blip-detail-body {
-    gap: 1.5rem;
-  }
-
-  .blip-detail-footer-top-row,
-  .blip-detail-footer-bottom-row {
-    align-items: flex-start;
-    flex-direction: column;
-  }
-
-  .blip-detail-meta-row-end {
-    justify-content: flex-start;
-  }
-}
-
-.blip-activity-section,
-.blip-updates-section {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.blip-updates-header {
-  align-items: center;
-  display: flex;
-  justify-content: space-between;
-  gap: 0.5rem;
-}
-
-.blip-updates-chip {
-  align-items: center;
-  border: 1px solid var(--colors-mono-05);
-  border-radius: 999rem;
-  color: var(--colors-mono-09);
-  display: inline-flex;
-  gap: 0.375rem;
-  padding: 0.25rem 0.25rem 0.25rem 0.5rem;
-}
-
-.blip-updates-chip-label {
-  font-size: 0.8125rem;
-  font-weight: 500;
-  line-height: 1;
-}
-
-.blip-updates-chip-count {
-  align-items: center;
-  background: var(--colors-info);
-  border-radius: 50%;
-  color: var(--colors-mono-01);
-  display: inline-flex;
-  font-size: 0.6875rem;
-  font-weight: 600;
-  height: 1.25rem;
-  justify-content: center;
-  line-height: 1;
-  min-width: 1.25rem;
-  padding: 0 0.2rem;
-}
-
-.blip-comments-chip {
-  align-items: center;
-  border: 1px solid var(--colors-mono-05);
-  border-radius: 999rem;
-  color: var(--colors-mono-09);
-  display: inline-flex;
-  gap: 0.375rem;
-  padding: 0.25rem 0.25rem 0.25rem 0.5rem;
-}
-
-.blip-comments-chip-label {
-  font-size: 0.8125rem;
-  font-weight: 500;
-  line-height: 1;
-}
-
-.blip-comments-chip-count {
-  align-items: center;
-  background: var(--colors-info);
-  border-radius: 50%;
-  color: var(--colors-mono-01);
-  display: inline-flex;
-  font-size: 0.6875rem;
-  font-weight: 600;
-  height: 1.25rem;
-  justify-content: center;
-  line-height: 1;
-  min-width: 1.25rem;
-  padding: 0 0.2rem;
-}
-
-.icon-button.blip-detail-sort-toggle {
-  background: transparent;
-  border: 0.0625rem solid var(--colors-mono-05);
-  border-radius: 999rem;
-  color: var(--colors-mono-09);
-  height: 1.75rem;
-  width: 1.75rem;
-
-  &:hover {
-    background: color-mix(in srgb, var(--colors-mono-03) 65%, transparent);
-    border-color: var(--colors-mono-06);
-  }
-
-  .icon {
-    color: currentColor;
-    font-size: 1.125rem;
-    transition: transform 180ms ease;
-  }
-
-  &.active {
-    background: color-mix(in srgb, var(--colors-cool-blue) 8%, transparent);
-    border-color: color-mix(
-      in srgb,
-      var(--colors-cool-blue) 65%,
-      var(--colors-mono-05) 35%
-    );
-    box-shadow: 0 0 0 0.0625rem rgb(0 144 255 / 0.16);
-    color: var(--colors-cool-blue);
-  }
-}
-
-.blip-detail-sort-toggle-icon {
-  &.reversed {
-    transform: rotate(180deg);
+  .blip-updates-chip-count {
+    align-items: center;
+    background: var(--colors-info);
+    border-radius: 50%;
+    color: var(--colors-mono-01);
+    display: inline-flex;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    height: 1.25rem;
+    justify-content: center;
+    line-height: 1;
+    min-width: 1.25rem;
+    padding: 0 0.2rem;
   }
 }
 
@@ -413,6 +384,45 @@ a.blip-detail-back-link {
     );
     box-shadow: 0 0 0 0.0625rem rgb(0 144 255 / 0.22);
   }
+}
+
+@media (max-width: 30rem) {
+  .blip-detail-container {
+    max-width: 100%;
+  }
+
+  .blip-detail-meta-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .blip-detail-body {
+    gap: 1.5rem;
+  }
+
+  .blip-detail-footer-top-row,
+  .blip-detail-footer-bottom-row {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .blip-detail-meta-row-end {
+    justify-content: flex-start;
+  }
+}
+
+.blip-activity-section,
+.blip-updates-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.blip-updates-header {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
 }
 
 .blip-detail-activity-list,

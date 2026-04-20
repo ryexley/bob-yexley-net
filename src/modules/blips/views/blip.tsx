@@ -17,7 +17,6 @@ import {
 } from "solid-js"
 import { Hashtag, Icon } from "@/components/icon"
 import { Button } from "@/components/button"
-import { IconButton } from "@/components/icon-button"
 import { MarkdownRenderer as Markdown } from "@/components/markdown/renderer"
 import { useNotify } from "@/components/notification"
 import { Tooltip } from "@/components/tooltip"
@@ -226,6 +225,14 @@ export function BlipView() {
     return allUpdates.filter(update => update.published)
   })
   const rootComments = createMemo(() => store.commentsByParent(blip()?.id))
+  const visibleCommentCount = createMemo(() => {
+    const updateCommentCount = visibleUpdates().reduce(
+      (total, update) => total + store.commentsByParent(update.id).length,
+      0,
+    )
+
+    return rootComments().length + updateCommentCount
+  })
   const hasTopLevelActivity = createMemo(
     () => visibleUpdates().length > 0 || rootComments().length > 0,
   )
@@ -797,33 +804,38 @@ export function BlipView() {
                           </Show>
                         </div>
                         <div class="blip-detail-meta-row-end">
-                          <Show when={rootComments().length > 0}>
+                          <Show when={visibleCommentCount() > 0}>
                             <div class="blip-comments-chip">
                               <span class="blip-comments-chip-label">
                                 {commentThreadTr("title")}
                               </span>
                               <span class="blip-comments-chip-count">
-                                {rootComments().length}
+                                {visibleCommentCount()}
                               </span>
                             </div>
                           </Show>
                           <Show when={hasTopLevelActivity()}>
-                            <Tooltip content={topLevelSortTooltip()}>
-                              <IconButton
-                                size="xs"
-                                icon="list_arrow"
-                                class={cx("blip-detail-sort-toggle", {
+                            <Tooltip
+                              content={topLevelSortTooltip()}
+                              triggerAs="button"
+                              triggerClass={cx(
+                                "icon-button xs blip-detail-sort-toggle",
+                                {
                                   active: topLevelSortDirection() === "asc",
-                                })}
-                                iconClass={cx("blip-detail-sort-toggle-icon", {
-                                  reversed: topLevelSortDirection() === "asc",
-                                })}
-                                aria-label={topLevelSortTooltip()}
-                                onClick={() =>
+                                },
+                              )}
+                              triggerProps={{
+                                type: "button",
+                                "aria-label": topLevelSortTooltip(),
+                                "data-direction": topLevelSortDirection(),
+                                onClick: () =>
                                   setTopLevelSortDirection(direction =>
                                     direction === "desc" ? "asc" : "desc",
-                                  )
-                                }
+                                  ),
+                              }}>
+                              <Icon
+                                name="list_arrow"
+                                class="blip-detail-sort-toggle-icon"
                               />
                             </Tooltip>
                           </Show>
