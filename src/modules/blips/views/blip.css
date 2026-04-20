@@ -1,4 +1,10 @@
 .blip-detail-page {
+  --blip-update-base-color: var(--colors-info);
+  --blip-detail-update-surface: color-mix(
+    in srgb,
+    var(--colors-mono-02) 95%,
+    var(--blip-update-base-color) 5%
+  );
   display: flex;
   justify-content: center;
   min-height: auto;

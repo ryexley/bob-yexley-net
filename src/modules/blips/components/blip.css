@@ -139,29 +139,33 @@
       flex-shrink: 0;
       gap: 0.3rem;
       margin-left: auto;
-    }
-
-    .updates-indicator {
-      align-items: center;
-      background: transparent;
-      border: 1px solid var(--colors-mono-05);
-      border-radius: 999px;
-      color: var(--colors-mono-08);
-      cursor: pointer;
-      display: inline-flex;
-      font-size: 0.75rem;
-      gap: 0.25rem;
-      padding: 0.1rem 0.45rem;
-      transition: var(--transitions-primary);
-
-      &:hover {
-        border-color: var(--colors-links);
-        color: var(--colors-links);
+      
+      .tooltip-trigger {
+        display: inline-flex;
       }
 
-      .icon {
-        color: currentcolor;
-        font-size: 0.9rem;
+      .activity-indicator {
+        align-items: center;
+        background: transparent;
+        border: 1px solid var(--colors-mono-05);
+        border-radius: 999px;
+        color: var(--colors-mono-08);
+        cursor: pointer;
+        display: inline-flex;
+        font-size: 0.75rem;
+        gap: 0.25rem;
+        padding: 0.1rem 0.45rem;
+        transition: var(--transitions-primary);
+
+        &:hover {
+          border-color: var(--colors-links);
+          color: var(--colors-links);
+        }
+
+        .icon {
+          color: currentcolor;
+          font-size: 0.9rem;
+        }
       }
     }
 

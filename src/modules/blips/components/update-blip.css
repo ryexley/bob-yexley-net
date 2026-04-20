@@ -6,7 +6,7 @@
 }
 
 .update-blip {
-  background: color-mix(in srgb, var(--colors-mono-02) 95%, var(--colors-info) 5%);
+  background: var(--blip-detail-update-surface);
   border: 1px solid var(--colors-mono-04);
   border-radius: 0.5rem;
   display: flex;

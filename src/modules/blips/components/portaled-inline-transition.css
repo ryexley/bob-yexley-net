@@ -1,0 +1,34 @@
+.blip-inline-transition {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr);
+  width: 100%;
+
+  > * {
+    min-height: 0;
+  }
+}
+
+.blip-inline-transition-enter-active,
+.blip-inline-transition-exit-active {
+  overflow: clip;
+  transition:
+    grid-template-rows 250ms ease-in-out,
+    opacity 250ms ease-in-out,
+    transform 250ms ease-in-out;
+  will-change: grid-template-rows, opacity, transform;
+}
+
+.blip-inline-transition-enter,
+.blip-inline-transition-exit-to {
+  grid-template-rows: minmax(0, 0fr);
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-0.35rem);
+}
+
+.blip-inline-transition-enter-to,
+.blip-inline-transition-exit {
+  grid-template-rows: minmax(0, 1fr);
+  opacity: 1;
+  transform: translateY(0);
+}

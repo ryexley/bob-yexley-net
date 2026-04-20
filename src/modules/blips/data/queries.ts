@@ -38,6 +38,7 @@ type ViewUpdateRow = Omit<Blip, "tags" | "updates_count"> & {
 type ViewBlipRow = Omit<Blip, "tags" | "updates_count"> & {
   tags?: ViewTagValue[] | null
   updates_count?: number | null
+  comments_count?: number | null
   updates?: ViewUpdateRow[] | null
   reactions_count?: number | null
   my_reaction_count?: number | null
@@ -284,6 +285,7 @@ const VIEW_BLIPS_SELECT = [
   "allow_comments",
   "tags",
   "updates_count",
+  "comments_count",
   "reactions_count",
   "my_reaction_count",
   "reactions",
@@ -333,6 +335,7 @@ const mapViewBlipRow = (row: ViewBlipRow): Blip => ({
   allow_comments: row.allow_comments ?? true,
   tags: mapTagNames(row.tags),
   updates_count: row.updates_count ?? 0,
+  comments_count: row.comments_count ?? 0,
   reactions_count: row.reactions_count ?? 0,
   my_reaction_count: row.my_reaction_count ?? 0,
   reactions: mapReactionSummaries(row.reactions),
@@ -509,6 +512,7 @@ export const mapViewCommentRows = (rows?: ViewCommentRow[] | null): Blip[] =>
     allow_comments: row.allow_comments ?? true,
     tags: [],
     updates_count: 0,
+    comments_count: 0,
     reactions_count: 0,
     my_reaction_count: 0,
     reactions: [],
@@ -530,6 +534,7 @@ export const mapViewUpdateRows = (rows?: ViewUpdateRow[] | null): ThreadedBlip[]
     allow_comments: row.allow_comments ?? true,
     tags: mapTagNames(row.tags),
     updates_count: row.updates_count ?? 0,
+    comments_count: 0,
     reactions_count: row.reactions_count ?? 0,
     my_reaction_count: row.my_reaction_count ?? 0,
     reactions: mapReactionSummaries(row.reactions),

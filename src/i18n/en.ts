@@ -232,7 +232,9 @@ export const en = {
             label: "Status",
           },
           trusted: {
-            label: "Trusted commenter",
+            label: "Trusted",
+            tooltip: "Trusted active users can publish comments without going through moderation.",
+            tooltipAriaLabel: "What trusted means",
           },
           pin: {
             label: "Reset PIN",
@@ -291,6 +293,10 @@ export const en = {
         },
         fields: {
           joinedAt: "Joined",
+          trusted: {
+            trustedTooltip: "This visitor is trusted",
+            untrustedTooltip: "This visitor is not yet trusted",
+          },
         },
         values: {
           unavailable: "Unavailable",
@@ -392,6 +398,8 @@ export const en = {
         actions: {
           readMore: "Read more",
           addReaction: "Add reaction",
+          updatesTooltip: "{count, plural, one {# update} other {# updates}}",
+          commentsTooltip: "{count, plural, one {# comment} other {# comments}}",
         },
         readMoreDialog: {
           closeAriaLabel: "Close dialog",
@@ -483,9 +491,15 @@ export const en = {
           disableComments: "Disable comments",
           toolbarAriaLabel: "Comment actions",
           edit: "Edit",
+          editTooltip: "Edit comment",
           delete: "Delete",
+          deleteTooltip: "Delete comment",
           approve: "Approve",
+          approveTooltip: "Approve and publish comment",
+          unpublish: "Unpublish",
+          unpublishTooltip: "Unpublish comment",
           reject: "Reject",
+          rejectTooltip: "Reject comment",
         },
         confirmDelete: {
           title: "Delete comment?",
@@ -495,6 +509,9 @@ export const en = {
             confirming: "Deleting...",
             cancel: "Cancel",
           },
+        },
+        errors: {
+          moderationFailed: "Unable to update this comment right now.",
         },
       },
     },

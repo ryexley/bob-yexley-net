@@ -7,7 +7,6 @@ import {
   Show,
   splitProps,
 } from "solid-js"
-import { Portal } from "solid-js/web"
 import {
   MarkdownEditor,
   type MarkdownEditorBelowEditorProps,
@@ -31,6 +30,7 @@ import { useSupabase } from "@/context/services-context"
 import { useAuth } from "@/context/auth-context"
 import { useViewport } from "@/context/viewport"
 import { BLIP_TYPES, blipId, blipStore, type Blip } from "@/modules/blips/data"
+import { PortaledInlineTransition } from "@/modules/blips/components/portaled-inline-transition"
 import "./blip-update-editor.css"
 
 type BlipUpdateEditorProps = {
@@ -92,15 +92,10 @@ export function BlipUpdateEditor(props: BlipUpdateEditorProps) {
   const [statusFading, setStatusFading] = createSignal(false)
   const [editorFocusNonce, setEditorFocusNonce] = createSignal(0)
   const [keyboardInsetPx, setKeyboardInsetPx] = createSignal(0)
-  const [isEditorMounted, setIsEditorMounted] = createSignal(local.open)
-  const [isEditorOpen, setIsEditorOpen] = createSignal(false)
-  const [skipClosePersist, setSkipClosePersist] = createSignal(false)
 
   let hideStatusTimeout: ReturnType<typeof setTimeout> | null = null
   let fadeStatusTimeout: ReturnType<typeof setTimeout> | null = null
   let keyboardDismissTimeout: ReturnType<typeof setTimeout> | null = null
-  let closeAnimationTimeout: ReturnType<typeof setTimeout> | null = null
-  let openAnimationFrameId: number | null = null
   let lastHandledExternalFocusNonce: number | undefined
   let lastHandledCloseRequestNonce: number | undefined
   let hasOpenedAtLeastOnce = false
@@ -134,22 +129,6 @@ export function BlipUpdateEditor(props: BlipUpdateEditorProps) {
     if (dismissKeyboardCleanupHandle) {
       dismissKeyboardCleanupHandle.cancel()
       dismissKeyboardCleanupHandle = null
-    }
-  }
-
-  const clearCloseAnimationTimeout = () => {
-    if (closeAnimationTimeout) {
-      clearTimeout(closeAnimationTimeout)
-      closeAnimationTimeout = null
-    }
-  }
-
-  const clearOpenAnimationFrame = () => {
-    if (openAnimationFrameId !== null) {
-      if (typeof window !== "undefined") {
-        window.cancelAnimationFrame(openAnimationFrameId)
-      }
-      openAnimationFrameId = null
     }
   }
 
@@ -341,24 +320,10 @@ export function BlipUpdateEditor(props: BlipUpdateEditorProps) {
         }
 
         hasOpenedAtLeastOnce = true
-        setIsEditorMounted(true)
         clearKeyboardDismissTimeout()
         clearDismissKeyboardCleanup()
-        clearCloseAnimationTimeout()
-        clearOpenAnimationFrame()
-        setSkipClosePersist(false)
-        setIsEditorOpen(false)
-
+        setKeyboardInsetPx(0)
         focusBridge.scheduleFocusAfterOpen()
-
-        if (typeof window !== "undefined") {
-          openAnimationFrameId = window.requestAnimationFrame(() => {
-            setIsEditorOpen(true)
-            openAnimationFrameId = null
-          })
-        } else {
-          setIsEditorOpen(true)
-        }
       },
     ),
   )
@@ -417,22 +382,6 @@ export function BlipUpdateEditor(props: BlipUpdateEditorProps) {
           debouncedDbSave.cancel()
           focusBridge.clearScheduledFocus()
           clearStatusTimeouts()
-          setIsEditorOpen(false)
-
-          clearCloseAnimationTimeout()
-          closeAnimationTimeout = setTimeout(() => {
-            setIsEditorMounted(false)
-            setCurrentUpdateId(blipId())
-            setContent("")
-            setIsDirty(false)
-            setIsPublished(true)
-            setHasPersistedCurrentUpdate(false)
-            setSaveStatus("idle")
-            setShowStatus(false)
-            setStatusFading(false)
-            setSkipClosePersist(false)
-            closeAnimationTimeout = null
-          }, ANIMATION_MS)
 
           return
         }
@@ -446,8 +395,6 @@ export function BlipUpdateEditor(props: BlipUpdateEditorProps) {
     clearDismissKeyboardCleanup()
     focusBridge.clearScheduledFocus()
     clearStatusTimeouts()
-    clearCloseAnimationTimeout()
-    clearOpenAnimationFrame()
     restoreEditorDocumentInteractionState()
   })
 
@@ -533,7 +480,6 @@ export function BlipUpdateEditor(props: BlipUpdateEditorProps) {
       onConfirm: async () => {
         const closeAfterDelete = () => {
           debouncedDbSave.cancel()
-          setSkipClosePersist(true)
           local.onRequestClose?.()
         }
 
@@ -618,7 +564,6 @@ export function BlipUpdateEditor(props: BlipUpdateEditorProps) {
 
   const closeAndDiscardDraft = async () => {
     debouncedDbSave.cancel()
-    setSkipClosePersist(true)
 
     if (hasPersistedCurrentUpdate()) {
       const updateId = currentUpdateId()
@@ -657,13 +602,23 @@ export function BlipUpdateEditor(props: BlipUpdateEditorProps) {
           await closeAndDiscardDraft()
         } catch (error) {
           console.error("Error discarding blip update draft:", error)
-          setSkipClosePersist(false)
           setSaveStatus("error")
           setShowStatus(true)
           setStatusFading(false)
         }
       },
     })
+  }
+
+  const handleDesktopAfterExit = () => {
+    setCurrentUpdateId(blipId())
+    setContent("")
+    setIsDirty(false)
+    setIsPublished(true)
+    setHasPersistedCurrentUpdate(false)
+    setSaveStatus("idle")
+    setShowStatus(false)
+    setStatusFading(false)
   }
 
   createEffect(() => {
@@ -708,7 +663,7 @@ export function BlipUpdateEditor(props: BlipUpdateEditorProps) {
   }
 
   const EditorControls = (ctx: MarkdownEditorBelowEditorProps) => {
-    const statusContext = ctx.statusContext as StatusContext | undefined
+    const statusContext = () => ctx.statusContext as StatusContext | undefined
 
     return (
       <div class="blip-editor-below-editor">
@@ -754,25 +709,25 @@ export function BlipUpdateEditor(props: BlipUpdateEditorProps) {
                   icon="delete"
                   class="blip-action-delete"
                   aria-label={trDetail("updates.actions.delete")}
-                  disabled={!statusContext?.canDelete}
-                  onClick={statusContext?.handleDelete}
+                  disabled={!statusContext()?.canDelete}
+                  onClick={statusContext()?.handleDelete}
                   onMouseDown={preventEditorBlur}
                 />
                 <IconButton
                   size="xs"
                   icon={
-                    statusContext?.isPublished
+                    statusContext()?.isPublished
                       ? "check_circle"
                       : "arrow_upload_ready"
                   }
-                  disabled={!statusContext?.canTogglePublish}
-                  onClick={statusContext?.handleTogglePublish}
+                  disabled={!statusContext()?.canTogglePublish}
+                  onClick={statusContext()?.handleTogglePublish}
                   class={cx("blip-action-publish", {
-                    published: statusContext?.isPublished,
-                    unpublished: !statusContext?.isPublished,
+                    published: statusContext()?.isPublished,
+                    unpublished: !statusContext()?.isPublished,
                   })}
                   aria-label={
-                    statusContext?.isPublished
+                    statusContext()?.isPublished
                       ? trEditor("actions.unpublish")
                       : trEditor("actions.publish")
                   }
@@ -783,8 +738,8 @@ export function BlipUpdateEditor(props: BlipUpdateEditorProps) {
                   icon="cloud_upload"
                   class="blip-action-save"
                   aria-label={trEditor("actions.save")}
-                  disabled={!statusContext?.canSave}
-                  onClick={statusContext?.handleSave}
+                  disabled={!statusContext()?.canSave}
+                  onClick={statusContext()?.handleSave}
                   onMouseDown={preventEditorBlur}
                 />
               </div>
@@ -798,13 +753,11 @@ export function BlipUpdateEditor(props: BlipUpdateEditorProps) {
   const UpdateEditorSurface = (props: {
     updateId: string
     useDialogTitle?: boolean
-    isOpen: boolean
   }) => {
     const showDesktopHeader = !isMobileViewport()
 
     return (
       <EditorShell
-        transitionClass="blip-update-editor-shell"
         shellClass="blip-update-editor-surface"
         bodyClass="blip-update-editor-body"
         focusProxyRef={focusBridge.setFocusProxyRef}
@@ -824,7 +777,7 @@ export function BlipUpdateEditor(props: BlipUpdateEditorProps) {
             </div>
           ) : undefined
         }
-        isOpen={props.isOpen}>
+      >
         <form
           class="blip-editor-form blip-update-editor-form"
           onSubmit={event => {
@@ -875,23 +828,20 @@ export function BlipUpdateEditor(props: BlipUpdateEditorProps) {
         />
       </Show>
       <Show
-        when={isEditorMounted() ? currentUpdateId() : null}
-        keyed>
-        {updateId => (
-          <Show
-            when={isMobileViewport()}
-            fallback={
-              local.desktopMount ? (
-                <Portal mount={local.desktopMount}>
-                  <div class="blip-update-editor-layer">
-                    <UpdateEditorSurface
-                      updateId={updateId}
-                      isOpen={isEditorOpen()}
-                    />
-                  </div>
-                </Portal>
-              ) : null
-            }>
+        when={isMobileViewport()}
+        fallback={
+          <PortaledInlineTransition
+            mount={local.desktopMount}
+            open={local.open}
+            class="blip-update-editor-layer"
+            onAfterExit={handleDesktopAfterExit}>
+            <UpdateEditorSurface updateId={currentUpdateId() ?? blipId()} />
+          </PortaledInlineTransition>
+        }>
+        <Show
+          when={local.open ? currentUpdateId() : null}
+          keyed>
+          {updateId => (
             <Dialog
               open={local.open}
               onOpenChange={open => {
@@ -912,12 +862,11 @@ export function BlipUpdateEditor(props: BlipUpdateEditorProps) {
                 <UpdateEditorSurface
                   updateId={updateId}
                   useDialogTitle
-                  isOpen
                 />
               </div>
             </Dialog>
-          </Show>
-        )}
+          )}
+        </Show>
       </Show>
     </>
   )

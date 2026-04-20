@@ -3,6 +3,7 @@ import { Icon } from "@/components/icon"
 import { IconButton } from "@/components/icon-button"
 import { MarkdownRenderer as Markdown } from "@/components/markdown/renderer"
 import { useNotify } from "@/components/notification"
+import { Tooltip } from "@/components/tooltip"
 import { useAuth } from "@/context/auth-context"
 import { useSupabase } from "@/context/services-context"
 import { useConfirm } from "@/components/confirm-dialog"
@@ -42,21 +43,9 @@ const trCommentEditor = ptr("blips.components.commentEditor")
 const COMMENT_KIND_ICON = "forum"
 
 const isPendingComment = (comment: Blip) =>
-  !comment.published || comment.moderation_status === "pending"
+  comment.moderation_status === "pending"
 
 const commentsEnabled = (blip: Blip) => blip.allow_comments !== false
-
-const getWritableBlipFields = (blip: Blip): Partial<Blip> => ({
-  id: blip.id,
-  parent_id: blip.parent_id,
-  user_id: blip.user_id,
-  title: blip.title,
-  content: blip.content,
-  published: blip.published,
-  moderation_status: blip.moderation_status,
-  blip_type: blip.blip_type,
-  allow_comments: blip.allow_comments,
-})
 
 type BlipCommentCardProps = {
   comment: Blip
@@ -66,6 +55,7 @@ type BlipCommentCardProps = {
   onDelete: (comment: Blip) => void
   onApprove: (comment: Blip) => void
   onReject: (comment: Blip) => void
+  onUnpublish: (comment: Blip) => void
 }
 
 function BlipCommentCard(props: BlipCommentCardProps) {
@@ -221,45 +211,66 @@ function BlipCommentCard(props: BlipCommentCardProps) {
               role="toolbar"
               aria-label={tr("actions.toolbarAriaLabel")}>
               <Show when={canEdit()}>
-                <IconButton
-                  size="xs"
-                  icon="edit_note"
-                  class="edit"
-                  aria-label={tr("actions.edit")}
-                  onClick={() =>
-                    composer.openEditComment(props.parentBlipId, props.comment.id)
-                  }
-                />
+                <Tooltip content={tr("actions.editTooltip")}>
+                  <IconButton
+                    size="xs"
+                    icon="edit_note"
+                    class="edit"
+                    aria-label={tr("actions.edit")}
+                    onClick={() =>
+                      composer.openEditComment(props.parentBlipId, props.comment.id)
+                    }
+                  />
+                </Tooltip>
               </Show>
               <Show when={canDelete()}>
-                <IconButton
-                  size="xs"
-                  icon="delete"
-                  class="delete"
-                  aria-label={tr("actions.delete")}
-                  onClick={() => props.onDelete(props.comment)}
-                />
+                <Tooltip content={tr("actions.deleteTooltip")}>
+                  <IconButton
+                    size="xs"
+                    icon="delete"
+                    class="delete"
+                    aria-label={tr("actions.delete")}
+                    onClick={() => props.onDelete(props.comment)}
+                  />
+                </Tooltip>
               </Show>
               <RequiresAdmin>
+                <Show when={props.comment.published}>
+                  <Tooltip content={tr("actions.unpublishTooltip")}>
+                    <IconButton
+                      size="xs"
+                      icon="check_circle"
+                      class="unpublish"
+                      aria-label={tr("actions.unpublish")}
+                      onClick={() => {
+                        props.onUnpublish(props.comment)
+                      }}
+                    />
+                  </Tooltip>
+                </Show>
                 <Show when={props.comment.moderation_status === "pending"}>
-                  <IconButton
-                    size="xs"
-                    icon="check_circle"
-                    class="approve"
-                    aria-label={tr("actions.approve")}
-                    onClick={() => {
-                      props.onApprove(props.comment)
-                    }}
-                  />
-                  <IconButton
-                    size="xs"
-                    icon="cancel"
-                    class="reject"
-                    aria-label={tr("actions.reject")}
-                    onClick={() => {
-                      props.onReject(props.comment)
-                    }}
-                  />
+                  <Tooltip content={tr("actions.approveTooltip")}>
+                    <IconButton
+                      size="xs"
+                      icon="check_circle"
+                      class="approve"
+                      aria-label={tr("actions.approve")}
+                      onClick={() => {
+                        props.onApprove(props.comment)
+                      }}
+                    />
+                  </Tooltip>
+                  <Tooltip content={tr("actions.rejectTooltip")}>
+                    <IconButton
+                      size="xs"
+                      icon="cancel"
+                      class="reject"
+                      aria-label={tr("actions.reject")}
+                      onClick={() => {
+                        props.onReject(props.comment)
+                      }}
+                    />
+                  </Tooltip>
                 </Show>
               </RequiresAdmin>
             </div>
@@ -298,6 +309,7 @@ export function BlipCommentListItem(props: BlipCommentListItemProps) {
   const auth = useAuth()
   const supabase = useSupabase()
   const confirm = useConfirm()
+  const notify = useNotify()
   const store = blipStore(supabase.client, { subscribe: false })
   const canModerate = createMemo(() => auth.isAuthenticated() && auth.isAdmin())
   const avatarSide = createMemo<"left" | "right">(() =>
@@ -316,32 +328,67 @@ export function BlipCommentListItem(props: BlipCommentListItemProps) {
   }
 
   const handleApprove = async (comment: Blip) => {
-    const result = await store.upsert({
-      ...getWritableBlipFields(comment),
-      published: true,
-      moderation_status: "approved",
-    })
+    try {
+      const result = await store.update(comment.id, {
+        published: true,
+        moderation_status: "approved",
+        updated_at: new Date().toISOString(),
+      })
+      if (result.error || !result.data) {
+        throw new Error(result.error ?? "Failed to approve comment")
+      }
 
-    if (result.data) {
       patchCommentCache(comment, {
         published: true,
         moderation_status: "approved",
       })
+    } catch (error) {
+      console.error("Error approving comment:", error)
+      notify.error({ content: tr("errors.moderationFailed") })
     }
   }
 
   const handleReject = async (comment: Blip) => {
-    const result = await store.upsert({
-      ...getWritableBlipFields(comment),
-      published: false,
-      moderation_status: "rejected",
-    })
+    try {
+      const result = await store.update(comment.id, {
+        published: false,
+        moderation_status: "rejected",
+        updated_at: new Date().toISOString(),
+      })
 
-    if (result.data) {
+      if (result.error || !result.data) {
+        throw new Error(result.error ?? "Failed to reject comment")
+      }
+
       patchCommentCache(comment, {
         published: false,
         moderation_status: "rejected",
       })
+    } catch (error) {
+      console.error("Error rejecting comment:", error)
+      notify.error({ content: tr("errors.moderationFailed") })
+    }
+  }
+
+  const handleUnpublish = async (comment: Blip) => {
+    try {
+      const result = await store.update(comment.id, {
+        published: false,
+        moderation_status: "pending",
+        updated_at: new Date().toISOString(),
+      })
+
+      if (result.error || !result.data) {
+        throw new Error(result.error ?? "Failed to unpublish comment")
+      }
+
+      patchCommentCache(comment, {
+        published: false,
+        moderation_status: "pending",
+      })
+    } catch (error) {
+      console.error("Error unpublishing comment:", error)
+      notify.error({ content: tr("errors.moderationFailed") })
     }
   }
 
@@ -371,6 +418,9 @@ export function BlipCommentListItem(props: BlipCommentListItemProps) {
       }}
       onReject={comment => {
         void handleReject(comment)
+      }}
+      onUnpublish={comment => {
+        void handleUnpublish(comment)
       }}
     />
   )

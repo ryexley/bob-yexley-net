@@ -32,6 +32,7 @@ export const blipSchema = z
     blip_type: blipTypeSchema,
     allow_comments: z.boolean().default(true).optional(),
     updates_count: z.number().int().nonnegative().optional(),
+    comments_count: z.number().int().nonnegative().optional(),
     published: z.boolean(),
     moderation_status: z.enum([
       "auto-approved",

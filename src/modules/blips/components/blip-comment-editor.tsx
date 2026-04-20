@@ -1,5 +1,4 @@
-import { createEffect, createMemo, createSignal, onCleanup, onMount, Show } from "solid-js"
-import { Portal } from "solid-js/web"
+import { createEffect, createMemo, createSignal, onCleanup, Show } from "solid-js"
 import {
   MarkdownEditor,
   type MarkdownEditorBelowEditorProps,
@@ -14,6 +13,7 @@ import { useViewport } from "@/context/viewport"
 import { EditorShell } from "@/modules/blips/components/editor-shell"
 import { UserAvatar } from "@/modules/users/components/user-avatar"
 import { BLIP_TYPES, blipId, blipStore, type Blip } from "@/modules/blips/data"
+import { PortaledInlineTransition } from "@/modules/blips/components/portaled-inline-transition"
 import { TIME } from "@/util/enums"
 import { clsx as cx } from "@/util"
 import { ptr } from "@/i18n"
@@ -41,7 +41,6 @@ type SaveStatus = "idle" | "saving" | "saved" | "error"
 
 const tr = ptr("blips.components.commentEditor")
 const MOBILE_MAX_WIDTH = 768
-const ANIMATION_MS = 260
 
 export function BlipCommentEditor(props: BlipCommentEditorProps) {
   const auth = useAuth()
@@ -55,13 +54,9 @@ export function BlipCommentEditor(props: BlipCommentEditorProps) {
   const [saveStatus, setSaveStatus] = createSignal<SaveStatus>("idle")
   const [showStatus, setShowStatus] = createSignal(false)
   const [statusFading, setStatusFading] = createSignal(false)
-  const [isDesktopEditorMounted, setIsDesktopEditorMounted] = createSignal(false)
-  const [isDesktopEditorOpen, setIsDesktopEditorOpen] = createSignal(false)
 
   let hideStatusTimeout: ReturnType<typeof setTimeout> | null = null
   let fadeStatusTimeout: ReturnType<typeof setTimeout> | null = null
-  let closeAnimationTimeout: ReturnType<typeof setTimeout> | null = null
-  let openAnimationFrameId: number | null = null
   let lastHandledCloseRequestNonce: number | undefined
 
   const isMobileViewport = createMemo(() => viewport.width() <= MOBILE_MAX_WIDTH)
@@ -115,20 +110,6 @@ export function BlipCommentEditor(props: BlipCommentEditorProps) {
     }
   }
 
-  const clearOpenAnimationFrame = () => {
-    if (openAnimationFrameId !== null && typeof window !== "undefined") {
-      window.cancelAnimationFrame(openAnimationFrameId)
-      openAnimationFrameId = null
-    }
-  }
-
-  const clearCloseAnimationTimeout = () => {
-    if (closeAnimationTimeout) {
-      clearTimeout(closeAnimationTimeout)
-      closeAnimationTimeout = null
-    }
-  }
-
   const showStatusWithFade = () => {
     clearStatusTimeouts()
     setShowStatus(true)
@@ -154,27 +135,6 @@ export function BlipCommentEditor(props: BlipCommentEditorProps) {
   }
 
   createEffect(() => {
-    if (!props.open || isMobileViewport()) {
-      return
-    }
-
-    clearCloseAnimationTimeout()
-    clearOpenAnimationFrame()
-    setIsDesktopEditorMounted(true)
-    setIsDesktopEditorOpen(false)
-
-    if (typeof window !== "undefined") {
-      openAnimationFrameId = window.requestAnimationFrame(() => {
-        setIsDesktopEditorOpen(true)
-        openAnimationFrameId = null
-      })
-      return
-    }
-
-    setIsDesktopEditorOpen(true)
-  })
-
-  createEffect(() => {
     if (props.open || isMobileViewport()) {
       if (!props.open && isMobileViewport()) {
         clearStatusTimeouts()
@@ -185,14 +145,6 @@ export function BlipCommentEditor(props: BlipCommentEditorProps) {
     }
 
     clearStatusTimeouts()
-    setIsDesktopEditorOpen(false)
-    clearCloseAnimationTimeout()
-    closeAnimationTimeout = setTimeout(() => {
-      setIsDesktopEditorMounted(false)
-      resetEditorState()
-      props.onAfterClose?.()
-      clearCloseAnimationTimeout()
-    }, ANIMATION_MS)
   })
 
   createEffect(() => {
@@ -211,12 +163,6 @@ export function BlipCommentEditor(props: BlipCommentEditorProps) {
     }
 
     props.onRequestClose?.()
-  })
-
-  onMount(() => {
-    if (props.open && !isMobileViewport()) {
-      setIsDesktopEditorMounted(true)
-    }
   })
 
   const handleSave = async () => {
@@ -418,16 +364,14 @@ export function BlipCommentEditor(props: BlipCommentEditorProps) {
   }
 
   const DesktopEditorSurface = () => (
-    <div class="inline-shell" classList={{ "is-open": isDesktopEditorOpen() }}>
+    <div class="inline-shell">
       <div class="bubble">
         <EditorShell
-          transitionClass="blip-comment-editor-shell"
           shellClass="blip-comment-editor-surface"
           bodyClass="blip-comment-editor-body"
           focusProxyAriaLabel={tr("placeholder")}
           icon="add_comment"
           showFocusProxy={false}
-          isOpen={isDesktopEditorOpen()}
           Header={
             <div class="blip-comment-editor-top-row">
               <div class="blip-comment-editor-mode-label">{tr("modeLabel")}</div>
@@ -481,30 +425,27 @@ export function BlipCommentEditor(props: BlipCommentEditorProps) {
 
   onCleanup(() => {
     clearStatusTimeouts()
-    clearOpenAnimationFrame()
-    clearCloseAnimationTimeout()
   })
 
   return (
     <Show
-      when={
-        (isMobileViewport() ? props.open : isDesktopEditorMounted())
-          ? commentId()
-          : null
-      }
-      keyed>
-      {_commentId => (
-        <Show
-          when={isMobileViewport()}
-          fallback={
-            props.desktopMount ? (
-              <Portal mount={props.desktopMount}>
-                <div class="blip-comment-editor-layer">
-                  <DesktopEditorSurface />
-                </div>
-              </Portal>
-            ) : null
-          }>
+      when={isMobileViewport()}
+      fallback={
+        <PortaledInlineTransition
+          mount={props.desktopMount}
+          open={props.open}
+          class="blip-comment-editor-layer"
+          onAfterExit={() => {
+            resetEditorState()
+            props.onAfterClose?.()
+          }}>
+          <DesktopEditorSurface />
+        </PortaledInlineTransition>
+      }>
+      <Show
+        when={props.open ? commentId() : null}
+        keyed>
+        {_commentId => (
           <Dialog
             open={props.open}
             onOpenChange={open => {
@@ -533,8 +474,8 @@ export function BlipCommentEditor(props: BlipCommentEditorProps) {
               />
             </DialogBody>
           </Dialog>
-        </Show>
-      )}
+        )}
+      </Show>
     </Show>
   )
 }

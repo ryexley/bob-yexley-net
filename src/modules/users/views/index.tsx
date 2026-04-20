@@ -6,6 +6,7 @@ import { Icon, LoadingSpinner } from "@/components/icon"
 import { Input } from "@/components/input"
 import { Select, type SelectOption } from "@/components/select"
 import { Stack } from "@/components/stack"
+import { Tooltip } from "@/components/tooltip"
 import { useAuth } from "@/context/auth-context"
 import { RequiresSuperUser } from "@/modules/auth/components/requires-role"
 import { UserAvatar } from "@/modules/users/components/user-avatar"
@@ -394,6 +395,20 @@ export function UsersView() {
                           class="users-view-role-text"
                           data-role={user.role}>
                           {trSharedRoles(user.role)}
+                          <Show when={user.role === "visitor"}>
+                            <Tooltip
+                              content={
+                                user.trusted
+                                  ? tr("fields.trusted.trustedTooltip")
+                                  : tr("fields.trusted.untrustedTooltip")
+                              }>
+                              <Icon
+                                name={user.trusted ? "verified" : "verified_off"}
+                                class="users-view-role-trust-icon"
+                                data-trusted={user.trusted ? "true" : "false"}
+                              />
+                            </Tooltip>
+                          </Show>
                         </span>
                       </div>
                     </button>

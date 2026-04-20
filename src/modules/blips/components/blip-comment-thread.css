@@ -132,13 +132,14 @@
   min-width: 0;
   padding: 0.5rem 0.75rem;
   position: relative;
-  transition:
-    border-color 220ms ease,
-    box-shadow 220ms ease,
-    background-color 220ms ease;
+  transition: var(--transitions-primary);
 
   &.pending {
-    opacity: 0.72;
+    opacity: 0.35;
+  }
+
+  &.pending:is(:hover, :focus-within) {
+    opacity: 1;
   }
 
   &::after {
@@ -234,7 +235,7 @@
     padding: 0.1rem 0.45rem;
 
     &.pending {
-      color: var(--colors-warning);
+      color: var(--colors-arctic-lime);
     }
 
     &.rejected {
@@ -256,6 +257,10 @@
     pointer-events: none;
     transition: var(--transitions-primary);
 
+    .tooltip-trigger {
+      display: inline-flex;
+    }
+
     .delete {
       .icon {
         color: var(--colors-danger);
@@ -270,6 +275,12 @@
     }
 
     .approve {
+      .icon {
+        color: var(--colors-success);
+      }
+    }
+
+    .unpublish {
       .icon {
         color: var(--colors-success);
       }
@@ -293,7 +304,7 @@
   }
 
   &.update-comments {
-    border-left: var(--comment-thread-line-width) solid var(--colors-mono-02);
+    border-left: var(--comment-thread-line-width) solid var(--blip-update-base-color);
     padding-left: 0.75rem;
   }
 }

@@ -2,7 +2,9 @@ import { createEffect, createMemo, createSignal, onCleanup, Show } from "solid-j
 import { Drawer, DrawerPosition } from "@/components/drawer"
 import { Button } from "@/components/button"
 import { Icon } from "@/components/icon"
+import { InfoTooltip } from "@/components/info-tooltip"
 import { useNotify } from "@/components/notification"
+import { Switch } from "@/components/switch"
 import { Pin } from "@/modules/auth/components/pin"
 import { UserAvatar } from "@/modules/users/components/user-avatar"
 import { UserRoleSegmentedControl } from "@/modules/users/components/user-role-segmented-control"
@@ -51,6 +53,10 @@ export function UserEditDrawer(props: UserEditDrawerProps) {
   const joinedAt = createMemo(() => {
     const timestamp = currentUser()?.createdAt
     return timestamp ? formatLongDate(timestamp) ?? tr("values.unavailable") : tr("values.unavailable")
+  })
+  const isTrustedManagedByRole = createMemo(() => {
+    const currentRole = role()
+    return currentRole === "admin" || currentRole === "superuser"
   })
   const isDirty = createMemo(() => {
     const user = currentUser()
@@ -281,15 +287,20 @@ export function UserEditDrawer(props: UserEditDrawerProps) {
               />
             </div>
 
-            <label class="user-edit-drawer-checkbox-field">
-              <input
-                type="checkbox"
-                checked={trusted() || role() === "admin" || role() === "superuser"}
-                disabled={isSaving() || role() === "admin" || role() === "superuser"}
-                onChange={event => setTrusted(event.currentTarget.checked)}
-              />
-              <span>{tr("fields.trusted.label")}</span>
-            </label>
+            <Switch
+              checked={trusted() || isTrustedManagedByRole()}
+              disabled={isSaving() || isTrustedManagedByRole()}
+              onChange={setTrusted}
+              label={tr("fields.trusted.label")}
+              containerClass="user-edit-drawer-trusted"
+              endContent={
+                <InfoTooltip
+                  info={tr("fields.trusted.tooltip")}
+                  contentClass="user-edit-drawer-trusted-tooltip"
+                  aria-label={tr("fields.trusted.tooltipAriaLabel")}
+                />
+              }
+            />
 
             <div class="user-edit-drawer-fieldset">
               <Pin

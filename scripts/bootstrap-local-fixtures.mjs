@@ -375,10 +375,161 @@ function buildAuthoredFixtureData() {
     title: null,
     blipType: "update",
     ...blip,
+    published: true,
+    moderationStatus: "approved",
+  }))
+
+  const comments = [
+    {
+      ownerSlug: "harry-potter",
+      parentId: visitorRoots[5].id,
+      createdAt: "2026-04-03T16:26:00.000Z",
+      updatedAt: "2026-04-03T16:28:00.000Z",
+      content:
+        "aw dang, that worked nicely.",
+      published: true,
+      moderationStatus: "approved",
+    },
+    {
+      ownerSlug: "albus-dumbledore",
+      parentId: visitorRoots[5].id,
+      createdAt: "2026-04-03T16:12:00.000Z",
+      updatedAt: "2026-04-03T16:12:00.000Z",
+      content:
+        "This is the second comment, and this one is associated with the root blip, not an update.",
+      published: true,
+      moderationStatus: "approved",
+    },
+    {
+      ownerSlug: "neville-longbottom",
+      parentId: visitorRoots[5].id,
+      createdAt: "2026-04-03T16:24:00.000Z",
+      updatedAt: "2026-04-03T16:25:00.000Z",
+      content:
+        "Still waiting on a moderator to review this one, but it is helpful for testing the pending comment state.",
+      published: false,
+      moderationStatus: "pending",
+    },
+    {
+      ownerSlug: "draco-malfoy",
+      parentId: visitorRoots[5].id,
+      createdAt: "2026-04-03T16:18:00.000Z",
+      updatedAt: "2026-04-03T16:19:00.000Z",
+      content:
+        "This comment was rejected so the local environment always has at least one rejected moderation example to inspect.",
+      published: false,
+      moderationStatus: "rejected",
+    },
+    {
+      ownerSlug: "hermione-granger",
+      parentId: visitorRoots[0].id,
+      createdAt: "2026-04-01T15:32:00.000Z",
+      updatedAt: "2026-04-01T15:35:00.000Z",
+      content:
+        "This root-level comment exists mostly to make sure the detail view always has enough fixture thread activity to look realistic.",
+      published: true,
+      moderationStatus: "approved",
+    },
+    {
+      ownerSlug: "ginny-weasley",
+      parentId: visitorRoots[0].id,
+      createdAt: "2026-04-01T15:44:00.000Z",
+      updatedAt: "2026-04-01T15:46:00.000Z",
+      content:
+        "Here is another visitor-authored comment on the same root so moderation and ordering can both be exercised locally.",
+      published: false,
+      moderationStatus: "pending",
+    },
+    {
+      ownerSlug: "minerva-mcgonagall",
+      parentId: visitorUpdates[0].id,
+      createdAt: "2026-04-01T16:18:00.000Z",
+      updatedAt: "2026-04-01T16:18:00.000Z",
+      content:
+        "A comment on an update gives the detail view a second lane of activity to sort and render.",
+      published: true,
+      moderationStatus: "approved",
+    },
+    {
+      ownerSlug: "luna-lovegood",
+      parentId: visitorUpdates[0].id,
+      createdAt: "2026-04-01T16:24:00.000Z",
+      updatedAt: "2026-04-01T16:25:00.000Z",
+      content:
+        "This pending comment on an update is useful when checking the inline comment composer and moderation controls together.",
+      published: false,
+      moderationStatus: "pending",
+    },
+    {
+      ownerSlug: "cedric-diggory",
+      parentId: visitorUpdates[1].id,
+      createdAt: "2026-04-01T19:16:00.000Z",
+      updatedAt: "2026-04-01T19:18:00.000Z",
+      content:
+        "A published update comment from a different fixture user helps verify avatar and author variety in the thread stack.",
+      published: true,
+      moderationStatus: "approved",
+    },
+    {
+      ownerSlug: "ron-weasley",
+      parentId: visitorUpdates[1].id,
+      createdAt: "2026-04-01T19:22:00.000Z",
+      updatedAt: "2026-04-01T19:24:00.000Z",
+      content:
+        "This one was rejected after review, which keeps the seeded moderation cases a little more realistic.",
+      published: false,
+      moderationStatus: "rejected",
+    },
+    {
+      ownerSlug: "albus-dumbledore",
+      parentId: roots[0].id,
+      createdAt: "2026-01-02T09:15:00.000Z",
+      updatedAt: "2026-01-02T09:18:00.000Z",
+      content:
+        "A seeded admin-authored comment on one of the older lorem ipsum roots helps test longer-running discussions.",
+      published: true,
+      moderationStatus: "approved",
+    },
+    {
+      ownerSlug: "harry-potter",
+      parentId: updates[0].id,
+      createdAt: "2026-02-15T10:48:00.000Z",
+      updatedAt: "2026-02-15T10:49:00.000Z",
+      content:
+        "This visitor comment hangs off one of the seeded updates so nested update threads have realistic coverage too.",
+      published: false,
+      moderationStatus: "pending",
+    },
+    {
+      ownerSlug: "minerva-mcgonagall",
+      parentId: updates[0].id,
+      createdAt: "2026-02-15T10:56:00.000Z",
+      updatedAt: "2026-02-15T10:58:00.000Z",
+      content:
+        "An approved admin-authored reply on the same update makes it easy to compare published and pending comments side by side.",
+      published: true,
+      moderationStatus: "approved",
+    },
+    {
+      ownerSlug: "hermione-granger",
+      parentId: visitorUpdates[4].id,
+      createdAt: "2026-04-01T17:18:00.000Z",
+      updatedAt: "2026-04-01T17:20:00.000Z",
+      content:
+        "One more approved update comment rounds out the local fixture set with enough variety for moderation and layout testing.",
+      published: true,
+      moderationStatus: "approved",
+    },
+  ].map(comment => ({
+    id: formatBlipId(comment.createdAt),
+    title: null,
+    blipType: "comment",
+    allowComments: false,
+    ...comment,
   }))
 
   const allRoots = [...roots, ...visitorRoots]
-  const allBlips = [...allRoots, ...updates, ...visitorUpdates]
+  const allBlips = [...allRoots, ...updates, ...visitorUpdates, ...comments]
   const rootIds = allRoots.map(blip => blip.id)
   const reactions = [
     { blipId: rootIds[0], ownerSlug: "harry-potter", emoji: "👍" },
@@ -421,7 +572,13 @@ function buildAuthoredFixtureData() {
     { blipId: visitorRoots[5].id, ownerSlug: "ron-weasley", emoji: "👏" },
   ]
 
-  return { allBlips, tagAssignments, reactions, allFixtureBlipIds: allBlips.map(blip => blip.id) }
+  return {
+    allBlips,
+    comments,
+    tagAssignments,
+    reactions,
+    allFixtureBlipIds: allBlips.map(blip => blip.id),
+  }
 }
 
 const FIXTURE_DATA = buildAuthoredFixtureData()
@@ -454,18 +611,6 @@ async function createOrUpdateAccounts(serviceClient, accounts, password) {
 }
 
 async function hydrateProfilesAndRoles(serviceClient, accountsBySlug) {
-  const visitorRows = [...accountsBySlug.values()].map(account => ({
-    user_id: account.userId,
-    display_name: account.displayName,
-    status: "active",
-    failed_login_attempts: 0,
-    notes: account.notes,
-  }))
-  const { error: visitorsError } = await serviceClient.from("visitors").upsert(visitorRows, { onConflict: "user_id" })
-  if (visitorsError) {
-    throw visitorsError
-  }
-
   const roleRows = [...accountsBySlug.values()].map(account => ({
     user_id: account.userId,
     role: account.role,
@@ -475,17 +620,42 @@ async function hydrateProfilesAndRoles(serviceClient, accountsBySlug) {
     throw rolesError
   }
 
-  const { data: visitors, error: visitorLookupError } = await serviceClient
-    .from("visitors")
-    .select("id, user_id")
-    .in("user_id", [...accountsBySlug.values()].map(account => account.userId))
-  if (visitorLookupError) {
-    throw visitorLookupError
+  const profileRows = [...accountsBySlug.values()].map(account => ({
+    user_id: account.userId,
+    display_name: account.displayName,
+  }))
+  const { error: profileUpsertError } = await serviceClient
+    .from("user_profile")
+    .upsert(profileRows, { onConflict: "user_id" })
+  if (profileUpsertError) {
+    throw profileUpsertError
   }
 
-  const visitorIdByUserId = new Map((visitors ?? []).map(visitor => [visitor.user_id, visitor.id]))
+  const { data: profiles, error: profileLookupError } = await serviceClient
+    .from("user_profile")
+    .select("id, user_id")
+    .in("user_id", [...accountsBySlug.values()].map(account => account.userId))
+  if (profileLookupError) {
+    throw profileLookupError
+  }
+
+  const profileIdByUserId = new Map((profiles ?? []).map(profile => [profile.user_id, profile.id]))
   for (const account of accountsBySlug.values()) {
-    account.visitorId = visitorIdByUserId.get(account.userId) ?? null
+    account.userProfileId = profileIdByUserId.get(account.userId) ?? null
+  }
+
+  const systemRows = [...accountsBySlug.values()].map(account => ({
+    user_profile_id: account.userProfileId,
+    status: "active",
+    failed_login_attempts: 0,
+    trusted: account.role === "admin" || account.role === "superuser",
+    notes: account.notes,
+  }))
+  const { error: systemUpsertError } = await serviceClient
+    .from("user_system")
+    .upsert(systemRows, { onConflict: "user_profile_id" })
+  if (systemUpsertError) {
+    throw systemUpsertError
   }
 }
 
@@ -516,8 +686,9 @@ async function upsertFixtureBlips(serviceClient, accountsBySlug) {
       user_id: owner.userId,
       title: blip.title,
       content: blip.content,
-      published: true,
-      moderation_status: "approved",
+      allow_comments: blip.allowComments,
+      published: blip.published ?? true,
+      moderation_status: blip.moderationStatus ?? "approved",
       created_at: blip.createdAt,
       updated_at: blip.updatedAt,
       blip_type: blip.blipType,
@@ -526,6 +697,24 @@ async function upsertFixtureBlips(serviceClient, accountsBySlug) {
   const { error } = await serviceClient.from("blips").upsert(rows, { onConflict: "id" })
   if (error) {
     throw error
+  }
+}
+
+async function syncFixtureCommentStates(serviceClient) {
+  for (const comment of FIXTURE_DATA.comments) {
+    const { error } = await serviceClient
+      .from("blips")
+      .update({
+        allow_comments: comment.allowComments ?? false,
+        published: comment.published,
+        moderation_status: comment.moderationStatus,
+        updated_at: comment.updatedAt,
+      })
+      .eq("id", comment.id)
+
+    if (error) {
+      throw error
+    }
   }
 }
 
@@ -552,17 +741,17 @@ async function insertFixtureTags(serviceClient, tagIdByName) {
 async function upsertFixtureReactions(serviceClient, visitorAccountsBySlug) {
   const rows = FIXTURE_DATA.reactions.map(reaction => {
     const owner = visitorAccountsBySlug.get(reaction.ownerSlug)
-    if (!owner?.visitorId) {
-      throw new Error(`Missing visitor id for reaction owner ${reaction.ownerSlug}`)
+    if (!owner?.userProfileId) {
+      throw new Error(`Missing user profile id for reaction owner ${reaction.ownerSlug}`)
     }
     return {
       blip_id: reaction.blipId,
-      visitor_id: owner.visitorId,
+      user_profile_id: owner.userProfileId,
       emoji: reaction.emoji,
     }
   })
   const { error } = await serviceClient.from("reactions").upsert(rows, {
-    onConflict: "blip_id,visitor_id,emoji",
+    onConflict: "blip_id,user_profile_id,emoji",
   })
   if (error) {
     throw error
@@ -587,7 +776,7 @@ function printSummary(authorAccountsBySlug, visitorAccountsBySlug, mode) {
     const hydrated = visitorAccountsBySlug.get(account.slug)
     console.log(`${account.displayName} <${account.email}>`)
     console.log(`  user_id: ${hydrated?.userId ?? "missing"}`)
-    console.log(`  visitor_id: ${hydrated?.visitorId ?? "missing"}`)
+    console.log(`  user_profile_id: ${hydrated?.userProfileId ?? "missing"}`)
   }
 }
 
@@ -603,12 +792,14 @@ async function main() {
 
   const authorAccountsBySlug = await createOrUpdateAccounts(serviceClient, AUTHOR_ACCOUNTS, VISITOR_PIN)
   const visitorAccountsBySlug = await createOrUpdateAccounts(serviceClient, VISITOR_ACCOUNTS, VISITOR_PIN)
-  await hydrateProfilesAndRoles(serviceClient, new Map([...authorAccountsBySlug, ...visitorAccountsBySlug]))
+  const allAccountsBySlug = new Map([...authorAccountsBySlug, ...visitorAccountsBySlug])
+  await hydrateProfilesAndRoles(serviceClient, allAccountsBySlug)
 
   if (mode === "all") {
     const tagIdByName = await getTagIdByName(serviceClient)
     await clearFixtureData(serviceClient)
-    await upsertFixtureBlips(serviceClient, authorAccountsBySlug)
+    await upsertFixtureBlips(serviceClient, allAccountsBySlug)
+    await syncFixtureCommentStates(serviceClient)
     await insertFixtureTags(serviceClient, tagIdByName)
     await upsertFixtureReactions(serviceClient, visitorAccountsBySlug)
   }
