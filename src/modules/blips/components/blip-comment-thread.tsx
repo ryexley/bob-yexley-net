@@ -167,6 +167,8 @@ function BlipCommentCard(props: BlipCommentCardProps) {
       class={cx("blip-comment-stack", {
         "avatar-left": props.avatarSide === "left",
         "avatar-right": props.avatarSide === "right",
+        "root-comment": props.avatarSide === "left",
+        "update-comment": props.avatarSide === "right",
       })}>
       <article
         class="blip-comment"

@@ -238,7 +238,7 @@ a.blip-detail-back-link {
   gap: 0.5rem;
 }
 
-@media (max-width: 48rem) {
+@media (max-width: 30rem) {
   .blip-detail-container {
     max-width: 100%;
   }
