@@ -1,18 +1,12 @@
 .blips-loading-state {
-  align-items: center;
-  color: var(--colors-mono-10);
   display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  justify-content: center;
-  margin: 0 auto;
-  max-width: 60rem;
-  min-height: 16rem;
   width: 100%;
+  min-height: 16rem;
+  padding: 0;
+}
 
-  p {
-    margin: 0;
-  }
+.blips-loading-state .blip-card-skeleton-state {
+  width: 100%;
 }
 
 .button.blips-show-more-button {

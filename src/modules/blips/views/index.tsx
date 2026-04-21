@@ -2,7 +2,7 @@ import { createAsync, useNavigate } from "@solidjs/router"
 import { Meta, Title } from "@solidjs/meta"
 import { createEffect, createMemo, createSignal, onCleanup, Show, untrack } from "solid-js"
 import { Button } from "@/components/button"
-import { LoadingSpinner } from "@/components/icon"
+import { BlipCardSkeletonList } from "@/modules/blips/components/blip-card-skeleton"
 import { PageSection } from "@/modules/home/components/page-section"
 import { Blips } from "@/modules/blips/components/blips"
 import { BLIP_TYPES, blipStore, getBlips } from "@/modules/blips/data"
@@ -198,8 +198,7 @@ export function BlipsView() {
             when={hasInitialData()}
             fallback={
               <div class="blips-loading-state">
-                <LoadingSpinner size="2rem" />
-                <p>{tr("loading")}</p>
+                <BlipCardSkeletonList label={tr("loading")} />
               </div>
             }>
             <Blips
@@ -207,7 +206,7 @@ export function BlipsView() {
               onView={handleViewBlip}
             />
           </Show>
-          <Show when={hasInitialData() && hasMore()}>
+          <Show when={hasInitialData() && hasBlipItems() && hasMore()}>
             <div class="w-full flex justify-center mt-4">
               <Button
                 ref={(el: HTMLButtonElement) => {
