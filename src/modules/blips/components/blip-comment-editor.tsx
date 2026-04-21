@@ -1,17 +1,26 @@
-import { createEffect, createMemo, createSignal, onCleanup, Show } from "solid-js"
+import {
+  createEffect,
+  createMemo,
+  createSignal,
+  on,
+  onCleanup,
+  Show,
+} from "solid-js"
 import {
   MarkdownEditor,
   type MarkdownEditorBelowEditorProps,
 } from "@/components/markdown/editor"
 import { Icon, LoadingSpinner } from "@/components/icon"
-import { Dialog, DialogBody, DialogHeader, DialogTitle } from "@/components/dialog"
+import { Dialog, DialogTitle } from "@/components/dialog"
 import { IconButton } from "@/components/icon-button"
 import { useConfirm } from "@/components/confirm-dialog"
 import { useNotify } from "@/components/notification"
 import { useAuth } from "@/context/auth-context"
 import { useSupabase } from "@/context/services-context"
 import { useViewport } from "@/context/viewport"
+import { createEditorFocusBridge } from "@/modules/blips/components/editor-focus-bridge"
 import { EditorShell } from "@/modules/blips/components/editor-shell"
+import { useEditorMobileViewportRuntime } from "@/modules/blips/components/editor-mobile-viewport-runtime"
 import { UserAvatar } from "@/modules/users/components/user-avatar"
 import { BLIP_TYPES, blipId, blipStore, type Blip } from "@/modules/blips/data"
 import { PortaledInlineTransition } from "@/modules/blips/components/portaled-inline-transition"
@@ -31,7 +40,7 @@ type BlipCommentEditorProps = {
   onAfterClose?: () => void
 }
 
-type DesktopStatusContext = {
+type CommentEditorStatusContext = {
   canDelete: boolean
   canSave: boolean
   handleDelete: () => void
@@ -85,12 +94,25 @@ export function BlipCommentEditor(props: BlipCommentEditorProps) {
   const [saveStatus, setSaveStatus] = createSignal<SaveStatus>("idle")
   const [showStatus, setShowStatus] = createSignal(false)
   const [statusFading, setStatusFading] = createSignal(false)
+  const [editorFocusNonce, setEditorFocusNonce] = createSignal(0)
+  const [keyboardInsetPx, setKeyboardInsetPx] = createSignal(0)
 
   let hideStatusTimeout: ReturnType<typeof setTimeout> | null = null
   let fadeStatusTimeout: ReturnType<typeof setTimeout> | null = null
   let lastHandledCloseRequestNonce: number | undefined
 
   const isMobileViewport = createMemo(() => viewport.width() <= MOBILE_MAX_WIDTH)
+  const requestEditorFocus = () => {
+    setEditorFocusNonce(previous => previous + 1)
+  }
+  const focusBridge = createEditorFocusBridge({
+    defaultDelayMs: 260,
+    requestEditorFocus,
+    coalesceImmediateFocus: true,
+    proxyRefocusCooldownMs: 120,
+    shouldAutoFocusOnOpen: () => true,
+    shouldUseFocusProxy: () => true,
+  })
 
   const existingComment = createMemo(() => {
     if (!props.editingCommentId) {
@@ -162,6 +184,7 @@ export function BlipCommentEditor(props: BlipCommentEditorProps) {
     setSaveStatus("idle")
     setShowStatus(false)
     setStatusFading(false)
+    setKeyboardInsetPx(0)
   }
 
   createEffect(() => {
@@ -176,6 +199,39 @@ export function BlipCommentEditor(props: BlipCommentEditorProps) {
 
     clearStatusTimeouts()
   })
+
+  useEditorMobileViewportRuntime({
+    isOpen: () => props.open,
+    setKeyboardInsetPx,
+  })
+
+  createEffect(
+    on(
+      () => props.open,
+      open => {
+        if (!open) {
+          focusBridge.clearScheduledFocus()
+          setKeyboardInsetPx(0)
+          return
+        }
+
+        focusBridge.scheduleFocusAfterOpen()
+      },
+    ),
+  )
+
+  createEffect(
+    on(
+      () => props.focusNonce,
+      focusNonce => {
+        if (focusNonce === undefined || !props.open) {
+          return
+        }
+
+        focusBridge.scheduleFocusAfterOpen()
+      },
+    ),
+  )
 
   createEffect(() => {
     const closeRequestNonce = props.closeRequestNonce
@@ -279,40 +335,6 @@ export function BlipCommentEditor(props: BlipCommentEditorProps) {
     event.preventDefault()
   }
 
-  const MobileControls = (_ctx: MarkdownEditorBelowEditorProps) => (
-    <div class="blip-comment-editor-controls">
-      <IconButton
-        size="xs"
-        icon="close"
-        aria-label={tr("actions.close")}
-        onClick={() => props.onRequestClose?.()}
-      />
-      <div class="blip-comment-editor-controls-end">
-        <Show when={existingComment()}>
-          <IconButton
-            size="xs"
-            icon="delete"
-            class="delete"
-            aria-label={tr("actions.delete")}
-            onClick={handleDelete}
-            onMouseDown={preventEditorBlur}
-          />
-        </Show>
-        <IconButton
-          size="xs"
-          icon="cloud_upload"
-          class="blip-action-save"
-          aria-label={isSaving() ? tr("actions.saving") : tr("actions.save")}
-          disabled={!canSave()}
-          onClick={() => {
-            void handleSave()
-          }}
-          onMouseDown={preventEditorBlur}
-        />
-      </div>
-    </div>
-  )
-
   const getStatusIcon = () => {
     const status = saveStatus()
 
@@ -327,8 +349,9 @@ export function BlipCommentEditor(props: BlipCommentEditorProps) {
     return null
   }
 
-  const DesktopControls = (ctx: MarkdownEditorBelowEditorProps) => {
-    const statusContext = () => ctx.statusContext as DesktopStatusContext | undefined
+  const EditorControls = (ctx: MarkdownEditorBelowEditorProps) => {
+    const statusContext = () =>
+      ctx.statusContext as CommentEditorStatusContext | undefined
 
     return (
       <div class="blip-editor-below-editor blip-comment-editor-below-editor">
@@ -369,16 +392,15 @@ export function BlipCommentEditor(props: BlipCommentEditorProps) {
                   <Icon name="format_underlined" />
                 </button>
                 <div class="blip-editor-control-divider" />
-                <Show when={statusContext()?.canDelete}>
-                  <IconButton
-                    size="xs"
-                    icon="delete"
-                    class="blip-action-delete"
-                    aria-label={tr("actions.delete")}
-                    onClick={statusContext()?.handleDelete}
-                    onMouseDown={preventEditorBlur}
-                  />
-                </Show>
+                <IconButton
+                  size="xs"
+                  icon="delete"
+                  class="blip-action-delete"
+                  aria-label={tr("actions.delete")}
+                  disabled={!statusContext()?.canDelete}
+                  onClick={statusContext()?.handleDelete}
+                  onMouseDown={preventEditorBlur}
+                />
                 <IconButton
                   size="xs"
                   icon="cloud_upload"
@@ -396,49 +418,60 @@ export function BlipCommentEditor(props: BlipCommentEditorProps) {
     )
   }
 
+  const CommentEditorSurface = (surfaceProps: { useDialogTitle?: boolean }) => (
+    <EditorShell
+      shellClass="blip-comment-editor-surface"
+      bodyClass="blip-comment-editor-body"
+      focusProxyRef={focusBridge.setFocusProxyRef}
+      focusProxyAriaLabel={tr("placeholder")}
+      icon={isMobileViewport() ? undefined : "add_comment"}
+      showFocusProxy={false}
+      Header={
+        surfaceProps.useDialogTitle ? (
+          <DialogTitle class="blip-comment-editor-dialog-title">
+            {props.editingCommentId ? tr("titles.edit") : tr("titles.new")}
+          </DialogTitle>
+        ) : (
+          <div class="blip-comment-editor-top-row">
+            <div class="blip-comment-editor-mode-label">{tr("modeLabel")}</div>
+          </div>
+        )
+      }>
+      <form
+        class="blip-editor-form blip-comment-editor-form"
+        onSubmit={event => {
+          event.preventDefault()
+          void handleSave()
+        }}>
+        <MarkdownEditor
+          instanceKey={`blip-comment-editor:${commentId()}`}
+          focusNonce={editorFocusNonce()}
+          focusCaretPlacement="end"
+          placeholder={tr("placeholder")}
+          initialValue={content()}
+          onChange={setContent}
+          BelowEditor={EditorControls}
+          statusIcon={getStatusIcon()}
+          showStatus={showStatus()}
+          statusFading={statusFading()}
+          showStatusBar={false}
+          statusContext={{
+            canDelete: Boolean(existingComment()),
+            canSave: canSave(),
+            handleDelete,
+            handleSave: () => {
+              void handleSave()
+            },
+          }}
+        />
+      </form>
+    </EditorShell>
+  )
+
   const DesktopEditorSurface = () => (
     <div class="inline-shell">
       <div class="bubble">
-        <EditorShell
-          shellClass="blip-comment-editor-surface"
-          bodyClass="blip-comment-editor-body"
-          focusProxyAriaLabel={tr("placeholder")}
-          icon="add_comment"
-          showFocusProxy={false}
-          Header={
-            <div class="blip-comment-editor-top-row">
-              <div class="blip-comment-editor-mode-label">{tr("modeLabel")}</div>
-            </div>
-          }>
-          <form
-            class="blip-editor-form blip-comment-editor-form"
-            onSubmit={event => {
-              event.preventDefault()
-              void handleSave()
-            }}>
-            <MarkdownEditor
-              instanceKey={`blip-comment-editor:${commentId()}`}
-              focusNonce={props.focusNonce}
-              focusCaretPlacement="end"
-              placeholder={tr("placeholder")}
-              initialValue={content()}
-              onChange={setContent}
-              BelowEditor={DesktopControls}
-              statusIcon={getStatusIcon()}
-              showStatus={showStatus()}
-              statusFading={statusFading()}
-              showStatusBar={false}
-              statusContext={{
-                canDelete: Boolean(existingComment()),
-                canSave: canSave(),
-                handleDelete,
-                handleSave: () => {
-                  void handleSave()
-                },
-              }}
-            />
-          </form>
-        </EditorShell>
+        <CommentEditorSurface />
       </div>
       <div class="avatar-column" aria-hidden="true">
         <div class="avatar-wrap">
@@ -457,58 +490,62 @@ export function BlipCommentEditor(props: BlipCommentEditorProps) {
   )
 
   onCleanup(() => {
+    focusBridge.clearScheduledFocus()
+    focusBridge.cancelTextInputSessionCleanup()
     clearStatusTimeouts()
   })
 
   return (
-    <Show
-      when={isMobileViewport()}
-      fallback={
-        <PortaledInlineTransition
-          mount={props.desktopMount}
-          open={props.open}
-          class="blip-comment-editor-layer"
-          onAfterExit={() => {
-            resetEditorState()
-            props.onAfterClose?.()
-          }}>
-          <DesktopEditorSurface />
-        </PortaledInlineTransition>
-      }>
-      <Show
-        when={props.open ? commentId() : null}
-        keyed>
-        {_commentId => (
-          <Dialog
-            open={props.open}
-            onOpenChange={open => {
-              if (!open) {
-                props.onRequestClose?.()
-              }
-            }}
-            class="blip-comment-editor-dialog"
-            modal
-            preventScroll>
-            <DialogHeader class="blip-comment-editor-header">
-              <DialogTitle>
-                {props.editingCommentId ? tr("titles.edit") : tr("titles.new")}
-              </DialogTitle>
-            </DialogHeader>
-            <DialogBody class="blip-comment-editor-body">
-              <MarkdownEditor
-                instanceKey={`blip-comment-editor:${commentId()}`}
-                focusNonce={props.focusNonce}
-                focusCaretPlacement="end"
-                placeholder={tr("placeholder")}
-                initialValue={content()}
-                onChange={setContent}
-                BelowEditor={MobileControls}
-                showStatusBar={false}
-              />
-            </DialogBody>
-          </Dialog>
-        )}
+    <>
+      <Show when={props.open}>
+        <textarea
+          ref={focusBridge.setFocusProxyRef}
+          class="blip-editor-focus-proxy"
+          tabIndex={-1}
+          aria-label={tr("placeholder")}
+        />
       </Show>
-    </Show>
+      <Show
+        when={isMobileViewport()}
+        fallback={
+          <PortaledInlineTransition
+            mount={props.desktopMount}
+            open={props.open}
+            class="blip-comment-editor-layer"
+            onAfterExit={() => {
+              resetEditorState()
+              props.onAfterClose?.()
+            }}>
+            <DesktopEditorSurface />
+          </PortaledInlineTransition>
+        }>
+        <Show
+          when={props.open ? commentId() : null}
+          keyed>
+          {_commentId => (
+            <Dialog
+              open={props.open}
+              onOpenChange={open => {
+                if (!open) {
+                  props.onRequestClose?.()
+                }
+              }}
+              overlayClass="blip-comment-editor-overlay"
+              class="blip-comment-editor-dialog"
+              modal
+              preventScroll
+              style={{ "--blip-keyboard-inset": `${keyboardInsetPx()}px` }}
+              contentProps={{
+                onOpenAutoFocus: event => event.preventDefault(),
+                onCloseAutoFocus: event => event.preventDefault(),
+              }}>
+              <div class="blip-comment-editor-dialog-frame">
+                <CommentEditorSurface useDialogTitle />
+              </div>
+            </Dialog>
+          )}
+        </Show>
+      </Show>
+    </>
   )
 }

@@ -41,6 +41,7 @@ import {
   VISITOR_AUTH_ERROR,
   isVisitorAuthErrorCode,
 } from "@/lib/auth/visitor-auth-errors"
+import { resolveBrowserSupabaseUrl } from "@/lib/vendor/supabase/browser-url"
 import { isEmpty } from "@/util"
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL
@@ -62,7 +63,13 @@ export function getClient(): AppSupabaseClient {
     return createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY)
   } else {
     if (isEmpty(browserClient)) {
-      browserClient = createBrowserClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY)
+      browserClient = createBrowserClient<Database>(
+        resolveBrowserSupabaseUrl(
+          SUPABASE_URL,
+          typeof window === "undefined" ? null : window.location.hostname,
+        ),
+        SUPABASE_ANON_KEY,
+      )
     }
 
     return browserClient

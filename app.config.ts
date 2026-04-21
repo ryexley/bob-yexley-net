@@ -10,5 +10,8 @@ export default defineConfig({
       },
     },
     plugins: [tailwindcss()],
+    server: {
+      allowedHosts: ["bobs-monarx-macbook-pro.local"],
+    },
   },
 })

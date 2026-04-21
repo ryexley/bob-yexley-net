@@ -158,6 +158,7 @@ export function BlipView() {
   const [recentRealtimeUpdateStates, setRecentRealtimeUpdateStates] =
     createSignal<Record<string, { shimmering: boolean }>>({})
   const [hydratedRootTags, setHydratedRootTags] = createSignal<string[]>([])
+  const [hasSeededInitialUpdates, setHasSeededInitialUpdates] = createSignal(false)
   const [hasSeededInitialComments, setHasSeededInitialComments] = createSignal(false)
   const [isReactionBusy, setIsReactionBusy] = createSignal(false)
   const [topLevelSortDirection, setTopLevelSortDirection] =
@@ -186,7 +187,23 @@ export function BlipView() {
     return "l"
   })
 
-  const updates = createMemo(() => store.updatesByParent(blip()?.id))
+  const getUpdatesForRoot = (rootBlipId?: string | null) => {
+    if (!rootBlipId) {
+      return []
+    }
+
+    const cachedUpdates = store.updatesByParent(rootBlipId)
+    if (hasSeededInitialUpdates()) {
+      return cachedUpdates
+    }
+
+    if (cachedUpdates.length > 0) {
+      return cachedUpdates
+    }
+
+    return initialUpdates()
+  }
+  const updates = createMemo(() => getUpdatesForRoot(blip()?.id))
   const sharePreviewText = createMemo(() => {
     const content = blip()?.content ?? ""
     const plainText = stripMarkdownForMeta(content)
@@ -300,6 +317,21 @@ export function BlipView() {
   const visibleUpdateIds = createMemo(() =>
     visibleUpdates().map(update => update.id),
   )
+  const visibleCommentIds = createMemo(() => {
+    const nextIds = new Set<string>()
+
+    for (const comment of rootComments()) {
+      nextIds.add(comment.id)
+    }
+
+    for (const update of visibleUpdates()) {
+      for (const comment of getCommentsForParent(update.id)) {
+        nextIds.add(comment.id)
+      }
+    }
+
+    return [...nextIds]
+  })
   const watchUpdatesRootId = createMemo(() => {
     const rootBlip = blip()
     if (!rootBlip || rootBlip.blip_type !== BLIP_TYPES.ROOT) {
@@ -318,7 +350,7 @@ export function BlipView() {
       return ""
     }
 
-    return [rootId, ...visibleUpdateIds()].join("|")
+    return [rootId, ...visibleUpdateIds(), ...visibleCommentIds()].join("|")
   })
   const reactionSignature = createMemo(() => getReactionSignature(blip()?.reactions ?? []))
   const displayBlip = createMemo(() => {
@@ -390,11 +422,18 @@ export function BlipView() {
 
   createEffect(() => {
     const loaded = initialUpdates()
-    if (!loaded || loaded.length === 0) {
+    const rootBlipId = blipQuery()?.id ?? null
+    if (!rootBlipId) {
       return
     }
-    const rootBlipId = blip()?.id ?? null
-    if (!rootBlipId || lastSeededUpdatesForBlipId === rootBlipId) {
+
+    if (loaded.length === 0) {
+      setHasSeededInitialUpdates(true)
+      return
+    }
+
+    if (lastSeededUpdatesForBlipId === rootBlipId) {
+      setHasSeededInitialUpdates(true)
       return
     }
 
@@ -402,10 +441,12 @@ export function BlipView() {
     untrack(() => {
       store.mergeIntoCache(loaded)
     })
+    setHasSeededInitialUpdates(true)
   })
 
   createEffect(() => {
     params.id
+    setHasSeededInitialUpdates(false)
     setHasSeededInitialComments(false)
   })
 
@@ -512,6 +553,7 @@ export function BlipView() {
     }
 
     const reactionBlipIds = watchKey.split("|")
+    void store.refreshReactionStates(reactionBlipIds)
     const unsubscribe = store.watchReactions(reactionBlipIds)
     onCleanup(unsubscribe)
   })
@@ -565,7 +607,11 @@ export function BlipView() {
       return
     }
 
-    const reactionBlipIds = untrack(() => [rootBlip.id, ...visibleUpdateIds()])
+    const reactionBlipIds = untrack(() => [
+      rootBlip.id,
+      ...visibleUpdateIds(),
+      ...visibleCommentIds(),
+    ])
     void store.syncReactionViewer(reactionBlipIds, nextViewer, lastReactionViewer)
     lastReactionViewer = nextViewer
   })

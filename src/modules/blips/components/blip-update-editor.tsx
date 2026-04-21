@@ -762,7 +762,7 @@ export function BlipUpdateEditor(props: BlipUpdateEditorProps) {
         bodyClass="blip-update-editor-body"
         focusProxyRef={focusBridge.setFocusProxyRef}
         focusProxyAriaLabel={trDetail("updates.placeholder")}
-        icon="chat"
+        icon={isMobileViewport() ? undefined : "chat"}
         showFocusProxy={false}
         Header={
           props.useDialogTitle ? (

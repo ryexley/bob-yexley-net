@@ -1,16 +1,37 @@
+.blip-comment-editor-overlay {
+  &.dialog-overlay {
+    background: rgba(var(--colors-mono-01-rgb), 0.75);
+  }
+}
+
 .blip-comment-editor-dialog {
-  max-width: min(44rem, calc(100vw - 2rem));
+  &.dialog {
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    color: inherit;
+    display: flex;
+    gap: 0;
+    max-height: none;
+    max-width: none;
+    min-width: 0;
+    outline: none;
+    overflow: visible;
+    padding: 0;
+    width: auto;
+
+    &:focus,
+    &:focus-visible {
+      outline: none;
+    }
+  }
 }
 
-.blip-comment-editor-header {
-  padding-bottom: 0.25rem;
-}
-
-.blip-comment-editor-body {
-  padding-top: 0;
+.blip-comment-editor-dialog-frame {
   display: flex;
-  flex: 1;
-  overflow: hidden;
+  height: 100%;
+  width: 100%;
 }
 
 .inline-shell {
@@ -98,6 +119,12 @@
   }
 }
 
+.blip-comment-editor-body {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
 .blip-comment-editor-top-row {
   align-items: center;
   display: flex;
@@ -123,21 +150,20 @@
   width: 100%;
 }
 
+.blip-comment-editor-dialog-title {
+  border: 0;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  padding: 0;
+  position: absolute;
+  white-space: nowrap;
+  width: 1px;
+}
+
 .blip-comment-editor-below-editor {
-  gap: 0.5rem;
-}
-
-.blip-comment-editor-controls {
-  align-items: center;
-  display: flex;
-  justify-content: space-between;
-  gap: 0.75rem;
-  padding-top: 0.5rem;
-}
-
-.blip-comment-editor-controls-end {
-  align-items: center;
-  display: inline-flex;
   gap: 0.5rem;
 }
 
@@ -148,7 +174,141 @@
 }
 
 @media (max-width: calc(48rem - 0.001rem)) {
+  .blip-comment-editor-overlay {
+    &.dialog-overlay {
+      background: var(--colors-mono-02);
+    }
+  }
+
+  .blip-comment-editor-dialog {
+    &.dialog {
+      --dialog-transform-base: none;
+      --dialog-transform-enter: translateY(0.5rem);
+      --dialog-transform-exit: translateY(0.5rem);
+      bottom: var(--blip-keyboard-inset, 0px);
+      left: 0;
+      max-width: none;
+      right: 0;
+      top: 0;
+      transform: none;
+      width: 100vw;
+    }
+  }
+
+  .blip-comment-editor-dialog-frame {
+    overscroll-behavior: contain;
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+  }
+
+  .blip-comment-editor-dialog {
+    &.dialog {
+      .blip-comment-editor-surface {
+        border-radius: 0;
+        height: 100%;
+      }
+    }
+  }
+
   .inline-shell {
     display: none;
+  }
+
+  .blip-comment-editor-form {
+    .markdown-editor {
+      display: flex;
+      flex: 1;
+      height: 100%;
+      min-height: 0;
+
+      > .flex {
+        display: flex;
+        flex: 1;
+        flex-direction: column;
+        gap: 0.75rem !important;
+        height: 100%;
+        min-height: 0;
+      }
+
+      .editor-container {
+        background: rgba(var(--colors-mono-01-rgb), 0.32);
+        border: 0.0625rem solid var(--colors-mono-04);
+        border-radius: var(--radius-md);
+        display: flex;
+        flex: 1;
+        flex-direction: column;
+        height: 100%;
+        max-height: none;
+        min-height: 0;
+        overflow: hidden;
+
+        > [data-placeholder] {
+          display: flex;
+          flex: 1;
+          min-height: 0;
+        }
+
+        .milkdown {
+          display: flex;
+          flex: 1;
+          flex-direction: column;
+          min-height: 0;
+        }
+
+        .ProseMirror {
+          flex: 1;
+          min-height: 100%;
+        }
+      }
+    }
+
+    .blip-editor-control-pill {
+      .blip-editor-control-pill-content {
+        padding: 0.625rem 0.9375rem 0.625rem 0.75rem;
+      }
+
+      .icon-button.xs {
+        --size: 2.875rem;
+
+        .icon {
+          font-size: 1.5rem;
+        }
+      }
+    }
+
+    .blip-editor-close {
+      .icon {
+        font-size: 1.5rem;
+      }
+    }
+
+    .blip-editor-toolbar-toggle {
+      height: 2.125rem;
+      padding-inline: 0.5rem;
+
+      .icon {
+        font-size: 1.125rem;
+      }
+    }
+
+    .blip-editor-control-pill-right {
+      gap: 0.5rem;
+    }
+
+    .blip-editor-status-slot {
+      height: 2.5rem;
+      min-width: 2.5rem;
+    }
+
+    .blip-editor-status-indicator {
+      .status-saved-icon {
+        font-size: 1.5rem;
+      }
+
+      .blip-editor-status-spinner {
+        --size: 2rem;
+      }
+    }
   }
 }

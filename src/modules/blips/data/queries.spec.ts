@@ -49,9 +49,9 @@ describe("blip queries", () => {
     ])
   })
 
-  it("builds reaction states for arbitrary blip ids including updates", () => {
+  it("builds reaction states for arbitrary blip ids including comments", () => {
     const states = buildBlipReactionStates(
-      ["root-1", "update-1", "update-2"],
+      ["root-1", "update-1", "update-2", "comment-1"],
       [
         {
           blip_id: "update-1",
@@ -70,6 +70,12 @@ describe("blip queries", () => {
           emoji: "👍",
           user_id: "user-3",
           display_name: "Pat",
+        },
+        {
+          blip_id: "comment-1",
+          emoji: "⚡",
+          user_id: "user-1",
+          display_name: "Bob",
         },
       ],
       "user-1",
@@ -101,6 +107,18 @@ describe("blip queries", () => {
           count: 1,
           reacted_by_current_user: false,
           display_names: ["Pat"],
+        },
+      ],
+    })
+    expect(states["comment-1"]).toEqual({
+      reactions_count: 1,
+      my_reaction_count: 1,
+      reactions: [
+        {
+          emoji: "⚡",
+          count: 1,
+          reacted_by_current_user: true,
+          display_names: ["Bob"],
         },
       ],
     })
