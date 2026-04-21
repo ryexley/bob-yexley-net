@@ -37,6 +37,7 @@ import {
   blipStore,
   getBlipGraph,
   tagStore,
+  type Blip,
 } from "@/modules/blips/data"
 import {
   buildOptimisticReactionState,
@@ -132,7 +133,18 @@ export function BlipView() {
   const tags = tagStore(supabase.client)
   const { isAuthenticated, isAdmin, userProfile, userSystem, loading } =
     useAuth() as any
-  const blipGraphQuery = createAsync(() => getBlipGraph(params.id))
+  const commentVisibilityViewerKey = createMemo(() =>
+    loading()
+      ? "__loading__"
+      : [
+          userProfile()?.id ?? "__anon__",
+          userSystem()?.status ?? "",
+          isAdmin() ? "admin" : "standard",
+        ].join(":"),
+  )
+  const blipGraphQuery = createAsync(() =>
+    getBlipGraph(params.id, commentVisibilityViewerKey()),
+  )
   const blipQuery = createMemo(() => blipGraphQuery()?.blip ?? null)
   const initialUpdates = createMemo(() => blipGraphQuery()?.updates ?? [])
   const initialRootComments = createMemo(() => blipGraphQuery()?.blip.comments ?? [])
@@ -146,6 +158,7 @@ export function BlipView() {
   const [recentRealtimeUpdateStates, setRecentRealtimeUpdateStates] =
     createSignal<Record<string, { shimmering: boolean }>>({})
   const [hydratedRootTags, setHydratedRootTags] = createSignal<string[]>([])
+  const [hasSeededInitialComments, setHasSeededInitialComments] = createSignal(false)
   const [isReactionBusy, setIsReactionBusy] = createSignal(false)
   const [topLevelSortDirection, setTopLevelSortDirection] =
     createSignal<TopLevelSortDirection>("desc")
@@ -224,10 +237,38 @@ export function BlipView() {
     }
     return allUpdates.filter(update => update.published)
   })
-  const rootComments = createMemo(() => store.commentsByParent(blip()?.id))
+  const initialCommentsByParentId = createMemo(() => {
+    const next = new Map<string, Blip[]>()
+    for (const comment of [...initialRootComments(), ...initialUpdateComments()]) {
+      if (!comment.parent_id) {
+        continue
+      }
+
+      const existing = next.get(comment.parent_id) ?? []
+      next.set(comment.parent_id, [...existing, comment])
+    }
+    return next
+  })
+  const getCommentsForParent = (parentId?: string | null) => {
+    if (!parentId) {
+      return []
+    }
+
+    const cachedComments = store.commentsByParent(parentId)
+    if (hasSeededInitialComments()) {
+      return cachedComments
+    }
+
+    if (cachedComments.length > 0) {
+      return cachedComments
+    }
+
+    return initialCommentsByParentId().get(parentId) ?? []
+  }
+  const rootComments = createMemo(() => getCommentsForParent(blip()?.id))
   const visibleCommentCount = createMemo(() => {
     const updateCommentCount = visibleUpdates().reduce(
-      (total, update) => total + store.commentsByParent(update.id).length,
+      (total, update) => total + getCommentsForParent(update.id).length,
       0,
     )
 
@@ -364,14 +405,26 @@ export function BlipView() {
   })
 
   createEffect(() => {
+    params.id
+    setHasSeededInitialComments(false)
+  })
+
+  createEffect(() => {
     const loadedComments = [...initialRootComments(), ...initialUpdateComments()]
-    if (loadedComments.length === 0) {
+    const targetParentIds = [
+      blipQuery()?.id,
+      ...initialUpdates().map(update => update.id),
+    ].filter((parentId): parentId is string => Boolean(parentId))
+
+    if (targetParentIds.length === 0) {
+      setHasSeededInitialComments(true)
       return
     }
 
     untrack(() => {
-      store.mergeIntoCache(loadedComments)
+      store.replaceCommentsForParents(targetParentIds, loadedComments)
     })
+    setHasSeededInitialComments(true)
   })
 
   createEffect(() => {
@@ -862,7 +915,7 @@ export function BlipView() {
                                 ) : (
                                   <UpdateBlip
                                     blip={activity.blip}
-                                    comments={store.commentsByParent(activity.blip.id)}
+                                    comments={getCommentsForParent(activity.blip.id)}
                                     onEdit={handleEditUpdate}
                                     isRecentRealtime={
                                       recentRealtimeUpdateStates()[activity.blip.id] !==

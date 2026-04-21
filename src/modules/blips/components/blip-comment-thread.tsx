@@ -408,7 +408,12 @@ export function BlipCommentListItem(props: BlipCommentListItemProps) {
       confirmationActionLoadingLabel: tr("confirmDelete.actions.confirming"),
       cancelActionLabel: tr("confirmDelete.actions.cancel"),
       onConfirm: async () => {
-        await store.remove(comment.id)
+        const result = await store.remove(comment.id)
+        if (!result.error) {
+          return
+        }
+
+        notify.error({ content: tr("errors.deleteFailed") })
       },
     })
   }

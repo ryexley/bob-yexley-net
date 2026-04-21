@@ -708,12 +708,17 @@ export const getBlip = query(async (id: string) => {
   )
 }, "blip")
 
-export const getBlipGraph = query(async (id: string): Promise<BlipGraph | null> => {
+export const getBlipGraph = query(async (
+  id: string,
+  viewerKey: string = "",
+): Promise<BlipGraph | null> => {
   "use server"
+
+  void viewerKey
 
   return withQueryMetrics(
     "getBlipGraph",
-    { id },
+    { id, viewerKey },
     async () => {
       const { getServerClient } = await import("@/lib/vendor/supabase/server")
       const supabase = await getServerClient()

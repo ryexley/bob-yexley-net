@@ -466,6 +466,7 @@ export const en = {
           delete: "Delete comment",
           save: "Save comment",
           saving: "Saving...",
+          toggleToolbar: "Toggle formatting toolbar",
         },
         confirmDelete: {
           title: "Delete comment?",
@@ -475,6 +476,9 @@ export const en = {
             confirming: "Deleting...",
             cancel: "Cancel",
           },
+        },
+        errors: {
+          deleteFailed: "Unable to delete this comment right now.",
         },
       },
       commentThread: {
@@ -511,6 +515,7 @@ export const en = {
           },
         },
         errors: {
+          deleteFailed: "Unable to delete this comment right now.",
           moderationFailed: "Unable to update this comment right now.",
         },
       },

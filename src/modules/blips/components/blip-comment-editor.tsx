@@ -7,6 +7,7 @@ import { Icon, LoadingSpinner } from "@/components/icon"
 import { Dialog, DialogBody, DialogHeader, DialogTitle } from "@/components/dialog"
 import { IconButton } from "@/components/icon-button"
 import { useConfirm } from "@/components/confirm-dialog"
+import { useNotify } from "@/components/notification"
 import { useAuth } from "@/context/auth-context"
 import { useSupabase } from "@/context/services-context"
 import { useViewport } from "@/context/viewport"
@@ -42,11 +43,41 @@ type SaveStatus = "idle" | "saving" | "saved" | "error"
 const tr = ptr("blips.components.commentEditor")
 const MOBILE_MAX_WIDTH = 768
 
+export const resolveCommentEditorDraft = ({
+  editingCommentId,
+  existingComment,
+  nextNewCommentId,
+}: {
+  editingCommentId?: string | null
+  existingComment?: Blip | null
+  nextNewCommentId: string
+}) => {
+  if (editingCommentId) {
+    if (!existingComment || existingComment.blip_type !== BLIP_TYPES.COMMENT) {
+      return {
+        commentId: editingCommentId,
+        content: "",
+      }
+    }
+
+    return {
+      commentId: existingComment.id,
+      content: existingComment.content ?? "",
+    }
+  }
+
+  return {
+    commentId: nextNewCommentId,
+    content: "",
+  }
+}
+
 export function BlipCommentEditor(props: BlipCommentEditorProps) {
   const auth = useAuth()
   const supabase = useSupabase()
   const viewport = useViewport()
   const confirm = useConfirm()
+  const notify = useNotify()
   const store = blipStore(supabase.client, { subscribe: false })
   const [commentId, setCommentId] = createSignal(blipId())
   const [content, setContent] = createSignal("")
@@ -79,21 +110,20 @@ export function BlipCommentEditor(props: BlipCommentEditorProps) {
       return
     }
 
-    const existing = existingComment()
-    if (existing) {
-      setCommentId(existing.id)
-      setContent(existing.content ?? "")
-      return
-    }
-
-    setCommentId(blipId())
-    setContent("")
+    const draft = resolveCommentEditorDraft({
+      editingCommentId: props.editingCommentId,
+      existingComment: existingComment(),
+      nextNewCommentId: blipId(),
+    })
+    setCommentId(draft.commentId)
+    setContent(draft.content)
   })
 
   const canSave = createMemo(
     () =>
       Boolean(props.parentBlipId) &&
       Boolean(auth.user()?.id) &&
+      (!props.editingCommentId || Boolean(existingComment())) &&
       content().trim().length > 0 &&
       !isSaving(),
   )
@@ -237,7 +267,10 @@ export function BlipCommentEditor(props: BlipCommentEditorProps) {
         const result = await store.remove(existing.id)
         if (!result.error) {
           props.onRequestClose?.()
+          return
         }
+
+        notify.error({ content: tr("errors.deleteFailed") })
       },
     })
   }
@@ -328,7 +361,7 @@ export function BlipCommentEditor(props: BlipCommentEditorProps) {
                   class={cx("blip-editor-toolbar-toggle", {
                     "is-active": ctx.toolbarVisible,
                   })}
-                  aria-label="Toggle formatting toolbar"
+                  aria-label={tr("actions.toggleToolbar")}
                   onClick={() => ctx.onToggleToolbar()}
                   onMouseDown={preventEditorBlur}>
                   <Icon name="format_bold" />
@@ -458,7 +491,7 @@ export function BlipCommentEditor(props: BlipCommentEditorProps) {
             preventScroll>
             <DialogHeader class="blip-comment-editor-header">
               <DialogTitle>
-                {existingComment() ? tr("titles.edit") : tr("titles.new")}
+                {props.editingCommentId ? tr("titles.edit") : tr("titles.new")}
               </DialogTitle>
             </DialogHeader>
             <DialogBody class="blip-comment-editor-body">

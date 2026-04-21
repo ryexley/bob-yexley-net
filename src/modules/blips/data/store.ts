@@ -209,6 +209,35 @@ export function blipStore(
     store.setInitialData(store.entities().filter(blip => blip.id !== blipId))
   }
 
+  const replaceCommentsForParents = (
+    parentIds: string[],
+    comments: Blip[],
+  ) => {
+    const targetParentIds = new Set(toUniqueBlipIds(parentIds))
+    if (targetParentIds.size === 0) {
+      return
+    }
+
+    const nextComments = comments.filter(
+      comment =>
+        comment.blip_type === BLIP_TYPES.COMMENT &&
+        Boolean(comment.parent_id) &&
+        targetParentIds.has(comment.parent_id),
+    )
+
+    const nextEntities = [
+      ...store.entities().filter(
+        blip =>
+          blip.blip_type !== BLIP_TYPES.COMMENT ||
+          !blip.parent_id ||
+          !targetParentIds.has(blip.parent_id),
+      ),
+      ...nextComments,
+    ]
+
+    store.setInitialData(nextEntities)
+  }
+
   const applyReactionState = (
     blipId: string,
     reactionState: BlipReactionState,
@@ -553,6 +582,7 @@ export function blipStore(
           event: "INSERT",
           schema: "public",
           table: "blips",
+          filter: "blip_type=eq.comment",
         },
         (payload: { new: Blip }) => {
           void handleIncomingUpsert(payload.new, handlers.onInsert)
@@ -564,6 +594,7 @@ export function blipStore(
           event: "UPDATE",
           schema: "public",
           table: "blips",
+          filter: "blip_type=eq.comment",
         },
         (payload: { new: Blip }) => {
           void handleIncomingUpsert(payload.new, handlers.onUpdate)
@@ -575,6 +606,7 @@ export function blipStore(
           event: "DELETE",
           schema: "public",
           table: "blips",
+          filter: "blip_type=eq.comment",
         },
         (payload: { old: { id: string } }) => {
           const deletedId = payload.old.id
@@ -831,6 +863,7 @@ export function blipStore(
     getById,
     mergeIntoCache,
     removeFromCache,
+    replaceCommentsForParents,
     watchBlips,
     watchUpdates,
     watchComments,
