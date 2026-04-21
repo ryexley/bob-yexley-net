@@ -322,27 +322,29 @@
   letter-spacing: 0.06em;
   line-height: 1.2rem;
   text-transform: uppercase;
-}
 
-.users-view-role-trust-icon {
-  color: var(--colors-error);
-  font-size: 0.9rem;
-}
+  .users-view-role-trust-icon {
+    color: var(--colors-error);
+    flex-shrink: 0;
+    font-size: 0.9rem;
+    line-height: 1;
+  }
 
-.users-view-role-trust-icon[data-trusted="true"] {
-  color: var(--colors-info);
-}
+  .users-view-role-trust-icon[data-trusted="true"] {
+    color: var(--colors-info);
+  }
 
-.users-view-role-text[data-role="visitor"] {
-  color: var(--colors-success);
-}
+  &[data-role="visitor"] {
+    color: var(--colors-success);
+  }
 
-.users-view-role-text[data-role="superuser"] {
-  color: var(--colors-cool-blue);
-}
+  &[data-role="superuser"] {
+    color: var(--colors-cool-blue);
+  }
 
-.users-view-role-text[data-role="admin"] {
-  color: var(--colors-warning);
+  &[data-role="admin"] {
+    color: var(--colors-warning);
+  }
 }
 
 .users-view-empty-state,
