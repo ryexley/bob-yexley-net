@@ -9,6 +9,12 @@
 - [solid-i18n](https://github.com/SanichKotikov/solid-i18n)
 - [Cloudflare](https://dash.cloudflare.com/671eff5187276e8e51b1c59181f401b1/pages/view/web-stack)
 
+## UI styling conventions
+
+- Prefer a normal root class for each component and nested CSS for child styling.
+- For child classes scoped beneath a root selector, use short underscore-prefixed names like `._panel`, `._trigger`, or `._day`.
+- Avoid repeating the full component name on nested child classes unless the selector must work outside the component root, such as intentionally portaled content.
+
 ## Database workflow
 
 This project now uses the Supabase CLI for local database development and schema migrations.

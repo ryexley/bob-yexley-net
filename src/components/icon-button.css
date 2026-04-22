@@ -5,6 +5,7 @@
   border: 0.0625rem solid var(--colors-mono-01);
   display: flex;
   justify-content: center;
+  touch-action: manipulation;
   transition: var(--transitions-primary);
 
   &:hover {

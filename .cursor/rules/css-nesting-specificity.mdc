@@ -10,16 +10,18 @@ alwaysApply: false
 - Scope overrides through the existing component root selector first.
 - Do not create long one-off class names just to force specificity.
 - Add a new class only when it represents a real semantic or reusable element, not a specificity workaround.
+- When styling component children inside a nested root, prefer terse underscore-prefixed child selectors like `._panel` or `._day`.
+- Use longer non-underscored class names only when the selector must work outside the component root, such as with intentionally portaled content.
 
 ## Preferred
 
 ```css
 .profile-drawer {
-  .tooltip-trigger {
+  ._trigger {
     position: absolute;
   }
 
-  .tooltip-content {
+  ._content {
     z-index: 140;
   }
 }

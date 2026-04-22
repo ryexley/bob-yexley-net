@@ -10,20 +10,22 @@ alwaysApply: false
 - Do not create long one-off class names whose only purpose is to target a single element for styling.
 - Add a new class only when it represents a real semantic or reusable element in the component structure.
 - When a component already has a root class, use that root plus nested selectors as the first approach for styling related children.
+- Prefer a normal root class for the component, then short nested child classes with a leading underscore like `._panel`, `._trigger`, or `._day`.
+- Reserve longer non-underscored child class names for cases that are intentionally global or portaled outside the component root.
 
 ## Preferred
 
 ```tsx
-<div class="profile-drawer-avatar-stack">
+<div class="profile-drawer">
   <Tooltip content="...">
-    <IconButton class="profile-drawer-avatar-regenerate" />
+    <IconButton class="_regenerate" />
   </Tooltip>
 </div>
 ```
 
 ```css
-.profile-drawer-avatar-stack {
-  .tooltip-trigger {
+.profile-drawer {
+  ._regenerate {
     position: absolute;
   }
 }
@@ -32,9 +34,7 @@ alwaysApply: false
 ## Avoid
 
 ```tsx
-<Tooltip
-  content="..."
-  triggerClass="profile-drawer-avatar-regenerate-trigger">
-  <IconButton class="profile-drawer-avatar-regenerate" />
-</Tooltip>
+<div class="profile-drawer">
+  <IconButton class="profile-drawer-avatar-regenerate-button" />
+</div>
 ```
