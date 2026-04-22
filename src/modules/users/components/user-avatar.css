@@ -1,5 +1,6 @@
 .user-avatar {
   align-items: center;
+  border-radius: var(--radius-round);
   color: var(--user-avatar-color, var(--colors-info));
   display: inline-flex;
   flex: 0 0 auto;
@@ -18,10 +19,13 @@
   text-transform: uppercase;
 }
 
+.user-avatar-trigger {
+  border-radius: var(--radius-round);
+}
+
 .user-avatar.surface {
   background: var(--user-avatar-bg, var(--colors-mono-02));
   border: 0.0625rem solid var(--user-avatar-border, var(--colors-mono-04));
-  border-radius: var(--radius-round);
 }
 
 .user-avatar.bare {

@@ -24,6 +24,7 @@ export function InfoTooltip(props: InfoTooltipProps) {
   return (
     <Tooltip
       content={local.info}
+      touchMode="popover"
       triggerAs="button"
       triggerClass={cx("info-tooltip-trigger", local.class)}
       contentClass={local.contentClass}

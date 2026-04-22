@@ -85,7 +85,12 @@ export function UserAvatar(props: UserAvatarProps) {
   return (
     <Tooltip
       content={tooltipLabel()}
+      touchMode="popover"
       disabled={local["aria-hidden"] || tooltipLabel().length === 0}
+      triggerClass="user-avatar-trigger"
+      triggerProps={{
+        "aria-label": tooltipLabel(),
+      }}
       placement="top">
       {avatar()}
     </Tooltip>
