@@ -18,6 +18,12 @@
     }
   }
 
+  .publish-now {
+    .icon {
+      color: var(--colors-warning);
+    }
+  }
+
   .unpublish {
     .icon {
       color: var(--colors-success);

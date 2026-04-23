@@ -331,11 +331,15 @@ export const en = {
         metaDescription: "Blip",
         loading: "Loading blip...",
         notFound: "Blip not found.",
+        labels: {
+          scheduled: "Scheduled",
+        },
         actions: {
           backToBlips: "back",
           postUpdate: "Post update",
           hideUpdateComposer: "Hide composer",
           addReaction: "Add reaction",
+          commentsDisabled: "Comments disabled",
         },
         sort: {
           toggleToOldest: "Show updates and root comments oldest first",
@@ -395,11 +399,16 @@ export const en = {
     components: {
       blip: {
         modeLabel: "Update",
+        labels: {
+          scheduled: "Scheduled",
+          scheduledTooltip: "Scheduled to be published on {timestamp}",
+        },
         actions: {
           readMore: "Read more",
           addReaction: "Add reaction",
           updatesTooltip: "{count, plural, one {# update} other {# updates}}",
           commentsTooltip: "{count, plural, one {# comment} other {# comments}}",
+          commentsDisabled: "Comments disabled",
         },
         readMoreDialog: {
           closeAriaLabel: "Close dialog",
@@ -407,6 +416,21 @@ export const en = {
       },
       blipActions: {
         toolbarAriaLabel: "Blip actions",
+        actions: {
+          publish: "Publish",
+          publishNow: "Publish Now",
+          unpublish: "Unpublish",
+        },
+        confirmPublishNow: {
+          title: "Publish this blip now?",
+          prompt:
+            "This blip is scheduled to publish at {timestamp}. Publishing now will update that scheduled time to the current moment.",
+          actions: {
+            confirm: "Publish now",
+            confirming: "Publishing...",
+            cancel: "Keep scheduled",
+          },
+        },
         confirmDelete: {
           title: "Delete blip?",
           prompt:
@@ -423,6 +447,11 @@ export const en = {
         tags: {
           ariaLabel: "Blip tags",
           placeholder: "tags...",
+        },
+        metadata: {
+          title: "Blip metadata",
+          allowComments: "Allow Comments",
+          publishAt: "Publish Date",
         },
         draftPicker: {
           new: "New Blip",
@@ -442,6 +471,8 @@ export const en = {
           unpublish: "Unpublish",
           delete: "Delete Draft",
           toggleToolbar: "Toggle formatting toolbar",
+          showMetadata: "Show blip metadata",
+          showEditor: "Return to editor",
         },
         confirmDelete: {
           title: "Delete draft blip?",

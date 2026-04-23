@@ -6,6 +6,7 @@ import { BlipCardSkeletonList } from "@/modules/blips/components/blip-card-skele
 import { PageSection } from "@/modules/home/components/page-section"
 import { Blips } from "@/modules/blips/components/blips"
 import { BLIP_TYPES, blipStore, getBlips } from "@/modules/blips/data"
+import { isBlipPubliclyVisible } from "@/modules/blips/util"
 import { useSupabase } from "@/context/services-context"
 import { useAuth } from "@/context/auth-context"
 import { ptr } from "@/i18n"
@@ -17,6 +18,9 @@ const BLIPS_PAGE_SIZE = 20
 const tr = ptr("blips.views.index")
 
 export function BlipsView() {
+  const navigate = useNavigate()
+  const supabase = useSupabase()
+  const { isAuthenticated, userProfile, userSystem, loading } = useAuth() as any
   const initialBlips = createAsync(() => getBlips(BLIPS_PAGE_SIZE, 0))
   let lastReactionViewerKey: string | null = null
   let lastReactionViewer = {
@@ -25,9 +29,6 @@ export function BlipsView() {
     displayName: null,
   } as const
   let reactionViewerBaselineCaptured = false
-  const navigate = useNavigate()
-  const supabase = useSupabase()
-  const { isAuthenticated, userProfile, userSystem, loading } = useAuth() as any
   const [isLoadingMore, setIsLoadingMore] = createSignal(false)
   const [hasMore, setHasMore] = createSignal(true)
   let showMoreButtonRef: HTMLButtonElement | undefined
@@ -48,7 +49,7 @@ export function BlipsView() {
       return allRootFeedBlips
     }
 
-    return allRootFeedBlips.filter(blip => blip.published)
+    return allRootFeedBlips.filter(blip => isBlipPubliclyVisible(blip))
   })
   const reactionWatchKey = createMemo(() =>
     visibleRootFeedBlips()

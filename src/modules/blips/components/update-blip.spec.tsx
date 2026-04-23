@@ -104,9 +104,13 @@ vi.mock("@/modules/blips/data/store", () => ({
   }),
 }))
 
-vi.mock("@/modules/blips/util", () => ({
-  formatBlipTimestamp: () => "2m ago",
-}))
+vi.mock("@/modules/blips/util", async importOriginal => {
+  const actual = await importOriginal<typeof import("@/modules/blips/util")>()
+  return {
+    ...actual,
+    formatBlipTimestamp: () => "2m ago",
+  }
+})
 
 vi.mock("@/i18n", () => ({
   ptr: () => (key: string) => key,
@@ -150,6 +154,12 @@ describe("UpdateBlip", () => {
 
     expect(screen.getByRole("button", { name: "actions.addReaction" })).toBeTruthy()
     expect(screen.getByRole("button", { name: "Remove 🔥 reaction" })).toBeTruthy()
+  })
+
+  it("shows a muted comments-disabled indicator when comments are turned off", () => {
+    render(() => <UpdateBlip blip={makeBlip({ allow_comments: false })} />)
+
+    expect(screen.getByText("actions.commentsDisabled")).toBeTruthy()
   })
 
   it("toggles an update reaction and syncs the shared blip cache", async () => {

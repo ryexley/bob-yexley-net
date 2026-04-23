@@ -27,3 +27,12 @@ export const resolveBrowserSupabaseUrl = (
     return supabaseUrl
   }
 }
+
+export const getSupabaseAuthStorageKey = (supabaseUrl: string) => {
+  try {
+    const resolvedUrl = new URL(supabaseUrl)
+    return `bob-yexley-net-${resolvedUrl.hostname.split(".")[0]}-auth-token`
+  } catch {
+    return "bob-yexley-net-localhost-auth-token"
+  }
+}

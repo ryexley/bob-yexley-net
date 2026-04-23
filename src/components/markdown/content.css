@@ -173,38 +173,23 @@
   }
 
   pre {
-    background: transparent;
-    border: none;
-    border-radius: var(--radius-sm);
-    isolation: isolate;
-    margin: 0 0 1rem;
-    max-width: 100%;
-    overflow-x: visible;
-    padding: 0.75rem;
-    position: relative;
-
-    &::before {
-      background: linear-gradient(
+    background-image:
+      linear-gradient(var(--colors-mono-02), var(--colors-mono-02)),
+      linear-gradient(
         135deg,
         var(--colors-cool-blue),
         var(--colors-resonant-blue),
         var(--colors-rebecca-purple)
       );
-      border-radius: calc(var(--radius-sm) + 0.0625rem);
-      content: "";
-      inset: -0.0625rem;
-      position: absolute;
-      z-index: -2;
-    }
-
-    &::after {
-      background: var(--colors-mono-02);
-      border-radius: var(--radius-sm);
-      content: "";
-      inset: 0;
-      position: absolute;
-      z-index: -1;
-    }
+    background-origin: border-box;
+    background-clip: padding-box, border-box;
+    border: 0.0625rem solid transparent;
+    border-radius: var(--radius-sm);
+    margin: 0 0 1rem;
+    max-width: 100%;
+    overflow-x: auto;
+    padding: 0.75rem;
+    position: relative;
 
     code {
       background: transparent;

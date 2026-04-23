@@ -38,12 +38,14 @@ describe("buildTopLevelActivity", () => {
           id: "update-1",
           parent_id: "root-1",
           blip_type: BLIP_TYPES.UPDATE,
+          publish_at: "2026-03-28T12:03:00.000Z",
           created_at: "2026-03-28T12:03:00.000Z",
         }),
         makeBlip({
           id: "update-2",
           parent_id: "root-1",
           blip_type: BLIP_TYPES.UPDATE,
+          publish_at: "2026-03-28T12:00:30.000Z",
           created_at: "2026-03-28T12:00:30.000Z",
         }),
       ],
@@ -92,6 +94,42 @@ describe("buildTopLevelActivity", () => {
       "update-2",
       "comment-1",
       "update-1",
+    ])
+  })
+
+  it("orders top-level activity by publish_at when present", () => {
+    const activity = buildTopLevelActivity({
+      direction: "desc",
+      rootComments: [
+        makeBlip({
+          id: "comment-1",
+          parent_id: "root-1",
+          blip_type: BLIP_TYPES.COMMENT,
+          created_at: "2026-03-28T12:04:00.000Z",
+        }),
+      ],
+      updates: [
+        makeBlip({
+          id: "update-scheduled-later",
+          parent_id: "root-1",
+          blip_type: BLIP_TYPES.UPDATE,
+          publish_at: "2026-03-28T12:05:00.000Z",
+          created_at: "2026-03-28T12:01:00.000Z",
+        }),
+        makeBlip({
+          id: "update-created-later",
+          parent_id: "root-1",
+          blip_type: BLIP_TYPES.UPDATE,
+          publish_at: null,
+          created_at: "2026-03-28T12:04:30.000Z",
+        }),
+      ],
+    })
+
+    expect(activity.map(item => item.blip.id)).toEqual([
+      "update-scheduled-later",
+      "update-created-later",
+      "comment-1",
     ])
   })
 })

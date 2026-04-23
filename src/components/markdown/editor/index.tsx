@@ -8,6 +8,7 @@ import {
   type Component,
   type JSX,
 } from "solid-js"
+import { Dynamic } from "solid-js/web"
 import {
   Editor,
   rootCtx,
@@ -58,10 +59,12 @@ interface MarkdownEditorProps {
   statusFading?: boolean
   statusActions?: Component<any>
   statusContext?: any
-  BelowEditor?: Component<MarkdownEditorBelowEditorProps>
+  MetadataPanel?: Component<MarkdownEditorControlsProps>
+  metadataPanelVisible?: boolean
+  EditorControls?: Component<MarkdownEditorControlsProps>
 }
 
-export type MarkdownEditorBelowEditorProps = {
+export type MarkdownEditorControlsProps = {
   onToggleToolbar: () => void
   toolbarVisible: boolean
   statusText?: string
@@ -192,7 +195,9 @@ export function MarkdownEditor(props: MarkdownEditorProps) {
     "statusFading",
     "statusActions",
     "statusContext",
-    "BelowEditor",
+    "MetadataPanel",
+    "metadataPanelVisible",
+    "EditorControls",
   ])
 
   let editorRef: HTMLDivElement | undefined
@@ -453,41 +458,93 @@ export function MarkdownEditor(props: MarkdownEditorProps) {
 
   return (
     <div class={cx("markdown-editor", local.class)}>
-      <Show when={local.Header}>{local.Header?.({})}</Show>
+      <Show when={local.Header}>
+        <Dynamic component={local.Header} />
+      </Show>
       <Stack gap="0.5rem">
         <div
-          class="editor-container"
-          {...rest}>
-          <Toolbar
-            visible={toolbarVisible()}
-            activeFormats={activeFormats()}
-            disabledFormats={disabledFormats()}
-            selectedLinkText={selectedLinkText()}
-            selectionRangeFrom={selectionRangeFrom()}
-            selectionRangeTo={selectionRangeTo()}
-            selectedLinkHref={selectedLinkHref()}
-            selectedLinkRangeFrom={selectedLinkRangeFrom()}
-            selectedLinkRangeTo={selectedLinkRangeTo()}
-            linkEditorRequestNonce={linkEditorRequestNonce()}
-            onRequestEditorFocus={focusEditor}
-            onFormatApply={handleApplyFormat}
-          />
-          <div
-            ref={editorRef}
-            data-placeholder={local.placeholder}
-          />
-        </div>
-        <Show when={local.BelowEditor}>
-          {local.BelowEditor?.({
-            onToggleToolbar: handleToggleToolbar,
-            toolbarVisible: toolbarVisible(),
-            statusText: local.statusText,
-            statusIcon: local.statusIcon,
-            showStatus: local.showStatus,
-            statusFading: local.statusFading,
-            statusActions: local.statusActions,
-            statusContext: local.statusContext,
+          class={cx("editor-container", {
+            "has-alternate-body": Boolean(local.MetadataPanel),
+            "alternate-body-visible": local.metadataPanelVisible === true,
           })}
+          {...rest}>
+          <Show
+            when={local.MetadataPanel}
+            fallback={
+              <>
+                <Toolbar
+                  visible={toolbarVisible()}
+                  activeFormats={activeFormats()}
+                  disabledFormats={disabledFormats()}
+                  selectedLinkText={selectedLinkText()}
+                  selectionRangeFrom={selectionRangeFrom()}
+                  selectionRangeTo={selectionRangeTo()}
+                  selectedLinkHref={selectedLinkHref()}
+                  selectedLinkRangeFrom={selectedLinkRangeFrom()}
+                  selectedLinkRangeTo={selectedLinkRangeTo()}
+                  linkEditorRequestNonce={linkEditorRequestNonce()}
+                  onRequestEditorFocus={focusEditor}
+                  onFormatApply={handleApplyFormat}
+                />
+                <div
+                  ref={editorRef}
+                  data-placeholder={local.placeholder}
+                />
+              </>
+            }>
+            {MetadataPanel => (
+              <div class="editor-body-carousel">
+                <div class="editor-body-track">
+                  <div class="editor-body-pane editor-body-pane-editor">
+                    <Toolbar
+                      visible={toolbarVisible()}
+                      activeFormats={activeFormats()}
+                      disabledFormats={disabledFormats()}
+                      selectedLinkText={selectedLinkText()}
+                      selectionRangeFrom={selectionRangeFrom()}
+                      selectionRangeTo={selectionRangeTo()}
+                      selectedLinkHref={selectedLinkHref()}
+                      selectedLinkRangeFrom={selectedLinkRangeFrom()}
+                      selectedLinkRangeTo={selectedLinkRangeTo()}
+                      linkEditorRequestNonce={linkEditorRequestNonce()}
+                      onRequestEditorFocus={focusEditor}
+                      onFormatApply={handleApplyFormat}
+                    />
+                    <div
+                      ref={editorRef}
+                      data-placeholder={local.placeholder}
+                    />
+                  </div>
+                  <div class="editor-body-pane editor-body-pane-alternate">
+                    <Dynamic
+                      component={MetadataPanel()}
+                      onToggleToolbar={handleToggleToolbar}
+                      toolbarVisible={toolbarVisible()}
+                      statusText={local.statusText}
+                      statusIcon={local.statusIcon}
+                      showStatus={local.showStatus}
+                      statusFading={local.statusFading}
+                      statusActions={local.statusActions}
+                      statusContext={local.statusContext}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+          </Show>
+        </div>
+        <Show when={local.EditorControls}>
+          <Dynamic
+            component={local.EditorControls}
+            onToggleToolbar={handleToggleToolbar}
+            toolbarVisible={toolbarVisible()}
+            statusText={local.statusText}
+            statusIcon={local.statusIcon}
+            showStatus={local.showStatus}
+            statusFading={local.statusFading}
+            statusActions={local.statusActions}
+            statusContext={local.statusContext}
+          />
         </Show>
         {local.showStatusBar ? (
           <StatusBar

@@ -1,5 +1,5 @@
 import { Popover as PopoverPrimitive } from "@kobalte/core/popover"
-import { type ParentProps, type ComponentProps } from "solid-js"
+import { splitProps, type ParentProps, type ComponentProps } from "solid-js"
 import { cx } from "@/util"
 import "./popover.css"
 
@@ -56,17 +56,28 @@ type PopoverContentProps = ParentProps<
   ComponentProps<typeof PopoverPrimitive.Content> & {
     arrow?: boolean
     arrowClass?: string
+    // Allows callers inside clipped or modal containers to keep the popover
+    // within a specific DOM subtree instead of always portaling to document.body.
+    portalMount?: HTMLElement
   }
 >
 export function PopoverContent(props: PopoverContentProps) {
+  const [local, others] = splitProps(props, [
+    "arrow",
+    "arrowClass",
+    "portalMount",
+    "class",
+    "children",
+  ])
+
   return (
-    <PopoverPrimitive.Portal>
+    <PopoverPrimitive.Portal mount={local.portalMount}>
       <PopoverPrimitive.Content
-        {...props}
-        class={cx("popover-content", props.class)}>
-        {props.children}
-        {props.arrow === false ? null : (
-          <PopoverPrimitive.Arrow class={cx("popover-arrow", props.arrowClass)} />
+        {...others}
+        class={cx("popover-content", local.class)}>
+        {local.children}
+        {local.arrow === false ? null : (
+          <PopoverPrimitive.Arrow class={cx("popover-arrow", local.arrowClass)} />
         )}
       </PopoverPrimitive.Content>
     </PopoverPrimitive.Portal>

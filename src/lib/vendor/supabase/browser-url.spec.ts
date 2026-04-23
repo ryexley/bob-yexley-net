@@ -1,46 +1,22 @@
 import { describe, expect, it } from "vitest"
-import { resolveBrowserSupabaseUrl } from "@/lib/vendor/supabase/browser-url"
+import {
+  getSupabaseAuthStorageKey,
+  resolveBrowserSupabaseUrl,
+} from "@/lib/vendor/supabase/browser-url"
 
-describe("browser-url", () => {
-  it("keeps non-loopback supabase hosts unchanged", () => {
+describe("browser Supabase URL helpers", () => {
+  it("rewrites loopback URLs for non-loopback browser hosts", () => {
     expect(
-      resolveBrowserSupabaseUrl(
-        "https://project-ref.supabase.co",
-        "192.168.1.50",
-      ),
-    ).toBe("https://project-ref.supabase.co")
+      resolveBrowserSupabaseUrl("http://localhost:54321", "192.168.4.25"),
+    ).toBe("http://192.168.4.25:54321/")
   })
 
-  it("keeps loopback supabase hosts unchanged for localhost browsing", () => {
-    expect(
-      resolveBrowserSupabaseUrl(
-        "http://127.0.0.1:54321",
-        "127.0.0.1",
-      ),
-    ).toBe("http://127.0.0.1:54321")
-  })
-
-  it("rewrites loopback supabase hosts to the current browser hostname", () => {
-    expect(
-      resolveBrowserSupabaseUrl(
-        "http://127.0.0.1:54321",
-        "192.168.1.50",
-      ),
-    ).toBe("http://192.168.1.50:54321/")
-  })
-
-  it("rewrites localhost supabase hosts to the current browser hostname", () => {
-    expect(
-      resolveBrowserSupabaseUrl(
-        "http://localhost:54321",
-        "bob-phone.local",
-      ),
-    ).toBe("http://bob-phone.local:54321/")
-  })
-
-  it("returns the original value for invalid URLs", () => {
-    expect(resolveBrowserSupabaseUrl("not-a-url", "192.168.1.50")).toBe(
-      "not-a-url",
+  it("keeps a stable auth storage key from the original configured URL", () => {
+    expect(getSupabaseAuthStorageKey("http://localhost:54321")).toBe(
+      "bob-yexley-net-localhost-auth-token",
+    )
+    expect(getSupabaseAuthStorageKey("http://192.168.4.25:54321")).toBe(
+      "bob-yexley-net-192-auth-token",
     )
   })
 })

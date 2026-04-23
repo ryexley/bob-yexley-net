@@ -230,6 +230,73 @@ export function Combobox<Option, OptGroup = never>(
       option as Exclude<Option, null>,
       local.optionTextValue ?? labelAccessor(),
     )
+
+  const optionPassesFilter = (option: Option, inputVal: string): boolean => {
+    const raw = inputVal.trim()
+    if (!raw) {
+      return false
+    }
+
+    const textVal = getOptionSearchText(option)
+    const df = rootProps.defaultFilter
+
+    if (typeof df === "function") {
+      return df(option as Exclude<Option, null>, inputVal)
+    }
+
+    const mode = df ?? "contains"
+    const haystack = textVal.toLocaleLowerCase()
+    const needle = raw.toLocaleLowerCase()
+
+    switch (mode) {
+      case "startsWith":
+        return haystack.startsWith(needle)
+      case "endsWith":
+        return haystack.endsWith(needle)
+      case "contains":
+      default:
+        return haystack.includes(needle)
+    }
+  }
+
+  const isOptionDisabledForItem = (option: Option): boolean => {
+    const od = rootProps.optionDisabled
+    if (!od) {
+      return false
+    }
+
+    if (typeof od === "function") {
+      return od(option as Exclude<Option, null>)
+    }
+
+    return Boolean((option as Record<string, unknown>)[od as string])
+  }
+
+  /** First visible option matching the current filter (same order as Kobalte’s list). */
+  const firstFilteredOption = createMemo(() => {
+    const q = inputQuery()
+    if (!q.trim()) {
+      return null
+    }
+
+    for (const option of mergedOptions()) {
+      if (isOptionDisabledForItem(option)) {
+        continue
+      }
+
+      if (optionPassesFilter(option, q)) {
+        return option
+      }
+    }
+
+    return null
+  })
+
+  const shouldAutoHighlightOption = (option: Option) => {
+    const first = firstFilteredOption()
+    return first != null && areOptionsEqual(option, first)
+  }
+
   const findExactInputMatch = (inputValue: string) => {
     const normalizedInput = normalize(inputValue)
     if (!normalizedInput) {
@@ -242,8 +309,6 @@ export function Combobox<Option, OptGroup = never>(
       ) ?? null
     )
   }
-  const shouldAutoHighlightOption = (option: Option) =>
-    normalize(getOptionSearchText(option)) === normalize(inputQuery())
   const clearInputValue = (target: EventTarget | null) => {
     if (!(target instanceof HTMLInputElement)) {
       return
@@ -431,6 +496,60 @@ export function Combobox<Option, OptGroup = never>(
 
     return true
   }
+
+  /**
+   * Kobalte clears list focus when the input changes, so there is often no
+   * `aria-activedescendant`. We highlight the first filtered option in CSS and,
+   * on Enter (when there is no keyboard-focused item), commit that option — the
+   * usual typeahead combobox behavior.
+   */
+  const selectFirstFilteredOptionOnEnter = (
+    state: SingleSelectControlState<Option>,
+    event: KeyboardEvent,
+  ) => {
+    if (event.key !== "Enter") {
+      return false
+    }
+
+    const target = event.target
+    if (!(target instanceof HTMLInputElement)) {
+      return false
+    }
+
+    const activeDescendant = target.getAttribute("aria-activedescendant")
+    if (activeDescendant) {
+      return false
+    }
+
+    const first = firstFilteredOption()
+    if (first == null) {
+      return false
+    }
+
+    event.preventDefault()
+    event.stopPropagation()
+
+    const onChange = (
+      primitiveProps() as { onChange?: (value: Option | Option[]) => void }
+    ).onChange
+
+    if (local.multiple) {
+      const selected = toArray(
+        state.selectedOptions?.() ??
+          resolveMaybeAccessor((primitiveProps() as { value?: Option[] }).value),
+      )
+      const alreadySelected = selected.some(option =>
+        areOptionsEqual(option, first),
+      )
+      onChange?.(alreadySelected ? selected : [...selected, first])
+    } else {
+      onChange?.(first as Option)
+    }
+
+    clearInputValue(target)
+    return true
+  }
+
   const removeChip =
     (state: MultiSelectControlState<Option>, option: Option) =>
     (event: MouseEvent) => {
@@ -521,7 +640,17 @@ export function Combobox<Option, OptGroup = never>(
             "combobox-item-auto-highlighted": shouldAutoHighlightOption(
               itemProps.item.rawValue,
             ),
-          })}>
+          })}
+          onPointerDown={e => {
+            // Prevent the input from blurring before `click`/selection runs; on mobile
+            // a blur/focus-out dismisses the list (dismissable layer) otherwise.
+            e.preventDefault()
+          }}
+          onMouseDown={e => {
+            if (e.button === 0) {
+              e.preventDefault()
+            }
+          }}>
           <ComboboxPrimitive.ItemLabel
             data-corvu-no-drag=""
             class="combobox-item-label">
@@ -599,6 +728,10 @@ export function Combobox<Option, OptGroup = never>(
                 onFocus={openOptionsOnInputFocus}
                 onKeyDown={event => {
                   if (selectExistingOptionFromInput(state, event)) {
+                    return
+                  }
+
+                  if (selectFirstFilteredOptionOnEnter(state, event)) {
                     return
                   }
 

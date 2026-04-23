@@ -46,6 +46,7 @@ export const blipSchema = z
     my_reaction_count: z.number().int().nonnegative().optional(),
     reactions: z.array(blipReactionSummarySchema).optional(),
     author: blipAuthorSchema.optional(),
+    publish_at: z.string().nullable().optional(),
     created_at: z.string(),
     updated_at: z.string(),
   })

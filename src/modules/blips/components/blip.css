@@ -1,38 +1,52 @@
-.blip {
+.blip-card {
   --blip-card-background: var(--colors-mono-02);
   --blip-card-border-radius: 0.5rem;
-  background: var(--blip-card-background);
-  border-radius: var(--blip-card-border-radius);
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  height: 10rem;
-  max-width: 30rem;
-  overflow: hidden;
-  padding: 0.5rem 1rem;
-  position: relative;
-  width: 100%;
 
-  .blip-main {
+  ._card {
+    background: var(--blip-card-background);
+    border-radius: var(--blip-card-border-radius);
     display: flex;
-    flex: 1;
     flex-direction: column;
     gap: 0.5rem;
-    min-height: 0;
-
-    &.interactive {
-      cursor: pointer;
-    }
-  }
-
-  .blip-content {
-    flex: 1;
-    font-size: 0.9rem;
+    height: 10rem;
+    max-width: 30rem;
     overflow: hidden;
+    padding: 0.5rem 1rem;
     position: relative;
+    width: 100%;
 
-    &.preview {
-      &::after {
+    ._main {
+      display: flex;
+      flex: 1;
+      flex-direction: column;
+      gap: 0.5rem;
+      min-height: 0;
+
+      &._interactive {
+        cursor: pointer;
+      }
+    }
+
+    header {
+      align-items: center;
+      display: flex;
+      gap: 0.5rem;
+      justify-content: end;
+
+      ._timestamp {
+        color: var(--colors-mono-07);
+        font-size: 0.75rem;
+        font-style: italic;
+      }
+    }
+
+    ._content {
+      flex: 1;
+      font-size: 0.9rem;
+      overflow: hidden;
+      position: relative;
+
+      &._preview::after {
         background: linear-gradient(
           transparent,
           var(--blip-card-background) 75%
@@ -44,158 +58,170 @@
         position: absolute;
         right: 0;
       }
-    }
 
-    .read-more {
-      --offset: 0.0625rem;
-      bottom: var(--offset);
-      color: var(--colors-links);
-      font-weight: 300;
-      gap: 0;
-      padding-right: 0.35rem;
-      position: absolute;
-      right: var(--offset);
-      z-index: 1;
-
-      .icon {
-        font-size: 1rem;
+      ._readMore {
+        --offset: 0.0625rem;
+        bottom: var(--offset);
         color: var(--colors-links);
+        font-weight: 300;
+        gap: 0;
+        padding-right: 0.35rem;
+        position: absolute;
+        right: var(--offset);
+        z-index: 1;
+
+        .icon {
+          font-size: 1rem;
+          color: var(--colors-links);
+        }
       }
     }
-  }
 
-  header {
-    align-items: center;
-    display: flex;
-    justify-content: end;
-
-    .timestamp {
-      color: var(--colors-mono-07);
-      font-size: 0.75rem;
-      font-style: italic;
-    }
-  }
-
-  footer {
-    align-items: center;
-    display: flex;
-    gap: 1rem;
-    justify-content: space-between;
-    width: 100%;
-
-    .tags {
-      align-items: flex-start;
+    footer {
+      align-items: center;
       display: flex;
-      flex: 1;
-      flex-wrap: nowrap;
-      gap: 0.25rem;
-      justify-content: start;
-      min-width: 0;
+      gap: 1rem;
+      justify-content: space-between;
+      width: 100%;
 
-      .icon {
+      ._tags {
+        align-items: flex-start;
+        display: flex;
+        flex: 1;
+        flex-wrap: nowrap;
+        gap: 0.25rem;
+        justify-content: start;
+        min-width: 0;
+
+        .icon {
+          align-items: center;
+          display: inline-flex;
+          flex-shrink: 0;
+          line-height: 1;
+        }
+
+        ._tagList {
+          align-items: flex-start;
+          column-gap: 0.25rem;
+          display: flex;
+          flex: 1;
+          flex-wrap: wrap;
+          row-gap: 0.125rem;
+          justify-content: start;
+          list-style: none;
+          margin: 0;
+          min-width: 0;
+          padding: 0;
+
+          ._tag {
+            color: var(--colors-mono-08);
+            font-size: 0.75rem;
+            font-style: italic;
+            line-height: 1.15;
+            white-space: nowrap;
+
+            a {
+              color: var(--colors-mono-08);
+              line-height: inherit;
+              white-space: inherit;
+              transition: var(--transitions-primary);
+
+              &:hover {
+                color: var(--colors-links);
+              }
+            }
+          }
+        }
+      }
+
+      ._activity {
         align-items: center;
         display: inline-flex;
         flex-shrink: 0;
-        line-height: 1;
-      }
+        gap: 0.3rem;
+        margin-left: auto;
 
-      .tag-list {
-        align-items: flex-start;
-        column-gap: 0.25rem;
-        display: flex;
-        flex: 1;
-        flex-wrap: wrap;
-        row-gap: 0.125rem;
-        justify-content: start;
-        list-style: none;
-        margin: 0;
-        min-width: 0;
-        padding: 0;
+        .tooltip-trigger {
+          display: inline-flex;
+        }
 
-        .tag {
+        ._activityIndicator {
+          align-items: center;
+          background: transparent;
+          border: 1px solid var(--colors-mono-05);
+          border-radius: 999px;
           color: var(--colors-mono-08);
+          cursor: pointer;
+          display: inline-flex;
           font-size: 0.75rem;
-          font-style: italic;
-          line-height: 1.15;
-          white-space: nowrap;
+          gap: 0.25rem;
+          padding: 0.1rem 0.45rem;
+          transition: var(--transitions-primary);
 
-          a {
-            color: var(--colors-mono-08);
-            line-height: inherit;
-            white-space: inherit;
-            transition: var(--transitions-primary);
+          &:hover {
+            border-color: var(--colors-links);
+            color: var(--colors-links);
+          }
 
-            &:hover {
-              color: var(--colors-links);
-            }
+          .icon {
+            color: currentcolor;
+            font-size: 0.9rem;
           }
         }
       }
     }
 
-    .activity {
-      align-items: center;
-      display: inline-flex;
-      flex-shrink: 0;
-      gap: 0.3rem;
-      margin-left: auto;
-      
-      .tooltip-trigger {
-        display: inline-flex;
-      }
-
-      .activity-indicator {
-        align-items: center;
-        background: transparent;
-        border: 1px solid var(--colors-mono-05);
-        border-radius: 999px;
-        color: var(--colors-mono-08);
-        cursor: pointer;
-        display: inline-flex;
-        font-size: 0.75rem;
-        gap: 0.25rem;
-        padding: 0.1rem 0.45rem;
-        transition: var(--transitions-primary);
-
-        &:hover {
-          border-color: var(--colors-links);
-          color: var(--colors-links);
-        }
-
-        .icon {
-          color: currentcolor;
-          font-size: 0.9rem;
-        }
+    /*
+     * Dim the body (content + footer) when the card is unpublished or
+     * scheduled, but keep the header visible so the timestamp/scheduled
+     * badge stays readable. Opacity on the root would apply to all
+     * descendants and children can't exceed the parent's opacity.
+     */
+    &._unpublished {
+      ._content,
+      footer {
+        opacity: 0.25;
       }
     }
 
-    .comments {
-      align-items: center;
-      display: flex;
-      justify-content: end;
+    &._scheduled {
+      ._timestamp {
+        align-items: center;
+        background: color-mix(in srgb, var(--colors-info) 12%, transparent);
+        border: 1px solid var(--colors-info);
+        border-radius: 999px;
+        color: var(--colors-info);
+        display: inline-flex;
+        font-style: normal;
+        font-weight: 500;
+        gap: 0.25rem;
+        padding: 0.1rem 0.5rem;
 
-      .icon {
-        font-size: 1.25rem;
+        ._timestampIcon {
+          color: currentcolor;
+          font-size: 0.875rem;
+        }
+      }
+
+      ._content,
+      footer {
+        opacity: 0.62;
       }
     }
   }
-}
 
-.blip--unpublished {
-  opacity: 0.25;
-}
+  ._metaRow {
+    align-items: flex-start;
+    display: flex;
+    gap: 0.75rem;
+    justify-content: space-between;
+    width: 100%;
+  }
 
-.blip-meta-row {
-  align-items: flex-start;
-  display: flex;
-  gap: 0.75rem;
-  justify-content: space-between;
-  width: 100%;
-}
-
-.blip-meta-row-start {
-  align-items: center;
-  display: inline-flex;
-  flex: 1;
-  min-width: 0;
+  ._metaRowStart {
+    align-items: center;
+    display: inline-flex;
+    flex: 1;
+    min-width: 0;
+  }
 }

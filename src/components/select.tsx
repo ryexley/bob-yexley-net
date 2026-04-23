@@ -26,6 +26,10 @@ type SelectProps = {
   triggerClass?: string
   contentClass?: string
   itemClass?: string
+  // Mirrors the popover portal override so dialog-hosted selects can mount
+  // inside the dialog content tree when body-level portaling causes clipping
+  // or dismissable-layer conflicts.
+  portalMount?: HTMLElement
   "aria-label"?: string
 }
 
@@ -46,6 +50,7 @@ export function Select(props: SelectProps) {
     "triggerClass",
     "contentClass",
     "itemClass",
+    "portalMount",
     "aria-label",
   ])
 
@@ -102,7 +107,7 @@ export function Select(props: SelectProps) {
       <Show when={isNotEmpty(local.errorMessage)}>
         <div class="select-error-message">{local.errorMessage}</div>
       </Show>
-      <SelectPrimitive.Portal>
+      <SelectPrimitive.Portal mount={local.portalMount}>
         <SelectPrimitive.Content class={cx("select-content", local.contentClass)}>
           <SelectPrimitive.Listbox class="select-listbox" />
         </SelectPrimitive.Content>

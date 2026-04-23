@@ -182,14 +182,13 @@ describe("DateTimePicker", () => {
     )
   })
 
-  it("rounds the initial time seed forward and keeps duplicate 12:00 options", async () => {
+  it("rounds the initial time seed forward", async () => {
     render(() => <DateTimePicker showTime timeGranularity={5} />)
 
     await fireEvent.focus(screen.getByRole("textbox"))
 
-    const select = screen.getByRole("combobox", { name: "Select time" }) as HTMLSelectElement
-    expect(select.value).toBe("635")
-    expect(screen.getAllByRole("option", { name: "12:00" })).toHaveLength(2)
+    const trigger = screen.getByRole("button", { name: "Select time 10:35" })
+    expect(trigger).toBeTruthy()
   })
 
   it("shows a validation error when manual input does not match the format", async () => {

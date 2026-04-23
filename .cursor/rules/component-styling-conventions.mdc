@@ -12,6 +12,10 @@ alwaysApply: false
 - When a component already has a root class, use that root plus nested selectors as the first approach for styling related children.
 - Prefer a normal root class for the component, then short nested child classes with a leading underscore like `._panel`, `._trigger`, or `._day`.
 - Reserve longer non-underscored child class names for cases that are intentionally global or portaled outside the component root.
+- When editing an existing component, treat nearby naming-pattern violations as cleanup candidates instead of copying them forward.
+- If a touched component already uses BEM-style modifiers, unnested child selectors, or long one-off class names that can be safely normalized with low churn, clean them up in the same change.
+- Do not follow an existing local violation just for consistency with that file.
+- Keep cleanup tightly scoped to the component you are already editing.
 
 ## Preferred
 

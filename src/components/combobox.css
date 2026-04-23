@@ -36,15 +36,17 @@
   }
 
   .combobox-control {
-    display: inline-flex;
     align-items: center;
-    width: 100%;
+    background-color: var(--colors-mono-02);
     border: 1px solid var(--colors-mono-07);
     border-radius: 0.375rem;
-    background-color: var(--colors-mono-02);
+    box-sizing: border-box;
     color: inherit;
+    display: inline-flex;
+    min-height: var(--form-control-height, 2.375rem);
     position: relative;
     transition: all var(--transitions-primary);
+    width: 100%;
 
     &:focus-within {
       border-color: var(--colors-cool-blue);
@@ -66,10 +68,17 @@
     display: flex;
     flex: 1 1 auto;
     flex-wrap: wrap;
-    align-items: center;
+    align-items: start;
     gap: 0.375rem;
+    min-height: calc(var(--form-control-height, 2.375rem) - 2px);
     min-width: 0;
-    padding: 0.125rem 0.25rem;
+    /* Single padding inset for chips + input so wrapping does not stack extra
+       vertical padding on the input row (input used to add its own block padding). */
+    padding: 0.3125rem 0.375rem;
+  }
+
+  .combobox-value-area:not(:has(.combobox-chip-list)) {
+    align-items: center;
   }
 
   .combobox-input {
@@ -85,7 +94,7 @@
     font-size: 1rem;
     line-height: 1.5rem;
     outline: none;
-    padding: 0.25rem 0 0.25rem 0.25rem;
+    padding: 0.0625rem 0 0.0625rem 0.25rem;
 
     &:hover,
     &:focus,
@@ -104,13 +113,11 @@
     }
   }
 
+  /* Hoists chips into `.combobox-value-area`’s flex layout so the input stays
+     on the same row as the last chip when space allows (no full-width chip block
+     forcing the caret to the next line). */
   .combobox-chip-list {
-    display: inline-flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 0.25rem;
-    min-width: 0;
-    padding: 0 0.125rem;
+    display: contents;
   }
 
   .combobox-chip {

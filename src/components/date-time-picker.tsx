@@ -10,6 +10,7 @@ import {
   untrack,
   type JSX,
 } from "solid-js"
+import { Select as SelectPrimitive } from "@kobalte/core/select"
 import { addDays } from "date-fns/addDays"
 import { addMonths } from "date-fns/addMonths"
 import { endOfDay } from "date-fns/endOfDay"
@@ -29,12 +30,15 @@ import { subMonths } from "date-fns/subMonths"
 import { Icon } from "@/components/icon"
 import { IconButton } from "@/components/icon-button"
 import { Popover, PopoverAnchor, PopoverContent } from "@/components/popover"
-import { Select, type SelectOption } from "@/components/select"
+import { type SelectOption } from "@/components/select"
 import { clsx as cx, isNotEmpty } from "@/util"
+import "./select.css"
 import "./date-time-picker.css"
 
 type TimeGranularity = 5 | 15 | 30 | 60
 type Meridiem = "AM" | "PM"
+
+const TIME_SELECT_CLOSE_GUARD_MS = 150
 
 type DateTimePickerProps = Omit<
   JSX.InputHTMLAttributes<HTMLInputElement>,
@@ -54,6 +58,10 @@ type DateTimePickerProps = Omit<
   minDate?: Date
   maxDate?: Date
   openOnInputInteraction?: boolean
+  // Lets callers provide a dialog-safe mount point for the picker and nested
+  // time-select overlays. Without this, body-level portals can fall outside a
+  // modal's focus/dismissable-layer boundary.
+  portalMount?: HTMLElement
 }
 
 export type DatePickerProps = DateTimePickerProps
@@ -358,6 +366,13 @@ function containsEventTarget(
   return !!(element && target instanceof Node && element.contains(target))
 }
 
+function isOwnedOverlayTarget(
+  target: EventTarget | null | undefined,
+  selector: string,
+) {
+  return target instanceof Element && target.closest(selector) !== null
+}
+
 function getClosestValidTimeSelection(
   dateValue: Date,
   preferredMeridiem: Meridiem,
@@ -422,6 +437,7 @@ export function DateTimePicker(props: DateTimePickerProps) {
     "minDate",
     "maxDate",
     "openOnInputInteraction",
+    "portalMount",
     "placeholder",
     "id",
     "disabled",
@@ -432,6 +448,7 @@ export function DateTimePicker(props: DateTimePickerProps) {
     "onBlur",
     "onKeyDown",
   ])
+  let rootRef: HTMLDivElement | undefined
   const generatedId = createUniqueId()
   const inputId = createMemo(() => local.id ?? `date-time-picker-${generatedId}`)
   const descriptionId = createMemo(() =>
@@ -452,6 +469,8 @@ export function DateTimePicker(props: DateTimePickerProps) {
   const [inputValue, setInputValue] = createSignal("")
   const [validationError, setValidationError] = createSignal<string | null>(null)
   const [open, setOpen] = createSignal(false)
+  const [timeSelectOpen, setTimeSelectOpen] = createSignal(false)
+  const [timeSelectOpenedAtMs, setTimeSelectOpenedAtMs] = createSignal<number | null>(null)
   const initialSeedValue = untrack(
     () =>
       getSeedValue(
@@ -496,17 +515,70 @@ export function DateTimePicker(props: DateTimePickerProps) {
   )
   let suppressInputOpenOnce = false
   let anchorRef: HTMLDivElement | undefined
+  let panelRef: HTMLDivElement | undefined
+  let timeSelectFieldRef: HTMLDivElement | undefined
+  const ownedOverlaySelector = ".date-time-picker-owned-overlay"
 
-  const preventAnchorDismiss = (
+  // The time select lives inside a popover inside a dialog. These guards keep
+  // clicks/focus transitions within any part of that owned overlay stack from
+  // being misclassified as "outside" interactions by Kobalte.
+  const preventInternalDismiss = (
     event: Event & { detail?: { originalEvent?: Event } },
   ) => {
     const target = event.detail?.originalEvent?.target ?? event.target
 
-    if (!containsEventTarget(anchorRef, target)) {
+    if (
+      !containsEventTarget(anchorRef, target) &&
+      !containsEventTarget(panelRef, target) &&
+      !isOwnedOverlayTarget(target, ownedOverlaySelector)
+    ) {
       return
     }
 
     event.preventDefault()
+  }
+
+  const closeTimeSelect = () => {
+    if (timeSelectOpen()) {
+      setTimeSelectOpen(false)
+    }
+
+    setTimeSelectOpenedAtMs(null)
+  }
+
+  const getCurrentTimeMs = () =>
+    typeof performance !== "undefined" ? performance.now() : Date.now()
+
+  // In the desktop modal path, Kobalte can emit an immediate close after the
+  // time select opens because nested overlay events race each other. This
+  // small guard keeps the first spurious close from collapsing the menu.
+  const handleTimeSelectOpenChange = (nextOpen: boolean) => {
+    if (nextOpen) {
+      setTimeSelectOpen(true)
+      setTimeSelectOpenedAtMs(getCurrentTimeMs())
+      return
+    }
+
+    const openedAtMs = timeSelectOpenedAtMs()
+    if (openedAtMs !== null && getCurrentTimeMs() - openedAtMs < TIME_SELECT_CLOSE_GUARD_MS) {
+      return
+    }
+
+    closeTimeSelect()
+  }
+
+  const handlePanelPointerDown = (event: PointerEvent) => {
+    const target = event.target
+
+    if (
+      !timeSelectOpen() ||
+      containsEventTarget(timeSelectFieldRef, target) ||
+      isOwnedOverlayTarget(target, ownedOverlaySelector)
+    ) {
+      return
+    }
+
+    closeTimeSelect()
   }
 
   const syncDraftState = (baseValue: Date | null) => {
@@ -565,6 +637,7 @@ export function DateTimePicker(props: DateTimePickerProps) {
     }
 
     suppressInputOpenOnce = true
+    setTimeSelectOpen(false)
     setOpen(false)
 
     if (local.showTime) {
@@ -577,6 +650,7 @@ export function DateTimePicker(props: DateTimePickerProps) {
       return
     }
 
+    setTimeSelectOpen(false)
     syncDraftState(selectedValue())
     setOpen(true)
   }
@@ -692,6 +766,10 @@ export function DateTimePicker(props: DateTimePickerProps) {
     closePicker()
   }
 
+  const selectedDraftTimeOption = createMemo(
+    () => draftTimeOptions().find(option => option.value === draftTimeValue()) ?? null,
+  )
+
   createEffect(() => {
     const value = selectedValue()
     setInputValue(formatDisplayValue(value, formatString()))
@@ -701,6 +779,7 @@ export function DateTimePicker(props: DateTimePickerProps) {
 
   return (
     <div
+      ref={rootRef}
       class={cx("date-time-picker", local.containerClass)}
       data-show-time={local.showTime ? "" : undefined}>
       <Show when={isNotEmpty(local.label)}>
@@ -805,13 +884,26 @@ export function DateTimePicker(props: DateTimePickerProps) {
           </div>
         </PopoverAnchor>
         <PopoverContent
-          class="date-time-picker-content"
+          portalMount={local.portalMount ?? rootRef}
+          class={cx("date-time-picker-content", {
+            "_with-time": local.showTime,
+          })}
           arrow={false}
           onOpenAutoFocus={event => event.preventDefault()}
           onCloseAutoFocus={event => event.preventDefault()}
-          onFocusOutside={preventAnchorDismiss}
-          onPointerDownOutside={preventAnchorDismiss}>
-          <div class="_panel">
+          onFocusOutside={preventInternalDismiss}
+          onPointerDownOutside={preventInternalDismiss}
+          onInteractOutside={preventInternalDismiss}
+          // This is an escape hatch for the nested dialog -> popover -> select
+          // stack used by the blip editor metadata panel. Keep this localized
+          // unless we find a cleaner library-supported pattern.
+          {...({ bypassTopMostLayerCheck: true } as any)}>
+          <div
+            class="_panel"
+            ref={element => {
+              panelRef = element
+            }}
+            onPointerDown={handlePanelPointerDown}>
             <div class="_header">
               <button
                 type="button"
@@ -875,18 +967,62 @@ export function DateTimePicker(props: DateTimePickerProps) {
             </div>
             <Show when={local.showTime}>
               <div class="_time-row">
-                <Select
-                  options={draftTimeOptions()}
-                  value={draftTimeValue()}
-                  onChange={value => {
-                    if (value) {
-                      setDraftTimeValue(value)
-                    }
+                <SelectPrimitive
+                  ref={element => {
+                    timeSelectFieldRef = element
                   }}
-                  aria-label="Select time"
-                  containerClass="_time-select-field"
-                  triggerClass="_time-select"
-                />
+                  options={draftTimeOptions()}
+                  optionValue="value"
+                  optionTextValue="label"
+                  optionDisabled="disabled"
+                  value={selectedDraftTimeOption()}
+                  open={timeSelectOpen()}
+                  onOpenChange={handleTimeSelectOpenChange}
+                  onChange={option => {
+                    if (option) {
+                      setDraftTimeValue(option.value)
+                    }
+
+                    closeTimeSelect()
+                  }}
+                  class="select-field _time-select-field"
+                  // The shared Select wrapper does not expose enough control for
+                  // this nested-overlay case, so the time menu uses primitives
+                  // directly to manage its open state and dismiss behavior.
+                  itemComponent={props => (
+                    <SelectPrimitive.Item
+                      item={props.item}
+                      class="select-item">
+                      <span class="select-item-label">{props.item.rawValue.label}</span>
+                      <span class="select-item-indicator" aria-hidden="true">
+                        <Icon name="check" />
+                      </span>
+                    </SelectPrimitive.Item>
+                  )}>
+                  <SelectPrimitive.HiddenSelect />
+                  <SelectPrimitive.Trigger
+                    class="select-trigger _time-select"
+                    aria-label="Select time">
+                    <SelectPrimitive.Value<SelectOption> class="select-value">
+                      {state => state.selectedOption().label}
+                    </SelectPrimitive.Value>
+                    <span class="select-trigger-icon" aria-hidden="true">
+                      <Icon name="expand_more" />
+                    </span>
+                  </SelectPrimitive.Trigger>
+                  <SelectPrimitive.Portal mount={local.portalMount ?? rootRef}>
+                    <SelectPrimitive.Content
+                      class="select-content _time-select-content date-time-picker-owned-overlay"
+                      // These handlers intentionally keep the nested time menu
+                      // inside the parent picker's interaction boundary.
+                      onCloseAutoFocus={event => event.preventDefault()}
+                      onFocusOutside={event => event.preventDefault()}
+                      onPointerDownOutside={event => event.preventDefault()}
+                      onInteractOutside={event => event.preventDefault()}>
+                      <SelectPrimitive.Listbox class="select-listbox" />
+                    </SelectPrimitive.Content>
+                  </SelectPrimitive.Portal>
+                </SelectPrimitive>
                 <div
                   class="_meridiem"
                   role="group"

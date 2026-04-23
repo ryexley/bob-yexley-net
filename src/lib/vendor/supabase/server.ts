@@ -10,6 +10,7 @@
  */
 import { createServerClient } from "@supabase/ssr"
 import { getEvent, parseCookies, setCookie } from "vinxi/http"
+import { getSupabaseAuthStorageKey } from "@/lib/vendor/supabase/browser-url"
 import type { AppSupabaseClient, Database } from "@/lib/vendor/supabase/types"
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL
@@ -19,6 +20,8 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
   throw new Error("Missing required Supabase environment variables")
 }
 
+const SUPABASE_AUTH_STORAGE_KEY = getSupabaseAuthStorageKey(SUPABASE_URL)
+
 const isHeadersSentError = (error: unknown): boolean =>
   typeof error === "object" &&
   error !== null &&
@@ -27,6 +30,9 @@ const isHeadersSentError = (error: unknown): boolean =>
 
 export async function getServerClient(): Promise<AppSupabaseClient> {
   const client = createServerClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    cookieOptions: {
+      name: SUPABASE_AUTH_STORAGE_KEY,
+    },
     cookies: {
       getAll() {
         const cookies = parseCookies()

@@ -6,6 +6,7 @@ import { Blips } from "@/modules/blips/components/blips"
 import { useAuth } from "@/context/auth-context"
 import { useSupabase } from "@/context/services-context"
 import { blipStore, getBlips } from "@/modules/blips/data"
+import { isBlipPubliclyVisible } from "@/modules/blips/util"
 import { ptr } from "@/i18n"
 import { pages } from "@/urls"
 import "./signals.css"
@@ -41,7 +42,7 @@ export function Signals(props) {
     if (isAuthenticated()) {
       return allBlips
     }
-    return allBlips.filter(blip => blip.published)
+    return allBlips.filter(blip => isBlipPubliclyVisible(blip))
   }
 
   return (

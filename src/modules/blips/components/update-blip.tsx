@@ -1,8 +1,16 @@
 import type { Blip } from "@/modules/blips/data/schema"
-import { createEffect, createMemo, createSignal, onCleanup, onMount } from "solid-js"
+import {
+  Show,
+  createEffect,
+  createMemo,
+  createSignal,
+  onCleanup,
+  onMount,
+} from "solid-js"
 import { Icon } from "@/components/icon"
 import { MarkdownRenderer as Markdown } from "@/components/markdown/renderer"
 import { useNotify } from "@/components/notification"
+import { Tooltip } from "@/components/tooltip"
 import { useAuth } from "@/context/auth-context"
 import { useSupabase } from "@/context/services-context"
 import { BlipActions } from "@/modules/blips/components/blip-actions"
@@ -20,11 +28,16 @@ import { reactionStore } from "@/modules/blips/data/reactions-store"
 import { blipStore } from "@/modules/blips/data/store"
 import { BlipCommentThread } from "@/modules/blips/components/blip-comment-thread"
 import { useBlipComposer } from "@/modules/blips/context/blip-composer-context"
-import { formatBlipTimestamp } from "@/modules/blips/util"
+import {
+  formatBlipTimestamp,
+  getBlipPublishTimestamp,
+  isBlipScheduled,
+} from "@/modules/blips/util"
 import { ptr } from "@/i18n"
 import "./update-blip.css"
 
 const tr = ptr("blips.components.blip")
+const commentThreadTr = ptr("blips.components.commentThread")
 
 export function UpdateBlip(props: {
   blip: Blip
@@ -59,8 +72,9 @@ export function UpdateBlip(props: {
   })
   const timestampLabel = createMemo(() => {
     timeTick()
-    return formatBlipTimestamp(props.blip.created_at)
+    return formatBlipTimestamp(getBlipPublishTimestamp(props.blip))
   })
+  const isScheduled = createMemo(() => isBlipScheduled(props.blip))
 
   createEffect(() => {
     props.blip.id
@@ -135,24 +149,26 @@ export function UpdateBlip(props: {
       class="update-blip-stack">
       <article
         class="update-blip"
-        classList={{
-          "update-blip--recent-realtime": props.isRecentRealtime === true,
-          "update-blip--shimmering": props.isShimmering === true,
-          "update-blip--unpublished": !props.blip.published,
-        }}>
-        <header class="update-blip-header">
-          <span class="update-blip-kind">
+        data-recent-realtime={props.isRecentRealtime === true ? "" : undefined}
+        data-shimmering={props.isShimmering === true ? "" : undefined}
+        data-unpublished={!props.blip.published ? "" : undefined}
+        data-scheduled={isScheduled() ? "" : undefined}>
+        <header class="_header">
+          <span class="_kind">
             <Icon
               name="chat"
-              class="update-blip-kind-icon"
+              class="_kind-icon"
             />
             <span>{tr("modeLabel")}</span>
           </span>
-          <span class="update-blip-timestamp">
+          <Show when={isScheduled()}>
+            <span class="_visibility-badge">{tr("labels.scheduled")}</span>
+          </Show>
+          <span class="_timestamp">
             {timestampLabel()}
           </span>
         </header>
-        <div class="update-blip-content">
+        <div class="_content">
           <Markdown content={props.blip.content ?? ""} />
         </div>
         <footer>
@@ -192,7 +208,15 @@ export function UpdateBlip(props: {
               <BlipCommentTrigger
                 onCompose={() => composer.openNewComment(props.blip.id)}
               />
-            ) : null}
+            ) : (
+              <Tooltip
+                content={commentThreadTr("disabled")}
+                triggerAs="span"
+                triggerClass="comments-disabled-indicator">
+                <Icon name="lock" />
+                <span>{tr("actions.commentsDisabled")}</span>
+              </Tooltip>
+            )}
           </div>
         </footer>
       </article>

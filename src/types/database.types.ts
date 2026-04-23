@@ -83,6 +83,7 @@ export type Database = {
           id: string
           moderation_status: string | null
           parent_id: string | null
+          publish_at: string | null
           published: boolean | null
           title: string | null
           updated_at: string | null
@@ -96,6 +97,7 @@ export type Database = {
           id: string
           moderation_status?: string | null
           parent_id?: string | null
+          publish_at?: string | null
           published?: boolean | null
           title?: string | null
           updated_at?: string | null
@@ -109,6 +111,7 @@ export type Database = {
           id?: string
           moderation_status?: string | null
           parent_id?: string | null
+          publish_at?: string | null
           published?: boolean | null
           title?: string | null
           updated_at?: string | null
@@ -341,9 +344,11 @@ export type Database = {
           moderation_status: string | null
           my_reaction_count: number | null
           parent_id: string | null
+          publish_at: string | null
           published: boolean | null
           reactions: Json | null
           reactions_count: number | null
+          sort_at: string | null
           tags: Json | null
           title: string | null
           updated_at: string | null
@@ -568,4 +573,3 @@ export const Constants = {
     },
   },
 } as const
-

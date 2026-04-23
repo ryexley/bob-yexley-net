@@ -724,9 +724,13 @@ export function blipStore(
       return { data: null, error: "Blip not found" }
     }
 
+    const publishAt =
+      existingBlip.publish_at ?? existingBlip.created_at ?? new Date().toISOString()
+
     return store.upsert({
       id: blipId,
       user_id: existingBlip.user_id, // Include user_id for RLS
+      publish_at: publishAt,
       published: true,
       moderation_status: "approved",
       updated_at: new Date().toISOString(),
@@ -795,6 +799,7 @@ export function blipStore(
 
     const presentationFields: Partial<Blip> = {
       allow_comments: existingBlip.allow_comments,
+      publish_at: existingBlip.publish_at ?? null,
       tags: fallbackTags ?? [],
       updates_count: existingBlip.updates_count,
       reactions_count: existingBlip.reactions_count,
@@ -826,9 +831,13 @@ export function blipStore(
       return { data: null, error: "Blip not found" }
     }
 
+    const publishAt =
+      existingBlip.publish_at ?? existingBlip.created_at ?? new Date().toISOString()
+
     const result = await store.upsert({
       id: blipId,
       user_id: existingBlip.user_id,
+      publish_at: publishAt,
       published: true,
       moderation_status: "approved",
       updated_at: new Date().toISOString(),

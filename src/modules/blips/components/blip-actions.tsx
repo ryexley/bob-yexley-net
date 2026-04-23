@@ -5,6 +5,7 @@ import { useAuth } from "@/context/auth-context"
 import { useSupabase } from "@/context/services-context"
 import { Stack } from "@/components/stack"
 import { IconButton } from "@/components/icon-button"
+import { formatBlipTimestampFull, isBlipScheduled } from "@/modules/blips/util"
 import { ptr } from "@/i18n"
 import { blipStore } from "@/modules/blips/data"
 import { isEmpty } from "@/util"
@@ -34,6 +35,13 @@ export function BlipActions(props: BlipActionsProps) {
   const { isAuthenticated, isSuperuser, user } = useAuth()
   const supabase = useSupabase()
   const store = blipStore(supabase.client, { subscribe: false })
+  const isScheduled = createMemo(() =>
+    local.blip ? isBlipScheduled(local.blip) : false,
+  )
+  const scheduledTimestamp = createMemo(() => {
+    const publishAt = local.blip?.publish_at
+    return publishAt ? formatBlipTimestampFull(publishAt) : ""
+  })
 
   const showToolbar = createMemo(() => {
     if (isEmpty(local.blip)) {
@@ -70,6 +78,29 @@ export function BlipActions(props: BlipActionsProps) {
     setIsTogglingPublish(true)
 
     try {
+      if (isScheduled()) {
+        confirm({
+          title: tr("confirmPublishNow.title"),
+          prompt: tr("confirmPublishNow.prompt", {
+            timestamp: scheduledTimestamp(),
+          }),
+          confirmationActionLabel: tr("confirmPublishNow.actions.confirm"),
+          confirmationActionLoadingLabel: tr(
+            "confirmPublishNow.actions.confirming",
+          ),
+          cancelActionLabel: tr("confirmPublishNow.actions.cancel"),
+          onConfirm: async () => {
+            await store.upsert({
+              id: blipId,
+              user_id: local.blip?.user_id,
+              published: true,
+              publish_at: new Date().toISOString(),
+            } as Partial<Blip>)
+          },
+        })
+        return
+      }
+
       if (local.blip?.published) {
         await store.unpublish(blipId)
       } else {
@@ -131,15 +162,27 @@ export function BlipActions(props: BlipActionsProps) {
               size="xs"
               icon="rocket_launch"
               class="publish"
+              aria-label={tr("actions.publish")}
               onClick={handleTogglePublish}
               disabled={isTogglingPublish()}
             />
           </Show>
-          <Show when={local.blip?.published}>
+          <Show when={local.blip?.published && !isScheduled()}>
             <IconButton
               size="xs"
               icon="check_circle"
               class="unpublish"
+              aria-label={tr("actions.unpublish")}
+              onClick={handleTogglePublish}
+              disabled={isTogglingPublish()}
+            />
+          </Show>
+          <Show when={isScheduled()}>
+            <IconButton
+              size="xs"
+              icon="rocket_launch"
+              class="publish-now"
+              aria-label={tr("actions.publishNow")}
               onClick={handleTogglePublish}
               disabled={isTogglingPublish()}
             />

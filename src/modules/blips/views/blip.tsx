@@ -48,7 +48,13 @@ import {
 import { reactionStore } from "@/modules/blips/data/reactions-store"
 import { UpdateBlip } from "@/modules/blips/components/update-blip"
 import { useBlipComposer } from "@/modules/blips/context/blip-composer-context"
-import { formatBlipTimestamp } from "@/modules/blips/util"
+import {
+  formatBlipTimestamp,
+  formatBlipTimestampFull,
+  getBlipPublishTimestamp,
+  isBlipPubliclyVisible,
+  isBlipScheduled,
+} from "@/modules/blips/util"
 import {
   buildTopLevelActivity,
   type TopLevelSortDirection,
@@ -252,7 +258,17 @@ export function BlipView() {
     if (isAuthenticated()) {
       return allUpdates
     }
-    return allUpdates.filter(update => update.published)
+    return allUpdates.filter(update => isBlipPubliclyVisible(update))
+  })
+  const rootTimestampTooltip = createMemo(() => {
+    const currentBlip = blip()
+    return currentBlip
+      ? formatBlipTimestampFull(getBlipPublishTimestamp(currentBlip))
+      : ""
+  })
+  const rootIsScheduled = createMemo(() => {
+    const currentBlip = blip()
+    return currentBlip ? isBlipScheduled(currentBlip) : false
   })
   const initialCommentsByParentId = createMemo(() => {
     const next = new Map<string, Blip[]>()
@@ -783,9 +799,16 @@ export function BlipView() {
                   <div class="blip-detail-body">
                     <article class="blip-detail-card">
                       <header class="blip-detail-header">
-                        <span class="blip-detail-timestamp">
-                          {formatBlipTimestamp(data().created_at)}
-                        </span>
+                        <Show when={rootIsScheduled()}>
+                          <span class="blip-detail-visibility-badge">
+                            {tr("labels.scheduled")}
+                          </span>
+                        </Show>
+                        <Tooltip content={rootTimestampTooltip()} touchMode="popover">
+                          <span class="blip-detail-timestamp">
+                            {formatBlipTimestamp(getBlipPublishTimestamp(data()))}
+                          </span>
+                        </Tooltip>
                       </header>
                       <div class="blip-detail-content">
                         <Markdown content={data().content ?? ""} />
@@ -905,15 +928,31 @@ export function BlipView() {
                           </Show>
                         </div>
                         <div class="blip-detail-meta-row-end">
-                          <Show when={visibleCommentCount() > 0}>
-                            <div class="blip-comments-chip">
+                          <Show
+                            when={data().allow_comments === false}
+                            fallback={
+                              <Show when={visibleCommentCount() > 0}>
+                                <div class="blip-comments-chip">
+                                  <span class="blip-comments-chip-label">
+                                    {commentThreadTr("title")}
+                                  </span>
+                                  <span class="blip-comments-chip-count">
+                                    {visibleCommentCount()}
+                                  </span>
+                                </div>
+                              </Show>
+                            }>
+                            <Tooltip
+                              content={commentThreadTr("disabled")}
+                              triggerAs="span"
+                              triggerClass="blip-comments-chip blip-comments-chip-disabled">
                               <span class="blip-comments-chip-label">
-                                {commentThreadTr("title")}
+                                {tr("actions.commentsDisabled")}
                               </span>
-                              <span class="blip-comments-chip-count">
-                                {visibleCommentCount()}
+                              <span class="blip-comments-chip-lock">
+                                <Icon name="lock" />
                               </span>
-                            </div>
+                            </Tooltip>
                           </Show>
                           <Show when={hasTopLevelActivity()}>
                             <Tooltip

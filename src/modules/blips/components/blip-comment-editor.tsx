@@ -8,7 +8,7 @@ import {
 } from "solid-js"
 import {
   MarkdownEditor,
-  type MarkdownEditorBelowEditorProps,
+  type MarkdownEditorControlsProps,
 } from "@/components/markdown/editor"
 import { Icon, LoadingSpinner } from "@/components/icon"
 import { Dialog, DialogTitle } from "@/components/dialog"
@@ -349,7 +349,7 @@ export function BlipCommentEditor(props: BlipCommentEditorProps) {
     return null
   }
 
-  const EditorControls = (ctx: MarkdownEditorBelowEditorProps) => {
+  const EditorControls = (ctx: MarkdownEditorControlsProps) => {
     const statusContext = () =>
       ctx.statusContext as CommentEditorStatusContext | undefined
 
@@ -450,7 +450,7 @@ export function BlipCommentEditor(props: BlipCommentEditorProps) {
           placeholder={tr("placeholder")}
           initialValue={content()}
           onChange={setContent}
-          BelowEditor={EditorControls}
+          EditorControls={EditorControls}
           statusIcon={getStatusIcon()}
           showStatus={showStatus()}
           statusFading={statusFading()}

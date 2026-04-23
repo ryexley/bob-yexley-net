@@ -3,7 +3,7 @@
 
   .combobox-control {
     border: 0.0625rem solid var(--colors-mono-04);
-    border-radius: 0.5rem;
+    border-radius: var(--form-control-radius, var(--radius-sm));
 
     &:focus-within {
       border: 0.0625rem solid var(--colors-mono-04);
@@ -13,23 +13,23 @@
   }
 
   .combobox-input {
-    font-size: 0.875rem;
-    line-height: 1.25rem;
+    font-size: 1rem;
+    line-height: 1.5rem;
 
     &::placeholder {
-      font-size: 0.875rem;
+      font-size: 1rem;
     }
   }
 }
 
-@media (max-width: 48rem) {
+@media (min-width: 48rem) {
   .blip-tags {
     .combobox-input {
-      font-size: 1rem;
-      line-height: 1.5rem;
+      font-size: 0.875rem;
+      line-height: 1.25rem;
 
       &::placeholder {
-        font-size: 1rem;
+        font-size: 0.875rem;
       }
     }
   }
@@ -37,7 +37,7 @@
 
 .blip-tags-content {
   border: 0.0625rem solid var(--colors-mono-04);
-  border-radius: 0.5rem;
+  border-radius: var(--form-control-radius, var(--radius-sm));
   max-height: min(8.5rem, var(--kb-popper-available-height, 8.5rem));
   pointer-events: auto;
   z-index: 60;

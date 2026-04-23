@@ -9,7 +9,7 @@ import {
 } from "solid-js"
 import {
   MarkdownEditor,
-  type MarkdownEditorBelowEditorProps,
+  type MarkdownEditorControlsProps,
 } from "@/components/markdown/editor"
 import { Icon, LoadingSpinner } from "@/components/icon"
 import { IconButton } from "@/components/icon-button"
@@ -662,7 +662,7 @@ export function BlipUpdateEditor(props: BlipUpdateEditorProps) {
     event.preventDefault()
   }
 
-  const EditorControls = (ctx: MarkdownEditorBelowEditorProps) => {
+  const EditorControls = (ctx: MarkdownEditorControlsProps) => {
     const statusContext = () => ctx.statusContext as StatusContext | undefined
 
     return (
@@ -792,7 +792,7 @@ export function BlipUpdateEditor(props: BlipUpdateEditorProps) {
             initialValue={content()}
             onChange={handleContentChange}
             onEditorReady={handleEditorReady}
-            BelowEditor={EditorControls}
+            EditorControls={EditorControls}
             statusIcon={getStatusIcon()}
             showStatus={showStatus()}
             statusFading={statusFading()}

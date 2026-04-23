@@ -31,7 +31,13 @@ import {
 } from "@/modules/blips/data/reaction-optimistic"
 import { REACTION_ERROR_I18N_KEY } from "@/modules/blips/data/errors"
 import { reactionStore } from "@/modules/blips/data/reactions-store"
-import { formatBlipTimestamp } from "@/modules/blips/util"
+import {
+  formatBlipTimestamp,
+  formatBlipTimestampFull,
+  getBlipPublishTimestamp,
+  formatBlipScheduledTimestamp,
+  isBlipScheduled,
+} from "@/modules/blips/util"
 import { ptr } from "@/i18n"
 import { pages } from "@/urls"
 import { clsx as cx } from "@/util"
@@ -73,9 +79,21 @@ export function Blip(props: {
       reactions_count: override.reactions_count,
     }
   })
+  const isScheduled = createMemo(() => isBlipScheduled(local.blip))
   const timestampLabel = createMemo(() => {
     timeTick()
-    return formatBlipTimestamp(local.blip.created_at)
+    const publishAt = getBlipPublishTimestamp(local.blip)
+    if (isScheduled()) {
+      return formatBlipScheduledTimestamp(publishAt)
+    }
+    return formatBlipTimestamp(publishAt)
+  })
+  const timestampTooltip = createMemo(() => {
+    const fullTimestamp = formatBlipTimestampFull(getBlipPublishTimestamp(local.blip))
+    if (isScheduled()) {
+      return tr("labels.scheduledTooltip", { timestamp: fullTimestamp })
+    }
+    return fullTimestamp
   })
   const canOpenDetails = () => isClipped() || typeof local.onView === "function"
   const hasUpdates = () => (local.blip.updates_count ?? 0) > 0
@@ -193,12 +211,15 @@ export function Blip(props: {
 
   return (
     <li>
-      <Stack>
+      <Stack class="blip-card">
         <div
-          class="blip"
-          classList={{ "blip--unpublished": !local.blip.published }}>
+          class="_card"
+          classList={{
+            _unpublished: !local.blip.published,
+            _scheduled: isScheduled(),
+          }}>
           <div
-            class={cx("blip-main", { interactive: canOpenDetails() })}
+            class={cx("_main", { _interactive: canOpenDetails() })}
             onPointerEnter={preloadDetails}
             onFocus={preloadDetails}
             onTouchStart={preloadDetails}
@@ -207,14 +228,21 @@ export function Blip(props: {
             role={canOpenDetails() ? "button" : undefined}
             tabIndex={canOpenDetails() ? 0 : undefined}>
             <header>
-              <span class="timestamp">
-                {/* TODO: wrap this in a tooltip that shows the full timestamp */}
-                {timestampLabel()}
-              </span>
+              <Tooltip content={timestampTooltip()} touchMode="popover">
+                <span class="_timestamp">
+                  <span class="_timestampLabel">{timestampLabel()}</span>
+                  <Show when={isScheduled()}>
+                    <Icon
+                      name="schedule"
+                      class="_timestampIcon"
+                    />
+                  </Show>
+                </span>
+              </Tooltip>
             </header>
             <div
               ref={contentRef}
-              class={cx("blip-content", { preview: isClipped() })}>
+              class={cx("_content", { _preview: isClipped() })}>
               <Markdown content={local.blip.content} />
               <Show when={canOpenDetails()}>
                 <Button
@@ -224,7 +252,7 @@ export function Blip(props: {
                     event.stopPropagation()
                     openDetails()
                   }}
-                  class="read-more"
+                  class="_readMore"
                   label={tr("actions.readMore")}
                   iconRight="arrow_forward"
                 />
@@ -232,13 +260,13 @@ export function Blip(props: {
             </div>
           </div>
           <footer>
-            <div class="tags">
+            <div class="_tags">
               <Show when={(local.tags?.length ?? 0) > 0}>
                 <Hashtag size="0.85rem" />
-                <ul class="tag-list">
+                <ul class="_tagList">
                   <For each={local.tags}>
                     {tag => (
-                      <li class="tag">
+                      <li class="_tag">
                         <A href={pages.blipsTag(tag)}>{tag}</A>
                       </li>
                     )}
@@ -249,7 +277,7 @@ export function Blip(props: {
             <Stack
               orient="row"
               gap="0.5rem"
-              class="activity">
+              class="_activity">
               <Show when={hasUpdates()}>
                 <Tooltip
                   content={tr("actions.updatesTooltip", {
@@ -257,7 +285,7 @@ export function Blip(props: {
                   })}>
                   <button
                     type="button"
-                    class="activity-indicator updates-indicator"
+                    class="_activityIndicator _updates"
                     aria-label={tr("actions.updatesTooltip", {
                       count: local.blip.updates_count ?? 0,
                     })}
@@ -277,7 +305,7 @@ export function Blip(props: {
                   })}>
                   <button
                     type="button"
-                    class="activity-indicator comments-indicator"
+                    class="_activityIndicator _comments"
                     aria-label={tr("actions.commentsTooltip", {
                       count: local.blip.comments_count ?? 0,
                     })}
@@ -309,8 +337,8 @@ export function Blip(props: {
             </Stack>
           </footer>
         </div>
-        <div class="blip-meta-row">
-          <div class="blip-meta-row-start">
+        <div class="_metaRow">
+          <div class="_metaRowStart">
             <BlipReactionSummary
               reactions={displayBlip().reactions}
               busy={isReactionBusy()}

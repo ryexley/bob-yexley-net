@@ -102,9 +102,13 @@ vi.mock("@/modules/users/components/user-avatar", () => ({
   UserAvatar: () => <div data-testid="user-avatar" />,
 }))
 
-vi.mock("@/modules/blips/util", () => ({
-  formatBlipTimestamp: () => "2 weeks ago",
-}))
+vi.mock("@/modules/blips/util", async importOriginal => {
+  const actual = await importOriginal<typeof import("@/modules/blips/util")>()
+  return {
+    ...actual,
+    formatBlipTimestamp: () => "2 weeks ago",
+  }
+})
 
 vi.mock("@/i18n", () => ({
   ptr: () => (key: string) => key,

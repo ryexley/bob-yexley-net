@@ -12,6 +12,10 @@ alwaysApply: false
 - Add a new class only when it represents a real semantic or reusable element, not a specificity workaround.
 - When styling component children inside a nested root, prefer terse underscore-prefixed child selectors like `._panel` or `._day`.
 - Use longer non-underscored class names only when the selector must work outside the component root, such as with intentionally portaled content.
+- When editing an existing component, treat nearby violations of these rules as cleanup candidates rather than precedent.
+- If a touched component already has unnested child selectors, BEM-style modifier classes, or long one-off names that can be safely normalized with low churn, clean them up in the same change.
+- Do not preserve or extend a local naming/specificity violation just because it already exists nearby.
+- Keep cleanup scoped to the component or selectors you are already touching; do not turn a focused change into a broad unrelated CSS refactor.
 
 ## Preferred
 

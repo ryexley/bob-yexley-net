@@ -279,6 +279,7 @@ const VIEW_BLIPS_SELECT = [
   "content",
   "published",
   "moderation_status",
+  "publish_at",
   "created_at",
   "updated_at",
   "blip_type",
@@ -329,6 +330,7 @@ const mapViewBlipRow = (row: ViewBlipRow): Blip => ({
   content: row.content,
   published: row.published,
   moderation_status: row.moderation_status,
+  publish_at: row.publish_at ?? null,
   created_at: row.created_at,
   updated_at: row.updated_at,
   blip_type: row.blip_type,
@@ -506,6 +508,7 @@ export const mapViewCommentRows = (rows?: ViewCommentRow[] | null): Blip[] =>
     content: row.content,
     published: row.published,
     moderation_status: row.moderation_status,
+    publish_at: row.publish_at ?? null,
     created_at: row.created_at,
     updated_at: row.updated_at,
     blip_type: row.blip_type,
@@ -528,6 +531,7 @@ export const mapViewUpdateRows = (rows?: ViewUpdateRow[] | null): ThreadedBlip[]
     content: row.content,
     published: row.published,
     moderation_status: row.moderation_status,
+    publish_at: row.publish_at ?? null,
     created_at: row.created_at,
     updated_at: row.updated_at,
     blip_type: row.blip_type,
@@ -554,6 +558,96 @@ const isJsonFilterSyntaxError = (error: unknown): boolean =>
     "invalid input syntax for type json",
   )
 
+const mapViewBlipRows = (rows?: ViewBlipRow[] | null): Blip[] =>
+  (rows ?? []).map(mapViewBlipRow)
+
+const queryViewBlipsPage = async (
+  supabase: SupabaseClient,
+  limit: number = 20,
+  offset: number = 0,
+): Promise<Blip[]> => {
+  const { data, error } = await supabase
+    .from("view_blips")
+    .select(VIEW_BLIPS_SELECT)
+    .order("sort_at", { ascending: false })
+    .order("created_at", { ascending: false })
+    .range(offset, offset + limit - 1)
+
+  if (error) {
+    throw error
+  }
+
+  return mapViewBlipRows((data ?? []) as unknown as ViewBlipRow[])
+}
+
+const queryViewBlipsByTagPage = async (
+  supabase: SupabaseClient,
+  tag: string,
+  limit: number = 20,
+  offset: number = 0,
+): Promise<Blip[]> => {
+  if (!tag?.trim()) {
+    return []
+  }
+
+  const { data: directData, error: directError } = await supabase
+    .from("view_blips")
+    .select(VIEW_BLIPS_SELECT)
+    // `tags` on `view_blips` is jsonb of objects ({ id, name, description }).
+    // Query directly in SQL first for efficient paging.
+    .filter("tags", "cs", JSON.stringify([{ name: tag }]))
+    .order("sort_at", { ascending: false })
+    .order("created_at", { ascending: false })
+    .range(offset, offset + limit - 1)
+
+  if (!directError) {
+    return mapViewBlipRows((directData ?? []) as unknown as ViewBlipRow[])
+  }
+
+  if (!isJsonFilterSyntaxError(directError)) {
+    throw directError
+  }
+
+  const normalizedTag = tag.trim().toLowerCase()
+  const pageSize = Math.max(limit, 50)
+  let rangeStart = 0
+  let matchedSeen = 0
+  const collected: Blip[] = []
+
+  // Fallback path when the gateway cannot parse jsonb filter syntax.
+  while (collected.length < limit) {
+    const rows = await queryViewBlipsPage(supabase, pageSize, rangeStart)
+    if (rows.length === 0) {
+      break
+    }
+
+    for (const row of rows) {
+      const tagNames = row.tags.map(value => value.toLowerCase())
+      if (!tagNames.includes(normalizedTag)) {
+        continue
+      }
+
+      if (matchedSeen < offset) {
+        matchedSeen += 1
+        continue
+      }
+
+      collected.push(row)
+      if (collected.length >= limit) {
+        break
+      }
+    }
+
+    if (rows.length < pageSize) {
+      break
+    }
+
+    rangeStart += rows.length
+  }
+
+  return collected
+}
+
 export const getBlips = query(async (limit: number = 20, offset: number = 0) => {
   "use server"
 
@@ -563,18 +657,7 @@ export const getBlips = query(async (limit: number = 20, offset: number = 0) => 
     async () => {
       const { getServerClient } = await import("@/lib/vendor/supabase/server")
       const supabase = await getServerClient()
-
-      const { data, error } = await supabase
-        .from("view_blips")
-        .select(VIEW_BLIPS_SELECT)
-        .order("created_at", { ascending: false })
-        .range(offset, offset + limit - 1)
-
-      if (error) {
-        throw error
-      }
-
-      return ((data ?? []) as unknown as ViewBlipRow[]).map(mapViewBlipRow)
+      return queryViewBlipsPage(supabase, limit, offset)
     },
     result => ({
       rowCount: result.length,
@@ -599,72 +682,7 @@ export const getBlipsByTag = query(async (
     async () => {
       const { getServerClient } = await import("@/lib/vendor/supabase/server")
       const supabase = await getServerClient()
-
-      const { data: directData, error: directError } = await supabase
-        .from("view_blips")
-        .select(VIEW_BLIPS_SELECT)
-        // `tags` on `view_blips` is jsonb of objects ({ id, name, description }).
-        // Query directly in SQL first for efficient paging.
-        .filter("tags", "cs", JSON.stringify([{ name: tag }]))
-        .order("created_at", { ascending: false })
-        .range(offset, offset + limit - 1)
-
-      if (!directError) {
-        return ((directData ?? []) as unknown as ViewBlipRow[]).map(mapViewBlipRow)
-      }
-
-      if (!isJsonFilterSyntaxError(directError)) {
-        throw directError
-      }
-
-      const normalizedTag = tag.trim().toLowerCase()
-      const pageSize = Math.max(limit, 50)
-      let rangeStart = 0
-      let matchedSeen = 0
-      const collected: Blip[] = []
-
-      // Fallback path when the gateway cannot parse jsonb filter syntax.
-      while (collected.length < limit) {
-        const { data, error } = await supabase
-          .from("view_blips")
-          .select(VIEW_BLIPS_SELECT)
-          .order("created_at", { ascending: false })
-          .range(rangeStart, rangeStart + pageSize - 1)
-
-        if (error) {
-          throw error
-        }
-
-        const rows = (data ?? []) as unknown as ViewBlipRow[]
-        if (rows.length === 0) {
-          break
-        }
-
-        for (const row of rows) {
-          const tagNames = mapTagNames(row.tags).map(value => value.toLowerCase())
-          if (!tagNames.includes(normalizedTag)) {
-            continue
-          }
-
-          if (matchedSeen < offset) {
-            matchedSeen += 1
-            continue
-          }
-
-          collected.push(mapViewBlipRow(row))
-          if (collected.length >= limit) {
-            break
-          }
-        }
-
-        if (rows.length < pageSize) {
-          break
-        }
-
-        rangeStart += rows.length
-      }
-
-      return collected
+      return queryViewBlipsByTagPage(supabase, tag, limit, offset)
     },
     result => ({
       rowCount: result.length,
@@ -756,4 +774,3 @@ export const getBlipGraph = query(async (
     }),
   )
 }, "blip-graph")
-

@@ -1,5 +1,6 @@
 import { differenceInDays, format, formatDistanceToNow } from "date-fns"
 import { enUS } from "date-fns/locale/en-US"
+import type { Blip } from "@/modules/blips/data/schema"
 import { ptr } from "@/i18n"
 
 const tr = ptr("blips.util.relativeTime")
@@ -29,6 +30,66 @@ const shortEnLocale = {
 
     return formatDistanceLocale[token]
   },
+}
+
+const toValidDate = (value?: string | null) => {
+  if (!value) {
+    return null
+  }
+
+  const date = new Date(value)
+  return Number.isNaN(date.getTime()) ? null : date
+}
+
+export function getBlipPublishTimestamp(blip: Pick<Blip, "publish_at" | "created_at">): string {
+  return blip.publish_at ?? blip.created_at
+}
+
+export function compareBlipsByPublishTimestampDesc(
+  left: Pick<Blip, "id" | "publish_at" | "created_at">,
+  right: Pick<Blip, "id" | "publish_at" | "created_at">,
+): number {
+  const timestampDelta =
+    new Date(getBlipPublishTimestamp(right)).getTime() -
+    new Date(getBlipPublishTimestamp(left)).getTime()
+
+  if (timestampDelta !== 0) {
+    return timestampDelta
+  }
+
+  const createdAtDelta =
+    new Date(right.created_at).getTime() - new Date(left.created_at).getTime()
+
+  if (createdAtDelta !== 0) {
+    return createdAtDelta
+  }
+
+  return right.id.localeCompare(left.id)
+}
+
+export function isBlipScheduled(
+  blip: Pick<Blip, "published" | "publish_at" | "created_at">,
+): boolean {
+  if (!blip.published) {
+    return false
+  }
+
+  const publishDate = toValidDate(getBlipPublishTimestamp(blip))
+  if (!publishDate) {
+    return false
+  }
+
+  return publishDate.getTime() > Date.now()
+}
+
+export function isBlipPubliclyVisible(
+  blip: Pick<Blip, "published" | "publish_at" | "created_at">,
+): boolean {
+  if (!blip.published) {
+    return false
+  }
+
+  return !isBlipScheduled(blip)
 }
 
 export function formatBlipTimestamp(timestamp: string): string {
@@ -64,4 +125,22 @@ export function formatBlipTimestamp(timestamp: string): string {
 
   // Over 1 year - full date
   return format(date, "MMMM do, yyyy") // "August 20th, 2023"
+}
+
+export function formatBlipTimestampFull(timestamp: string): string {
+  const date = toValidDate(timestamp)
+  if (!date) {
+    return timestamp
+  }
+
+  return format(date, "MMMM do, yyyy 'at' h:mm a")
+}
+
+export function formatBlipScheduledTimestamp(timestamp: string): string {
+  const date = toValidDate(timestamp)
+  if (!date) {
+    return timestamp
+  }
+
+  return format(date, "M/d/yyyy h:mm a")
 }

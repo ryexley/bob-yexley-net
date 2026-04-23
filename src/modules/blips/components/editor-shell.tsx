@@ -9,7 +9,6 @@ type EditorShellProps = {
   focusProxyRef?: (element: HTMLTextAreaElement) => void
   showFocusProxy?: boolean
   Header?: JSX.Element
-  PortalLayer?: JSX.Element
   bodyClass?: string
   frameClass?: string
   shellClass?: string
@@ -40,7 +39,6 @@ function EditorShellSurface(props: EditorShellProps) {
       </Show>
       <Show when={props.Header}>{props.Header}</Show>
       <div class={cx("blip-editor-body", props.bodyClass)}>{props.children}</div>
-      <Show when={props.PortalLayer}>{props.PortalLayer}</Show>
     </div>
   )
 }

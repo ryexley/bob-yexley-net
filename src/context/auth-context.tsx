@@ -134,7 +134,10 @@ export function AuthProvider(props: { children: any }) {
           return
         }
 
-        if (!bootstrapped() || event !== "SIGNED_IN") {
+        if (
+          !bootstrapped() ||
+          (event !== "SIGNED_IN" && event !== "INITIAL_SESSION")
+        ) {
           return
         }
 

@@ -5,6 +5,7 @@ import { useAuth } from "@/context/auth-context"
 import { useSupabase } from "@/context/services-context"
 import { tagStore } from "@/modules/blips/data"
 import { useOptionalBlipComposer } from "@/modules/blips/context/blip-composer-context"
+import { compareBlipsByPublishTimestampDesc } from "@/modules/blips/util"
 import "./blips.css"
 
 export function Blips(props: {
@@ -55,10 +56,14 @@ export function Blips(props: {
     composer?.openEditRoot(blipId)
   }
 
+  const sortedBlips = createMemo(() =>
+    [...local.blips].sort(compareBlipsByPublishTimestampDesc),
+  )
+
   return (
     <>
       <ul class="blips">
-        <For each={local.blips}>
+        <For each={sortedBlips()}>
           {blip => (
             <Blip
               blip={blip}

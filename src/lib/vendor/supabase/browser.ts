@@ -41,7 +41,10 @@ import {
   VISITOR_AUTH_ERROR,
   isVisitorAuthErrorCode,
 } from "@/lib/auth/visitor-auth-errors"
-import { resolveBrowserSupabaseUrl } from "@/lib/vendor/supabase/browser-url"
+import {
+  getSupabaseAuthStorageKey,
+  resolveBrowserSupabaseUrl,
+} from "@/lib/vendor/supabase/browser-url"
 import { isEmpty } from "@/util"
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL
@@ -53,6 +56,7 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
 
 const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000
 const DEFAULT_SESSION_TTL = "7 days"
+const SUPABASE_AUTH_STORAGE_KEY = getSupabaseAuthStorageKey(SUPABASE_URL)
 
 // Singleton browser client instance
 let browserClient: AppSupabaseClient | null = null
@@ -69,6 +73,11 @@ export function getClient(): AppSupabaseClient {
           typeof window === "undefined" ? null : window.location.hostname,
         ),
         SUPABASE_ANON_KEY,
+        {
+          cookieOptions: {
+            name: SUPABASE_AUTH_STORAGE_KEY,
+          },
+        },
       )
     }
 
@@ -173,7 +182,8 @@ function Supabase() {
           return { data: null, error: "Email and password are required" }
         }
 
-        const { data, error } = await getClient().auth.signInWithPassword({
+        const client = getClient()
+        const { data, error } = await client.auth.signInWithPassword({
           email: email.trim(),
           password,
         })
@@ -182,9 +192,21 @@ function Supabase() {
           return { data: null, error: formatAuthError(error) }
         }
 
+        const signedInUser = data?.user
+        if (!signedInUser) {
+          return { data: null, error: "Login succeeded but no user was returned" }
+        }
+
+        const { error: openSessionError } = await this.openCurrentSession()
+        if (openSessionError) {
+          await client.auth.signOut()
+          userProfiles.clearCachedUserProfile()
+          return { data: null, error: openSessionError }
+        }
+
         setSessionStartedAtMs(Date.now())
 
-        return { data: data?.user, error: null }
+        return { data: signedInUser, error: null }
       } catch (err) {
         console.error("Login error:", err)
         return {

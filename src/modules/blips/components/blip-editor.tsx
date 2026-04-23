@@ -9,10 +9,12 @@ import {
   Show,
   untrack,
 } from "solid-js"
+import { DateTimePicker } from "@/components/date-time-picker"
 import { Stack } from "@/components/stack"
+import { Switch } from "@/components/switch"
 import {
   MarkdownEditor,
-  type MarkdownEditorBelowEditorProps,
+  type MarkdownEditorControlsProps,
   type MarkdownEditorContentMetrics,
   getMarkdownEditorContentMetrics,
 } from "@/components/markdown/editor"
@@ -57,10 +59,11 @@ type SaveStatus =
   | "error"
 
 type EditorView = "picker" | "editor"
+type EditorSurfaceView = "editor" | "metadata"
 
 const tr = ptr("blips.components.blipEditor")
 const DESKTOP_LAYOUT_BREAKPOINT_PX = 768
-const DESKTOP_SHELL_MIN_WIDTH_PX = 25 * 16
+const DESKTOP_SHELL_MIN_WIDTH_PX = 30 * 16
 const DESKTOP_SHELL_MAX_WIDTH_PX = 48 * 16
 const DESKTOP_SHELL_MIN_HEIGHT_PX = 16 * 16
 const DESKTOP_SHELL_MAX_HEIGHT_PX = 44 * 16
@@ -89,13 +92,13 @@ const BLIP_EDITOR_DESKTOP_SIZE_PRESETS: Record<
   roomy: {
     minCharacters: 420,
     minWords: 75,
-    widthPx: 34 * 16,
+    widthPx: 38 * 16,
     maxHeightPx: 32 * 16,
   },
   article: {
     minCharacters: 1200,
     minWords: 220,
-    widthPx: 42 * 16,
+    widthPx: 46 * 16,
     maxHeightPx: 38 * 16,
   },
   essay: {
@@ -121,6 +124,30 @@ export const getDesktopSizePreset = (metrics: MarkdownEditorContentMetrics) => {
     return selectedPreset
   }, BLIP_EDITOR_DESKTOP_SIZE_PRESETS.compact)
 }
+
+const normalizeTimestamp = (value?: string | null) => {
+  if (!value) {
+    return null
+  }
+
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) {
+    return null
+  }
+
+  return date.toISOString()
+}
+
+const toDateValue = (value?: string | null) => {
+  const normalized = normalizeTimestamp(value)
+  return normalized ? new Date(normalized) : null
+}
+
+const getInitialPublishAt = (blip?: Pick<Blip, "publish_at" | "created_at"> | null) =>
+  normalizeTimestamp(blip?.publish_at ?? blip?.created_at ?? null)
+
+const areTimestampsEqual = (left?: string | null, right?: string | null) =>
+  (normalizeTimestamp(left) ?? null) === (normalizeTimestamp(right) ?? null)
 
 export function BlipEditor(props: BlipEditorProps) {
   const [local] = splitProps(props, [
@@ -149,12 +176,24 @@ export function BlipEditor(props: BlipEditorProps) {
   const [statusFading, setStatusFading] = createSignal<boolean>(false)
   const [editorFocusNonce, setEditorFocusNonce] = createSignal(0)
   const [editorView, setEditorView] = createSignal<EditorView>("editor")
+  const [editorSurfaceView, setEditorSurfaceView] =
+    createSignal<EditorSurfaceView>("editor")
   const [skipClosePersist, setSkipClosePersist] = createSignal<boolean>(false)
   const [keyboardInsetPx, setKeyboardInsetPx] = createSignal<number>(0)
   const [viewportTopPx, setViewportTopPx] = createSignal<number>(0)
   const [isEditorMounted, setIsEditorMounted] = createSignal(false)
   const [contentMetrics, setContentMetrics] =
     createSignal<MarkdownEditorContentMetrics>(getMarkdownEditorContentMetrics(""))
+  const [allowComments, setAllowComments] = createSignal(true)
+  const [lastCachedAllowComments, setLastCachedAllowComments] = createSignal(true)
+  const [lastDbSavedAllowComments, setLastDbSavedAllowComments] = createSignal(true)
+  const [publishAt, setPublishAt] = createSignal<string | null>(null)
+  const [lastCachedPublishAt, setLastCachedPublishAt] = createSignal<string | null>(
+    null,
+  )
+  const [lastDbSavedPublishAt, setLastDbSavedPublishAt] = createSignal<string | null>(
+    null,
+  )
   const [selectedTags, setSelectedTags] = createSignal<BlipTagOption[]>([])
   const [tagOptions, setTagOptions] = createSignal<BlipTagOption[]>([])
   const [lastDbSavedTagValues, setLastDbSavedTagValues] = createSignal<string[]>(
@@ -196,6 +235,66 @@ export function BlipEditor(props: BlipEditorProps) {
 
   const preventEditorBlur = (event: MouseEvent | TouchEvent) => {
     event.preventDefault()
+  }
+
+  const isMobileViewport = () => viewport.width() < DESKTOP_LAYOUT_BREAKPOINT_PX
+
+  const releaseEditorFocusForMetadata = (reason: string) => {
+    if (typeof document === "undefined") {
+      return
+    }
+
+    const blurEditorElements = () => {
+      const scope = comboboxPortalMount() ?? document
+      const activeElement = document.activeElement as HTMLElement | null
+
+      if (activeElement && scope.contains(activeElement)) {
+        activeElement.blur?.()
+      }
+
+      const proseMirror = scope.querySelector(".ProseMirror") as HTMLElement | null
+      proseMirror?.blur?.()
+
+      const activeEditable = scope.querySelector(
+        '[contenteditable="true"]',
+      ) as HTMLElement | null
+      activeEditable?.blur?.()
+    }
+
+    focusBridge.clearTextInputSession(reason)
+    blurEditorElements()
+
+    queueMicrotask(() => {
+      blurEditorElements()
+    })
+
+    if (typeof window !== "undefined") {
+      window.requestAnimationFrame(() => {
+        blurEditorElements()
+      })
+    }
+  }
+
+  const handleMetadataToggleMouseDown = (event: MouseEvent) => {
+    const nextView = editorSurfaceView() === "metadata" ? "editor" : "metadata"
+
+    if (nextView === "metadata" && isMobileViewport()) {
+      releaseEditorFocusForMetadata("blipEditor.metadataToggleMouseDown")
+      return
+    }
+
+    preventEditorBlur(event)
+  }
+
+  const handleMetadataToggleTouchStart = (event: TouchEvent) => {
+    const nextView = editorSurfaceView() === "metadata" ? "editor" : "metadata"
+
+    if (nextView === "metadata" && isMobileViewport()) {
+      releaseEditorFocusForMetadata("blipEditor.metadataToggleTouchStart")
+      return
+    }
+
+    preventEditorBlur(event)
   }
 
   const waitForNextPaint = async () => {
@@ -262,25 +361,41 @@ export function BlipEditor(props: BlipEditorProps) {
     setLastDbSavedContent("")
     setHasPersistedCurrentBlip(false)
     setContentMetrics(getMarkdownEditorContentMetrics(""))
+    setAllowComments(true)
+    setLastCachedAllowComments(true)
+    setLastDbSavedAllowComments(true)
+    setPublishAt(null)
+    setLastCachedPublishAt(null)
+    setLastDbSavedPublishAt(null)
     setSelectedTags([])
     setLastDbSavedTagValues([])
     setSaveStatus("idle")
     setEditorView("editor")
+    setEditorSurfaceView("editor")
     focusBridge.scheduleFocusAfterOpen()
   }
 
   const openExistingBlip = (selectedBlip: Blip, assumePersisted = false) => {
     const selectedContent = selectedBlip.content || ""
+    const selectedAllowComments = selectedBlip.allow_comments ?? true
+    const selectedPublishAt = getInitialPublishAt(selectedBlip)
     setCurrentBlipId(selectedBlip.id)
     setContent(selectedContent)
     setLastCachedContent(selectedContent)
     setLastDbSavedContent(assumePersisted ? selectedContent : "")
     setHasPersistedCurrentBlip(assumePersisted)
     setContentMetrics(getMarkdownEditorContentMetrics(selectedContent))
+    setAllowComments(selectedAllowComments)
+    setLastCachedAllowComments(selectedAllowComments)
+    setLastDbSavedAllowComments(selectedAllowComments)
+    setPublishAt(selectedPublishAt)
+    setLastCachedPublishAt(selectedPublishAt)
+    setLastDbSavedPublishAt(selectedPublishAt)
     setSelectedTags([])
     setLastDbSavedTagValues([])
     setSaveStatus("idle")
     setEditorView("editor")
+    setEditorSurfaceView("editor")
     focusBridge.scheduleFocusAfterOpen()
     void syncPersistedBlipState(selectedBlip.id, assumePersisted)
     void hydrateTagsForBlip(selectedBlip.id)
@@ -397,13 +512,13 @@ export function BlipEditor(props: BlipEditorProps) {
     values = selectedTagValues(),
   ) => {
     if (!blipId || !user()?.id || !hasPersistedCurrentBlip()) {
-      return
+      return true
     }
 
     const result = await tags.replaceBlipTags(blipId, values)
     if (result.error) {
       console.error("Error persisting blip tags:", result.error)
-      return
+      return false
     }
 
     const persistedValues = result.data ?? []
@@ -419,6 +534,8 @@ export function BlipEditor(props: BlipEditorProps) {
       } as Partial<Blip>,
       { cacheOnly: true },
     )
+
+    return true
   }
 
   // Save to cache only (localStorage + signal)
@@ -431,12 +548,17 @@ export function BlipEditor(props: BlipEditorProps) {
 
     try {
       const saveStartedAt = Date.now()
+      const nextAllowComments = allowComments()
+      const nextPublishAt = publishAt()
       await startSavingStatus("saving-cache")
 
       await store.upsert(
         {
           id: blipId,
           content: markdown,
+          allow_comments: nextAllowComments,
+          publish_at: nextPublishAt,
+          tags: selectedTagValues(),
           // Persist ownership in cache so draft toolbars render consistently.
           ...(userId ? { user_id: userId } : {}),
           blip_type: BLIP_TYPES.ROOT,
@@ -447,6 +569,8 @@ export function BlipEditor(props: BlipEditorProps) {
 
       await waitForMinimumSavingIndicator(saveStartedAt)
       setLastCachedContent(markdown)
+      setLastCachedAllowComments(nextAllowComments)
+      setLastCachedPublishAt(nextPublishAt)
       setSaveStatus("saved-cache")
       showStatusWithFade()
     } catch (error) {
@@ -461,16 +585,20 @@ export function BlipEditor(props: BlipEditorProps) {
     const blipId = currentBlipId()
     const userId = user()?.id
     if (!blipId || !userId) {
-      return
+      return false
     }
 
     try {
       const saveStartedAt = Date.now()
+      const nextAllowComments = allowComments()
+      const nextPublishAt = publishAt()
       await startSavingStatus("saving-db")
 
       const result = await store.upsert({
         id: blipId,
         content: markdown,
+        allow_comments: nextAllowComments,
+        publish_at: nextPublishAt,
         user_id: userId, // Add user_id for RLS
         blip_type: BLIP_TYPES.ROOT,
         parent_id: null,
@@ -483,13 +611,19 @@ export function BlipEditor(props: BlipEditorProps) {
       await waitForMinimumSavingIndicator(saveStartedAt)
       setLastDbSavedContent(markdown)
       setLastCachedContent(markdown)
+      setLastDbSavedAllowComments(nextAllowComments)
+      setLastCachedAllowComments(nextAllowComments)
+      setLastDbSavedPublishAt(nextPublishAt)
+      setLastCachedPublishAt(nextPublishAt)
       setHasPersistedCurrentBlip(true)
       setSaveStatus("saved-db")
       showStatusWithFade()
       void persistTagsToDatabase(blipId)
+      return true
     } catch /* (error) */ {
       setSaveStatus("error")
       setShowStatus(true)
+      return false
     }
   }
 
@@ -527,41 +661,183 @@ export function BlipEditor(props: BlipEditorProps) {
     (markdown: string) => void untrack(() => saveToDatabase(markdown)),
     TIME.THIRTY_SECONDS,
   )
-  const debouncedTagSave = debounce(() => {
-    void untrack(() => persistTagsToDatabase())
-  }, TIME.THIRTY_SECONDS)
 
-  // Initialize editor state when drawer opens
-  createEffect(() => {
-    if (local.open && !currentBlipId()) {
-      void loadTagOptions()
+  const persistPendingChangesBeforeClose = async () => {
+    const closingBlipId = currentBlipId()
+    const closingContent = content()
+    const cachedContent = lastCachedContent()
+    const dbSavedContent = lastDbSavedContent()
+    const closingAllowComments = allowComments()
+    const cachedAllowComments = lastCachedAllowComments()
+    const dbSavedAllowComments = lastDbSavedAllowComments()
+    const closingPublishAt = publishAt()
+    const cachedPublishAt = lastCachedPublishAt()
+    const dbSavedPublishAt = lastDbSavedPublishAt()
+    const closingTagValues = selectedTagValues()
+    const dbSavedTagValues = lastDbSavedTagValues()
+    const userId = user()?.id
+    const hasBlipId = Boolean(closingBlipId)
+    const hasContent = closingContent.trim().length > 0
+    const canPersistCurrentBlip =
+      hasBlipId && (hasContent || hasPersistedCurrentBlip())
+    const needsCacheSave =
+      closingContent !== cachedContent ||
+      closingAllowComments !== cachedAllowComments ||
+      !areTimestampsEqual(closingPublishAt, cachedPublishAt)
+    const needsDbSave =
+      closingContent !== dbSavedContent ||
+      closingAllowComments !== dbSavedAllowComments ||
+      !areTimestampsEqual(closingPublishAt, dbSavedPublishAt)
+    const needsTagSave = !areTagValuesEqual(closingTagValues, dbSavedTagValues)
 
-      const userId = user()?.id
-      if (!userId) {
-        console.error("No user ID available")
-        return
+    if (!canPersistCurrentBlip) {
+      return true
+    }
+
+    if (needsCacheSave) {
+      const cacheResult = await store.upsert(
+        {
+          id: closingBlipId!,
+          content: closingContent,
+          allow_comments: closingAllowComments,
+          publish_at: closingPublishAt,
+          ...(userId ? { user_id: userId } : {}),
+          blip_type: BLIP_TYPES.ROOT,
+          parent_id: null,
+        },
+        { cacheOnly: true },
+      )
+
+      if (cacheResult.error) {
+        console.error("Error saving root draft to local cache:", cacheResult.error)
+        setSaveStatus("error")
+        setShowStatus(true)
+        return false
       }
 
-      // If a specific blip was selected for editing, prioritize loading it.
-      const requestedBlipId = local.blipId
-      if (requestedBlipId) {
-        const selectedBlip = store
-          .entities()
-          .find(b => b.id === requestedBlipId)
-        if (selectedBlip) {
-          openExistingBlip(selectedBlip, true)
+      setLastCachedContent(closingContent)
+      setLastCachedAllowComments(closingAllowComments)
+      setLastCachedPublishAt(closingPublishAt)
+    }
+
+    if (needsDbSave) {
+      if (!userId) {
+        console.error("Cannot sync root draft without an authenticated user")
+        setSaveStatus("error")
+        setShowStatus(true)
+        return false
+      }
+
+      const dbResult = await store.upsert({
+        id: closingBlipId!,
+        content: closingContent,
+        allow_comments: closingAllowComments,
+        publish_at: closingPublishAt,
+        user_id: userId,
+        blip_type: BLIP_TYPES.ROOT,
+        parent_id: null,
+      })
+
+      if (dbResult.error) {
+        console.error("Error syncing root draft to cloud:", dbResult.error)
+        setSaveStatus("error")
+        setShowStatus(true)
+        return false
+      }
+
+      setLastDbSavedContent(closingContent)
+      setLastCachedContent(closingContent)
+      setLastDbSavedAllowComments(closingAllowComments)
+      setLastCachedAllowComments(closingAllowComments)
+      setLastDbSavedPublishAt(closingPublishAt)
+      setLastCachedPublishAt(closingPublishAt)
+      setHasPersistedCurrentBlip(true)
+    }
+
+    if (hasBlipId && needsTagSave) {
+      if (!userId) {
+        console.error("Cannot sync root draft tags without an authenticated user")
+        setSaveStatus("error")
+        setShowStatus(true)
+        return false
+      }
+
+      const tagsPersisted = await persistTagsToDatabase(
+        closingBlipId!,
+        closingTagValues,
+      )
+      if (!tagsPersisted) {
+        setSaveStatus("error")
+        setShowStatus(true)
+        return false
+      }
+    }
+
+    return true
+  }
+
+  const requestCloseEditor = async () => {
+    debouncedCacheSave.cancel()
+    debouncedDbSave.cancel()
+
+    if (!skipClosePersist()) {
+      const persisted = await persistPendingChangesBeforeClose()
+      if (!persisted) {
+        return
+      }
+    }
+
+    setSkipClosePersist(true)
+    local.onPanelOpenChange(false)
+  }
+
+  // Initialize editor state when the root editor receives a fresh open request.
+  // This avoids mobile fast close/reopen races preserving a stale `currentBlipId`
+  // and skipping the draft picker when the user explicitly asked for "new blip".
+  createEffect(
+    on(
+      () => [local.open, local.blipId] as const,
+      ([open, requestedBlipId], previous) => {
+        if (!open) {
           return
         }
-      }
 
-      if (drafts().length > 0) {
-        setEditorView("picker")
-        return
-      }
+        const [previousOpen, previousRequestedBlipId] = previous ?? [false, null]
+        const isFreshOpen = !previousOpen
+        const targetChanged = requestedBlipId !== previousRequestedBlipId
 
-      startNewBlip()
-    }
-  })
+        if (!isFreshOpen && !targetChanged) {
+          return
+        }
+
+        void loadTagOptions()
+
+        const userId = user()?.id
+        if (!userId) {
+          console.error("No user ID available")
+          return
+        }
+
+        if (requestedBlipId) {
+          const selectedBlip = store
+            .entities()
+            .find(b => b.id === requestedBlipId)
+          if (selectedBlip) {
+            openExistingBlip(selectedBlip, true)
+          }
+          return
+        }
+
+        if (drafts().length > 0) {
+          setEditorView("picker")
+          setEditorSurfaceView("editor")
+          return
+        }
+
+        startNewBlip()
+      },
+    ),
+  )
 
   // Reset state when drawer closes
   createEffect(
@@ -586,54 +862,12 @@ export function BlipEditor(props: BlipEditorProps) {
           return
         }
 
-        const closingBlipId = currentBlipId()
-        const closingContent = content()
-        const cachedContent = lastCachedContent()
-        const dbSavedContent = lastDbSavedContent()
-        const closingTagValues = selectedTagValues()
-        const dbSavedTagValues = lastDbSavedTagValues()
-        const userId = user()?.id
-
         // Cancel any pending saves
         debouncedCacheSave.cancel()
         debouncedDbSave.cancel()
-        debouncedTagSave.cancel()
 
         if (!skipClosePersist()) {
-          // If there are unsaved changes when closing, persist them immediately.
-          // This prevents losing drafts when users close quickly and refresh.
-          const hasBlipId = Boolean(closingBlipId)
-          const hasContent = closingContent.trim().length > 0
-          const needsCacheSave = closingContent !== cachedContent
-          const needsDbSave = closingContent !== dbSavedContent
-          const needsTagSave = !areTagValuesEqual(closingTagValues, dbSavedTagValues)
-
-          if (hasBlipId && hasContent && needsCacheSave) {
-            void store.upsert(
-              {
-                id: closingBlipId!,
-                content: closingContent,
-                ...(userId ? { user_id: userId } : {}),
-                blip_type: BLIP_TYPES.ROOT,
-                parent_id: null,
-              },
-              { cacheOnly: true },
-            )
-          }
-
-          if (hasBlipId && hasContent && needsDbSave && userId) {
-            void store.upsert({
-              id: closingBlipId!,
-              content: closingContent,
-              user_id: userId,
-              blip_type: BLIP_TYPES.ROOT,
-              parent_id: null,
-            })
-          }
-
-          if (hasBlipId && needsTagSave && userId) {
-            void persistTagsToDatabase(closingBlipId!, closingTagValues)
-          }
+          void persistPendingChangesBeforeClose()
         }
 
         // Clear timeouts
@@ -659,9 +893,16 @@ export function BlipEditor(props: BlipEditorProps) {
           setLastDbSavedContent("")
           setHasPersistedCurrentBlip(false)
           setContentMetrics(getMarkdownEditorContentMetrics(""))
+          setAllowComments(true)
+          setLastCachedAllowComments(true)
+          setLastDbSavedAllowComments(true)
+          setPublishAt(null)
+          setLastCachedPublishAt(null)
+          setLastDbSavedPublishAt(null)
           setLastDbSavedTagValues([])
           setSaveStatus("idle")
           setEditorView("editor")
+          setEditorSurfaceView("editor")
           setSelectedTags([])
           setShowStatus(false)
           setStatusFading(false)
@@ -677,7 +918,6 @@ export function BlipEditor(props: BlipEditorProps) {
   onCleanup(() => {
     debouncedCacheSave.cancel()
     debouncedDbSave.cancel()
-    debouncedTagSave.cancel()
     if (resetStateTimeout) {
       clearTimeout(resetStateTimeout)
       resetStateTimeout = null
@@ -701,7 +941,26 @@ export function BlipEditor(props: BlipEditorProps) {
       // Trigger both debounced saves
       debouncedCacheSave(markdown)
       debouncedDbSave(markdown)
-      debouncedTagSave()
+    }
+  }
+
+  const handleAllowCommentsChange = (nextAllowComments: boolean) => {
+    setAllowComments(nextAllowComments)
+    setSaveStatus("idle")
+
+    if (currentBlipId() && (content().trim() || hasPersistedCurrentBlip())) {
+      debouncedCacheSave(content())
+      debouncedDbSave(content())
+    }
+  }
+
+  const handlePublishAtChange = (nextPublishAt: Date | null) => {
+    setPublishAt(nextPublishAt ? nextPublishAt.toISOString() : null)
+    setSaveStatus("idle")
+
+    if (currentBlipId() && (content().trim() || hasPersistedCurrentBlip())) {
+      debouncedCacheSave(content())
+      debouncedDbSave(content())
     }
   }
 
@@ -709,12 +968,17 @@ export function BlipEditor(props: BlipEditorProps) {
     setSelectedTags(nextTags)
     setSaveStatus("idle")
 
-    if (currentBlipId()) {
-      if (hasPersistedCurrentBlip()) {
-        debouncedTagSave()
-      } else {
-        debouncedDbSave(content())
-      }
+    if (!currentBlipId()) {
+      return
+    }
+
+    if (content().trim() || hasPersistedCurrentBlip()) {
+      debouncedCacheSave(content())
+      debouncedDbSave(content())
+    } else {
+      // Stub blip with empty body: tee up first cloud persist like the previous
+      // tag-specific debounce, so tag-only edits are not stranded pre-upsert.
+      debouncedDbSave(content())
     }
   }
 
@@ -722,7 +986,6 @@ export function BlipEditor(props: BlipEditorProps) {
     // Cancel pending saves
     debouncedCacheSave.cancel()
     debouncedDbSave.cancel()
-    debouncedTagSave.cancel()
 
     // Save to database immediately
     await saveToDatabase(content())
@@ -738,10 +1001,12 @@ export function BlipEditor(props: BlipEditorProps) {
     try {
       debouncedCacheSave.cancel()
       debouncedDbSave.cancel()
-      debouncedTagSave.cancel()
 
-      if (content() !== lastDbSavedContent()) {
-        await saveToDatabase(content())
+      if (hasPendingChanges()) {
+        const saved = await saveToDatabase(content())
+        if (!saved) {
+          return
+        }
       }
 
       await startSavingStatus("saving-db")
@@ -799,8 +1064,24 @@ export function BlipEditor(props: BlipEditorProps) {
   }
 
   const hasPendingChanges = () =>
-    content() !== lastCachedContent() ||
+    content() !== lastDbSavedContent() ||
+    allowComments() !== lastDbSavedAllowComments() ||
+    !areTimestampsEqual(publishAt(), lastDbSavedPublishAt()) ||
     !areTagValuesEqual(selectedTagValues(), lastDbSavedTagValues())
+
+  const handleToggleMetadataView = () => {
+    const nextView = editorSurfaceView() === "metadata" ? "editor" : "metadata"
+
+    if (nextView === "metadata" && isMobileViewport()) {
+      releaseEditorFocusForMetadata("blipEditor.metadataOpen")
+    }
+
+    setEditorSurfaceView(nextView)
+
+    if (nextView === "editor") {
+      focusBridge.scheduleFocusAfterOpen()
+    }
+  }
 
   const handleContentMetricsChange = (
     nextMetrics: MarkdownEditorContentMetrics,
@@ -886,18 +1167,50 @@ export function BlipEditor(props: BlipEditorProps) {
     return null
   }
 
-  const EditorControls = (ctx: MarkdownEditorBelowEditorProps) => {
+  const MetadataPanel = () => {
+    return (
+      <div class="blip-editor-metadata-panel">
+        <div class="_section">
+          <div class="_sectionLabel">{tr("metadata.title")}</div>
+          <BlipTags
+            aria-label={tr("tags.ariaLabel")}
+            placeholder={tr("tags.placeholder")}
+            freeSolo
+            options={tagOptions()}
+            value={selectedTags()}
+            onChange={handleTagSelectionChange}
+            portalMount={comboboxPortalMount()}
+          />
+        </div>
+        <div class="_section">
+          <Switch
+            label={tr("metadata.allowComments")}
+            checked={allowComments()}
+            onChange={handleAllowCommentsChange}
+            aria-label={tr("metadata.allowComments")}
+            containerClass="_allowComments"
+          />
+        </div>
+        <div class="_section">
+          <DateTimePicker
+            label={tr("metadata.publishAt")}
+            value={toDateValue(publishAt())}
+            onChange={handlePublishAtChange}
+            showTime
+            timeGranularity={5}
+            portalMount={comboboxPortalMount()}
+            containerClass="_publishAt"
+          />
+        </div>
+      </div>
+    )
+  }
+
+  const EditorControls = (ctx: MarkdownEditorControlsProps) => {
+    const metadataOpen = () => editorSurfaceView() === "metadata"
+
     return (
       <div class="blip-editor-below-editor">
-        <BlipTags
-          aria-label={tr("tags.ariaLabel")}
-          placeholder={tr("tags.placeholder")}
-          freeSolo
-          options={tagOptions()}
-          value={selectedTags()}
-          onChange={handleTagSelectionChange}
-          portalMount={comboboxPortalMount()}
-        />
         <div class="blip-editor-control-pill">
           <div class="blip-editor-control-pill-scroll">
             <div class="blip-editor-control-pill-content">
@@ -907,7 +1220,7 @@ export function BlipEditor(props: BlipEditorProps) {
                   icon="close"
                   class="blip-editor-close"
                   aria-label={tr("actions.close")}
-                  onClick={() => local.onPanelOpenChange(false)}
+                  onClick={() => void requestCloseEditor()}
                   onMouseDown={preventEditorBlur}
                 />
                 <div class="blip-editor-status-slot">
@@ -924,10 +1237,26 @@ export function BlipEditor(props: BlipEditorProps) {
               <div class="blip-editor-control-pill-right">
                 <button
                   type="button"
+                  class={cx("blip-editor-metadata-toggle", {
+                    "is-active": metadataOpen(),
+                  })}
+                  aria-label={
+                    metadataOpen()
+                      ? tr("actions.showEditor")
+                      : tr("actions.showMetadata")
+                  }
+                  onClick={handleToggleMetadataView}
+                  onMouseDown={handleMetadataToggleMouseDown}
+                  onTouchStart={handleMetadataToggleTouchStart}>
+                  <Icon name={metadataOpen() ? "edit_note" : "page_info"} />
+                </button>
+                <button
+                  type="button"
                   class={cx("blip-editor-toolbar-toggle", {
                     "is-active": ctx.toolbarVisible,
                   })}
                   aria-label={tr("actions.toggleToolbar")}
+                  disabled={metadataOpen()}
                   onClick={() => ctx.onToggleToolbar()}
                   onMouseDown={preventEditorBlur}>
                   <Icon name="format_bold" />
@@ -988,7 +1317,14 @@ export function BlipEditor(props: BlipEditorProps) {
     <Show when={isEditorMounted()}>
       <Dialog
         open={local.open}
-        onOpenChange={open => local.onPanelOpenChange(open)}
+        onOpenChange={open => {
+          if (open) {
+            local.onPanelOpenChange(true)
+            return
+          }
+
+          void requestCloseEditor()
+        }}
         modal
         preventScroll
         overlayClass="blip-editor-overlay"
@@ -1001,6 +1337,10 @@ export function BlipEditor(props: BlipEditorProps) {
           ...desktopShellStyle(),
         }}
         contentProps={{
+          // Mount metadata overlays to the dialog content element itself so
+          // they stay within the modal subtree but can still escape the
+          // editor shell's overflow clipping on desktop.
+          ref: element => setComboboxPortalMount(element),
           onOpenAutoFocus: handleDialogOpenAutoFocus,
           onCloseAutoFocus: event => event.preventDefault(),
         }}>
@@ -1016,17 +1356,11 @@ export function BlipEditor(props: BlipEditorProps) {
                   icon="close"
                   class="blip-editor-picker-close"
                   aria-label={tr("actions.close")}
-                  onClick={() => local.onPanelOpenChange(false)}
+                  onClick={() => void requestCloseEditor()}
                   onMouseDown={preventEditorBlur}
                 />
               </div>
             </Show>
-          }
-          PortalLayer={
-            <div
-              class="blip-editor-portal-layer"
-              ref={element => setComboboxPortalMount(element)}
-            />
           }>
           <Show
             when={editorView() === "picker"}
@@ -1034,13 +1368,15 @@ export function BlipEditor(props: BlipEditorProps) {
               <form class="blip-editor-form">
                 <MarkdownEditor
                   instanceKey="blip-editor"
+                  MetadataPanel={MetadataPanel}
+                  metadataPanelVisible={editorSurfaceView() === "metadata"}
                   focusNonce={editorFocusNonce()}
                   focusCaretPlacement="end"
                   placeholder={tr("placeholder")}
                   initialValue={content()}
                   onChange={handleContentChange}
                   onContentMetricsChange={handleContentMetricsChange}
-                  BelowEditor={EditorControls}
+                  EditorControls={EditorControls}
                   statusIcon={getStatusIcon()}
                   showStatus={showStatus()}
                   statusFading={statusFading()}

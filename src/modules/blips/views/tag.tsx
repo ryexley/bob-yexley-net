@@ -6,6 +6,7 @@ import { LoadingSpinner } from "@/components/icon"
 import { Blips } from "@/modules/blips/components/blips"
 import { getBlipsByTag } from "@/modules/blips/data"
 import type { Blip } from "@/modules/blips/data/schema"
+import { isBlipPubliclyVisible } from "@/modules/blips/util"
 import { useAuth } from "@/context/auth-context"
 import { PageSection } from "@/modules/home/components/page-section"
 import { ptr } from "@/i18n"
@@ -30,7 +31,7 @@ export function BlipsTagView() {
     if (isAuthenticated()) {
       return allBlips
     }
-    return allBlips.filter(blip => blip.published)
+    return allBlips.filter(blip => isBlipPubliclyVisible(blip))
   })
   const hasBlipItems = createMemo(() => visibleBlips().length > 0)
   let showMoreButtonRef: HTMLButtonElement | undefined
