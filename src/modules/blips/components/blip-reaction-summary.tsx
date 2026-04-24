@@ -13,7 +13,7 @@ import { useAuth } from "@/context/auth-context"
 import { useViewport } from "@/context/viewport"
 import type { BlipReactionSummary } from "@/modules/blips/data/reactions-schema"
 import { cx } from "@/util"
-import "./blip-reaction-summary.css"
+import "./blip-reactions.css"
 
 type BlipReactionSummaryProps = {
   reactions?: BlipReactionSummary[]
@@ -162,7 +162,7 @@ export function BlipReactionSummary(props: BlipReactionSummaryProps) {
 
   return (
     <Show when={reactions().length > 0}>
-      <ul class={cx("blip-reaction-summary-list", props.class)} aria-label="Reactions">
+      <ul class={cx("blip-reactions", props.class)} aria-label="Reactions">
         <For each={reactions()}>
           {reaction => {
             const displayNames = createMemo(() => getReactionNames(reaction))
@@ -177,24 +177,20 @@ export function BlipReactionSummary(props: BlipReactionSummaryProps) {
             )
             const canToggle = createMemo(() => Boolean(props.onToggleReaction))
             const renderDetailsContent = () => (
-              <div class="blip-reaction-summary-tooltip-body">
-                <div class="blip-reaction-summary-tooltip-emoji" aria-hidden="true">
+              <div class="_body">
+                <div class="_emoji" aria-hidden="true">
                   {reaction.emoji}
                 </div>
-                <div class="blip-reaction-summary-tooltip-names">{tooltipText()}</div>
+                <div class="_names">{tooltipText()}</div>
               </div>
             )
-            const pillClass = createMemo(() =>
-              cx(
-                "blip-reaction-summary-pill",
-                canToggle() && "blip-reaction-summary-button",
-                reaction.reacted_by_current_user && "reacted",
-              ),
+            const reactionClass = createMemo(() =>
+              cx("_reaction", reaction.reacted_by_current_user && "reacted"),
             )
             const renderChipContent = () => (
               <>
-                <span class="emoji" aria-hidden="true">{reaction.emoji}</span>
-                <span class="count">{reaction.count}</span>
+                <span class="_emoji" aria-hidden="true">{reaction.emoji}</span>
+                <span class="_count">{reaction.count}</span>
               </>
             )
             const desktopTriggerProps = createMemo(() =>
@@ -210,19 +206,19 @@ export function BlipReactionSummary(props: BlipReactionSummaryProps) {
             )
             const desktopTrigger = () =>
               canToggle() ? (
-                <button class={pillClass()} {...desktopTriggerProps()}>
+                <button class={reactionClass()} {...desktopTriggerProps()}>
                   {renderChipContent()}
                 </button>
               ) : (
-                <span class={pillClass()}>{renderChipContent()}</span>
+                <span class={reactionClass()}>{renderChipContent()}</span>
               )
             const desktopChip = () =>
               showDesktopTooltip() ? (
                 <Tooltip
                   content={renderDetailsContent()}
-                  contentClass="blip-reaction-summary-tooltip"
+                  contentClass="blip-reactions-tooltip"
                   triggerAs={canToggle() ? "button" : "span"}
-                  triggerClass={pillClass()}
+                  triggerClass={reactionClass()}
                   triggerProps={desktopTriggerProps()}>
                   {renderChipContent()}
                 </Tooltip>
@@ -234,10 +230,7 @@ export function BlipReactionSummary(props: BlipReactionSummaryProps) {
               canToggle() ? (
                 <button
                   type="button"
-                  class="blip-reaction-summary-pill blip-reaction-summary-button"
-                  classList={{
-                    reacted: reaction.reacted_by_current_user,
-                  }}
+                  class={reactionClass()}
                   disabled={props.busy}
                   aria-label={`${reaction.reacted_by_current_user ? "Remove" : "Add"} ${reaction.emoji} reaction`}
                   onClick={event => handleReactionClick(event, reaction.emoji)}
@@ -268,10 +261,7 @@ export function BlipReactionSummary(props: BlipReactionSummaryProps) {
                 </button>
               ) : (
                 <span
-                  class="blip-reaction-summary-pill"
-                  classList={{
-                    reacted: reaction.reacted_by_current_user,
-                  }}
+                  class={reactionClass()}
                   onTouchStart={event =>
                     handleTouchStart(event, reaction.emoji, allowLongPressPopover())
                   }
@@ -300,7 +290,7 @@ export function BlipReactionSummary(props: BlipReactionSummaryProps) {
               )
 
             return (
-              <li class="blip-reaction-summary-item">
+              <li>
                 {allowLongPressPopover() ? (
                   <Popover
                     open={openPopoverEmoji() === reaction.emoji}
@@ -315,13 +305,13 @@ export function BlipReactionSummary(props: BlipReactionSummaryProps) {
                     shift={8}>
                     <PopoverAnchor as="span">{chip()}</PopoverAnchor>
                     <PopoverContent
-                      class="blip-reaction-summary-popover"
+                      class="blip-reactions-popover"
                       role="dialog"
                       aria-label={`Reactions for ${reaction.emoji}`}>
-                      <div class="blip-reaction-summary-popover-emoji" aria-hidden="true">
+                      <div class="_emoji" aria-hidden="true">
                         {reaction.emoji}
                       </div>
-                      <div class="blip-reaction-summary-popover-names">{tooltipText()}</div>
+                      <div class="_names">{tooltipText()}</div>
                     </PopoverContent>
                   </Popover>
                 ) : (
