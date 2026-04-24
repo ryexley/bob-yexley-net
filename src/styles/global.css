@@ -21,6 +21,7 @@
   --colors-safety-orange-02: #ff7700;
   --colors-neon-green: #39ff14;
   --colors-arctic-lime: #c2ff19;
+  --colors-chartreuse: #7fff00;
   --colors-cool-blue: #0090ff;
   --colors-resonant-blue: #01a2c7;
   --colors-cerise-pink: #e93d82;
@@ -89,6 +90,7 @@ a:visited {
   color: var(--colors-links);
   margin: -0.0625rem -0.25rem;
   padding: 0.0625rem 0.25rem;
+  text-decoration: underline;
 }
 
 img,

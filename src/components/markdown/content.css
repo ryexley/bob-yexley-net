@@ -110,7 +110,7 @@
 
   a {
     color: var(--colors-links);
-    text-decoration: none;
+    text-decoration: underline;
     text-underline-offset: 0.125rem;
     transition: var(--transitions-primary);
   }
@@ -165,7 +165,7 @@
   code {
     background: var(--colors-mono-03);
     border-radius: var(--radius-xs);
-    color: var(--colors-arctic-lime);
+    color: var(--colors-chartreuse);
     font-size: 0.875rem;
     overflow-wrap: anywhere;
     padding: 0.1rem 0.25rem;
@@ -173,18 +173,43 @@
   }
 
   pre {
-    background: var(--colors-mono-02);
-    border: 0.0625rem solid var(--colors-mono-04);
+    background: transparent;
+    border: none;
     border-radius: var(--radius-sm);
+    isolation: isolate;
     margin: 0 0 1rem;
     max-width: 100%;
-    overflow-x: auto;
+    overflow-x: visible;
     padding: 0.75rem;
+    position: relative;
+
+    &::before {
+      background: linear-gradient(
+        135deg,
+        var(--colors-cool-blue),
+        var(--colors-resonant-blue),
+        var(--colors-rebecca-purple)
+      );
+      border-radius: calc(var(--radius-sm) + 0.0625rem);
+      content: "";
+      inset: -0.0625rem;
+      position: absolute;
+      z-index: -2;
+    }
+
+    &::after {
+      background: var(--colors-mono-02);
+      border-radius: var(--radius-sm);
+      content: "";
+      inset: 0;
+      position: absolute;
+      z-index: -1;
+    }
 
     code {
       background: transparent;
       border-radius: 0;
-      color: var(--colors-text-primary);
+      color: var(--colors-chartreuse);
       overflow-wrap: normal;
       padding: 0;
       white-space: inherit;
