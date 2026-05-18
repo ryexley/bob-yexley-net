@@ -3,8 +3,9 @@ import {
   type Tokens,
 } from "marked"
 import {
-  extractAudioEmbedBlock,
-  parseAudioEmbedBlock,
+  coerceAudioPlayerProps,
+  parseAudioEmbedObjectLiteral,
+  readLeadingAudioEmbedBlock,
 } from "@/components/markdown/audio/audio-embed-syntax"
 
 type AudioEmbedToken = Tokens.Generic & {
@@ -31,12 +32,13 @@ export const audioEmbedExtension: TokenizerAndRendererExtension<
     return index >= 0 ? index : undefined
   },
   tokenizer(src) {
-    const block = extractAudioEmbedBlock(src)
+    const block = readLeadingAudioEmbedBlock(src)
     if (!block) {
       return
     }
 
-    const props = parseAudioEmbedBlock(block.raw)
+    const objectLiteral = parseAudioEmbedObjectLiteral(block.objectLiteral)
+    const props = objectLiteral ? coerceAudioPlayerProps(objectLiteral) : null
     if (!props) {
       return
     }

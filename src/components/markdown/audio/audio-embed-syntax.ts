@@ -73,25 +73,6 @@ function readBalancedObject(source: string, openBraceIndex: number): number | nu
   return null
 }
 
-export function extractAudioEmbedBlock(source: string): AudioEmbedBlock | null {
-  const leadingWhitespace = source.match(/^\s*/)?.[0] ?? ""
-  const rest = source.slice(leadingWhitespace.length)
-  const block = readAudioEmbedBlock(rest)
-  if (!block) {
-    return null
-  }
-
-  const trailing = rest.slice(block.endIndex)
-  if (trailing.trim().length > 0) {
-    return null
-  }
-
-  return {
-    raw: leadingWhitespace + block.raw,
-    objectLiteral: block.objectLiteral,
-  }
-}
-
 function readAudioEmbedBlock(source: string): {
   raw: string
   objectLiteral: string
@@ -145,6 +126,34 @@ function readAudioEmbedBlock(source: string): {
     objectLiteral: source.slice(objectOpenIndex, objectEndIndex),
     endIndex: index,
   }
+}
+
+export function readLeadingAudioEmbedBlock(source: string): AudioEmbedBlock | null {
+  const leadingWhitespace = source.match(/^\s*/)?.[0] ?? ""
+  const rest = source.slice(leadingWhitespace.length)
+  const block = readAudioEmbedBlock(rest)
+  if (!block) {
+    return null
+  }
+
+  return {
+    raw: leadingWhitespace + block.raw,
+    objectLiteral: block.objectLiteral,
+  }
+}
+
+export function extractAudioEmbedBlock(source: string): AudioEmbedBlock | null {
+  const block = readLeadingAudioEmbedBlock(source)
+  if (!block) {
+    return null
+  }
+
+  const trailing = source.slice(block.raw.length)
+  if (trailing.trim().length > 0) {
+    return null
+  }
+
+  return block
 }
 
 export function canonicalizeAudioEmbedBlock(block: AudioEmbedBlock): string {

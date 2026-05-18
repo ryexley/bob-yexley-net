@@ -5,6 +5,7 @@ import {
   normalizeAudioEmbedsInMarkdown,
   parseAudioEmbedBlock,
   parseAudioEmbedObjectLiteral,
+  readLeadingAudioEmbedBlock,
 } from "@/components/markdown/audio/audio-embed-syntax"
 
 const multiLineAudioEmbed = `{
@@ -39,6 +40,19 @@ describe("extractAudioEmbedBlock", () => {
       series: "Heaven and Hell",
       title: "Death and Judgment",
     })
+  })
+
+  it("reads a leading audio embed block when more markdown follows", () => {
+    const source = `{audio:{ src: "/audio/ep-1.mp3" }}
+
+---
+
+*More content below.*`
+
+    expect(readLeadingAudioEmbedBlock(source)?.raw).toBe(
+      "{audio:{ src: \"/audio/ep-1.mp3\" }}",
+    )
+    expect(extractAudioEmbedBlock(source)).toBeNull()
   })
 
   it("rejects blocks with trailing content on the same line", () => {

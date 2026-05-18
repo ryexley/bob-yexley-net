@@ -44,6 +44,22 @@ title: "Episode 1"
     )
   })
 
+  it("renders audio embeds when followed by more markdown content", () => {
+    const audio =
+      "{audio:{src:\"https://example.com/ep-1.mp3\",title:\"Death and Judgment\"}}"
+    const html = parseBlipMarkdown(`## Session 1
+
+${audio}
+
+---
+
+*The audio for this sermon series belongs to The Journey Church.*`)
+
+    expect(html).toContain("blip-audio-player")
+    expect(html).toContain("<hr>")
+    expect(html).not.toMatch(/<p>\{audio:/)
+  })
+
   it("leaves invalid audio embed syntax as markdown text", () => {
     expect(parseBlipMarkdown("{audio:{ title: \"Missing src\" }}")).toContain(
       "Missing src",
