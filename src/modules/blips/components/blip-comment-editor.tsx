@@ -40,14 +40,6 @@ type BlipCommentEditorProps = {
   onAfterClose?: () => void
 }
 
-type CommentEditorStatusContext = {
-  canDelete: boolean
-  canSave: boolean
-  handleDelete: () => void
-  handleSave: () => void
-}
-
-type SaveStatus = "idle" | "saving" | "saved" | "error"
 
 const tr = ptr("blips.components.commentEditor")
 const MOBILE_MAX_WIDTH = 768
@@ -127,19 +119,30 @@ export function BlipCommentEditor(props: BlipCommentEditorProps) {
     return existing
   })
 
-  createEffect(() => {
-    if (!props.open) {
-      return
-    }
+  createEffect(
+    on(
+      () =>
+        [
+          props.open,
+          props.editingCommentId,
+          props.editingCommentId ? existingComment()?.id : null,
+        ] as const,
+      ([open, editingCommentId, existingCommentId]) => {
+        if (!open) {
+          return
+        }
 
-    const draft = resolveCommentEditorDraft({
-      editingCommentId: props.editingCommentId,
-      existingComment: existingComment(),
-      nextNewCommentId: blipId(),
-    })
-    setCommentId(draft.commentId)
-    setContent(draft.content)
-  })
+        const draft = resolveCommentEditorDraft({
+          editingCommentId,
+          existingComment:
+            editingCommentId && existingCommentId ? existingComment() : null,
+          nextNewCommentId: blipId(),
+        })
+        setCommentId(draft.commentId)
+        setContent(draft.content)
+      },
+    ),
+  )
 
   const canSave = createMemo(
     () =>
@@ -350,9 +353,6 @@ export function BlipCommentEditor(props: BlipCommentEditorProps) {
   }
 
   const EditorControls = (ctx: MarkdownEditorControlsProps) => {
-    const statusContext = () =>
-      ctx.statusContext as CommentEditorStatusContext | undefined
-
     return (
       <div class="blip-editor-below-editor blip-comment-editor-below-editor">
         <div class="blip-editor-control-pill">
@@ -397,8 +397,8 @@ export function BlipCommentEditor(props: BlipCommentEditorProps) {
                   icon="delete"
                   class="blip-action-delete"
                   aria-label={tr("actions.delete")}
-                  disabled={!statusContext()?.canDelete}
-                  onClick={statusContext()?.handleDelete}
+                  disabled={!ctx.statusContext?.canDelete}
+                  onClick={ctx.statusContext?.handleDelete}
                   onMouseDown={preventEditorBlur}
                 />
                 <IconButton
@@ -406,8 +406,8 @@ export function BlipCommentEditor(props: BlipCommentEditorProps) {
                   icon="cloud_upload"
                   class="blip-action-save"
                   aria-label={isSaving() ? tr("actions.saving") : tr("actions.save")}
-                  disabled={!statusContext()?.canSave}
-                  onClick={statusContext()?.handleSave}
+                  disabled={!ctx.statusContext?.canSave}
+                  onClick={ctx.statusContext?.handleSave}
                   onMouseDown={preventEditorBlur}
                 />
               </div>

@@ -204,6 +204,11 @@ export function MarkdownEditor(props: MarkdownEditorProps) {
   let editorRef: HTMLDivElement | undefined
   let editorInstance: Editor | undefined
   let editorKeydownCleanup: (() => void) | undefined
+  const editorCallbacks = {
+    onChange: local.onChange,
+    onEditorReady: local.onEditorReady,
+    onContentMetricsChange: local.onContentMetricsChange,
+  }
   let focusRetryTimeout: ReturnType<typeof setTimeout> | undefined
   let pendingFocusAfterMount: "start" | "end" | null = null
   let lastHandledFocusNonce: number | undefined
@@ -265,8 +270,16 @@ export function MarkdownEditor(props: MarkdownEditorProps) {
     }
   }
 
+  createEffect(() => {
+    editorCallbacks.onChange = local.onChange
+    editorCallbacks.onEditorReady = local.onEditorReady
+    editorCallbacks.onContentMetricsChange = local.onContentMetricsChange
+  })
+
   const emitContentMetrics = debounce((markdown: string) => {
-    local.onContentMetricsChange?.(getMarkdownEditorContentMetrics(markdown))
+    editorCallbacks.onContentMetricsChange?.(
+      getMarkdownEditorContentMetrics(markdown),
+    )
   }, TIME.TWO_POINT_FIVE_SECONDS)
 
   const scheduleEditorFocus = (
@@ -300,7 +313,7 @@ export function MarkdownEditor(props: MarkdownEditorProps) {
         ctx.set(defaultValueCtx, initialValue)
         ctx.update(prosePluginsCtx, prev => [...prev, history()])
         ctx.get(listenerCtx).mounted(() => {
-          local.onEditorReady?.()
+          editorCallbacks.onEditorReady?.()
           emitContentMetrics(initialValue)
           if (pendingFocusAfterMount === null) {
             return
@@ -311,7 +324,7 @@ export function MarkdownEditor(props: MarkdownEditorProps) {
           scheduleEditorFocus(caretPlacement)
         })
         ctx.get(listenerCtx).markdownUpdated((ctx, markdown) => {
-          local.onChange?.(markdown)
+          editorCallbacks.onChange?.(markdown)
           emitContentMetrics(markdown)
         })
         ctx.get(listenerCtx).selectionUpdated(() => {
@@ -536,17 +549,16 @@ export function MarkdownEditor(props: MarkdownEditorProps) {
           </Show>
         </div>
         <Show when={local.EditorControls}>
-          <Dynamic
-            component={local.EditorControls}
-            onToggleToolbar={handleToggleToolbar}
-            toolbarVisible={toolbarVisible()}
-            statusText={local.statusText}
-            statusIcon={local.statusIcon}
-            showStatus={local.showStatus}
-            statusFading={local.statusFading}
-            statusActions={local.statusActions}
-            statusContext={local.statusContext}
-          />
+          {local.EditorControls?.({
+            onToggleToolbar: handleToggleToolbar,
+            toolbarVisible: toolbarVisible(),
+            statusText: local.statusText,
+            statusIcon: local.statusIcon,
+            showStatus: local.showStatus,
+            statusFading: local.statusFading,
+            statusActions: local.statusActions,
+            statusContext: local.statusContext,
+          })}
         </Show>
         {local.showStatusBar ? (
           <StatusBar

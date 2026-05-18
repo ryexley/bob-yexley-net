@@ -83,6 +83,7 @@ export function BlipUpdateEditor(props: BlipUpdateEditorProps) {
     blipId(),
   )
   const [content, setContent] = createSignal("")
+  const [lastSavedContent, setLastSavedContent] = createSignal("")
   const [isDirty, setIsDirty] = createSignal(false)
   const [isPublished, setIsPublished] = createSignal(true)
   const [hasPersistedCurrentUpdate, setHasPersistedCurrentUpdate] =
@@ -186,6 +187,7 @@ export function BlipUpdateEditor(props: BlipUpdateEditorProps) {
     clearStatusTimeouts()
     setCurrentUpdateId(blipId())
     setContent("")
+    setLastSavedContent("")
     setIsDirty(false)
     setHasPersistedCurrentUpdate(false)
     setIsPublished(true)
@@ -200,6 +202,7 @@ export function BlipUpdateEditor(props: BlipUpdateEditorProps) {
     clearStatusTimeouts()
     setCurrentUpdateId(update.id)
     setContent(update.content ?? "")
+    setLastSavedContent(update.content ?? "")
     setIsDirty(false)
     setHasPersistedCurrentUpdate(true)
     setIsPublished(update.published)
@@ -238,6 +241,7 @@ export function BlipUpdateEditor(props: BlipUpdateEditorProps) {
       }
 
       setIsDirty(false)
+      setLastSavedContent(markdown)
       setHasPersistedCurrentUpdate(true)
       setIsPublished(persistedUpdate.published)
       setSaveStatus("saved-db")
@@ -398,33 +402,35 @@ export function BlipUpdateEditor(props: BlipUpdateEditorProps) {
     restoreEditorDocumentInteractionState()
   })
 
-  const handleContentChange = (markdown: string) => {
-    setContent(markdown)
-    setIsDirty(markdown.trim().length > 0)
-    setSaveStatus("idle")
-  }
-
-  const hasPendingChanges = createMemo(
-    () => isDirty() && content().trim().length > 0 && local.open,
-  )
-
-  createEffect(() => {
-    if (!local.open) {
+  const scheduleAutoSave = (markdown: string) => {
+    if (
+      !local.open ||
+      markdown.trim().length === 0 ||
+      markdown === lastSavedContent()
+    ) {
       debouncedDbSave.cancel()
       return
     }
 
-    const markdown = content()
     const ctx = saveContext()
-    const pendingChanges = isDirty() && markdown.trim().length > 0
-
-    if (!pendingChanges || !ctx) {
+    if (!ctx) {
       debouncedDbSave.cancel()
       return
     }
 
     debouncedDbSave(markdown, ctx)
-  })
+  }
+
+  const handleContentChange = (markdown: string) => {
+    setContent(markdown)
+    setIsDirty(markdown !== lastSavedContent())
+    setSaveStatus("idle")
+    scheduleAutoSave(markdown)
+  }
+
+  const hasPendingChanges = createMemo(
+    () => isDirty() && content().trim().length > 0 && local.open,
+  )
 
   const handleSave = async (closeAfterSave = false) => {
     const ctx = saveContext()
@@ -613,6 +619,7 @@ export function BlipUpdateEditor(props: BlipUpdateEditorProps) {
   const handleDesktopAfterExit = () => {
     setCurrentUpdateId(blipId())
     setContent("")
+    setLastSavedContent("")
     setIsDirty(false)
     setIsPublished(true)
     setHasPersistedCurrentUpdate(false)
@@ -663,8 +670,6 @@ export function BlipUpdateEditor(props: BlipUpdateEditorProps) {
   }
 
   const EditorControls = (ctx: MarkdownEditorControlsProps) => {
-    const statusContext = () => ctx.statusContext as StatusContext | undefined
-
     return (
       <div class="blip-editor-below-editor">
         <div class="blip-editor-control-pill">
@@ -709,25 +714,25 @@ export function BlipUpdateEditor(props: BlipUpdateEditorProps) {
                   icon="delete"
                   class="blip-action-delete"
                   aria-label={trDetail("updates.actions.delete")}
-                  disabled={!statusContext()?.canDelete}
-                  onClick={statusContext()?.handleDelete}
+                  disabled={!ctx.statusContext?.canDelete}
+                  onClick={ctx.statusContext?.handleDelete}
                   onMouseDown={preventEditorBlur}
                 />
                 <IconButton
                   size="xs"
                   icon={
-                    statusContext()?.isPublished
+                    ctx.statusContext?.isPublished
                       ? "check_circle"
                       : "arrow_upload_ready"
                   }
-                  disabled={!statusContext()?.canTogglePublish}
-                  onClick={statusContext()?.handleTogglePublish}
+                  disabled={!ctx.statusContext?.canTogglePublish}
+                  onClick={ctx.statusContext?.handleTogglePublish}
                   class={cx("blip-action-publish", {
-                    published: statusContext()?.isPublished,
-                    unpublished: !statusContext()?.isPublished,
+                    published: ctx.statusContext?.isPublished,
+                    unpublished: !ctx.statusContext?.isPublished,
                   })}
                   aria-label={
-                    statusContext()?.isPublished
+                    ctx.statusContext?.isPublished
                       ? trEditor("actions.unpublish")
                       : trEditor("actions.publish")
                   }
@@ -738,8 +743,8 @@ export function BlipUpdateEditor(props: BlipUpdateEditorProps) {
                   icon="cloud_upload"
                   class="blip-action-save"
                   aria-label={trEditor("actions.save")}
-                  disabled={!statusContext()?.canSave}
-                  onClick={statusContext()?.handleSave}
+                  disabled={!ctx.statusContext?.canSave}
+                  onClick={ctx.statusContext?.handleSave}
                   onMouseDown={preventEditorBlur}
                 />
               </div>

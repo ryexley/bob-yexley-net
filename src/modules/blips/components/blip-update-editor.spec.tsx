@@ -3,7 +3,7 @@ import { createSignal } from "solid-js"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { BlipUpdateEditor } from "@/modules/blips/components/blip-update-editor"
 
-const { state, confirmMock, dialogState } = vi.hoisted(() => ({
+const { state, confirmMock, dialogState, upsertMock } = vi.hoisted(() => ({
   state: {
     entities: [] as any[],
     viewportWidth: 375,
@@ -12,6 +12,10 @@ const { state, confirmMock, dialogState } = vi.hoisted(() => ({
   dialogState: {
     lastProps: null as any,
   },
+  upsertMock: vi.fn(async () => ({
+    error: null,
+    data: { id: "update-1", published: true, tags: [] },
+  })),
 }))
 
 vi.mock("@/context/services-context", () => ({
@@ -72,10 +76,7 @@ vi.mock("@/modules/blips/data", () => ({
   blipStore: () => ({
     entities: () => state.entities,
     getById: (id: string) => state.entities.find(blip => blip.id === id) ?? null,
-    upsert: vi.fn(async () => ({
-      error: null,
-      data: { id: "update-1", published: true, tags: [] },
-    })),
+    upsert: upsertMock,
     remove: vi.fn(async () => ({ error: null })),
   }),
 }))
@@ -132,6 +133,7 @@ describe("BlipUpdateEditor", () => {
     state.entities = []
     state.viewportWidth = 375
     confirmMock.mockReset()
+    upsertMock.mockClear()
     dialogState.lastProps = null
   })
 
@@ -220,6 +222,37 @@ describe("BlipUpdateEditor", () => {
         ),
       ).toBeGreaterThan(2)
     })
+  })
+
+  it("auto-saves pending update drafts after the debounce interval", async () => {
+    vi.useFakeTimers()
+
+    render(() => (
+      <BlipUpdateEditor
+        open
+        rootBlipId="root-1"
+        onRequestClose={() => undefined}
+      />
+    ))
+
+    await waitFor(() => {
+      expect(screen.getByTestId("mock-update-markdown-editor")).toBeTruthy()
+    })
+
+    await fireEvent.click(screen.getByTestId("mock-update-change"))
+    expect(upsertMock).not.toHaveBeenCalled()
+
+    await vi.advanceTimersByTimeAsync(30_000)
+
+    expect(upsertMock).toHaveBeenCalledTimes(1)
+    expect(upsertMock.mock.calls[0]?.[0]).toMatchObject({
+      id: "update-1",
+      content: "Draft update",
+      parent_id: "root-1",
+      blip_type: "update",
+    })
+
+    vi.useRealTimers()
   })
 
   it("routes dialog dismissal and parent close requests through the shared close path", async () => {
