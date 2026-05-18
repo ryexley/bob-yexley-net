@@ -171,7 +171,9 @@ main {
   position: relative;
   /* Use responsive width instead of fixed min-width */
   width: 100%;
+  max-width: 100%;
   min-width: 0; /* Allow content to shrink */
+  overflow-x: clip;
 
   &.no-chrome {
     padding: 0;

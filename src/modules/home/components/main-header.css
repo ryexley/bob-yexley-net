@@ -69,7 +69,8 @@
   top: 0;
   right: 0;
   left: auto;
-  width: 100vw;
+  width: 100%;
+  max-width: 100vw;
   min-width: 0;
   border-width: 0 0 0 var(--border-width);
   box-shadow: -1rem 0 2rem rgba(var(--colors-mono-00-rgb), 0.4);

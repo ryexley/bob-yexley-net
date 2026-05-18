@@ -1,4 +1,5 @@
 .audio-player {
+  --player-control-button-size: 2.5rem;
   --player-surface: var(--colors-mono-02);
   --player-elevated: var(--colors-mono-03);
   --player-highlight: var(--colors-info);
@@ -21,6 +22,8 @@
   flex-direction: column;
   gap: 0.75rem;
   max-width: min(28rem, 100%);
+  min-width: 0;
+  overflow-x: clip;
   width: 100%;
   padding: 0.875rem 1rem 1rem;
   margin: 0;
@@ -162,16 +165,25 @@
     display: flex;
     gap: 0.5rem;
     justify-content: space-between;
+    min-width: 0;
+    width: 100%;
 
-    .rail-side {
+    .rail-side,
+    .seek-action {
       flex-shrink: 0;
+      height: var(--player-control-button-size);
+      max-height: var(--player-control-button-size);
+      max-width: var(--player-control-button-size);
+      min-height: var(--player-control-button-size);
+      min-width: var(--player-control-button-size);
+      width: var(--player-control-button-size);
     }
 
     .transport {
       align-items: center;
       display: flex;
-      flex: 1;
-      gap: 1.5rem;
+      flex: 1 1 auto;
+      gap: clamp(0.5rem, 3vw, 1.5rem);
       justify-content: center;
       min-width: 0;
 
@@ -289,10 +301,13 @@
     appearance: none;
     background: transparent;
     border-radius: var(--radius-pill);
+    box-sizing: border-box;
     cursor: pointer;
     display: block;
     height: 1.25rem;
     margin: 0;
+    max-width: 100%;
+    min-width: 0;
     width: 100%;
 
     &:focus-visible {

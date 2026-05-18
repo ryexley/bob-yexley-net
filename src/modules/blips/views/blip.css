@@ -8,6 +8,9 @@
   display: flex;
   justify-content: center;
   min-height: auto;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: clip;
   padding: 1rem;
   padding-bottom: 7rem;
   padding-top: var(--main-header-height);
@@ -19,6 +22,8 @@
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  max-width: 100%;
+  min-width: 0;
   width: 100%;
 
   &.s {
@@ -122,6 +127,8 @@ a.blip-detail-back-link {
     var(--colors-mono-11) 35%
   );
   font-size: 1rem;
+  max-width: 100%;
+  min-width: 0;
 }
 
 .blip-detail-footer {

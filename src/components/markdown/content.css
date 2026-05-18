@@ -1,5 +1,8 @@
 :is(.milkdown .ProseMirror, .rendered-markdown) {
+  max-width: 100%;
+  min-width: 0;
   overflow-wrap: break-word;
+  overflow-x: clip;
 
   > :first-child {
     margin-top: 0;
@@ -243,6 +246,9 @@
     display: flex;
     justify-content: center;
     margin: 1rem 0;
+    max-width: 100%;
+    min-width: 0;
+    width: 100%;
   }
 
   pre.audio-embed-block {
