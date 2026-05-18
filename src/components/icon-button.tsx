@@ -35,6 +35,7 @@ export function IconButton(props: IconButtonProps) {
 
   return (
     <KobalteButton
+      type="button"
       class={cx("icon-button", local.size, local.class)}
       onClick={local.onClick}
       onMouseDown={local.onMouseDown}
