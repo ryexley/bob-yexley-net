@@ -1,5 +1,7 @@
 import { Marked } from "marked"
+import { normalizeAudioEmbedsInMarkdown } from "@/components/markdown/audio/audio-embed-syntax"
 import { rendererExtensions } from "./extensions"
+import { audioEmbedExtension } from "./extensions/audio-embed"
 import { highlightExtension } from "./extensions/highlight"
 
 const createBlipMarked = () => {
@@ -9,7 +11,10 @@ const createBlipMarked = () => {
     extension.extendRenderer(renderer)
   }
 
-  marked.use({ renderer, extensions: [highlightExtension] })
+  marked.use({
+    renderer,
+    extensions: [highlightExtension, audioEmbedExtension],
+  })
 
   return marked
 }
@@ -17,5 +22,5 @@ const createBlipMarked = () => {
 const blipMarked = createBlipMarked()
 
 export const parseBlipMarkdown = (content: string) => {
-  return blipMarked.parse(content) as string
+  return blipMarked.parse(normalizeAudioEmbedsInMarkdown(content)) as string
 }

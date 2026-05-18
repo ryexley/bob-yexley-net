@@ -23,6 +23,11 @@
   max-width: min(28rem, 100%);
   width: 100%;
   padding: 0.875rem 1rem 1rem;
+  margin: 0;
+
+  img {
+    margin: 0;
+  }
 
   > audio {
     block-size: 0;
@@ -126,6 +131,7 @@
       border-radius: var(--radius-md);
       display: block;
       height: auto;
+      margin: 0;
       width: 100%;
     }
   }

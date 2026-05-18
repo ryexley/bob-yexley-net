@@ -22,6 +22,7 @@ const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000
 /** How quickly the scrubber glides toward playback time (higher = snappier). */
 const PROGRESS_GLIDE_RATE = 10
 const DEFAULT_VOLUME = 0.5
+export const DEFAULT_AUDIO_PLAYER_STORAGE_KEY = "bob-yexley-net:audio-player"
 
 export type AudioPlayerPersistEntry = {
   currentTime: number
@@ -34,7 +35,7 @@ type PersistStore = Record<string, AudioPlayerPersistEntry>
 
 export type AudioPlayerProps = {
   src: string
-  storageKey: string
+  storageKey?: string
   coverImage?: string
   title?: string
   artist?: string
@@ -240,7 +241,11 @@ function mergeEntry(
 
 export const AudioPlayer: Component<AudioPlayerProps> = rawProps => {
   const props = mergeProps(
-    { scrubSeconds: 10, volume: DEFAULT_VOLUME },
+    {
+      scrubSeconds: 10,
+      volume: DEFAULT_VOLUME,
+      storageKey: DEFAULT_AUDIO_PLAYER_STORAGE_KEY,
+    },
     rawProps,
   )
   const [local] = splitProps(props, [

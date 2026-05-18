@@ -238,4 +238,31 @@
       margin-right: 0.5rem;
     }
   }
+
+  .blip-audio-player {
+    display: flex;
+    justify-content: center;
+    margin: 1rem 0;
+  }
+
+  pre.audio-embed-block {
+    background-color: var(--colors-mono-02);
+    border: 0.0625rem solid var(--colors-mono-04);
+    border-radius: var(--radius-sm);
+    font-family: var(--font-family-mono, ui-monospace, monospace);
+    font-size: 0.875rem;
+    line-height: 1.4;
+    margin: 1rem 0;
+    overflow-x: auto;
+    padding: 0.75rem 1rem;
+    white-space: pre-wrap;
+    word-break: break-word;
+
+    code {
+      background: none;
+      border: 0;
+      font: inherit;
+      padding: 0;
+    }
+  }
 }

@@ -27,6 +27,7 @@ import { debounce } from "@/util/debounce"
 import { TIME } from "@/util/enums"
 import { Stack } from "@/components/stack"
 import { highlight } from "./plugins/highlight"
+import { audioEmbed } from "./plugins/audio-embed"
 import { placeholder } from "./plugins/placeholder"
 import {
   applyFormat,
@@ -322,6 +323,7 @@ export function MarkdownEditor(props: MarkdownEditorProps) {
       })
       .use(commonmark)
       .use(highlight)
+      .use(audioEmbed)
       .use(placeholder(local.placeholder))
       .use(emoji)
       .use(listener)
