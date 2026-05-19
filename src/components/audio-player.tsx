@@ -11,7 +11,6 @@ import {
   type Component,
 } from "solid-js"
 import { isServer } from "solid-js/web"
-import { Transition } from "solid-transition-group"
 import { Icon } from "@/components/icon"
 import { IconButton } from "@/components/icon-button"
 import { cx } from "@/util"
@@ -781,6 +780,12 @@ export const AudioPlayer: Component<AudioPlayerProps> = rawProps => {
         }}
         onEnded={() => {
           setPlaying(false)
+          const el = audioElBox.current
+          if (el) {
+            el.currentTime = 0
+          }
+          setCurrentTimeSig(0)
+          snapSmoothTime(0)
           persistPlaybackPosition()
         }}
         onLoadStart={() => setDuration(0)}
@@ -918,38 +923,37 @@ export const AudioPlayer: Component<AudioPlayerProps> = rawProps => {
         </Show>
       </div>
 
-      <Transition name="player-volume">
-        <Show when={showVolume()}>
-          <div class="volume-panel">
-            <div class="volume-panel-inner">
-              <input
-                class="player-range volume-range"
-                type="range"
-                min={0}
-                max={1}
-                step="any"
-                value={volume()}
-                style={{ "--slider-fill": `${volumeFillPercent()}%` }}
-                aria-label="Volume"
-                onInput={e => {
-                  const v = Number(e.currentTarget.value)
-                  setVolume(v)
-                  const el = audioRef()
-                  if (el) {
-                    el.volume = v
-                  }
-                  persistUiState({ volume: v })
-                }}
-              />
-              <p
-                class="volume-panel-label"
-                aria-hidden="true">
-                volume
-              </p>
-            </div>
-          </div>
-        </Show>
-      </Transition>
+      <div
+        class={cx("volume-panel", showVolume() && "volume-panel-open")}
+        aria-hidden={!showVolume()}>
+        <div class="volume-panel-inner">
+          <input
+            class="player-range volume-range"
+            type="range"
+            min={0}
+            max={1}
+            step="any"
+            value={volume()}
+            style={{ "--slider-fill": `${volumeFillPercent()}%` }}
+            aria-label="Volume"
+            tabIndex={showVolume() ? 0 : -1}
+            onInput={e => {
+              const v = Number(e.currentTarget.value)
+              setVolume(v)
+              const el = audioRef()
+              if (el) {
+                el.volume = v
+              }
+              persistUiState({ volume: v })
+            }}
+          />
+          <p
+            class="volume-panel-label"
+            aria-hidden="true">
+            volume
+          </p>
+        </div>
+      </div>
     </div>
   )
 }
