@@ -262,7 +262,7 @@ export function Blip(props: {
           <footer>
             <div class="_tags">
               <Show when={(local.tags?.length ?? 0) > 0}>
-                <Hashtag size="0.85rem" />
+                <Hashtag />
                 <ul class="_tagList">
                   <For each={local.tags}>
                     {tag => (

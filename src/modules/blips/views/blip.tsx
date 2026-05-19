@@ -817,7 +817,7 @@ export function BlipView() {
                         <div class="blip-detail-footer-top-row">
                           <div class="tags">
                             <Show when={visibleRootTags().length > 0}>
-                              <Hashtag size="0.85rem" />
+                              <Hashtag />
                               <ul class="tag-list">
                                 <For each={visibleRootTags()}>
                                   {tag => (
