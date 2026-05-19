@@ -208,45 +208,73 @@
 
       .transport-play {
         align-items: center;
-        background: var(--player-elevated);
-        border: 0.0625rem solid var(--colors-mono-04);
+        background: rgba(var(--colors-mono-01-rgb), 0.75);
+        border: 0.0625rem solid var(--colors-mono-01);
         border-radius: var(--radius-round);
         box-shadow: none;
         display: flex;
         flex-shrink: 0;
         height: 3.25rem;
+        isolation: isolate;
         justify-content: center;
+        position: relative;
         transition: var(--transitions-primary);
         width: 3.25rem;
 
-        &:hover {
-          background: color-mix(
-            in srgb,
-            var(--player-elevated) 88%,
-            var(--colors-mono-05)
-          );
+        &:hover:not(.transport-play-playing) {
+          background: rgba(var(--colors-mono-01-rgb), 0.9);
         }
 
         .icon {
           color: var(--colors-info);
           font-size: 2rem;
+          position: relative;
+          z-index: 1;
         }
 
         &.transport-play-playing {
-          background: color-mix(
-            in srgb,
-            var(--player-highlight) 88%,
-            var(--player-elevated)
-          );
-          border-color: color-mix(
-            in srgb,
-            var(--player-highlight) 55%,
-            var(--colors-mono-04)
-          );
-          box-shadow: 0 0 1rem var(--player-thumb-glow);
+          --play-pulse-shadow: calc(var(--play-pulse, 0) * var(--play-pulse, 0));
+
+          background:
+            radial-gradient(
+              circle at center,
+              var(--colors-info) 0%,
+              color-mix(
+                  in srgb,
+                  var(--colors-cool-blue) calc(82% + var(--play-pulse, 0) * 18%),
+                  transparent
+                )
+                calc(20% + var(--play-pulse, 0) * 18%),
+              color-mix(
+                  in srgb,
+                  var(--colors-info) calc(38% + var(--play-pulse, 0) * 32%),
+                  transparent
+                )
+                calc(33% + var(--play-pulse, 0) * 25%),
+              transparent calc(50% + var(--play-pulse, 0) * 22%)
+            ),
+            rgba(var(--colors-mono-01-rgb), 0.75);
+          border-color: var(--colors-mono-01);
+          box-shadow:
+            0 0 calc(0.75rem + var(--play-pulse-shadow) * 2.35rem)
+              var(--player-thumb-glow),
+            0 0 calc(0.3rem + var(--play-pulse-shadow) * 1.5rem)
+              color-mix(
+                in srgb,
+                var(--colors-info) calc(18% + var(--play-pulse-shadow) * 72%),
+                transparent
+              );
+          overflow: hidden;
+          transition: box-shadow 70ms ease-out;
 
           .icon {
             color: var(--colors-text-primary);
+          }
+
+          @media (prefers-reduced-motion: reduce) {
+            background: rgba(var(--colors-mono-01-rgb), 0.75);
+            box-shadow: 0 0 1rem var(--player-thumb-glow);
+            transition: none;
           }
         }
       }

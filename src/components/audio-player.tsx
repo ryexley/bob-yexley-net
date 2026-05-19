@@ -20,6 +20,11 @@ import "./audio-player.css"
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000
 /** How quickly the scrubber glides toward playback time (higher = snappier). */
 const PROGRESS_GLIDE_RATE = 10
+/** Play-button glow driven by low-frequency energy from the analyser. */
+const PLAY_PULSE_FFT_SIZE = 256
+const PLAY_PULSE_BIN_RATIO = 0.2
+const PLAY_PULSE_SMOOTH_ATTACK = 0.42
+const PLAY_PULSE_SMOOTH_RELEASE = 0.14
 const DEFAULT_VOLUME = 0.5
 export const DEFAULT_AUDIO_PLAYER_STORAGE_KEY = "bob-yexley-net:audio-player"
 
@@ -202,6 +207,103 @@ function formatPlaybackClock(seconds: number): string {
   return `${minutes}:${String(secs).padStart(2, "0")}`
 }
 
+type PlayPulseGraph = {
+  context: AudioContext
+  analyser: AnalyserNode
+  freqData: Uint8Array
+  timeData: Uint8Array
+  smoothed: number
+}
+
+type HTMLMediaElementWithCapture = HTMLMediaElement & {
+  captureStream?: () => MediaStream
+  mozCaptureStream?: () => MediaStream
+}
+
+function captureMediaElementStream(el: HTMLMediaElement): MediaStream | null {
+  const media = el as HTMLMediaElementWithCapture
+  if (typeof media.captureStream === "function") {
+    return media.captureStream()
+  }
+  if (typeof media.mozCaptureStream === "function") {
+    return media.mozCaptureStream()
+  }
+  return null
+}
+
+/**
+ * Analyser tap that leaves native <audio> output intact (captureStream when possible).
+ * crossOrigin="anonymous" plus CDN CORS headers are required for cross-origin levels.
+ */
+function connectPlayPulseAnalyser(
+  context: AudioContext,
+  el: HTMLAudioElement,
+  analyser: AnalyserNode,
+): boolean {
+  const stream = captureMediaElementStream(el)
+  if (stream && stream.getAudioTracks().length > 0) {
+    context.createMediaStreamSource(stream).connect(analyser)
+    return true
+  }
+  if (el.crossOrigin !== "anonymous" && el.crossOrigin !== "use-credentials") {
+    return false
+  }
+  const source = context.createMediaElementSource(el)
+  source.connect(analyser)
+  analyser.connect(context.destination)
+  return true
+}
+
+function prefersReducedMotion(): boolean {
+  return (
+    typeof window !== "undefined" &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches
+  )
+}
+
+function isCrossOriginMediaUrl(src: string): boolean {
+  if (isServer) {
+    return false
+  }
+  const trimmed = src.trim()
+  if (!trimmed) {
+    return false
+  }
+  try {
+    return (
+      new URL(trimmed, window.location.href).origin !== window.location.origin
+    )
+  } catch {
+    return false
+  }
+}
+
+function samplePlayPulseLevel(
+  analyser: AnalyserNode,
+  freqData: Uint8Array,
+  timeData: Uint8Array,
+): number {
+  analyser.getByteFrequencyData(freqData)
+  analyser.getByteTimeDomainData(timeData)
+
+  const binCount = Math.max(1, Math.floor(freqData.length * PLAY_PULSE_BIN_RATIO))
+  let bassSum = 0
+  for (let i = 0; i < binCount; i++) {
+    bassSum += freqData[i] ?? 0
+  }
+  const bass = bassSum / binCount / 255
+
+  let sumSq = 0
+  for (let i = 0; i < timeData.length; i++) {
+    const sample = (timeData[i]! - 128) / 128
+    sumSq += sample * sample
+  }
+  const rms = Math.sqrt(sumSq / timeData.length)
+
+  const combined = Math.max(bass ** 0.7 * 1.65, rms * 2.2)
+  return Math.min(1, combined)
+}
+
 function mergeEntry(
   storageKey: string,
   canonicalHref: string,
@@ -263,6 +365,18 @@ export const AudioPlayer: Component<AudioPlayerProps> = rawProps => {
   const defaultVolume = createMemo(() => clampVolume(local.volume))
 
   const normalizedUrl = createMemo(() => normalizePersistedMediaUrl(local.src))
+
+  const wantsCrossOriginPulse = createMemo(
+    () => !isServer && isCrossOriginMediaUrl(normalizedUrl()),
+  )
+  /** When false, playback runs without crossOrigin (no pulse) after a media load error. */
+  const [crossOriginPulseActive, setCrossOriginPulseActive] = createSignal(true)
+  const audioCrossOrigin = createMemo((): "anonymous" | undefined => {
+    if (!wantsCrossOriginPulse() || !crossOriginPulseActive()) {
+      return undefined
+    }
+    return "anonymous"
+  })
 
   /** Non-empty trimmed URL — whitespace-only props stay falsy so UI state cannot disagree. */
   const trimmedCoverSrc = createMemo(() => trimmedProp(local.coverImage))
@@ -353,6 +467,15 @@ export const AudioPlayer: Component<AudioPlayerProps> = rawProps => {
   const [smoothTime, setSmoothTime] = createSignal(0)
   const [isScrubbing, setIsScrubbing] = createSignal(false)
   const [scrubTime, setScrubTime] = createSignal<number | null>(null)
+  const playPulseGraph = { current: null as PlayPulseGraph | null }
+  const transportPlayRef = { current: null as HTMLButtonElement | null }
+
+  function applyTransportPlayPulse(level: number): void {
+    transportPlayRef.current?.style.setProperty(
+      "--play-pulse",
+      level.toFixed(3),
+    )
+  }
   const persistSnapshot = {
     volume: initial.volume,
     showCover: initial.showCover,
@@ -438,6 +561,52 @@ export const AudioPlayer: Component<AudioPlayerProps> = rawProps => {
   const lastPrunedStorageKey = { current: null as string | null }
   const lastMediaRestoreKey = { current: null as string | null }
 
+  function ensurePlayPulseGraph(el: HTMLAudioElement): PlayPulseGraph | null {
+    if (isServer) {
+      return null
+    }
+    const existing = playPulseGraph.current
+    if (existing && existing.context.state !== "closed") {
+      return existing
+    }
+    try {
+      const context = new AudioContext()
+      const analyser = context.createAnalyser()
+      analyser.fftSize = PLAY_PULSE_FFT_SIZE
+      analyser.smoothingTimeConstant = 0.65
+      analyser.minDecibels = -85
+      analyser.maxDecibels = -12
+      if (!connectPlayPulseAnalyser(context, el, analyser)) {
+        void context.close()
+        return null
+      }
+      const graph: PlayPulseGraph = {
+        context,
+        analyser,
+        freqData: new Uint8Array(analyser.frequencyBinCount),
+        timeData: new Uint8Array(analyser.fftSize),
+        smoothed: 0,
+      }
+      playPulseGraph.current = graph
+      return graph
+    } catch {
+      return null
+    }
+  }
+
+  function teardownPlayPulseGraph(): void {
+    const graph = playPulseGraph.current
+    if (!graph) {
+      return
+    }
+    try {
+      void graph.context.close()
+    } catch {
+      /* ignore */
+    }
+    playPulseGraph.current = null
+  }
+
   function persistPlaybackPosition(): void {
     const el = audioElBox.current
     if (!el || isServer) {
@@ -496,6 +665,36 @@ export const AudioPlayer: Component<AudioPlayerProps> = rawProps => {
     snapSmoothTime(el.currentTime)
     setPendingSeek(null)
     return true
+  }
+
+  createEffect(
+    on(normalizedUrl, () => {
+      setCrossOriginPulseActive(true)
+      teardownPlayPulseGraph()
+    }),
+  )
+
+  function handleAudioMediaError(el: HTMLAudioElement): void {
+    if (!crossOriginPulseActive() || !wantsCrossOriginPulse()) {
+      return
+    }
+    setCrossOriginPulseActive(false)
+    teardownPlayPulseGraph()
+    const resumeTime = el.currentTime
+    const resumePlaying = !el.paused
+    const onReady = () => {
+      if (resumeTime > 0) {
+        el.currentTime = resumeTime
+      }
+      if (resumePlaying) {
+        void el.play().catch(() => {
+          /* ignore */
+        })
+      }
+      el.removeEventListener("loadedmetadata", onReady)
+    }
+    el.addEventListener("loadedmetadata", onReady)
+    el.load()
   }
 
   createEffect(
@@ -574,6 +773,72 @@ export const AudioPlayer: Component<AudioPlayerProps> = rawProps => {
       el.removeEventListener("loadedmetadata", onDurationReady)
       el.removeEventListener("durationchange", onDurationReady)
     })
+  })
+
+  /** React play-button glow to audio energy while playing. */
+  createEffect(() => {
+    if (isServer || !playing() || prefersReducedMotion()) {
+      applyTransportPlayPulse(0)
+      return
+    }
+    const el = audioRef()
+    if (!el) {
+      return
+    }
+
+    let frame = 0
+    let kickoff = 0
+    let running = true
+    let graph: PlayPulseGraph | null = null
+
+    const tick = () => {
+      if (!running || !graph) {
+        return
+      }
+      const target = samplePlayPulseLevel(
+        graph.analyser,
+        graph.freqData,
+        graph.timeData,
+      )
+      const prev = graph.smoothed
+      const blend =
+        target > prev ? PLAY_PULSE_SMOOTH_ATTACK : PLAY_PULSE_SMOOTH_RELEASE
+      graph.smoothed = prev + (target - prev) * blend
+      applyTransportPlayPulse(graph.smoothed)
+      frame = requestAnimationFrame(tick)
+    }
+
+    const start = () => {
+      if (!running || graph) {
+        return
+      }
+      graph = ensurePlayPulseGraph(el)
+      if (!graph) {
+        return
+      }
+      void graph.context.resume().then(() => {
+        if (running && graph) {
+          frame = requestAnimationFrame(tick)
+        }
+      })
+    }
+
+    // captureStream is most reliable once playback has started
+    kickoff = requestAnimationFrame(start)
+
+    onCleanup(() => {
+      running = false
+      cancelAnimationFrame(frame)
+      cancelAnimationFrame(kickoff)
+      if (graph) {
+        graph.smoothed = 0
+      }
+      applyTransportPlayPulse(0)
+    })
+  })
+
+  onCleanup(() => {
+    teardownPlayPulseGraph()
   })
 
   /** Glide the scrubber while playing — avoids jumpy timeupdate steps. */
@@ -769,7 +1034,9 @@ export const AudioPlayer: Component<AudioPlayerProps> = rawProps => {
       <audio
         ref={bindAudioEl}
         src={local.src}
+        crossOrigin={audioCrossOrigin()}
         preload="metadata"
+        onError={e => handleAudioMediaError(e.currentTarget)}
         onPlay={() => {
           setPlaying(true)
           applyMediaSession()
@@ -851,6 +1118,9 @@ export const AudioPlayer: Component<AudioPlayerProps> = rawProps => {
             onMouseDown={e => replaySeekIconSpin(e, "back")}
           />
           <KobalteButton
+            ref={el => {
+              transportPlayRef.current = el
+            }}
             type="button"
             class={cx(
               "transport-play",
