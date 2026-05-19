@@ -2,7 +2,7 @@
   --blip-card-background: var(--colors-mono-02);
   --blip-card-border-radius: 0.5rem;
 
-  ._card {
+  .card {
     background: var(--blip-card-background);
     border-radius: var(--blip-card-border-radius);
     display: flex;
@@ -15,14 +15,14 @@
     position: relative;
     width: 100%;
 
-    ._main {
+    .main {
       display: flex;
       flex: 1;
       flex-direction: column;
       gap: 0.5rem;
       min-height: 0;
 
-      &._interactive {
+      &.interactive {
         cursor: pointer;
       }
     }
@@ -33,20 +33,20 @@
       gap: 0.5rem;
       justify-content: end;
 
-      ._timestamp {
+      .timestamp {
         color: var(--colors-mono-07);
         font-size: 0.75rem;
         font-style: italic;
       }
     }
 
-    ._content {
+    .content {
       flex: 1;
       font-size: 0.9rem;
       overflow: hidden;
       position: relative;
 
-      &._preview::after {
+      &.preview::after {
         background: linear-gradient(
           transparent,
           var(--blip-card-background) 75%
@@ -59,7 +59,7 @@
         right: 0;
       }
 
-      ._readMore {
+      .read-more {
         --offset: 0.0625rem;
         bottom: var(--offset);
         color: var(--colors-links);
@@ -84,7 +84,7 @@
       justify-content: space-between;
       width: 100%;
 
-      ._tags {
+      .tags {
         --blip-tag-font-size: 0.875rem;
         --blip-tag-gap: 0.85rem;
         --blip-tag-icon-size: 0.95rem;
@@ -111,7 +111,7 @@
           line-height: 1;
         }
 
-        ._tagList {
+        .tag-list {
           align-items: flex-start;
           column-gap: var(--blip-tag-gap);
           display: flex;
@@ -124,7 +124,7 @@
           min-width: 0;
           padding: 0;
 
-          ._tag {
+          .tag {
             color: var(--colors-mono-08);
             font-size: var(--blip-tag-font-size);
             font-style: italic;
@@ -147,7 +147,7 @@
         }
       }
 
-      ._activity {
+      .activity {
         align-items: center;
         display: inline-flex;
         flex-shrink: 0;
@@ -158,7 +158,7 @@
           display: inline-flex;
         }
 
-        ._activityIndicator {
+        .activity-indicator {
           align-items: center;
           background: transparent;
           border: 1px solid var(--colors-mono-05);
@@ -190,15 +190,15 @@
      * badge stays readable. Opacity on the root would apply to all
      * descendants and children can't exceed the parent's opacity.
      */
-    &._unpublished {
-      ._content,
+    &.unpublished {
+      .content,
       footer {
         opacity: 0.25;
       }
     }
 
-    &._scheduled {
-      ._timestamp {
+    &.scheduled {
+      .timestamp {
         align-items: center;
         background: color-mix(in srgb, var(--colors-info) 12%, transparent);
         border: 1px solid var(--colors-info);
@@ -210,20 +210,20 @@
         gap: 0.25rem;
         padding: 0.1rem 0.5rem;
 
-        ._timestampIcon {
+        .timestamp-icon {
           color: currentcolor;
           font-size: 0.875rem;
         }
       }
 
-      ._content,
+      .content,
       footer {
         opacity: 0.62;
       }
     }
   }
 
-  ._metaRow {
+  .meta-row {
     align-items: flex-start;
     display: flex;
     gap: 0.75rem;
@@ -231,7 +231,7 @@
     width: 100%;
   }
 
-  ._metaRowStart {
+  .meta-rowStart {
     align-items: center;
     display: inline-flex;
     flex: 1;
@@ -240,7 +240,7 @@
 }
 
 @media (max-width: calc(48rem - 0.001rem)) {
-  .blip-card ._tags {
+  .blip-card .tags {
     --blip-tag-font-size: 1rem;
     --blip-tag-icon-size: 1.1rem;
   }

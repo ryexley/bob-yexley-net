@@ -177,20 +177,20 @@ export function BlipReactionSummary(props: BlipReactionSummaryProps) {
             )
             const canToggle = createMemo(() => Boolean(props.onToggleReaction))
             const renderDetailsContent = () => (
-              <div class="_body">
-                <div class="_emoji" aria-hidden="true">
+              <div class="body">
+                <div class="emoji" aria-hidden="true">
                   {reaction.emoji}
                 </div>
-                <div class="_names">{tooltipText()}</div>
+                <div class="names">{tooltipText()}</div>
               </div>
             )
             const reactionClass = createMemo(() =>
-              cx("_reaction", reaction.reacted_by_current_user && "reacted"),
+              cx("reaction", reaction.reacted_by_current_user && "reacted"),
             )
             const renderChipContent = () => (
               <>
-                <span class="_emoji" aria-hidden="true">{reaction.emoji}</span>
-                <span class="_count">{reaction.count}</span>
+                <span class="emoji" aria-hidden="true">{reaction.emoji}</span>
+                <span class="count">{reaction.count}</span>
               </>
             )
             const desktopTriggerProps = createMemo(() =>
@@ -308,10 +308,10 @@ export function BlipReactionSummary(props: BlipReactionSummaryProps) {
                       class="blip-reactions-popover"
                       role="dialog"
                       aria-label={`Reactions for ${reaction.emoji}`}>
-                      <div class="_emoji" aria-hidden="true">
+                      <div class="emoji" aria-hidden="true">
                         {reaction.emoji}
                       </div>
-                      <div class="_names">{tooltipText()}</div>
+                      <div class="names">{tooltipText()}</div>
                     </PopoverContent>
                   </Popover>
                 ) : (

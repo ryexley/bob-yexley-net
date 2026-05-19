@@ -10,8 +10,8 @@ alwaysApply: false
 - Scope overrides through the existing component root selector first.
 - Do not create long one-off class names just to force specificity.
 - Add a new class only when it represents a real semantic or reusable element, not a specificity workaround.
-- When styling component children inside a nested root, prefer terse underscore-prefixed child selectors like `._panel` or `._day`.
-- Use longer non-underscored class names only when the selector must work outside the component root, such as with intentionally portaled content.
+- Never prefix class names with `_`. Nested child selectors should use normal names scoped by the component root.
+- Use a longer root class name when the selector must work outside the component, such as with intentionally portaled content.
 - When editing an existing component, treat nearby violations of these rules as cleanup candidates rather than precedent.
 - If a touched component already has unnested child selectors, BEM-style modifier classes, or long one-off names that can be safely normalized with low churn, clean them up in the same change.
 - Do not preserve or extend a local naming/specificity violation just because it already exists nearby.
@@ -21,11 +21,11 @@ alwaysApply: false
 
 ```css
 .profile-drawer {
-  ._trigger {
+  .trigger {
     position: absolute;
   }
 
-  ._content {
+  .content {
     z-index: 140;
   }
 }
@@ -34,11 +34,11 @@ alwaysApply: false
 ## Avoid
 
 ```css
-.profile-drawer-avatar-regenerate-trigger {
+.profile-drawer ._trigger {
   position: absolute;
 }
 
-.profile-drawer-avatar-tooltip {
-  z-index: 140;
+.profile-drawer-avatar-regenerate-trigger {
+  position: absolute;
 }
 ```

@@ -255,14 +255,14 @@
   width: 100%;
   -webkit-overflow-scrolling: touch;
 
-  ._section {
+  .section {
     display: flex;
     flex-direction: column;
     gap: 0.625rem;
     min-width: 0;
   }
 
-  ._sectionLabel {
+  .section-label {
     color: var(--colors-mono-08);
     font-size: 0.75rem;
     font-weight: 600;
@@ -270,13 +270,13 @@
     text-transform: uppercase;
   }
 
-  ._allowComments,
-  ._publishAt {
+  .allow-comments,
+  .publish-at {
     width: 100%;
   }
 
   .blip-tags .combobox-control,
-  .date-time-picker ._control,
+  .date-time-picker .control,
   .switch-field {
     border: 0.0625rem solid var(--colors-mono-04);
     border-radius: var(--form-control-radius);
@@ -295,11 +295,11 @@
     width: 100%;
   }
 
-  .date-time-picker ._control {
+  .date-time-picker .control {
     min-height: var(--blip-editor-metadata-field-height);
   }
 
-  .date-time-picker ._input {
+  .date-time-picker .input {
     padding-block: 0.25rem;
   }
 

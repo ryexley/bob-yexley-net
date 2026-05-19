@@ -784,7 +784,7 @@ export function DateTimePicker(props: DateTimePickerProps) {
       data-show-time={local.showTime ? "" : undefined}>
       <Show when={isNotEmpty(local.label)}>
         <label
-          class="_label"
+          class="label"
           for={inputId()}>
           {local.label}
         </label>
@@ -798,16 +798,16 @@ export function DateTimePicker(props: DateTimePickerProps) {
         shift={0}>
         <PopoverAnchor
           ref={anchorRef}
-          class="_anchor">
+          class="anchor">
           <div
-            class="_control"
+            class="control"
             data-invalid={activeErrorMessage() ? "" : undefined}
             data-disabled={local.disabled ? "" : undefined}>
             <input
               {...attrs}
               id={inputId()}
               type="text"
-              class={cx("_input", local.inputClass)}
+              class={cx("input", local.inputClass)}
               value={inputValue()}
               placeholder={placeholder()}
               disabled={local.disabled}
@@ -866,7 +866,7 @@ export function DateTimePicker(props: DateTimePickerProps) {
             />
             <button
               type="button"
-              class="_trigger"
+              class="trigger"
               data-open={open() ? "" : undefined}
               aria-label={open() ? "Close date picker" : "Open date picker"}
               disabled={local.disabled}
@@ -886,7 +886,7 @@ export function DateTimePicker(props: DateTimePickerProps) {
         <PopoverContent
           portalMount={local.portalMount ?? rootRef}
           class={cx("date-time-picker-content", {
-            "_with-time": local.showTime,
+            "with-time": local.showTime,
           })}
           arrow={false}
           onOpenAutoFocus={event => event.preventDefault()}
@@ -899,42 +899,42 @@ export function DateTimePicker(props: DateTimePickerProps) {
           // unless we find a cleaner library-supported pattern.
           {...({ bypassTopMostLayerCheck: true } as any)}>
           <div
-            class="_panel"
+            class="panel"
             ref={element => {
               panelRef = element
             }}
             onPointerDown={handlePanelPointerDown}>
-            <div class="_header">
+            <div class="header">
               <button
                 type="button"
-                class="_nav"
+                class="nav"
                 aria-label="Previous month"
                 onMouseDown={event => event.preventDefault()}
                 onClick={() => setDisplayMonth(current => subMonths(current, 1))}>
                 <Icon name="chevron_left" />
               </button>
-              <div class="_month">{getMonthLabel(displayMonth())}</div>
+              <div class="month">{getMonthLabel(displayMonth())}</div>
               <button
                 type="button"
-                class="_nav"
+                class="nav"
                 aria-label="Next month"
                 onMouseDown={event => event.preventDefault()}
                 onClick={() => setDisplayMonth(current => addMonths(current, 1))}>
                 <Icon name="chevron_right" />
               </button>
             </div>
-            <div class="_calendar">
+            <div class="calendar">
               <div
-                class="_weekdays"
+                class="weekdays"
                 aria-hidden="true">
                 <For each={WEEKDAY_LABELS}>
-                  {label => <div class="_weekday">{label}</div>}
+                  {label => <div class="weekday">{label}</div>}
                 </For>
               </div>
-              <div class="_grid">
+              <div class="grid">
                 <For each={calendarWeeks()}>
                   {week => (
-                    <div class="_week">
+                    <div class="week">
                       <For each={week}>
                         {day => {
                           const disabled = createMemo(() =>
@@ -947,7 +947,7 @@ export function DateTimePicker(props: DateTimePickerProps) {
                           return (
                             <button
                               type="button"
-                              class="_day"
+                              class="day"
                               data-outside-month={!isSameMonth(day, displayMonth()) ? "" : undefined}
                               data-selected={selected() ? "" : undefined}
                               disabled={disabled()}
@@ -966,7 +966,7 @@ export function DateTimePicker(props: DateTimePickerProps) {
               </div>
             </div>
             <Show when={local.showTime}>
-              <div class="_time-row">
+              <div class="time-row">
                 <SelectPrimitive
                   ref={element => {
                     timeSelectFieldRef = element
@@ -1024,19 +1024,19 @@ export function DateTimePicker(props: DateTimePickerProps) {
                   </SelectPrimitive.Portal>
                 </SelectPrimitive>
                 <div
-                  class="_meridiem"
+                  class="meridiem"
                   role="group"
                   aria-label="Select AM or PM">
                   <button
                     type="button"
-                    class="_meridiem-option"
+                    class="meridiem-option"
                     data-selected={draftMeridiem() === "AM" ? "" : undefined}
                     onClick={() => setTimeMeridiem("AM")}>
                     AM
                   </button>
                   <button
                     type="button"
-                    class="_meridiem-option"
+                    class="meridiem-option"
                     data-selected={draftMeridiem() === "PM" ? "" : undefined}
                     onClick={() => setTimeMeridiem("PM")}>
                     PM
@@ -1045,7 +1045,7 @@ export function DateTimePicker(props: DateTimePickerProps) {
                 <IconButton
                   icon="check_circle"
                   size="sm"
-                  class="_set"
+                  class="set"
                   aria-label="Set date and time"
                   disabled={isSetDisabled()}
                   onMouseDown={event => event.preventDefault()}
@@ -1059,14 +1059,14 @@ export function DateTimePicker(props: DateTimePickerProps) {
       <Show when={isNotEmpty(local.hint)}>
         <div
           id={descriptionId()}
-          class="_hint">
+          class="hint">
           {local.hint}
         </div>
       </Show>
       <Show when={isNotEmpty(activeErrorMessage())}>
         <div
           id={activeErrorId()}
-          class="_error-message">
+          class="error-message">
           {activeErrorMessage()}
         </div>
       </Show>

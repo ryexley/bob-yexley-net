@@ -333,6 +333,7 @@ export const en = {
         notFound: "Blip not found.",
         labels: {
           scheduled: "Scheduled",
+          scheduledTooltip: "Scheduled to be published on {timestamp}",
         },
         actions: {
           backToBlips: "back",

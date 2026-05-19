@@ -153,22 +153,22 @@ export function UpdateBlip(props: {
         data-shimmering={props.isShimmering === true ? "" : undefined}
         data-unpublished={!props.blip.published ? "" : undefined}
         data-scheduled={isScheduled() ? "" : undefined}>
-        <header class="_header">
-          <span class="_kind">
+        <header class="header">
+          <span class="kind">
             <Icon
               name="chat"
-              class="_kind-icon"
+              class="kind-icon"
             />
             <span>{tr("modeLabel")}</span>
           </span>
           <Show when={isScheduled()}>
-            <span class="_visibility-badge">{tr("labels.scheduled")}</span>
+            <span class="visibility-badge">{tr("labels.scheduled")}</span>
           </Show>
-          <span class="_timestamp">
+          <span class="timestamp">
             {timestampLabel()}
           </span>
         </header>
-        <div class="_content">
+        <div class="content">
           <Markdown content={props.blip.content ?? ""} />
         </div>
         <footer>

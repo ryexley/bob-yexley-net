@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import {
   compareBlipsByPublishTimestampDesc,
   formatBlipScheduledTimestamp,
+  formatBlipTimestampTooltip,
   getBlipPublishTimestamp,
   isBlipPubliclyVisible,
   isBlipScheduled,
@@ -78,5 +79,19 @@ describe("blip scheduling helpers", () => {
     expect(formatBlipScheduledTimestamp("2026-04-24T20:10:00.000Z")).toBe(
       "4/24/2026 4:10 PM",
     )
+  })
+
+  it("uses the scheduled tooltip copy for future published blips", () => {
+    const blip = {
+      published: true,
+      publish_at: "2026-04-23T12:00:00.000Z",
+      created_at: "2026-04-21T12:00:00.000Z",
+    } as any
+
+    expect(
+      formatBlipTimestampTooltip(blip, fullTimestamp =>
+        `Scheduled to be published on ${fullTimestamp}`,
+      ),
+    ).toBe("Scheduled to be published on April 23rd, 2026 at 8:00 AM")
   })
 })

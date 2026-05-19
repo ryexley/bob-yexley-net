@@ -1170,8 +1170,8 @@ export function BlipEditor(props: BlipEditorProps) {
   const MetadataPanel = () => {
     return (
       <div class="blip-editor-metadata-panel">
-        <div class="_section">
-          <div class="_sectionLabel">{tr("metadata.title")}</div>
+        <div class="section">
+          <div class="section-label">{tr("metadata.title")}</div>
           <BlipTags
             aria-label={tr("tags.ariaLabel")}
             placeholder={tr("tags.placeholder")}
@@ -1182,16 +1182,16 @@ export function BlipEditor(props: BlipEditorProps) {
             portalMount={comboboxPortalMount()}
           />
         </div>
-        <div class="_section">
+        <div class="section">
           <Switch
             label={tr("metadata.allowComments")}
             checked={allowComments()}
             onChange={handleAllowCommentsChange}
             aria-label={tr("metadata.allowComments")}
-            containerClass="_allowComments"
+            containerClass="allow-comments"
           />
         </div>
-        <div class="_section">
+        <div class="section">
           <DateTimePicker
             label={tr("metadata.publishAt")}
             value={toDateValue(publishAt())}
@@ -1199,7 +1199,7 @@ export function BlipEditor(props: BlipEditorProps) {
             showTime
             timeGranularity={5}
             portalMount={comboboxPortalMount()}
-            containerClass="_publishAt"
+            containerClass="publish-at"
           />
         </div>
       </div>

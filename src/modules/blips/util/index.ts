@@ -144,3 +144,17 @@ export function formatBlipScheduledTimestamp(timestamp: string): string {
 
   return format(date, "M/d/yyyy h:mm a")
 }
+
+export function formatBlipTimestampTooltip(
+  blip: Pick<Blip, "published" | "publish_at" | "created_at">,
+  formatScheduledTooltip: (fullTimestamp: string) => string,
+): string {
+  const publishAt = getBlipPublishTimestamp(blip)
+  const fullTimestamp = formatBlipTimestampFull(publishAt)
+
+  if (isBlipScheduled(blip)) {
+    return formatScheduledTooltip(fullTimestamp)
+  }
+
+  return fullTimestamp
+}

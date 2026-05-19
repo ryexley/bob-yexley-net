@@ -95,29 +95,32 @@ a.blip-detail-back-link {
   gap: 0.5rem;
   justify-content: flex-end;
   margin-bottom: 0.5rem;
-}
 
-.blip-detail-visibility-badge {
-  background: color-mix(in srgb, var(--colors-warning) 18%, transparent);
-  border: 1px solid color-mix(
-    in srgb,
-    var(--colors-warning) 62%,
-    var(--colors-mono-05) 38%
-  );
-  border-radius: 999px;
-  color: var(--colors-warning);
-  font-size: 0.75rem;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  line-height: 1;
-  padding: 0.22rem 0.5rem;
-  text-transform: uppercase;
-}
+  .timestamp {
+    color: var(--colors-mono-07);
+    font-size: 0.875rem;
+    font-style: italic;
+  }
 
-.blip-detail-timestamp {
-  color: var(--colors-mono-07);
-  font-size: 0.875rem;
-  font-style: italic;
+  &.scheduled {
+    .timestamp {
+      align-items: center;
+      background: color-mix(in srgb, var(--colors-info) 12%, transparent);
+      border: 1px solid var(--colors-info);
+      border-radius: 999px;
+      color: var(--colors-info);
+      display: inline-flex;
+      font-style: normal;
+      font-weight: 500;
+      gap: 0.25rem;
+      padding: 0.1rem 0.5rem;
+
+      .icon {
+        color: currentcolor;
+        font-size: 0.875rem;
+      }
+    }
+  }
 }
 
 .blip-detail-content {

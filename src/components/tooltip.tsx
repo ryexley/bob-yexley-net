@@ -16,7 +16,7 @@ import { cx } from "@/util"
 import "./tooltip.css"
 
 type TooltipProps = ParentProps<{
-  content: JSXElement
+  content: JSXElement | (() => JSXElement)
   disabled?: boolean
   openDelay?: number
   closeDelay?: number
@@ -116,6 +116,10 @@ export function Tooltip(props: TooltipProps) {
   })
 
   const triggerProps = createMemo(() => props.triggerProps ?? {})
+  const renderedContent = () => {
+    const value = props.content
+    return typeof value === "function" ? value() : value
+  }
 
   return (
     <Show
@@ -134,7 +138,7 @@ export function Tooltip(props: TooltipProps) {
           <TooltipPrimitive.Portal>
             <TooltipPrimitive.Content
               class={cx("tooltip-content", props.contentClass)}>
-              {props.content}
+              {renderedContent()}
               <TooltipPrimitive.Arrow class="tooltip-arrow" />
             </TooltipPrimitive.Content>
           </TooltipPrimitive.Portal>
@@ -169,7 +173,7 @@ export function Tooltip(props: TooltipProps) {
                 onOpenAutoFocus={event => event.preventDefault()}
                 onCloseAutoFocus={event => event.preventDefault()}
                 {...({ bypassTopMostLayerCheck: true } as any)}>
-                {props.content}
+                {renderedContent()}
                 <PopoverPrimitive.Arrow class="tooltip-arrow" />
               </PopoverPrimitive.Content>
             </PopoverPrimitive.Portal>

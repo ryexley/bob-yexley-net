@@ -49,8 +49,9 @@ import { reactionStore } from "@/modules/blips/data/reactions-store"
 import { UpdateBlip } from "@/modules/blips/components/update-blip"
 import { useBlipComposer } from "@/modules/blips/context/blip-composer-context"
 import {
+  formatBlipScheduledTimestamp,
   formatBlipTimestamp,
-  formatBlipTimestampFull,
+  formatBlipTimestampTooltip,
   getBlipPublishTimestamp,
   isBlipPubliclyVisible,
   isBlipScheduled,
@@ -260,15 +261,24 @@ export function BlipView() {
     }
     return allUpdates.filter(update => isBlipPubliclyVisible(update))
   })
-  const rootTimestampTooltip = createMemo(() => {
+  const rootTimestampDisplay = createMemo(() => {
     const currentBlip = blip()
-    return currentBlip
-      ? formatBlipTimestampFull(getBlipPublishTimestamp(currentBlip))
-      : ""
-  })
-  const rootIsScheduled = createMemo(() => {
-    const currentBlip = blip()
-    return currentBlip ? isBlipScheduled(currentBlip) : false
+    if (!currentBlip) {
+      return null
+    }
+
+    const publishAt = getBlipPublishTimestamp(currentBlip)
+    const scheduled = isBlipScheduled(currentBlip)
+
+    return {
+      scheduled,
+      label: scheduled
+        ? formatBlipScheduledTimestamp(publishAt)
+        : formatBlipTimestamp(publishAt),
+      tooltip: formatBlipTimestampTooltip(currentBlip, fullTimestamp =>
+        tr("labels.scheduledTooltip", { timestamp: fullTimestamp }),
+      ),
+    }
   })
   const initialCommentsByParentId = createMemo(() => {
     const next = new Map<string, Blip[]>()
@@ -798,15 +808,20 @@ export function BlipView() {
                 <>
                   <div class="blip-detail-body">
                     <article class="blip-detail-card">
-                      <header class="blip-detail-header">
-                        <Show when={rootIsScheduled()}>
-                          <span class="blip-detail-visibility-badge">
-                            {tr("labels.scheduled")}
-                          </span>
-                        </Show>
-                        <Tooltip content={rootTimestampTooltip()} touchMode="popover">
-                          <span class="blip-detail-timestamp">
-                            {formatBlipTimestamp(getBlipPublishTimestamp(data()))}
+                      <header
+                        class="blip-detail-header"
+                        classList={{ scheduled: rootTimestampDisplay()?.scheduled }}>
+                        <Tooltip
+                          content={() => rootTimestampDisplay()?.tooltip ?? ""}
+                          touchMode="popover">
+                          <span class="timestamp">
+                            {rootTimestampDisplay()?.label ?? ""}
+                            <Show when={rootTimestampDisplay()?.scheduled}>
+                              <Icon
+                                name="schedule"
+                                class="icon"
+                              />
+                            </Show>
                           </span>
                         </Tooltip>
                       </header>
