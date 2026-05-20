@@ -25,6 +25,10 @@ const PLAY_PULSE_FFT_SIZE = 256
 const PLAY_PULSE_BIN_RATIO = 0.2
 const PLAY_PULSE_SMOOTH_ATTACK = 0.42
 const PLAY_PULSE_SMOOTH_RELEASE = 0.14
+/** Slow breathing pulse on mobile while playing (no Web Audio tap). */
+const MOBILE_ACTIVE_PULSE_PERIOD_S = 3.4
+const MOBILE_ACTIVE_PULSE_MIN = 0.14
+const MOBILE_ACTIVE_PULSE_MAX = 0.52
 const DEFAULT_VOLUME = 0.5
 export const DEFAULT_AUDIO_PLAYER_STORAGE_KEY = "bob-yexley-net:audio-player"
 
@@ -207,9 +211,17 @@ function formatPlaybackClock(seconds: number): string {
   return `${minutes}:${String(secs).padStart(2, "0")}`
 }
 
+type PlayPulseTap = {
+  source: MediaElementAudioSourceNode | MediaStreamAudioSourceNode
+  /** True when output is routed through AudioContext — desktop-only fallback. */
+  routesThroughContext: boolean
+}
+
 type PlayPulseGraph = {
   context: AudioContext
   analyser: AnalyserNode
+  tapSource: MediaElementAudioSourceNode | MediaStreamAudioSourceNode
+  routesThroughContext: boolean
   freqData: Uint8Array
   timeData: Uint8Array
   smoothed: number
@@ -218,6 +230,7 @@ type PlayPulseGraph = {
 type HTMLMediaElementWithCapture = HTMLMediaElement & {
   captureStream?: () => MediaStream
   mozCaptureStream?: () => MediaStream
+  webkitCaptureStream?: () => MediaStream
 }
 
 function captureMediaElementStream(el: HTMLMediaElement): MediaStream | null {
@@ -225,39 +238,113 @@ function captureMediaElementStream(el: HTMLMediaElement): MediaStream | null {
   if (typeof media.captureStream === "function") {
     return media.captureStream()
   }
+  if (typeof media.webkitCaptureStream === "function") {
+    return media.webkitCaptureStream()
+  }
   if (typeof media.mozCaptureStream === "function") {
     return media.mozCaptureStream()
   }
   return null
 }
 
+function configurePlaybackAudioSession(): void {
+  if (typeof navigator === "undefined") {
+    return
+  }
+  const nav = navigator as Navigator & {
+    audioSession?: { type: string }
+  }
+  try {
+    if (nav.audioSession) {
+      nav.audioSession.type = "playback"
+    }
+  } catch {
+    /* ignore */
+  }
+}
+
+/** createMediaElementSource reroutes output — desktop fallback when captureStream is missing. */
+function canUseMediaElementPulseTap(el: HTMLAudioElement): boolean {
+  if (isMobilePlaybackDevice()) {
+    return false
+  }
+  if (
+    el.crossOrigin === "anonymous" ||
+    el.crossOrigin === "use-credentials"
+  ) {
+    return true
+  }
+  try {
+    const src = el.currentSrc || el.src
+    if (!src) {
+      return false
+    }
+    return (
+      new URL(src, window.location.href).origin === window.location.origin
+    )
+  } catch {
+    return false
+  }
+}
+
 /**
- * Analyser tap that leaves native <audio> output intact (captureStream when possible).
- * crossOrigin="anonymous" plus CDN CORS headers are required for cross-origin levels.
+ * Prefer captureStream (listener-only — native <audio> keeps output).
+ * Fallback: createMediaElementSource → analyser + destination when captureStream
+ * is missing (Safari). Uses playback audio session so iOS can keep context alive.
  */
 function connectPlayPulseAnalyser(
   context: AudioContext,
   el: HTMLAudioElement,
   analyser: AnalyserNode,
-): boolean {
+): PlayPulseTap | null {
   const stream = captureMediaElementStream(el)
   if (stream && stream.getAudioTracks().length > 0) {
-    context.createMediaStreamSource(stream).connect(analyser)
-    return true
+    const source = context.createMediaStreamSource(stream)
+    source.connect(analyser)
+    return { source, routesThroughContext: false }
   }
-  if (el.crossOrigin !== "anonymous" && el.crossOrigin !== "use-credentials") {
-    return false
+
+  if (!canUseMediaElementPulseTap(el)) {
+    return null
   }
-  const source = context.createMediaElementSource(el)
-  source.connect(analyser)
-  analyser.connect(context.destination)
-  return true
+
+  try {
+    const source = context.createMediaElementSource(el)
+    source.connect(analyser)
+    source.connect(context.destination)
+    return { source, routesThroughContext: true }
+  } catch {
+    return null
+  }
 }
 
 function prefersReducedMotion(): boolean {
   return (
     typeof window !== "undefined" &&
     window.matchMedia("(prefers-reduced-motion: reduce)").matches
+  )
+}
+
+function delayMs(ms: number): Promise<void> {
+  return new Promise(resolve => {
+    window.setTimeout(resolve, ms)
+  })
+}
+
+/** Touch-first devices — skip Web Audio pulse so lock-screen playback stays native. */
+function isMobilePlaybackDevice(): boolean {
+  if (typeof window === "undefined") {
+    return false
+  }
+  return window.matchMedia("(hover: none), (pointer: coarse)").matches
+}
+
+function sampleMobileActivePulseLevel(timeMs: number): number {
+  const phase = (timeMs / 1000 / MOBILE_ACTIVE_PULSE_PERIOD_S) * Math.PI * 2
+  const wave = 0.5 + 0.5 * Math.sin(phase)
+  return (
+    MOBILE_ACTIVE_PULSE_MIN +
+    (MOBILE_ACTIVE_PULSE_MAX - MOBILE_ACTIVE_PULSE_MIN) * wave
   )
 }
 
@@ -469,6 +556,116 @@ export const AudioPlayer: Component<AudioPlayerProps> = rawProps => {
   const [scrubTime, setScrubTime] = createSignal<number | null>(null)
   const playPulseGraph = { current: null as PlayPulseGraph | null }
   const transportPlayRef = { current: null as HTMLButtonElement | null }
+  const [playPulseWakeTick, setPlayPulseWakeTick] = createSignal(0)
+  const wasPlayingBeforeHide = { current: false }
+  /** User intent — only cleared on explicit pause, not iOS spurious pause. */
+  const intendsPlayback = { current: false }
+  const mobileWakeGeneration = { current: 0 }
+  /** Ignore spurious pause events iOS fires during unlock. */
+  const suppressWakePauseUntil = { current: 0 }
+  const mobileWakeCheckTimer = {
+    current: 0 as ReturnType<typeof setTimeout> | 0,
+  }
+
+  function clearMobileWakeTimer(): void {
+    if (mobileWakeCheckTimer.current) {
+      window.clearTimeout(mobileWakeCheckTimer.current)
+      mobileWakeCheckTimer.current = 0
+    }
+  }
+
+  function markExplicitPause(): void {
+    intendsPlayback.current = false
+    wasPlayingBeforeHide.current = false
+  }
+
+  async function isMediaActuallyProgressing(
+    el: HTMLAudioElement,
+    sampleMs = 120,
+  ): Promise<boolean> {
+    const start = el.currentTime
+    await delayMs(sampleMs)
+    if (el.currentTime > start + 0.012) {
+      return true
+    }
+    await delayMs(sampleMs)
+    return el.currentTime > start + 0.025
+  }
+
+  async function resumeMobilePlaybackIfNeeded(
+    generation: number,
+  ): Promise<void> {
+    if (generation !== mobileWakeGeneration.current) {
+      return
+    }
+
+    const el = audioElBox.current
+    if (!el || !intendsPlayback.current || !wasPlayingBeforeHide.current) {
+      return
+    }
+
+    configurePlaybackAudioSession()
+
+    if (!el.paused) {
+      setPlaying(true)
+      applyMediaSession("playing")
+      return
+    }
+
+    if (await isMediaActuallyProgressing(el)) {
+      if (generation !== mobileWakeGeneration.current) {
+        return
+      }
+      setPlaying(true)
+      applyMediaSession("playing")
+      return
+    }
+
+    const tryPlay = async (): Promise<boolean> => {
+      if (generation !== mobileWakeGeneration.current || !el) {
+        return false
+      }
+      try {
+        await el.play()
+      } catch {
+        /* iOS may reject resume until the page has fully woken */
+      }
+      await delayMs(80)
+      return !el.paused || (await isMediaActuallyProgressing(el))
+    }
+
+    if (await tryPlay()) {
+      if (generation !== mobileWakeGeneration.current) {
+        return
+      }
+      setPlaying(true)
+      applyMediaSession("playing")
+      return
+    }
+
+    for (const waitMs of [200, 400, 600]) {
+      if (generation !== mobileWakeGeneration.current || !intendsPlayback.current) {
+        return
+      }
+      await delayMs(waitMs)
+      if (!el.paused || (await isMediaActuallyProgressing(el))) {
+        setPlaying(true)
+        applyMediaSession("playing")
+        return
+      }
+      if (await tryPlay()) {
+        setPlaying(true)
+        applyMediaSession("playing")
+        return
+      }
+    }
+
+    if (generation !== mobileWakeGeneration.current || !intendsPlayback.current) {
+      return
+    }
+    setPlaying(true)
+    applyMediaSession("playing")
+  }
 
   function applyTransportPlayPulse(level: number): void {
     transportPlayRef.current?.style.setProperty(
@@ -540,7 +737,9 @@ export const AudioPlayer: Component<AudioPlayerProps> = rawProps => {
     () => showCover() && trimmedCoverSrc().length > 0,
   )
 
-  function applyMediaSession(): void {
+  function applyMediaSession(
+    playbackState?: MediaSessionPlaybackState,
+  ): void {
     if (typeof navigator === "undefined" || !("mediaSession" in navigator)) {
       return
     }
@@ -553,6 +752,8 @@ export const AudioPlayer: Component<AudioPlayerProps> = rawProps => {
           ? [{ src: trimmedCoverSrc(), sizes: "512x512", type: "image/jpeg" }]
           : [],
       })
+      navigator.mediaSession.playbackState =
+        playbackState ?? (playing() ? "playing" : "paused")
     } catch {
       /* silent */
     }
@@ -570,19 +771,23 @@ export const AudioPlayer: Component<AudioPlayerProps> = rawProps => {
       return existing
     }
     try {
+      configurePlaybackAudioSession()
       const context = new AudioContext()
       const analyser = context.createAnalyser()
       analyser.fftSize = PLAY_PULSE_FFT_SIZE
       analyser.smoothingTimeConstant = 0.65
       analyser.minDecibels = -85
       analyser.maxDecibels = -12
-      if (!connectPlayPulseAnalyser(context, el, analyser)) {
+      const tap = connectPlayPulseAnalyser(context, el, analyser)
+      if (!tap) {
         void context.close()
         return null
       }
       const graph: PlayPulseGraph = {
         context,
         analyser,
+        tapSource: tap.source,
+        routesThroughContext: tap.routesThroughContext,
         freqData: new Uint8Array(analyser.frequencyBinCount),
         timeData: new Uint8Array(analyser.fftSize),
         smoothed: 0,
@@ -600,11 +805,67 @@ export const AudioPlayer: Component<AudioPlayerProps> = rawProps => {
       return
     }
     try {
+      graph.tapSource.disconnect()
+      graph.analyser.disconnect()
+    } catch {
+      /* ignore */
+    }
+    try {
       void graph.context.close()
     } catch {
       /* ignore */
     }
     playPulseGraph.current = null
+  }
+
+  function syncPlaybackStateFromElement(): void {
+    const el = audioElBox.current
+    if (!el) {
+      return
+    }
+    setPlaying(!el.paused)
+  }
+
+  function handlePageWake(): void {
+    const el = audioElBox.current
+
+    if (document.visibilityState === "hidden") {
+      mobileWakeGeneration.current += 1
+      wasPlayingBeforeHide.current = intendsPlayback.current
+      applyTransportPlayPulse(0)
+      clearMobileWakeTimer()
+      return
+    }
+
+    if (isMobilePlaybackDevice()) {
+      if (!wasPlayingBeforeHide.current || !el) {
+        syncPlaybackStateFromElement()
+        return
+      }
+
+      mobileWakeGeneration.current += 1
+      const generation = mobileWakeGeneration.current
+      suppressWakePauseUntil.current = performance.now() + 1200
+      clearMobileWakeTimer()
+      configurePlaybackAudioSession()
+
+      if (el.paused) {
+        void el.play().catch(() => {
+          /* resumeMobilePlaybackIfNeeded handles follow-up */
+        })
+      }
+
+      void resumeMobilePlaybackIfNeeded(generation)
+      return
+    }
+
+    syncPlaybackStateFromElement()
+    const graph = playPulseGraph.current
+    if (graph?.routesThroughContext && el && !el.paused) {
+      void graph.context.resume()
+    }
+    teardownPlayPulseGraph()
+    setPlayPulseWakeTick(t => t + 1)
   }
 
   function persistPlaybackPosition(): void {
@@ -673,6 +934,30 @@ export const AudioPlayer: Component<AudioPlayerProps> = rawProps => {
       teardownPlayPulseGraph()
     }),
   )
+
+  createEffect(() => {
+    if (isServer) {
+      return
+    }
+    wireMediaSessionActions()
+    onCleanup(() => {
+      clearMediaSessionActions()
+    })
+  })
+
+  createEffect(() => {
+    if (isServer) {
+      return
+    }
+    const onWake = () => handlePageWake()
+    document.addEventListener("visibilitychange", onWake)
+    window.addEventListener("pageshow", onWake)
+    onCleanup(() => {
+      document.removeEventListener("visibilitychange", onWake)
+      window.removeEventListener("pageshow", onWake)
+      clearMobileWakeTimer()
+    })
+  })
 
   function handleAudioMediaError(el: HTMLAudioElement): void {
     if (!crossOriginPulseActive() || !wantsCrossOriginPulse()) {
@@ -775,12 +1060,33 @@ export const AudioPlayer: Component<AudioPlayerProps> = rawProps => {
     })
   })
 
-  /** React play-button glow to audio energy while playing. */
+  /** Play-button pulse — audio-reactive on desktop, slow idle pulse on mobile. */
   createEffect(() => {
     if (isServer || !playing() || prefersReducedMotion()) {
       applyTransportPlayPulse(0)
       return
     }
+
+    if (isMobilePlaybackDevice()) {
+      let frame = 0
+      let running = true
+      const tickMobile = (now: number) => {
+        if (!running) {
+          return
+        }
+        applyTransportPlayPulse(sampleMobileActivePulseLevel(now))
+        frame = requestAnimationFrame(tickMobile)
+      }
+      frame = requestAnimationFrame(tickMobile)
+      onCleanup(() => {
+        running = false
+        cancelAnimationFrame(frame)
+        applyTransportPlayPulse(0)
+      })
+      return
+    }
+
+    playPulseWakeTick()
     const el = audioRef()
     if (!el) {
       return
@@ -790,6 +1096,7 @@ export const AudioPlayer: Component<AudioPlayerProps> = rawProps => {
     let kickoff = 0
     let running = true
     let graph: PlayPulseGraph | null = null
+    let onContextState: (() => void) | null = null
 
     const tick = () => {
       if (!running || !graph) {
@@ -816,6 +1123,16 @@ export const AudioPlayer: Component<AudioPlayerProps> = rawProps => {
       if (!graph) {
         return
       }
+      onContextState = () => {
+        if (!running || !graph || el.paused) {
+          return
+        }
+        const state = graph.context.state
+        if (state === "suspended" || state === "interrupted") {
+          void graph.context.resume()
+        }
+      }
+      graph.context.addEventListener("statechange", onContextState)
       void graph.context.resume().then(() => {
         if (running && graph) {
           frame = requestAnimationFrame(tick)
@@ -830,6 +1147,9 @@ export const AudioPlayer: Component<AudioPlayerProps> = rawProps => {
       running = false
       cancelAnimationFrame(frame)
       cancelAnimationFrame(kickoff)
+      if (graph && onContextState) {
+        graph.context.removeEventListener("statechange", onContextState)
+      }
       if (graph) {
         graph.smoothed = 0
       }
@@ -871,6 +1191,50 @@ export const AudioPlayer: Component<AudioPlayerProps> = rawProps => {
       cancelAnimationFrame(frame)
       snapSmoothTime(el.currentTime)
     })
+  })
+
+  /** Recover when UI says playing but the element stalled (common after iOS unlock). */
+  createEffect(() => {
+    if (isServer || !isMobilePlaybackDevice() || !playing()) {
+      return
+    }
+    const el = audioRef()
+    if (!el) {
+      return
+    }
+
+    let lastTime = el.currentTime
+    let lastAdvance = performance.now()
+    let recoveryAttempts = 0
+
+    const id = window.setInterval(() => {
+      if (!playing()) {
+        return
+      }
+      const now = performance.now()
+      if (el.currentTime > lastTime + 0.008) {
+        lastTime = el.currentTime
+        lastAdvance = now
+        recoveryAttempts = 0
+        return
+      }
+      if (!el.paused && now - lastAdvance < 900) {
+        return
+      }
+      if (!intendsPlayback.current) {
+        return
+      }
+      if (recoveryAttempts >= 6) {
+        return
+      }
+      recoveryAttempts += 1
+      configurePlaybackAudioSession()
+      void el.play().catch(() => {
+        /* verified on next tick */
+      })
+    }, 250)
+
+    onCleanup(() => window.clearInterval(id))
   })
 
   createEffect(() => {
@@ -937,6 +1301,7 @@ export const AudioPlayer: Component<AudioPlayerProps> = rawProps => {
         /* autoplay or transient errors — ignore */
       })
     } else {
+      markExplicitPause()
       el.pause()
     }
   }
@@ -953,6 +1318,54 @@ export const AudioPlayer: Component<AudioPlayerProps> = rawProps => {
     el.currentTime = next
     setCurrentTimeSig(next)
     snapSmoothTime(next)
+  }
+
+  function wireMediaSessionActions(): void {
+    if (typeof navigator === "undefined" || !("mediaSession" in navigator)) {
+      return
+    }
+    const ms = navigator.mediaSession
+    try {
+      ms.setActionHandler("play", () => {
+        const el = audioElBox.current
+        if (el) {
+          void el.play().catch(() => {
+            /* ignore */
+          })
+        }
+      })
+      ms.setActionHandler("pause", () => {
+        markExplicitPause()
+        audioElBox.current?.pause()
+      })
+      ms.setActionHandler("seekbackward", details => {
+        seekBy(-(details.seekOffset ?? local.scrubSeconds))
+      })
+      ms.setActionHandler("seekforward", details => {
+        seekBy(details.seekOffset ?? local.scrubSeconds)
+      })
+    } catch {
+      /* unsupported action */
+    }
+  }
+
+  function clearMediaSessionActions(): void {
+    if (typeof navigator === "undefined" || !("mediaSession" in navigator)) {
+      return
+    }
+    const ms = navigator.mediaSession
+    for (const action of [
+      "play",
+      "pause",
+      "seekbackward",
+      "seekforward",
+    ] as const) {
+      try {
+        ms.setActionHandler(action, null)
+      } catch {
+        /* ignore */
+      }
+    }
   }
 
   function replaySeekIconSpin(
@@ -1036,16 +1449,27 @@ export const AudioPlayer: Component<AudioPlayerProps> = rawProps => {
         src={local.src}
         crossOrigin={audioCrossOrigin()}
         preload="metadata"
+        playsInline
         onError={e => handleAudioMediaError(e.currentTarget)}
         onPlay={() => {
+          intendsPlayback.current = true
+          wasPlayingBeforeHide.current = true
           setPlaying(true)
-          applyMediaSession()
+          applyMediaSession("playing")
         }}
         onPause={() => {
+          if (
+            performance.now() < suppressWakePauseUntil.current &&
+            intendsPlayback.current
+          ) {
+            return
+          }
           setPlaying(false)
+          applyMediaSession("paused")
           persistPlaybackPosition()
         }}
         onEnded={() => {
+          markExplicitPause()
           setPlaying(false)
           const el = audioElBox.current
           if (el) {
