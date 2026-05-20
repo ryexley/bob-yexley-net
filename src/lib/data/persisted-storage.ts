@@ -84,7 +84,6 @@ class DeferredLocalStorageAdapter implements PersistedStorageAdapter {
     }
 
     window.addEventListener("pagehide", flushAll)
-    window.addEventListener("beforeunload", flushAll)
     document.addEventListener("visibilitychange", () => {
       if (document.visibilityState === "hidden") {
         flushAll()

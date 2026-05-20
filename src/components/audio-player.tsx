@@ -18,6 +18,8 @@ import { generateRandomRadialGradients } from "@/util/image"
 import "./audio-player.css"
 
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000
+/** Resume playback after a tab reload/discards if interrupted recently. */
+const RESUME_PLAYBACK_MAX_AGE_MS = 5 * 60 * 1000
 /** How quickly the scrubber glides toward playback time (higher = snappier). */
 const PROGRESS_GLIDE_RATE = 10
 /** Play-button glow driven by low-frequency energy from the analyser. */
@@ -37,6 +39,7 @@ export type AudioPlayerPersistEntry = {
   volume: number
   showCover: boolean
   lastPlayed: number
+  wasPlaying?: boolean
 }
 
 type PersistStore = Record<string, AudioPlayerPersistEntry>
@@ -115,7 +118,17 @@ function isPersistEntry(x: unknown): x is AudioPlayerPersistEntry {
     typeof o.currentTime === "number" &&
     typeof o.volume === "number" &&
     typeof o.showCover === "boolean" &&
-    typeof o.lastPlayed === "number"
+    typeof o.lastPlayed === "number" &&
+    (o.wasPlaying === undefined || typeof o.wasPlaying === "boolean")
+  )
+}
+
+function shouldResumePersistedPlayback(
+  entry: AudioPlayerPersistEntry,
+): boolean {
+  return (
+    entry.wasPlaying === true &&
+    Date.now() - entry.lastPlayed < RESUME_PLAYBACK_MAX_AGE_MS
   )
 }
 
@@ -566,6 +579,7 @@ export const AudioPlayer: Component<AudioPlayerProps> = rawProps => {
   const mobileWakeCheckTimer = {
     current: 0 as ReturnType<typeof setTimeout> | 0,
   }
+  const resumedMediaKey = { current: null as string | null }
 
   function clearMobileWakeTimer(): void {
     if (mobileWakeCheckTimer.current) {
@@ -577,6 +591,20 @@ export const AudioPlayer: Component<AudioPlayerProps> = rawProps => {
   function markExplicitPause(): void {
     intendsPlayback.current = false
     wasPlayingBeforeHide.current = false
+    persistWasPlaying(false)
+  }
+
+  function persistWasPlaying(wasPlaying: boolean): void {
+    const el = audioElBox.current
+    if (!el || isServer) {
+      return
+    }
+    mergeEntry(local.storageKey, normalizedUrl(), {
+      currentTime: el.currentTime,
+      volume: persistSnapshot.volume,
+      showCover: persistSnapshot.showCover,
+      wasPlaying,
+    })
   }
 
   async function isMediaActuallyProgressing(
@@ -832,6 +860,9 @@ export const AudioPlayer: Component<AudioPlayerProps> = rawProps => {
     if (document.visibilityState === "hidden") {
       mobileWakeGeneration.current += 1
       wasPlayingBeforeHide.current = intendsPlayback.current
+      if (intendsPlayback.current && el) {
+        persistWasPlaying(true)
+      }
       applyTransportPlayPulse(0)
       clearMobileWakeTimer()
       return
@@ -861,10 +892,27 @@ export const AudioPlayer: Component<AudioPlayerProps> = rawProps => {
 
     syncPlaybackStateFromElement()
     const graph = playPulseGraph.current
-    if (graph?.routesThroughContext && el && !el.paused) {
-      void graph.context.resume()
+    if (graph?.routesThroughContext) {
+      // Safari desktop — output only exists through this graph; never tear down on wake.
+      if (el && intendsPlayback.current && el.paused) {
+        void el.play().catch(() => {
+          /* ignore */
+        })
+      }
+      if (el && !el.paused) {
+        void graph.context.resume()
+      }
+      return
     }
-    teardownPlayPulseGraph()
+
+    if (graph) {
+      teardownPlayPulseGraph()
+    }
+    if (intendsPlayback.current && el?.paused) {
+      void el.play().catch(() => {
+        /* ignore */
+      })
+    }
     setPlayPulseWakeTick(t => t + 1)
   }
 
@@ -877,6 +925,7 @@ export const AudioPlayer: Component<AudioPlayerProps> = rawProps => {
       currentTime: el.currentTime,
       volume: persistSnapshot.volume,
       showCover: persistSnapshot.showCover,
+      wasPlaying: intendsPlayback.current,
     })
   }
 
@@ -950,11 +999,18 @@ export const AudioPlayer: Component<AudioPlayerProps> = rawProps => {
       return
     }
     const onWake = () => handlePageWake()
+    const onPageHide = () => {
+      if (intendsPlayback.current) {
+        persistWasPlaying(true)
+      }
+    }
     document.addEventListener("visibilitychange", onWake)
     window.addEventListener("pageshow", onWake)
+    window.addEventListener("pagehide", onPageHide)
     onCleanup(() => {
       document.removeEventListener("visibilitychange", onWake)
       window.removeEventListener("pageshow", onWake)
+      window.removeEventListener("pagehide", onPageHide)
       clearMobileWakeTimer()
     })
   })
@@ -1057,6 +1113,50 @@ export const AudioPlayer: Component<AudioPlayerProps> = rawProps => {
     onCleanup(() => {
       el.removeEventListener("loadedmetadata", onDurationReady)
       el.removeEventListener("durationchange", onDurationReady)
+    })
+  })
+
+  /** Resume after tab reload/discards when playback was interrupted recently. */
+  createEffect(() => {
+    if (isServer) {
+      return
+    }
+    const el = audioRef()
+    const url = normalizedUrl()
+    const key = local.storageKey
+    if (!el || !url) {
+      return
+    }
+
+    const mediaKey = `${key}::${url}`
+    if (resumedMediaKey.current === mediaKey) {
+      return
+    }
+
+    const entry = readEntry(key, url)
+    if (!entry || !shouldResumePersistedPlayback(entry)) {
+      return
+    }
+
+    resumedMediaKey.current = mediaKey
+
+    const resume = () => {
+      applyPendingSeekToElement(el)
+      intendsPlayback.current = true
+      wasPlayingBeforeHide.current = true
+      void el.play().catch(() => {
+        /* autoplay policy or transient load error */
+      })
+    }
+
+    if (el.readyState >= HTMLMediaElement.HAVE_METADATA) {
+      queueMicrotask(resume)
+      return
+    }
+
+    el.addEventListener("loadedmetadata", resume, { once: true })
+    onCleanup(() => {
+      el.removeEventListener("loadedmetadata", resume)
     })
   })
 
@@ -1276,6 +1376,7 @@ export const AudioPlayer: Component<AudioPlayerProps> = rawProps => {
         currentTime: el.currentTime,
         volume: persistSnapshot.volume,
         showCover: persistSnapshot.showCover,
+        wasPlaying: true,
       })
     }, 5000)
     onCleanup(() => window.clearInterval(id))
