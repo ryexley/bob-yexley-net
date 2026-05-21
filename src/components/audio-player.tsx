@@ -1837,97 +1837,117 @@ export const AudioPlayer: Component<AudioPlayerProps> = rawProps => {
         />
       </div>
 
-      <div class="player-progress">
-        <input
-          ref={el => {
-            progressRangeRef.current = el
-          }}
-          class="player-range"
-          type="range"
-          min={0}
-          max={Math.max(safeDuration(), 0.0001)}
-          step="any"
-          value={progressRangeValue()}
-          style={{ "--slider-fill": `${progressFillPercent()}%` }}
-          disabled={!safeDuration()}
-          aria-label="Playback progress"
-          aria-valuetext={`${elapsedClock()} elapsed, ${remainingClock()} remaining of ${totalClock()}`}
-          onPointerDown={e => {
-            e.currentTarget.setPointerCapture(e.pointerId)
-            setIsScrubbing(true)
-          }}
-          onInput={e => setScrubTime(Number(e.currentTarget.value))}
-          onPointerUp={onScrubPointerUp}
-          onPointerCancel={onScrubPointerUp}
-        />
-        <Show when={safeDuration() > 0}>
-          <div
-            class="player-time"
-            aria-hidden="true">
-            <span class="elapsed">{elapsedClock()}</span>
-            <span class="remaining">
-              {remainingClock()} / {totalClock()}
-            </span>
-          </div>
-        </Show>
-      </div>
-
-      <div
-        class={cx(
-          "settings-panel",
-          settingsPanel() != null && "settings-panel-open",
-        )}
-        aria-hidden={settingsPanel() == null}>
-        <div class="settings-panel-inner">
-          <Show when={settingsPanel() === "volume"}>
-            <input
-              class="player-range volume-range"
-              type="range"
-              min={0}
-              max={1}
-              step="any"
-              value={volume()}
-              style={{ "--slider-fill": `${volumeFillPercent()}%` }}
-              aria-label="Volume"
-              tabIndex={0}
-              onInput={e => {
-                const v = Number(e.currentTarget.value)
-                setVolume(v)
-                const el = audioRef()
-                if (el) {
-                  el.volume = v
-                }
-                persistUiState({ volume: v })
-              }}
-            />
-          </Show>
-          <Show when={settingsPanel() === "speed"}>
+      <div class="player-bottom">
+        <div class="player-progress">
+          <input
+            ref={el => {
+              progressRangeRef.current = el
+            }}
+            class="player-range"
+            type="range"
+            min={0}
+            max={Math.max(safeDuration(), 0.0001)}
+            step="any"
+            value={progressRangeValue()}
+            style={{ "--slider-fill": `${progressFillPercent()}%` }}
+            disabled={!safeDuration()}
+            aria-label="Playback progress"
+            aria-valuetext={`${elapsedClock()} elapsed, ${remainingClock()} remaining of ${totalClock()}`}
+            onPointerDown={e => {
+              e.currentTarget.setPointerCapture(e.pointerId)
+              setIsScrubbing(true)
+            }}
+            onInput={e => setScrubTime(Number(e.currentTarget.value))}
+            onPointerUp={onScrubPointerUp}
+            onPointerCancel={onScrubPointerUp}
+          />
+          <Show when={safeDuration() > 0}>
             <div
-              class="speed-presets"
-              role="group"
-              aria-label="Playback speed">
-              <For each={PLAYBACK_RATES}>
-                {rate => (
-                  <KobalteButton
-                    type="button"
-                    class={cx(
-                      "speed-preset",
-                      playbackRate() === rate && "speed-preset-selected",
-                    )}
-                    aria-label={`${formatPlaybackRateLabel(rate)} times speed`}
-                    aria-pressed={playbackRate() === rate}
-                    onClick={() => selectPlaybackRate(rate)}>
-                    {formatPlaybackRateLabel(rate)}
-                  </KobalteButton>
-                )}
-              </For>
+              class="player-time"
+              aria-hidden="true">
+              <span class="elapsed">{elapsedClock()}</span>
+              <span class="remaining">
+                {remainingClock()} / {totalClock()}
+              </span>
             </div>
           </Show>
-          <p
-            class="settings-panel-label"
-            aria-hidden="true">
-            {settingsPanel() === "speed" ? "speed" : "volume"}
-          </p>
+        </div>
+
+        <div
+          class={cx(
+            "settings-panel",
+            settingsPanel() != null && "settings-panel-open",
+          )}
+          aria-hidden={settingsPanel() == null}>
+          <div class="settings-panel-inner">
+            <div
+              class={cx(
+                "settings-panel-view",
+                "settings-panel-volume",
+                settingsPanel() === "volume" && "settings-panel-view-active",
+              )}
+              aria-hidden={settingsPanel() !== "volume"}>
+              <p
+                class="settings-panel-label"
+                aria-hidden="true">
+                Volume
+              </p>
+              <input
+                class="player-range volume-range"
+                type="range"
+                min={0}
+                max={1}
+                step="any"
+                value={volume()}
+                style={{ "--slider-fill": `${volumeFillPercent()}%` }}
+                aria-label="Volume"
+                tabIndex={settingsPanel() === "volume" ? 0 : -1}
+                onInput={e => {
+                  const v = Number(e.currentTarget.value)
+                  setVolume(v)
+                  const el = audioRef()
+                  if (el) {
+                    el.volume = v
+                  }
+                  persistUiState({ volume: v })
+                }}
+              />
+            </div>
+            <div
+              class={cx(
+                "settings-panel-view",
+                "settings-panel-speed",
+                settingsPanel() === "speed" && "settings-panel-view-active",
+              )}
+              aria-hidden={settingsPanel() !== "speed"}>
+              <p
+                class="settings-panel-label"
+                aria-hidden="true">
+                Playback Speed
+              </p>
+              <div
+                class="speed-presets"
+                role="group"
+                aria-label="Playback speed">
+                <For each={PLAYBACK_RATES}>
+                  {rate => (
+                    <KobalteButton
+                      type="button"
+                      class={cx(
+                        "speed-preset",
+                        playbackRate() === rate && "speed-preset-selected",
+                      )}
+                      aria-label={`${formatPlaybackRateLabel(rate)} times speed`}
+                      aria-pressed={playbackRate() === rate}
+                      tabIndex={settingsPanel() === "speed" ? 0 : -1}
+                      onClick={() => selectPlaybackRate(rate)}>
+                      {formatPlaybackRateLabel(rate)}
+                    </KobalteButton>
+                  )}
+                </For>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

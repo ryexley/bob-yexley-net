@@ -302,7 +302,9 @@
         }
 
         &.transport-play-playing {
-          --play-pulse-shadow: calc(var(--play-pulse, 0) * var(--play-pulse, 0));
+          --play-pulse-shadow: calc(
+            var(--play-pulse, 0) * var(--play-pulse, 0)
+          );
 
           background:
             radial-gradient(
@@ -350,10 +352,25 @@
     }
   }
 
+  .player-bottom {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    transition: gap 750ms cubic-bezier(0.22, 1, 0.36, 1);
+    width: 100%;
+  }
+
+  &.is-settings-open {
+    .player-bottom {
+      gap: 0.375rem;
+    }
+  }
+
   .player-progress {
     display: flex;
     flex-direction: column;
     gap: 0.25rem;
+    margin-bottom: 0;
     width: 100%;
 
     > .player-range {
@@ -443,37 +460,42 @@
   }
 
   .settings-panel {
+    --settings-panel-duration: 750ms;
+    --settings-panel-ease: cubic-bezier(0.22, 1, 0.36, 1);
+
     display: grid;
     grid-template-rows: minmax(0, 0fr);
-    margin-top: -0.75rem;
-    opacity: 0;
     overflow: hidden;
     pointer-events: none;
-    transform: translateY(0.5rem);
-    transition:
-      grid-template-rows 280ms ease-in-out,
-      margin-top 280ms ease-in-out,
-      opacity 280ms ease-in-out,
-      transform 280ms ease-in-out;
+    transition: grid-template-rows var(--settings-panel-duration)
+      var(--settings-panel-ease);
     width: 100%;
-    will-change: grid-template-rows, opacity, transform;
 
     &.settings-panel-open {
       grid-template-rows: minmax(0, 1fr);
-      margin-top: 0;
-      opacity: 1;
       pointer-events: auto;
-      transform: translateY(0);
     }
 
     .settings-panel-inner {
-      display: flex;
-      flex-direction: column;
-      gap: 0;
       min-height: 0;
+      opacity: 0;
       overflow: hidden;
-      padding-bottom: 0.125rem;
-      padding-top: 0.125rem;
+      transition: opacity var(--settings-panel-duration)
+        var(--settings-panel-ease);
+    }
+
+    &.settings-panel-open .settings-panel-inner {
+      opacity: 1;
+    }
+
+    .settings-panel-view {
+      display: none;
+      flex-direction: column;
+      gap: 0.25rem;
+
+      &.settings-panel-view-active {
+        display: flex;
+      }
 
       .speed-presets {
         align-items: center;
@@ -524,7 +546,7 @@
         font-size: 0.625rem;
         letter-spacing: 0.06em;
         line-height: 1.2;
-        margin: -0.25rem 0 0;
+        margin: 0;
         text-align: center;
         text-transform: uppercase;
         user-select: none;
@@ -533,6 +555,19 @@
   }
 
   @media (prefers-reduced-motion: reduce) {
+    .player-bottom {
+      transition: none;
+    }
+
+    .settings-panel {
+      transition: none;
+
+      .settings-panel-inner {
+        opacity: 1;
+        transition: none;
+      }
+    }
+
     .transport .seek-action .icon.spin-back,
     .transport .seek-action .icon.spin-forward {
       animation: none;
