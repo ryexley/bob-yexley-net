@@ -3,6 +3,7 @@ import {
   createEffect,
   createMemo,
   createSignal,
+  For,
   mergeProps,
   on,
   onCleanup,
@@ -32,11 +33,16 @@ const MOBILE_ACTIVE_PULSE_PERIOD_S = 3.4
 const MOBILE_ACTIVE_PULSE_MIN = 0.14
 const MOBILE_ACTIVE_PULSE_MAX = 0.52
 const DEFAULT_VOLUME = 0.5
+const DEFAULT_PLAYBACK_RATE = 1
+const PLAYBACK_RATES = [1, 1.25, 1.5, 1.75, 2] as const
+export type PlaybackRate = (typeof PLAYBACK_RATES)[number]
+type SettingsPanel = "volume" | "speed" | null
 export const DEFAULT_AUDIO_PLAYER_STORAGE_KEY = "bob-yexley-net:audio-player"
 
 export type AudioPlayerPersistEntry = {
   currentTime: number
   volume: number
+  playbackRate?: number
   showCover: boolean
   lastPlayed: number
   wasPlaying?: boolean
@@ -62,6 +68,22 @@ function clampVolume(value: number): number {
     return DEFAULT_VOLUME
   }
   return Math.min(1, Math.max(0, value))
+}
+
+function clampPlaybackRate(value: number): PlaybackRate {
+  if (!Number.isFinite(value)) {
+    return DEFAULT_PLAYBACK_RATE
+  }
+  for (const rate of PLAYBACK_RATES) {
+    if (value === rate) {
+      return rate
+    }
+  }
+  return DEFAULT_PLAYBACK_RATE
+}
+
+function formatPlaybackRateLabel(rate: PlaybackRate): string {
+  return String(rate)
 }
 
 function trimmedProp(value: string | undefined): string {
@@ -119,7 +141,8 @@ function isPersistEntry(x: unknown): x is AudioPlayerPersistEntry {
     typeof o.volume === "number" &&
     typeof o.showCover === "boolean" &&
     typeof o.lastPlayed === "number" &&
-    (o.wasPlaying === undefined || typeof o.wasPlaying === "boolean")
+    (o.wasPlaying === undefined || typeof o.wasPlaying === "boolean") &&
+    (o.playbackRate === undefined || typeof o.playbackRate === "number")
   )
 }
 
@@ -423,6 +446,7 @@ function mergeEntry(
     const base: AudioPlayerPersistEntry = prev ?? {
       currentTime: 0,
       volume: DEFAULT_VOLUME,
+      playbackRate: DEFAULT_PLAYBACK_RATE,
       showCover: false,
       lastPlayed: Date.now(),
     }
@@ -558,7 +582,10 @@ export const AudioPlayer: Component<AudioPlayerProps> = rawProps => {
   const [playing, setPlaying] = createSignal(false)
   const [volume, setVolume] = createSignal(initial.volume)
   const [showCover, setShowCover] = createSignal(initial.showCover)
-  const [showVolume, setShowVolume] = createSignal(false)
+  const [settingsPanel, setSettingsPanel] = createSignal<SettingsPanel>(null)
+  const [playbackRate, setPlaybackRate] = createSignal<PlaybackRate>(
+    DEFAULT_PLAYBACK_RATE,
+  )
   const [pendingSeek, setPendingSeek] = createSignal<number | null>(
     initial.pendingSeek,
   )
@@ -602,6 +629,7 @@ export const AudioPlayer: Component<AudioPlayerProps> = rawProps => {
     mergeEntry(local.storageKey, normalizedUrl(), {
       currentTime: el.currentTime,
       volume: persistSnapshot.volume,
+      playbackRate: persistSnapshot.playbackRate,
       showCover: persistSnapshot.showCover,
       wasPlaying,
     })
@@ -703,7 +731,45 @@ export const AudioPlayer: Component<AudioPlayerProps> = rawProps => {
   }
   const persistSnapshot = {
     volume: initial.volume,
+    playbackRate: DEFAULT_PLAYBACK_RATE,
     showCover: initial.showCover,
+  }
+
+  function toggleSettingsPanel(mode: Exclude<SettingsPanel, null>): void {
+    setSettingsPanel(current => (current === mode ? null : mode))
+  }
+
+  function applyPlaybackRateToElement(el: HTMLAudioElement, rate: PlaybackRate): void {
+    el.playbackRate = rate
+    el.defaultPlaybackRate = rate
+  }
+
+  function selectPlaybackRate(rate: PlaybackRate): void {
+    const el = audioRef()
+    const prev = playbackRate()
+    if (
+      el &&
+      !isMobilePlaybackDevice() &&
+      prev === DEFAULT_PLAYBACK_RATE &&
+      rate !== DEFAULT_PLAYBACK_RATE
+    ) {
+      const graph = playPulseGraph.current
+      if (graph && !graph.routesThroughContext) {
+        teardownPlayPulseGraph()
+      }
+    }
+    setPlaybackRate(rate)
+    if (el) {
+      applyPlaybackRateToElement(el, rate)
+    }
+    if (
+      rate === DEFAULT_PLAYBACK_RATE &&
+      prev !== DEFAULT_PLAYBACK_RATE &&
+      playing()
+    ) {
+      setPlayPulseWakeTick(t => t + 1)
+    }
+    persistUiState({ playbackRate: rate })
   }
 
   const displayTime = createMemo(() => {
@@ -846,6 +912,38 @@ export const AudioPlayer: Component<AudioPlayerProps> = rawProps => {
     playPulseGraph.current = null
   }
 
+  /** Stops Web Audio output on pause — avoids a looping buffer when routed via context. */
+  function suspendPlayPulseGraph(): void {
+    const graph = playPulseGraph.current
+    if (!graph || graph.context.state === "closed") {
+      return
+    }
+    if (graph.context.state === "suspended") {
+      return
+    }
+    void graph.context.suspend()
+  }
+
+  function resumePlayPulseGraph(): void {
+    const graph = playPulseGraph.current
+    if (!graph || graph.context.state !== "suspended") {
+      return
+    }
+    void graph.context.resume()
+  }
+
+  function releasePlayPulseGraphOnPause(): void {
+    const graph = playPulseGraph.current
+    if (!graph) {
+      return
+    }
+    if (graph.routesThroughContext) {
+      suspendPlayPulseGraph()
+      return
+    }
+    teardownPlayPulseGraph()
+  }
+
   function syncPlaybackStateFromElement(): void {
     const el = audioElBox.current
     if (!el) {
@@ -924,6 +1022,7 @@ export const AudioPlayer: Component<AudioPlayerProps> = rawProps => {
     mergeEntry(local.storageKey, normalizedUrl(), {
       currentTime: el.currentTime,
       volume: persistSnapshot.volume,
+      playbackRate: persistSnapshot.playbackRate,
       showCover: persistSnapshot.showCover,
       wasPlaying: intendsPlayback.current,
     })
@@ -1060,6 +1159,7 @@ export const AudioPlayer: Component<AudioPlayerProps> = rawProps => {
         const entry = readEntry(key, url)
         if (entry) {
           setVolume(entry.volume)
+          setPlaybackRate(clampPlaybackRate(entry.playbackRate ?? DEFAULT_PLAYBACK_RATE))
           setShowCover(hasArt && entry.showCover)
           if (mediaChanged) {
             setPendingSeek(entry.currentTime)
@@ -1068,6 +1168,7 @@ export const AudioPlayer: Component<AudioPlayerProps> = rawProps => {
           }
         } else {
           setVolume(defaultVolume())
+          setPlaybackRate(DEFAULT_PLAYBACK_RATE)
           setShowCover(false)
           if (mediaChanged) {
             setPendingSeek(null)
@@ -1160,24 +1261,32 @@ export const AudioPlayer: Component<AudioPlayerProps> = rawProps => {
     })
   })
 
-  /** Play-button pulse — audio-reactive on desktop, slow idle pulse on mobile. */
+  /** Play-button pulse — audio-reactive on desktop at 1x; synthetic pulse otherwise. */
   createEffect(() => {
     if (isServer || !playing() || prefersReducedMotion()) {
       applyTransportPlayPulse(0)
       return
     }
 
-    if (isMobilePlaybackDevice()) {
+    const rate = playbackRate()
+    const useSyntheticPulse =
+      isMobilePlaybackDevice() || rate !== DEFAULT_PLAYBACK_RATE
+
+    if (useSyntheticPulse) {
+      const graph = playPulseGraph.current
+      if (graph && !graph.routesThroughContext) {
+        teardownPlayPulseGraph()
+      }
       let frame = 0
       let running = true
-      const tickMobile = (now: number) => {
+      const tickSynthetic = (now: number) => {
         if (!running) {
           return
         }
         applyTransportPlayPulse(sampleMobileActivePulseLevel(now))
-        frame = requestAnimationFrame(tickMobile)
+        frame = requestAnimationFrame(tickSynthetic)
       }
-      frame = requestAnimationFrame(tickMobile)
+      frame = requestAnimationFrame(tickSynthetic)
       onCleanup(() => {
         running = false
         cancelAnimationFrame(frame)
@@ -1253,6 +1362,16 @@ export const AudioPlayer: Component<AudioPlayerProps> = rawProps => {
       if (graph) {
         graph.smoothed = 0
       }
+      const active = playPulseGraph.current
+      if (active) {
+        if (active.routesThroughContext) {
+          if (!playing()) {
+            suspendPlayPulseGraph()
+          }
+        } else {
+          teardownPlayPulseGraph()
+        }
+      }
       applyTransportPlayPulse(0)
     })
   })
@@ -1270,6 +1389,7 @@ export const AudioPlayer: Component<AudioPlayerProps> = rawProps => {
     if (!el) {
       return
     }
+    const rate = playbackRate()
     let frame = 0
     let lastTick = performance.now()
     const tick = (now: number) => {
@@ -1282,7 +1402,7 @@ export const AudioPlayer: Component<AudioPlayerProps> = rawProps => {
         if (Math.abs(diff) < 0.02) {
           return target
         }
-        return prev + diff * Math.min(1, PROGRESS_GLIDE_RATE * dt)
+        return prev + diff * Math.min(1, PROGRESS_GLIDE_RATE * rate * dt)
       })
       frame = requestAnimationFrame(tick)
     }
@@ -1346,6 +1466,14 @@ export const AudioPlayer: Component<AudioPlayerProps> = rawProps => {
   })
 
   createEffect(() => {
+    const el = audioRef()
+    const rate = playbackRate()
+    if (el) {
+      applyPlaybackRateToElement(el, rate)
+    }
+  })
+
+  createEffect(() => {
     trimmedTitle()
     trimmedArtist()
     albumOrSeries()
@@ -1358,6 +1486,7 @@ export const AudioPlayer: Component<AudioPlayerProps> = rawProps => {
 
   createEffect(() => {
     persistSnapshot.volume = volume()
+    persistSnapshot.playbackRate = playbackRate()
     persistSnapshot.showCover = showCover()
   })
 
@@ -1375,6 +1504,7 @@ export const AudioPlayer: Component<AudioPlayerProps> = rawProps => {
       mergeEntry(key, url, {
         currentTime: el.currentTime,
         volume: persistSnapshot.volume,
+        playbackRate: persistSnapshot.playbackRate,
         showCover: persistSnapshot.showCover,
         wasPlaying: true,
       })
@@ -1384,10 +1514,14 @@ export const AudioPlayer: Component<AudioPlayerProps> = rawProps => {
 
   function persistUiState(patch: {
     volume?: number
+    playbackRate?: number
     showCover?: boolean
   }): void {
     mergeEntry(local.storageKey, normalizedUrl(), {
       ...(patch.volume !== undefined ? { volume: patch.volume } : {}),
+      ...(patch.playbackRate !== undefined
+        ? { playbackRate: patch.playbackRate }
+        : {}),
       ...(patch.showCover !== undefined ? { showCover: patch.showCover } : {}),
     })
   }
@@ -1537,7 +1671,10 @@ export const AudioPlayer: Component<AudioPlayerProps> = rawProps => {
     <div
       class={cx(
         "audio-player",
-        showVolume() && "is-volume-open",
+        settingsPanel() === "volume" && "is-settings-volume",
+        settingsPanel() === "speed" && "is-settings-speed",
+        settingsPanel() != null && "is-settings-open",
+        playbackRate() !== DEFAULT_PLAYBACK_RATE && "is-playback-rate-active",
         coverArtDisplayed() && "is-cover-open",
         local.class,
       )}
@@ -1556,6 +1693,7 @@ export const AudioPlayer: Component<AudioPlayerProps> = rawProps => {
           intendsPlayback.current = true
           wasPlayingBeforeHide.current = true
           setPlaying(true)
+          resumePlayPulseGraph()
           applyMediaSession("playing")
         }}
         onPause={() => {
@@ -1565,6 +1703,7 @@ export const AudioPlayer: Component<AudioPlayerProps> = rawProps => {
           ) {
             return
           }
+          releasePlayPulseGraphOnPause()
           setPlaying(false)
           applyMediaSession("paused")
           persistPlaybackPosition()
@@ -1625,13 +1764,28 @@ export const AudioPlayer: Component<AudioPlayerProps> = rawProps => {
       </Show>
 
       <div class="player-controls">
-        <IconButton
-          class="rail-side volume-toggle"
-          size="sm"
-          icon="volume_up"
-          aria-label={showVolume() ? "Hide volume" : "Show volume"}
-          onClick={() => setShowVolume(v => !v)}
-        />
+        <div class="rail-side-group">
+          <IconButton
+            class="rail-side volume-toggle"
+            size="sm"
+            icon="volume_up"
+            aria-label={
+              settingsPanel() === "volume" ? "Hide volume" : "Show volume"
+            }
+            onClick={() => toggleSettingsPanel("volume")}
+          />
+          <IconButton
+            class="rail-side speed-toggle"
+            size="sm"
+            icon="speed"
+            aria-label={
+              settingsPanel() === "speed"
+                ? "Hide playback speed"
+                : "Show playback speed"
+            }
+            onClick={() => toggleSettingsPanel("speed")}
+          />
+        </div>
 
         <div class="transport">
           <IconButton
@@ -1719,33 +1873,60 @@ export const AudioPlayer: Component<AudioPlayerProps> = rawProps => {
       </div>
 
       <div
-        class={cx("volume-panel", showVolume() && "volume-panel-open")}
-        aria-hidden={!showVolume()}>
-        <div class="volume-panel-inner">
-          <input
-            class="player-range volume-range"
-            type="range"
-            min={0}
-            max={1}
-            step="any"
-            value={volume()}
-            style={{ "--slider-fill": `${volumeFillPercent()}%` }}
-            aria-label="Volume"
-            tabIndex={showVolume() ? 0 : -1}
-            onInput={e => {
-              const v = Number(e.currentTarget.value)
-              setVolume(v)
-              const el = audioRef()
-              if (el) {
-                el.volume = v
-              }
-              persistUiState({ volume: v })
-            }}
-          />
+        class={cx(
+          "settings-panel",
+          settingsPanel() != null && "settings-panel-open",
+        )}
+        aria-hidden={settingsPanel() == null}>
+        <div class="settings-panel-inner">
+          <Show when={settingsPanel() === "volume"}>
+            <input
+              class="player-range volume-range"
+              type="range"
+              min={0}
+              max={1}
+              step="any"
+              value={volume()}
+              style={{ "--slider-fill": `${volumeFillPercent()}%` }}
+              aria-label="Volume"
+              tabIndex={0}
+              onInput={e => {
+                const v = Number(e.currentTarget.value)
+                setVolume(v)
+                const el = audioRef()
+                if (el) {
+                  el.volume = v
+                }
+                persistUiState({ volume: v })
+              }}
+            />
+          </Show>
+          <Show when={settingsPanel() === "speed"}>
+            <div
+              class="speed-presets"
+              role="group"
+              aria-label="Playback speed">
+              <For each={PLAYBACK_RATES}>
+                {rate => (
+                  <KobalteButton
+                    type="button"
+                    class={cx(
+                      "speed-preset",
+                      playbackRate() === rate && "speed-preset-selected",
+                    )}
+                    aria-label={`${formatPlaybackRateLabel(rate)} times speed`}
+                    aria-pressed={playbackRate() === rate}
+                    onClick={() => selectPlaybackRate(rate)}>
+                    {formatPlaybackRateLabel(rate)}
+                  </KobalteButton>
+                )}
+              </For>
+            </div>
+          </Show>
           <p
-            class="volume-panel-label"
+            class="settings-panel-label"
             aria-hidden="true">
-            volume
+            {settingsPanel() === "speed" ? "speed" : "volume"}
           </p>
         </div>
       </div>
