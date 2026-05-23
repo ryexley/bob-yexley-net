@@ -1,0 +1,153 @@
+.scripture-passage-panel {
+  display: grid;
+  gap: 0.65rem;
+  min-width: 0;
+  width: 100%;
+
+  &:not(:has(.scripture-passage-copyright)) {
+    padding-bottom: 1rem;
+  }
+
+  .reference {
+    color: var(--colors-mono-09);
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    line-height: 1.2;
+    margin: 0;
+    padding-inline: 1rem;
+    text-transform: uppercase;
+  }
+
+  .text {
+    margin: 0;
+    white-space: pre-wrap;
+
+    .verse-block {
+      display: inline;
+    }
+
+    .verse-start {
+      white-space: nowrap;
+    }
+
+    .verse-number {
+      color: var(--colors-mono-09);
+      font-size: 0.72em;
+      font-weight: 600;
+      position: relative;
+      top: -0.2em;
+      vertical-align: baseline;
+    }
+  }
+
+  .error {
+    color: var(--colors-mono-09);
+    font-style: italic;
+    margin: 0;
+  }
+}
+
+.scripture-passage-scroll-body {
+  max-height: min(20rem, calc(100dvh - 8rem));
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-block: 0.15rem;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+}
+
+@media (hover: none), (pointer: coarse) {
+  .scripture-passage-scroll-body {
+    max-height: min(11rem, 38dvh);
+    scrollbar-color: color-mix(
+        in srgb,
+        var(--colors-cool-blue) 40%,
+        transparent
+      )
+      transparent;
+    scrollbar-width: thin;
+
+    &::-webkit-scrollbar {
+      width: 0.25rem;
+    }
+
+    &::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: color-mix(
+        in srgb,
+        var(--colors-cool-blue) 40%,
+        transparent
+      );
+      border-radius: 999px;
+    }
+  }
+}
+
+.scripture-passage-scroll-content {
+  padding-inline: 1rem;
+}
+
+.scripture-passage-copyright {
+  border-top: 0.0625rem solid color-mix(in srgb, var(--colors-mono-06) 55%, transparent);
+  color: var(--colors-mono-09);
+  font-size: 0.625rem;
+  line-height: 1.4;
+  margin: 0;
+  padding: 0.25rem 1rem;
+
+  a {
+    color: var(--colors-cool-blue);
+    text-decoration: underline;
+    text-underline-offset: 0.12em;
+  }
+}
+
+.scripture-passage-panel-skeleton {
+  display: grid;
+  gap: 0.45rem;
+
+  .line {
+    animation: scripture-passage-panel-shimmer 1.2s ease-in-out infinite;
+    background: linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--colors-mono-05) 72%, transparent) 0%,
+      color-mix(in srgb, var(--colors-mono-06) 88%, transparent) 50%,
+      color-mix(in srgb, var(--colors-mono-05) 72%, transparent) 100%
+    );
+    background-size: 200% 100%;
+    border-radius: 0.25rem;
+    height: 0.625rem;
+  }
+
+  .line-1 {
+    min-width: 10rem;
+    width: 100%;
+  }
+
+  .line-2 {
+    width: 92%;
+  }
+
+  .line-3 {
+    width: 78%;
+  }
+
+  .line-4 {
+    width: 64%;
+  }
+}
+
+@keyframes scripture-passage-panel-shimmer {
+  from {
+    background-position: 200% 0;
+  }
+
+  to {
+    background-position: -200% 0;
+  }
+}

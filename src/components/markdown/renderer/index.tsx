@@ -2,10 +2,15 @@ import { createEffect, createMemo, onCleanup, splitProps } from "solid-js"
 import { render } from "solid-js/web"
 import { AudioPlayer } from "@/components/audio-player"
 import { clsx as cx } from "@/util"
+import { ScriptureReference } from "@/modules/blips/components/scripture-reference"
 import {
   mountMarkdownAudioPlayers,
   unmountMarkdownAudioPlayers,
 } from "./mount-audio-players"
+import {
+  mountMarkdownScriptureReferences,
+  unmountMarkdownScriptureReferences,
+} from "./mount-scripture-references"
 import { parseBlipMarkdown } from "./marked-blips"
 import "./styles.css"
 
@@ -37,11 +42,28 @@ export function MarkdownRenderer(props: MarkdownRendererProps) {
       mountMarkdownAudioPlayers(containerRef, (playerProps, target) =>
         render(() => <AudioPlayer {...playerProps} />, target),
       )
+
+      mountMarkdownScriptureReferences(containerRef, (referenceProps, target) =>
+        render(
+          () => (
+            <ScriptureReference
+              book={referenceProps.book}
+              chapter={referenceProps.chapter}
+              startVerse={referenceProps.startVerse}
+              endVerse={referenceProps.endVerse}
+              normalized={referenceProps.normalized}>
+              {referenceProps.displayText}
+            </ScriptureReference>
+          ),
+          target,
+        ),
+      )
     })
 
     onCleanup(() => {
       if (containerRef) {
         unmountMarkdownAudioPlayers(containerRef)
+        unmountMarkdownScriptureReferences(containerRef)
       }
     })
   })
@@ -49,6 +71,7 @@ export function MarkdownRenderer(props: MarkdownRendererProps) {
   onCleanup(() => {
     if (containerRef) {
       unmountMarkdownAudioPlayers(containerRef)
+      unmountMarkdownScriptureReferences(containerRef)
     }
   })
 

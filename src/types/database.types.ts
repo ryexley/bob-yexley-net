@@ -34,6 +34,111 @@ export type Database = {
   }
   public: {
     Tables: {
+      bible_passage_collections: {
+        Row: {
+          created_at: string
+          deleted_at: string | null
+          description: string | null
+          id: number
+          name: string
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          deleted_at?: string | null
+          description?: string | null
+          id?: never
+          name: string
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          deleted_at?: string | null
+          description?: string | null
+          id?: never
+          name?: string
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      bible_passage_reference_collections: {
+        Row: {
+          collection_id: number
+          created_at: string
+          reference_id: number
+        }
+        Insert: {
+          collection_id: number
+          created_at?: string
+          reference_id: number
+        }
+        Update: {
+          collection_id?: number
+          created_at?: string
+          reference_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bible_passage_reference_collections_collection_id_fkey"
+            columns: ["collection_id"]
+            isOneToOne: false
+            referencedRelation: "bible_passage_collections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bible_passage_reference_collections_reference_id_fkey"
+            columns: ["reference_id"]
+            isOneToOne: false
+            referencedRelation: "bible_passage_references"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bible_passage_references: {
+        Row: {
+          background_color_hex: string | null
+          book: string
+          chapter: number
+          created_at: string
+          deleted_at: string | null
+          end_verse: number | null
+          id: number
+          slug: string
+          start_verse: number
+          unsplash_image_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          background_color_hex?: string | null
+          book: string
+          chapter: number
+          created_at?: string
+          deleted_at?: string | null
+          end_verse?: number | null
+          id?: never
+          slug: string
+          start_verse: number
+          unsplash_image_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          background_color_hex?: string | null
+          book?: string
+          chapter?: number
+          created_at?: string
+          deleted_at?: string | null
+          end_verse?: number | null
+          id?: never
+          slug?: string
+          start_verse?: number
+          unsplash_image_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       blip_tags: {
         Row: {
           blip_id: string
@@ -134,6 +239,27 @@ export type Database = {
           },
         ]
       }
+      esv_passage_cache: {
+        Row: {
+          cached_at: string
+          id: string
+          passage_text: string
+          reference: string
+        }
+        Insert: {
+          cached_at?: string
+          id?: string
+          passage_text: string
+          reference: string
+        }
+        Update: {
+          cached_at?: string
+          id?: string
+          passage_text?: string
+          reference?: string
+        }
+        Relationships: []
+      }
       reactions: {
         Row: {
           blip_id: string
@@ -175,15 +301,22 @@ export type Database = {
             foreignKeyName: "reactions_user_profile_id_fkey"
             columns: ["user_profile_id"]
             isOneToOne: false
-            referencedRelation: "view_user"
+            referencedRelation: "user_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reactions_user_profile_id_fkey"
+            columns: ["user_profile_id"]
+            isOneToOne: false
+            referencedRelation: "view_public_user"
             referencedColumns: ["profile_id"]
           },
           {
             foreignKeyName: "reactions_user_profile_id_fkey"
             columns: ["user_profile_id"]
             isOneToOne: false
-            referencedRelation: "user_profile"
-            referencedColumns: ["id"]
+            referencedRelation: "view_user"
+            referencedColumns: ["profile_id"]
           },
         ]
       }
@@ -208,51 +341,6 @@ export type Database = {
           id?: string
           name?: string
           updated_at?: string
-        }
-        Relationships: []
-      }
-      user_roles: {
-        Row: {
-          created_at: string
-          id: string
-          role: Database["public"]["Enums"]["app_role"]
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          role?: Database["public"]["Enums"]["app_role"]
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          role?: Database["public"]["Enums"]["app_role"]
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
-      "victors-work": {
-        Row: {
-          chapter: string | null
-          id: number
-          inserted_at: string | null
-          passage: string
-        }
-        Insert: {
-          chapter?: string | null
-          id?: number
-          inserted_at?: string | null
-          passage: string
-        }
-        Update: {
-          chapter?: string | null
-          id?: number
-          inserted_at?: string | null
-          passage?: string
         }
         Relationships: []
       }
@@ -281,6 +369,30 @@ export type Database = {
           created_at?: string
           display_name?: string
           id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
           updated_at?: string
           user_id?: string
         }
@@ -326,10 +438,38 @@ export type Database = {
             foreignKeyName: "user_system_user_profile_id_fkey"
             columns: ["user_profile_id"]
             isOneToOne: true
+            referencedRelation: "view_public_user"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "user_system_user_profile_id_fkey"
+            columns: ["user_profile_id"]
+            isOneToOne: true
             referencedRelation: "view_user"
             referencedColumns: ["profile_id"]
           },
         ]
+      }
+      "victors-work": {
+        Row: {
+          chapter: string | null
+          id: number
+          inserted_at: string | null
+          passage: string
+        }
+        Insert: {
+          chapter?: string | null
+          id?: number
+          inserted_at?: string | null
+          passage: string
+        }
+        Update: {
+          chapter?: string | null
+          id?: number
+          inserted_at?: string | null
+          passage?: string
+        }
+        Relationships: []
       }
     }
     Views: {
@@ -338,6 +478,7 @@ export type Database = {
           allow_comments: boolean | null
           blip_type: string | null
           comments: Json | null
+          comments_count: number | null
           content: string | null
           created_at: string | null
           id: string | null
@@ -394,7 +535,43 @@ export type Database = {
           user_id: string | null
           user_profile_id: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "reactions_blip_id_fkey"
+            columns: ["blip_id"]
+            isOneToOne: false
+            referencedRelation: "blips"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reactions_blip_id_fkey"
+            columns: ["blip_id"]
+            isOneToOne: false
+            referencedRelation: "view_blips"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reactions_user_profile_id_fkey"
+            columns: ["user_profile_id"]
+            isOneToOne: false
+            referencedRelation: "user_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reactions_user_profile_id_fkey"
+            columns: ["user_profile_id"]
+            isOneToOne: false
+            referencedRelation: "view_public_user"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "reactions_user_profile_id_fkey"
+            columns: ["user_profile_id"]
+            isOneToOne: false
+            referencedRelation: "view_user"
+            referencedColumns: ["profile_id"]
+          },
+        ]
       }
       view_user: {
         Row: {
@@ -573,3 +750,4 @@ export const Constants = {
     },
   },
 } as const
+

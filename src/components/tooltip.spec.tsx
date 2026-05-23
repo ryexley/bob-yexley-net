@@ -64,7 +64,19 @@ vi.mock("@kobalte/core/popover", () => ({
       Portal: (props: any) => <>{props.children}</>,
       Content: (props: any) => {
         const context = useContext(PopoverContext)!
-        return <Show when={context.open()}><div class={props.class}>{props.children}</div></Show>
+        return (
+          <Show when={context.open()}>
+            <div
+              class={props.class}
+              ref={props.ref}>
+              <div
+                data-testid="scrollable-popover-content"
+                style={{ overflow: "auto", height: "6rem" }}>
+                {props.children}
+              </div>
+            </div>
+          </Show>
+        )
       },
       Arrow: (props: any) => <div class={props.class} />,
     },
@@ -218,7 +230,7 @@ describe("Tooltip", () => {
     })
   })
 
-  it("closes an open touch popover on scroll", async () => {
+  it("closes an open touch popover on viewport scroll", async () => {
     mockMatchMedia(true)
 
     render(() => (
@@ -237,5 +249,24 @@ describe("Tooltip", () => {
     await waitFor(() => {
       expect(screen.queryByText("Scrollable tooltip")).toBeNull()
     })
+  })
+
+  it("keeps an open touch popover open while scrolling inside the content", async () => {
+    mockMatchMedia(true)
+
+    render(() => (
+      <Tooltip content="Scrollable tooltip" touchMode="popover">
+        Trigger
+      </Tooltip>
+    ))
+
+    await fireEvent.click(screen.getByRole("button", { name: "Trigger" }))
+    await waitFor(() => {
+      expect(screen.getByText("Scrollable tooltip")).toBeTruthy()
+    })
+
+    fireEvent.scroll(screen.getByTestId("scrollable-popover-content"))
+
+    expect(screen.getByText("Scrollable tooltip")).toBeTruthy()
   })
 })

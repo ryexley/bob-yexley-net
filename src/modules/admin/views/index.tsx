@@ -4,6 +4,8 @@ import { createEffect, createMemo, For } from "solid-js"
 import { Icon, LoadingSpinner } from "@/components/icon"
 import { useAuth } from "@/context/auth-context"
 import { RequiresSuperUser } from "@/modules/auth/components/requires-role"
+import { getAdminCollections } from "@/modules/scripture-collections/data/queries"
+import { getAdminReferences } from "@/modules/scripture-references/data/queries"
 import { getAdminUsers } from "@/modules/users/data/queries"
 import { ptr } from "@/i18n"
 import { pages } from "@/urls"
@@ -16,6 +18,8 @@ export function AdminHomeView() {
   const navigate = useNavigate()
   const auth = useAuth()
   const adminUsersQuery = createAsync(() => getAdminUsers())
+  const adminCollectionsQuery = createAsync(() => getAdminCollections())
+  const adminReferencesQuery = createAsync(() => getAdminReferences())
   const counts = createMemo(() => {
     const users = adminUsersQuery()?.users ?? []
 
@@ -66,7 +70,19 @@ export function AdminHomeView() {
     }
   })
 
-  const isReady = createMemo(() => adminUsersQuery() !== undefined && auth.isSuperuser())
+  const isReady = createMemo(
+    () =>
+      adminUsersQuery() !== undefined &&
+      adminCollectionsQuery() !== undefined &&
+      adminReferencesQuery() !== undefined &&
+      auth.isSuperuser(),
+  )
+  const collectionCount = createMemo(
+    () => adminCollectionsQuery()?.collections.length ?? 0,
+  )
+  const referenceCount = createMemo(
+    () => adminReferencesQuery()?.references.length ?? 0,
+  )
 
   return (
     <>
@@ -119,6 +135,41 @@ export function AdminHomeView() {
                     </For>
                   </div>
                 </a>
+                <div class="admin-home-view-card admin-home-view-scripture-card">
+                  <a
+                    href={pages.scripture}
+                    class="admin-home-view-card-stretched-link"
+                    aria-label={tr("cards.scripture.openLabel")}
+                  />
+                  <div class="admin-home-view-card-header">
+                    <Icon
+                      name="menu_book"
+                      class="admin-home-view-card-icon"
+                    />
+                    <h2 class="admin-home-view-card-title">{tr("cards.scripture.title")}</h2>
+                  </div>
+                  <div class="admin-home-view-card-copy">
+                    <p class="admin-home-view-card-description">
+                      {tr("cards.scripture.description")}
+                    </p>
+                  </div>
+                  <div class="admin-home-view-card-bubbles">
+                    <a
+                      href={pages.scriptureCollections}
+                      class="admin-home-view-card-direct-link admin-home-view-status-bubble">
+                      {tr("cards.scripture.collections", {
+                        count: collectionCount(),
+                      })}
+                    </a>
+                    <a
+                      href={pages.scriptureReferences}
+                      class="admin-home-view-card-direct-link admin-home-view-status-bubble">
+                      {tr("cards.scripture.references", {
+                        count: referenceCount(),
+                      })}
+                    </a>
+                  </div>
+                </div>
               </div>
             ) : (
               <div class="admin-home-view-loading-state">

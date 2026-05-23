@@ -8,6 +8,11 @@ export const pages = {
   admin: "/a",
   login: "/a/li",
   users: "/a/users",
+  scripture: "/a/scripture",
+  scriptureCollections: "/a/scripture/collections",
+  scriptureCollection: (slug: string) => `/a/scripture/collections/${encodeURIComponent(slug)}`,
+  scriptureCollectionById: (id: number | string) => `/a/scripture/collections/${id}`,
+  scriptureReferences: "/a/scripture/references",
   visitors: "/a/visitors",
   logout: "/a/lo",
 }

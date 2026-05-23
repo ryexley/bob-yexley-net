@@ -1,0 +1,26 @@
+.scripture-reference-trigger {
+  color: inherit;
+  cursor: help;
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, currentColor 42%, transparent);
+  text-decoration-style: dotted;
+  text-underline-offset: 0.15em;
+}
+
+.tooltip-content.scripture-reference-content {
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  overflow: visible;
+  padding: 0.9rem 0 0;
+  width: fit-content;
+  min-width: 0;
+  max-width: min(28rem, calc(100vw - 2rem));
+}
+
+@media (hover: none), (pointer: coarse) {
+  .tooltip-content.scripture-reference-content {
+    box-sizing: border-box;
+    max-width: none !important;
+    width: var(--kb-popper-anchor-width) !important;
+  }
+}

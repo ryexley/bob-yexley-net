@@ -18,5 +18,6 @@ export function getEnv() {
       import.meta.env.VITE_UNSPLASH_ACCESS_KEY ||
       process.env.UNSPLASH_ACCESS_KEY ||
       "",
+    ESV_API_KEY: process.env.ESV_API_KEY || "",
   }
 }

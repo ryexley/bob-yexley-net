@@ -29,7 +29,93 @@ type TooltipProps = ParentProps<{
     "children" | "class" | "as"
   >
   touchMode?: "tooltip" | "popover"
+  touchFullWidth?: boolean
 }>
+
+function touchPopoverMarginPx() {
+  if (typeof document === "undefined") {
+    return 16
+  }
+
+  return Number.parseFloat(getComputedStyle(document.documentElement).fontSize) || 16
+}
+
+function getTouchFullWidthAnchorRect(anchor?: HTMLElement) {
+  if (!anchor || typeof window === "undefined") {
+    return undefined
+  }
+
+  const rect = anchor.getBoundingClientRect()
+  const margin = touchPopoverMarginPx()
+
+  return {
+    x: margin,
+    y: rect.top,
+    width: window.innerWidth - margin * 2,
+    height: rect.height,
+  }
+}
+
+const TOUCH_FULL_WIDTH_ARROW_PADDING_PX = 12
+
+function alignTouchFullWidthArrow(trigger: HTMLElement, content: HTMLElement) {
+  const arrow = content.querySelector(".tooltip-arrow")
+  if (!(arrow instanceof HTMLElement)) {
+    return
+  }
+
+  const triggerRect = trigger.getBoundingClientRect()
+  const contentRect = content.getBoundingClientRect()
+  const arrowWidth = arrow.offsetWidth || 30
+  const triggerCenterX = triggerRect.left + triggerRect.width / 2
+  let arrowLeft = triggerCenterX - contentRect.left - arrowWidth / 2
+  const maxLeft = Math.max(
+    TOUCH_FULL_WIDTH_ARROW_PADDING_PX,
+    contentRect.width - arrowWidth - TOUCH_FULL_WIDTH_ARROW_PADDING_PX,
+  )
+
+  arrowLeft = Math.max(
+    TOUCH_FULL_WIDTH_ARROW_PADDING_PX,
+    Math.min(maxLeft, arrowLeft),
+  )
+
+  const nextLeft = `${Math.round(arrowLeft)}px`
+  if (arrow.style.left !== nextLeft) {
+    arrow.style.left = nextLeft
+  }
+}
+
+function watchTouchFullWidthArrow(trigger: HTMLElement, content: HTMLElement) {
+  const arrow = content.querySelector(".tooltip-arrow")
+  if (!(arrow instanceof HTMLElement)) {
+    return () => {}
+  }
+
+  const sync = () => alignTouchFullWidthArrow(trigger, content)
+
+  sync()
+
+  const observer = new MutationObserver(sync)
+  observer.observe(arrow, { attributes: true, attributeFilter: ["style"] })
+
+  const resizeObserver =
+    typeof ResizeObserver === "function"
+      ? new ResizeObserver(sync)
+      : undefined
+
+  resizeObserver?.observe(content)
+  resizeObserver?.observe(trigger)
+
+  window.addEventListener("resize", sync, { passive: true })
+  window.addEventListener("orientationchange", sync, { passive: true })
+
+  return () => {
+    observer.disconnect()
+    resizeObserver?.disconnect()
+    window.removeEventListener("resize", sync)
+    window.removeEventListener("orientationchange", sync)
+  }
+}
 
 const TOUCH_TOOLTIP_MEDIA_QUERY = "(hover: none), (pointer: coarse)"
 const [activeTouchPopoverId, setActiveTouchPopoverId] = createSignal<string | null>(
@@ -38,6 +124,8 @@ const [activeTouchPopoverId, setActiveTouchPopoverId] = createSignal<string | nu
 
 export function Tooltip(props: TooltipProps) {
   const touchPopoverId = createUniqueId()
+  let touchPopoverContentRef: HTMLElement | undefined
+  let touchPopoverTriggerRef: HTMLElement | undefined
   const [prefersTouchInput, setPrefersTouchInput] = createSignal(false)
   const isTouchPopoverMode = createMemo(
     () => props.touchMode === "popover" && prefersTouchInput(),
@@ -95,19 +183,55 @@ export function Tooltip(props: TooltipProps) {
       return
     }
 
-    const dismiss = () => closeTouchPopover()
+    const dismissOnViewportChange = (event: Event) => {
+      const target = event.target
+      if (
+        touchPopoverContentRef &&
+        target instanceof Node &&
+        touchPopoverContentRef.contains(target)
+      ) {
+        return
+      }
+
+      closeTouchPopover()
+    }
     const listenerOptions = { capture: true, passive: true } as AddEventListenerOptions
 
-    window.addEventListener("scroll", dismiss, listenerOptions)
-    window.addEventListener("resize", dismiss, listenerOptions)
-    window.addEventListener("orientationchange", dismiss, listenerOptions)
-    document.addEventListener("scroll", dismiss, listenerOptions)
+    window.addEventListener("scroll", dismissOnViewportChange, listenerOptions)
+    window.addEventListener("resize", dismissOnViewportChange, listenerOptions)
+    window.addEventListener("orientationchange", dismissOnViewportChange, listenerOptions)
+    document.addEventListener("scroll", dismissOnViewportChange, listenerOptions)
 
     onCleanup(() => {
-      window.removeEventListener("scroll", dismiss, listenerOptions)
-      window.removeEventListener("resize", dismiss, listenerOptions)
-      window.removeEventListener("orientationchange", dismiss, listenerOptions)
-      document.removeEventListener("scroll", dismiss, listenerOptions)
+      window.removeEventListener("scroll", dismissOnViewportChange, listenerOptions)
+      window.removeEventListener("resize", dismissOnViewportChange, listenerOptions)
+      window.removeEventListener(
+        "orientationchange",
+        dismissOnViewportChange,
+        listenerOptions,
+      )
+      document.removeEventListener("scroll", dismissOnViewportChange, listenerOptions)
+    })
+  })
+
+  createEffect(() => {
+    if (!isTouchPopoverOpen() || !props.touchFullWidth) {
+      return
+    }
+
+    let cleanup = () => {}
+    const frame = requestAnimationFrame(() => {
+      const trigger = touchPopoverTriggerRef
+      const content = touchPopoverContentRef
+
+      if (trigger && content) {
+        cleanup = watchTouchFullWidthArrow(trigger, content)
+      }
+    })
+
+    onCleanup(() => {
+      cancelAnimationFrame(frame)
+      cleanup()
     })
   })
 
@@ -154,21 +278,31 @@ export function Tooltip(props: TooltipProps) {
               }
             : triggerProps()
 
+        const touchFullWidth = props.touchFullWidth ?? false
+        const touchMargin = touchPopoverMarginPx()
+
         return (
           <PopoverPrimitive
             open={isTouchPopoverOpen()}
             onOpenChange={isOpen => {
               setActiveTouchPopoverId(isOpen ? touchPopoverId : null)
             }}
-            placement={props.placement ?? "top"}>
+            placement={props.placement ?? "top"}
+            flip
+            shift={touchFullWidth ? false : true}
+            sameWidth={touchFullWidth ? true : undefined}
+            overflowPadding={touchFullWidth ? touchMargin : undefined}
+            getAnchorRect={touchFullWidth ? getTouchFullWidthAnchorRect : undefined}>
             <PopoverPrimitive.Trigger
               as={triggerAs}
+              ref={touchPopoverTriggerRef}
               class={cx("tooltip-trigger", props.triggerClass)}
               {...popoverTriggerProps}>
               {props.children}
             </PopoverPrimitive.Trigger>
             <PopoverPrimitive.Portal>
               <PopoverPrimitive.Content
+                ref={touchPopoverContentRef}
                 class={cx("tooltip-content", props.contentClass)}
                 onOpenAutoFocus={event => event.preventDefault()}
                 onCloseAutoFocus={event => event.preventDefault()}

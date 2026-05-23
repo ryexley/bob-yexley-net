@@ -1,0 +1,78 @@
+.scripture-collection-detail-view {
+  min-height: 100vh;
+  padding: var(--main-header-height) 1rem 3rem;
+}
+
+.scripture-collection-detail-view-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin: 0 auto;
+  max-width: 72rem;
+}
+
+.scripture-collection-detail-view-back-link,
+.scripture-collection-detail-view-back-link:link,
+.scripture-collection-detail-view-back-link:visited {
+  align-items: center;
+  display: inline-flex;
+  gap: 0.25rem;
+  left: 0;
+  height: var(--main-header-height);
+  padding: 0 2rem 0 1.25rem;
+  position: fixed;
+  top: 0;
+  text-transform: lowercase;
+  z-index: 11;
+
+  .icon {
+    color: inherit;
+    font-size: 1rem;
+  }
+}
+
+.scripture-collection-detail-view-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.scripture-collection-detail-view-header-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.scripture-collection-detail-view-title {
+  color: var(--colors-mono-11);
+  font-size: clamp(1.375rem, 3.5vw, 2rem);
+  line-height: 1.05;
+  margin: 0;
+}
+
+.scripture-collection-detail-view-slug {
+  color: var(--colors-mono-08);
+  font-family: var(--fonts-mono, monospace);
+  font-size: 0.8125rem;
+  margin: 0;
+}
+
+.scripture-collection-detail-view-description {
+  color: var(--colors-mono-09);
+  font-size: 0.9375rem;
+  line-height: 1.45;
+  margin: 0;
+  max-width: 40rem;
+}
+
+.scripture-collection-detail-view-header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+@media (max-width: 48rem) {
+  .scripture-collection-detail-view {
+    padding-top: var(--main-header-height);
+  }
+}

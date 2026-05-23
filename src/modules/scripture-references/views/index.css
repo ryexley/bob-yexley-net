@@ -1,0 +1,219 @@
+@import "../components/reference-cards-grid.css";
+
+.scripture-references-view {
+  min-height: 100vh;
+  padding: var(--main-header-height) 1rem 3rem;
+}
+
+.scripture-references-view-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin: 0 auto;
+  max-width: 72rem;
+}
+
+.scripture-references-view-back-link,
+.scripture-references-view-back-link:link,
+.scripture-references-view-back-link:visited {
+  align-items: center;
+  display: inline-flex;
+  gap: 0.25rem;
+  left: 0;
+  height: var(--main-header-height);
+  padding: 0 2rem 0 1.25rem;
+  position: fixed;
+  top: 0;
+  text-transform: lowercase;
+  z-index: 11;
+
+  .icon {
+    color: inherit;
+    font-size: 1rem;
+  }
+}
+
+.scripture-references-view-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.scripture-references-view-header-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.scripture-references-view-title {
+  color: var(--colors-mono-11);
+  font-size: clamp(1.375rem, 3.5vw, 2rem);
+  line-height: 1.05;
+  margin: 0;
+}
+
+.scripture-references-view-subtitle {
+  color: var(--colors-mono-09);
+  font-size: 0.9375rem;
+  margin: 0;
+  max-width: 40rem;
+}
+
+.scripture-references-view-toolbar {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.scripture-references-view-create-button {
+  flex: 0 0 auto;
+}
+
+.scripture-references-view-toolbar-controls {
+  align-items: center;
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 0.5rem;
+  margin-left: auto;
+}
+
+.scripture-references-view-sort-field {
+  display: inline-flex;
+  flex: 0 0 auto;
+  min-width: 0;
+  width: 12rem;
+}
+
+.scripture-references-view-sort-field .select-trigger {
+  min-height: 2rem;
+  padding: 0.375rem 0.625rem;
+  width: 100%;
+}
+
+.scripture-references-view-sort-field .select-value {
+  font-size: 0.875rem;
+}
+
+.scripture-references-view-sort-field .select-trigger-icon {
+  margin-left: 0.375rem;
+}
+
+.scripture-references-view-toolbar-icon-button {
+  align-items: center;
+  background: transparent;
+  border: 0.0625rem solid var(--colors-mono-05);
+  border-radius: var(--radius-sm);
+  color: var(--colors-mono-10);
+  cursor: pointer;
+  display: inline-flex;
+  flex: 0 0 auto;
+  height: 2rem;
+  justify-content: center;
+  padding: 0;
+  transition: var(--transitions-primary);
+  width: 2rem;
+
+  .icon {
+    color: inherit;
+    font-size: 1rem;
+  }
+
+  &:hover {
+    background-color: rgba(var(--colors-mono-11-rgb), 0.05);
+    border-color: var(--colors-mono-08);
+    color: var(--colors-mono-11);
+  }
+
+  &.is-active {
+    border-color: var(--colors-cool-blue);
+    color: var(--colors-cool-blue);
+  }
+
+  &:focus,
+  &:focus-visible {
+    border-color: var(--colors-cool-blue);
+    box-shadow: 0 0 0 0.0625rem var(--colors-cool-blue);
+    outline: none;
+  }
+}
+
+.scripture-references-view-filters-motion {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transform: translateY(-0.5rem);
+  transition:
+    grid-template-rows 200ms ease,
+    opacity 200ms ease,
+    transform 200ms ease;
+}
+
+.scripture-references-view-filters-motion.is-open {
+  grid-template-rows: 1fr;
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.scripture-references-view-filters {
+  background: var(--colors-mono-01);
+  border: 0.0625rem solid var(--colors-mono-02);
+  border-radius: var(--radius-lg);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-height: 0;
+  overflow: hidden;
+  padding: 1rem;
+}
+
+.scripture-references-view-filter-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.scripture-references-view-summary {
+  color: var(--colors-mono-08);
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+
+.scripture-references-view-empty-state,
+.scripture-references-view-loading-state {
+  align-items: center;
+  background: var(--colors-mono-02);
+  border: 0.0625rem dashed var(--colors-mono-04);
+  border-radius: var(--radius-xl);
+  color: var(--colors-mono-08);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  justify-content: center;
+  min-height: 14rem;
+  padding: 2rem 1rem;
+  text-align: center;
+}
+
+@media (max-width: 48rem) {
+  .scripture-references-view {
+    padding-top: var(--main-header-height);
+  }
+
+  .scripture-references-view-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .scripture-references-view-toolbar-controls {
+    justify-content: flex-end;
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .scripture-references-view-sort-field {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+}

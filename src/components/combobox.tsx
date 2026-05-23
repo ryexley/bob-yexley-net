@@ -10,6 +10,7 @@ import {
 import {
   Combobox as ComboboxPrimitive,
   type ComboboxRootProps,
+  useComboboxContext,
 } from "@kobalte/core/combobox"
 import { Icon } from "@/components/icon"
 import { cx, isNotEmpty } from "@/util"
@@ -112,6 +113,70 @@ type MultiSelectControlState<Option> = {
 
 type SingleSelectControlState<Option> = MultiSelectControlState<Option> & {
   selectedOption?: () => Option | null | undefined
+}
+
+type ComboboxInputKeydownHelpers<Option> = {
+  selectExistingOptionFromInput: (
+    state: SingleSelectControlState<Option>,
+    event: KeyboardEvent,
+    context: ReturnType<typeof useComboboxContext>,
+  ) => boolean
+  selectFirstFilteredOptionOnEnter: (
+    state: SingleSelectControlState<Option>,
+    event: KeyboardEvent,
+    context: ReturnType<typeof useComboboxContext>,
+  ) => boolean
+  createNewOption: (
+    state: SingleSelectControlState<Option>,
+    event: KeyboardEvent,
+  ) => void
+  getFirstFilteredOptionForQuery: (query: string) => Option | null
+}
+
+function ComboboxInputWithContext<Option>(props: {
+  state: SingleSelectControlState<Option>
+  class?: string
+  helpers: ComboboxInputKeydownHelpers<Option>
+  onInputQueryChange: (value: string) => void
+  onFocus: (event: FocusEvent) => void
+}) {
+  const context = useComboboxContext()
+
+  return (
+    <ComboboxPrimitive.Input
+      class={props.class}
+      autocapitalize="none"
+      autocorrect="off"
+      spellcheck={false}
+      onInput={event => {
+        if (event.currentTarget instanceof HTMLInputElement) {
+          props.onInputQueryChange(event.currentTarget.value)
+        }
+      }}
+      onFocus={props.onFocus}
+      onKeyDown={event => {
+        if (props.helpers.selectExistingOptionFromInput(props.state, event, context)) {
+          return
+        }
+
+        if (props.helpers.selectFirstFilteredOptionOnEnter(props.state, event, context)) {
+          return
+        }
+
+        props.helpers.createNewOption(props.state, event)
+
+        const target = event.target
+        if (
+          event.key === "Enter" &&
+          target instanceof HTMLInputElement &&
+          !target.getAttribute("aria-activedescendant") &&
+          props.helpers.getFirstFilteredOptionForQuery(target.value) != null
+        ) {
+          event.preventDefault()
+        }
+      }}
+    />
+  )
 }
 
 export function Combobox<Option, OptGroup = never>(
@@ -273,9 +338,8 @@ export function Combobox<Option, OptGroup = never>(
   }
 
   /** First visible option matching the current filter (same order as Kobalte’s list). */
-  const firstFilteredOption = createMemo(() => {
-    const q = inputQuery()
-    if (!q.trim()) {
+  const getFirstFilteredOptionForQuery = (query: string) => {
+    if (!query.trim()) {
       return null
     }
 
@@ -284,19 +348,36 @@ export function Combobox<Option, OptGroup = never>(
         continue
       }
 
-      if (optionPassesFilter(option, q)) {
+      if (optionPassesFilter(option, query)) {
         return option
       }
     }
 
     return null
-  })
+  }
+
+  const firstFilteredOption = createMemo(() => getFirstFilteredOptionForQuery(inputQuery()))
 
   const shouldAutoHighlightOption = (option: Option) => {
     const first = firstFilteredOption()
     return first != null && areOptionsEqual(option, first)
   }
 
+  const getOptionKey = (option: Option) =>
+    getOptionText(
+      option as Exclude<Option, null>,
+      local.optionValue ?? labelAccessor(),
+    )
+  const commitSingleSelectOption = (
+    option: Option,
+    event: KeyboardEvent,
+    context: ReturnType<typeof useComboboxContext>,
+  ) => {
+    event.preventDefault()
+    event.stopPropagation()
+    context.listState().selectionManager().select(getOptionKey(option))
+    return true
+  }
   const findExactInputMatch = (inputValue: string) => {
     const normalizedInput = normalize(inputValue)
     if (!normalizedInput) {
@@ -454,6 +535,7 @@ export function Combobox<Option, OptGroup = never>(
   const selectExistingOptionFromInput = (
     state: SingleSelectControlState<Option>,
     event: KeyboardEvent,
+    context: ReturnType<typeof useComboboxContext>,
   ) => {
     if (event.key !== "Enter") {
       return false
@@ -474,6 +556,10 @@ export function Combobox<Option, OptGroup = never>(
       return false
     }
 
+    if (!local.multiple) {
+      return commitSingleSelectOption(matchedOption, event, context)
+    }
+
     event.preventDefault()
     event.stopPropagation()
 
@@ -488,11 +574,7 @@ export function Combobox<Option, OptGroup = never>(
       areOptionsEqual(option, matchedOption),
     )
 
-    if (local.multiple) {
-      onChange?.(alreadySelected ? selected : [...selected, matchedOption])
-    } else {
-      onChange?.(matchedOption)
-    }
+    onChange?.(alreadySelected ? selected : [...selected, matchedOption])
 
     return true
   }
@@ -506,6 +588,7 @@ export function Combobox<Option, OptGroup = never>(
   const selectFirstFilteredOptionOnEnter = (
     state: SingleSelectControlState<Option>,
     event: KeyboardEvent,
+    context: ReturnType<typeof useComboboxContext>,
   ) => {
     if (event.key !== "Enter") {
       return false
@@ -521,9 +604,13 @@ export function Combobox<Option, OptGroup = never>(
       return false
     }
 
-    const first = firstFilteredOption()
+    const first = getFirstFilteredOptionForQuery(target.value)
     if (first == null) {
       return false
+    }
+
+    if (!local.multiple) {
+      return commitSingleSelectOption(first as Option, event, context)
     }
 
     event.preventDefault()
@@ -533,18 +620,14 @@ export function Combobox<Option, OptGroup = never>(
       primitiveProps() as { onChange?: (value: Option | Option[]) => void }
     ).onChange
 
-    if (local.multiple) {
-      const selected = toArray(
-        state.selectedOptions?.() ??
-          resolveMaybeAccessor((primitiveProps() as { value?: Option[] }).value),
-      )
-      const alreadySelected = selected.some(option =>
-        areOptionsEqual(option, first),
-      )
-      onChange?.(alreadySelected ? selected : [...selected, first])
-    } else {
-      onChange?.(first as Option)
-    }
+    const selected = toArray(
+      state.selectedOptions?.() ??
+        resolveMaybeAccessor((primitiveProps() as { value?: Option[] }).value),
+    )
+    const alreadySelected = selected.some(option =>
+      areOptionsEqual(option, first),
+    )
+    onChange?.(alreadySelected ? selected : [...selected, first])
 
     clearInputValue(target)
     return true
@@ -625,6 +708,13 @@ export function Combobox<Option, OptGroup = never>(
     inputQuery()
     scheduleListboxHintSync()
   })
+
+  const inputKeydownHelpers = {
+    selectExistingOptionFromInput,
+    selectFirstFilteredOptionOnEnter,
+    createNewOption,
+    getFirstFilteredOptionForQuery,
+  }
 
   return (
     <ComboboxPrimitive<Option, OptGroup>
@@ -720,23 +810,12 @@ export function Combobox<Option, OptGroup = never>(
                   </For>
                 </div>
               ) : null}
-              <ComboboxPrimitive.Input
+              <ComboboxInputWithContext
+                state={state}
                 class={cx("combobox-input", local.inputClass)}
-                autocapitalize="none"
-                autocorrect="off"
-                spellcheck={false}
+                helpers={inputKeydownHelpers}
+                onInputQueryChange={setInputQuery}
                 onFocus={openOptionsOnInputFocus}
-                onKeyDown={event => {
-                  if (selectExistingOptionFromInput(state, event)) {
-                    return
-                  }
-
-                  if (selectFirstFilteredOptionOnEnter(state, event)) {
-                    return
-                  }
-
-                  createNewOption(state, event)
-                }}
               />
             </div>
             <ComboboxPrimitive.Trigger

@@ -1,0 +1,186 @@
+.scripture-references-view-list {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fill, minmax(18.5rem, 1fr));
+}
+
+.scripture-references-view-card {
+  align-items: stretch;
+  background: var(--colors-mono-02);
+  border: 0.0625rem solid var(--colors-mono-04);
+  border-radius: var(--radius-xl);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-height: 8.5rem;
+  min-width: 0;
+  padding: 1rem 1.125rem;
+  width: 100%;
+}
+
+.scripture-references-view-card-header {
+  align-items: flex-start;
+  display: flex;
+  gap: 0.75rem;
+  justify-content: space-between;
+}
+
+.scripture-references-view-card-copy {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 0.375rem;
+  min-width: 0;
+}
+
+.scripture-references-view-card-badges {
+  align-items: center;
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+  justify-content: flex-end;
+  max-width: 55%;
+}
+
+.scripture-references-view-card-footer {
+  align-items: flex-end;
+  display: flex;
+  gap: 0.75rem;
+  justify-content: space-between;
+  margin-top: auto;
+}
+
+.scripture-references-view-card-updated {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-width: 0;
+}
+
+.scripture-references-view-card-updated-label {
+  color: var(--colors-mono-08);
+  font-size: 0.75rem;
+  line-height: 1.2;
+}
+
+.scripture-references-view-card-updated-value {
+  color: var(--colors-mono-09);
+  font-size: 0.8125rem;
+  line-height: 1.35;
+}
+
+.scripture-references-view-card-actions {
+  align-items: center;
+  display: flex;
+  flex: 0 0 auto;
+  gap: 0.25rem;
+  justify-content: flex-end;
+}
+
+.scripture-references-view-edit-button {
+  .icon {
+    color: var(--colors-resonant-blue);
+    font-size: 1.25rem;
+  }
+}
+
+.scripture-references-view-delete-button {
+  .icon {
+    color: var(--colors-danger);
+    font-size: 1.25rem;
+  }
+}
+
+.scripture-references-view-card-reference {
+  color: var(--colors-mono-11);
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.25;
+  margin: 0;
+}
+
+.scripture-references-view-card-slug-line {
+  color: var(--colors-mono-08);
+  font-size: 0.8125rem;
+  line-height: 1.35;
+  margin: 0;
+}
+
+.scripture-references-view-card-slug {
+  font-family: var(--fonts-mono, monospace);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.scripture-references-view-collection-badge,
+.tooltip-trigger.scripture-references-view-collection-badge,
+a.scripture-references-view-collection-badge {
+  align-items: center;
+  background: rgb(from var(--colors-info) r g b / 0.12);
+  block-size: calc(0.75rem * 1.2 + 0.25rem + 0.125rem);
+  border: 0.0625rem solid rgb(from var(--colors-info) r g b / 0.28);
+  border-radius: var(--radius-pill);
+  box-sizing: border-box;
+  color: var(--colors-info);
+  display: inline-flex;
+  font-size: 0.75rem;
+  font-weight: 700;
+  justify-content: center;
+  line-height: 1.2;
+  padding-inline: 0.625rem;
+  white-space: nowrap;
+
+  &[data-uncollected="true"] {
+    background: rgb(from var(--colors-mono-08) r g b / 0.12);
+    border-color: rgb(from var(--colors-mono-08) r g b / 0.28);
+    color: var(--colors-mono-09);
+  }
+}
+
+a.scripture-references-view-collection-badge {
+  cursor: pointer;
+  text-decoration: none;
+  transition: var(--transitions-primary);
+
+  &:hover {
+    background: rgb(from var(--colors-info) r g b / 0.2);
+    border-color: rgb(from var(--colors-info) r g b / 0.4);
+  }
+}
+
+.scripture-references-view-collection-badge-overflow,
+.tooltip-trigger.scripture-references-view-collection-badge-overflow {
+  cursor: default;
+  padding-inline: 0.375rem;
+
+  .icon {
+    font-size: 1.125em;
+    line-height: 1;
+  }
+}
+
+.scripture-references-view-collection-tooltip {
+  max-width: 16rem;
+}
+
+.scripture-references-view-collection-tooltip-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.scripture-references-view-collection-tooltip-link {
+  color: inherit;
+  display: block;
+  text-decoration: none;
+
+  &:hover {
+    color: var(--colors-info);
+    text-decoration: underline;
+  }
+}

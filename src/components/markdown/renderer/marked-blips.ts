@@ -3,6 +3,7 @@ import { normalizeAudioEmbedsInMarkdown } from "@/components/markdown/audio/audi
 import { rendererExtensions } from "./extensions"
 import { audioEmbedExtension } from "./extensions/audio-embed"
 import { highlightExtension } from "./extensions/highlight"
+import { scriptureReferenceExtension } from "./extensions/scripture-reference"
 
 const createBlipMarked = () => {
   const marked = new Marked()
@@ -13,7 +14,7 @@ const createBlipMarked = () => {
 
   marked.use({
     renderer,
-    extensions: [highlightExtension, audioEmbedExtension],
+    extensions: [highlightExtension, audioEmbedExtension, scriptureReferenceExtension],
   })
 
   return marked

@@ -1,0 +1,144 @@
+.reference-form-drawer {
+  --drawer-header-height: 4rem;
+
+  .drawer-title {
+    font-size: 1.25rem;
+  }
+}
+
+.reference-form-drawer-close {
+  align-items: center;
+  background: transparent;
+  border: none;
+  color: var(--colors-mono-10);
+  cursor: pointer;
+  display: flex;
+  height: var(--drawer-header-height);
+  justify-content: center;
+  padding: 0;
+  position: absolute;
+  right: 0;
+  top: 0;
+  transform: none;
+  transition: var(--transitions-primary);
+  width: 3.5rem;
+  z-index: 100;
+
+  .icon {
+    color: inherit;
+    display: block;
+    font-size: 3rem;
+    line-height: 1;
+  }
+
+  &:hover {
+    color: var(--colors-resonant-blue);
+  }
+
+  &:focus,
+  &:focus-visible,
+  &:active {
+    box-shadow: none;
+    outline: none;
+  }
+}
+
+.reference-form-drawer-shell {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 1rem;
+  margin: 0 auto;
+  max-width: 42rem;
+  min-height: 0;
+  padding: 1rem 1rem 1.25rem;
+  width: 100%;
+}
+
+.reference-form-drawer-form {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.reference-form-drawer-verse-fields {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.reference-form-drawer-preview {
+  background: var(--colors-mono-01);
+  border: 0.0625rem solid var(--colors-mono-03);
+  border-radius: var(--radius-lg);
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  padding: 0.875rem 1rem;
+}
+
+.reference-form-drawer-preview-label {
+  color: var(--colors-mono-08);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.reference-form-drawer-preview-value {
+  color: var(--colors-mono-11);
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.reference-form-drawer-passage-preview {
+  background: var(--colors-mono-01);
+  border: 0.0625rem solid var(--colors-mono-03);
+  border-radius: var(--radius-lg);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-height: 0;
+  padding: 0.875rem 0 0;
+
+  > .reference-form-drawer-preview-label {
+    padding-inline: 1rem;
+  }
+
+  .scripture-passage-panel {
+    gap: 0.5rem;
+  }
+
+  .scripture-passage-scroll-body {
+    max-height: min(14rem, 40dvh);
+  }
+
+  .scripture-passage-scroll-content,
+  .scripture-passage-copyright {
+    padding-inline: 1rem;
+  }
+}
+
+.reference-form-drawer-passage-preview-error {
+  color: var(--colors-error);
+  font-size: 0.875rem;
+  line-height: 1.35;
+  margin: 0;
+  padding: 0 1rem 0.875rem;
+}
+
+.reference-form-drawer-actions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+  margin-top: auto;
+  padding-top: 0.5rem;
+}
+
+@media (max-width: 36rem) {
+  .reference-form-drawer-verse-fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

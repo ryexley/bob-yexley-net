@@ -551,6 +551,11 @@ export const en = {
           moderationFailed: "Unable to update this comment right now.",
         },
       },
+      scripturePassagePanel: {
+        error: "Passage unavailable",
+        copyright: "Scripture from the {esvLink}. © Crossway. Used by permission.",
+        esvLinkLabel: "ESV® Bible",
+      },
     },
     reactions: {
       errors: {
@@ -579,6 +584,273 @@ export const en = {
       },
     },
   },
+  scriptureCollections: {
+    components: {
+      collectionFormDrawer: {
+        title: {
+          create: "New Collection",
+          edit: "Edit Collection",
+        },
+        actions: {
+          close: "Close",
+          cancel: "Cancel",
+          save: "Save",
+          saving: "Saving...",
+          delete: "Delete collection",
+          deleting: "Deleting...",
+        },
+        fields: {
+          name: {
+            label: "Name",
+            placeholder: "Collection name",
+          },
+          description: {
+            label: "Description",
+            placeholder: "Optional description",
+          },
+          slug: {
+            label: "Slug",
+            placeholder: "collection-slug",
+            hint: "Used in URLs. Auto-generated from the name until you edit it.",
+          },
+        },
+        confirmDelete: {
+          title: "Delete collection?",
+          prompt:
+            'Delete "{name}" and remove its references from this collection? This cannot be undone.',
+          actions: {
+            confirm: "Delete",
+            confirming: "Deleting...",
+            cancel: "Cancel",
+          },
+        },
+        notifications: {
+          createSuccess: "Collection created.",
+          saveSuccess: "Collection updated.",
+          saveError: "Unable to save this collection right now.",
+          deleteSuccess: "Collection deleted.",
+          deleteError: "Unable to delete this collection right now.",
+        },
+      },
+    },
+    views: {
+      index: {
+        pageTitle: "Scripture Collections",
+        metaDescription: "Admin scripture collection management",
+        title: "Scripture Collections",
+        subtitle:
+          "Create and manage named groups of Bible references for curated passage libraries.",
+        loading: "Loading collections...",
+        summary: "Showing {visible} of {total} collections",
+        actions: {
+          backToAdmin: "admin",
+          backToScripture: "scripture",
+          create: "New collection",
+          showFilters: "Show filters",
+          hideFilters: "Hide filters",
+          clearFilters: "Clear filters",
+        },
+        sort: {
+          fieldLabel: "Sort by",
+          fields: {
+            name: "Name",
+            createdAt: "Created date",
+          },
+          direction: {
+            asc: "Ascending",
+            desc: "Descending",
+          },
+        },
+        filters: {
+          search: {
+            label: "Search",
+            placeholder: "Search by name, slug, or description",
+          },
+        },
+        fields: {
+          referenceCount:
+            "{count, plural, one {# reference} other {# references}}",
+          updatedAt: "Updated",
+        },
+        values: {
+          unavailable: "Unavailable",
+        },
+        empty: {
+          noCollections: "No collections yet. Create one to get started.",
+          noMatches: "No collections match your search.",
+        },
+      },
+      collection: {
+        pageTitle: "{name}",
+        loadingPageTitle: "Collection",
+        metaDescription: "Scripture references in {name}",
+        metaDescriptionFallback: "Scripture collection references",
+        loading: "Loading collection...",
+        summary: "Showing {visible} of {total} references",
+        actions: {
+          backToCollections: "collections",
+          editCollection: "Edit collection",
+          createReference: "New reference",
+        },
+        empty: {
+          notFound: "This collection could not be found.",
+          noReferences: "No references in this collection yet.",
+          noMatches: "No references match your search.",
+        },
+      },
+    },
+  },
+  scriptureReferences: {
+    components: {
+      referenceFormDrawer: {
+        title: {
+          create: "New Reference",
+          edit: "Edit Reference",
+        },
+        actions: {
+          close: "Close",
+          cancel: "Cancel",
+          saveCreate: "Add reference",
+          saveEdit: "Save changes",
+          saving: "Verifying reference...",
+        },
+        fields: {
+          book: {
+            label: "Book",
+            placeholder: "Search for a book",
+          },
+          chapter: {
+            label: "Chapter",
+          },
+          startVerse: {
+            label: "Start verse",
+          },
+          endVerse: {
+            label: "End verse",
+            placeholder: "Optional",
+          },
+          collection: {
+            label: "Collections",
+            placeholder: "Optional — search or type new collections",
+          },
+          preview: {
+            label: "Normalized reference",
+            placeholder: "Enter a valid reference to preview",
+          },
+          passagePreview: {
+            label: "Passage preview",
+            error: "Unable to fetch this passage. Check the chapter and verses.",
+          },
+        },
+        notifications: {
+          createSuccess: "Reference added.",
+          createError: "Unable to add this reference right now.",
+          updateSuccess: "Reference saved.",
+          updateError: "Unable to save this reference right now.",
+          createCollectionError: "Unable to create this collection right now.",
+        },
+      },
+    },
+    views: {
+      index: {
+        pageTitle: "Scripture References",
+        metaDescription: "Admin scripture reference management",
+        title: "Scripture References",
+        subtitle:
+          "Add and manage individual Bible references, optionally grouped into collections.",
+        loading: "Loading references...",
+        summary: "Showing {visible} of {total} references",
+        actions: {
+          backToAdmin: "admin",
+          backToScripture: "scripture",
+          create: "New reference",
+          showFilters: "Show filters",
+          hideFilters: "Hide filters",
+          clearFilters: "Clear filters",
+          remove: "Remove",
+          removing: "Removing...",
+          edit: "Edit reference",
+        },
+        sort: {
+          fieldLabel: "Sort by",
+          fields: {
+            normalized: "Reference",
+            createdAt: "Created date",
+          },
+          direction: {
+            asc: "Ascending",
+            desc: "Descending",
+          },
+        },
+        filters: {
+          search: {
+            label: "Search",
+            placeholder: "Search by reference, book, or collection",
+          },
+          collection: {
+            label: "Collection",
+            all: "All collections",
+            uncollected: "Uncollected",
+          },
+        },
+        fields: {
+          uncollected: "Uncollected",
+          updatedAt: "Updated",
+          collectionsOverflow: "Show all {count} collections",
+          viewCollection: "View {name} collection",
+        },
+        values: {
+          unavailable: "Unavailable",
+        },
+        confirmDelete: {
+          title: "Remove reference?",
+          prompt: 'Remove "{reference}" from scripture references? This cannot be undone.',
+          actions: {
+            confirm: "Remove",
+            confirming: "Removing...",
+            cancel: "Cancel",
+          },
+        },
+        notifications: {
+          deleteSuccess: "Reference removed.",
+          deleteError: "Unable to remove this reference right now.",
+        },
+        empty: {
+          noReferences: "No references yet. Add one to get started.",
+          noMatches: "No references match your filters.",
+        },
+      },
+    },
+  },
+  scripture: {
+    views: {
+      index: {
+        pageTitle: "Scripture",
+        metaDescription: "Admin scripture management",
+        title: "Scripture",
+        subtitle:
+          "Manage curated passage collections and the individual Bible references they contain.",
+        loading: "Loading scripture modules...",
+        actions: {
+          backToAdmin: "admin",
+        },
+        cards: {
+          collections: {
+            title: "Collections",
+            description:
+              "Create and manage named groups of Bible references for curated passage libraries.",
+            total: "{count, plural, one {# collection} other {# collections}}",
+          },
+          references: {
+            title: "References",
+            description:
+              "Add individual Bible references, preview normalized passage strings, and assign collections.",
+            total: "{count, plural, one {# reference} other {# references}}",
+          },
+        },
+      },
+    },
+  },
   admin: {
     layout: {
       subtitle: "admin",
@@ -602,6 +874,16 @@ export const en = {
               active: "{count} active",
               locked: "{count} locked",
             },
+          },
+          scripture: {
+            title: "Scripture",
+            openLabel: "Open scripture admin",
+            description:
+              "Manage scripture collections, references, and curated passage libraries.",
+            collections:
+              "{count, plural, one {# collection} other {# collections}}",
+            references:
+              "{count, plural, one {# reference} other {# references}}",
           },
         },
       },
