@@ -5,21 +5,29 @@ import {
   requestPassage,
 } from "@/modules/blips/components/scripture-reference"
 
-const mockMatchMedia = (matches: boolean) => {
-  Object.defineProperty(window, "matchMedia", {
-    writable: true,
-    value: vi.fn().mockImplementation((query: string) => ({
-      matches,
-      media: query,
-      onchange: null,
-      addListener: vi.fn(),
-      removeListener: vi.fn(),
-      addEventListener: vi.fn(),
-      removeEventListener: vi.fn(),
-      dispatchEvent: vi.fn(),
-    })),
-  })
-}
+const { latestDrawerProps, viewportWidth } = vi.hoisted(() => ({
+  latestDrawerProps: {
+    value: null as any,
+  },
+  viewportWidth: vi.fn(() => 1024),
+}))
+
+vi.mock("@/components/drawer", () => ({
+  DrawerPosition: {
+    BOTTOM: "bottom",
+  },
+  Drawer: (props: any) => {
+    latestDrawerProps.value = props
+    return (
+      <div
+        data-testid="scripture-reference-drawer"
+        data-open={props.open ? "true" : "false"}>
+        <div data-testid="scripture-reference-drawer-title">{props.title}</div>
+        {props.children}
+      </div>
+    )
+  },
+}))
 
 describe("requestPassage", () => {
   beforeEach(() => {
@@ -73,11 +81,16 @@ describe("requestPassage", () => {
 
 describe("ScriptureReference", () => {
   beforeEach(() => {
-    mockMatchMedia(false)
+    viewportWidth.mockReturnValue(1024)
+    Object.defineProperty(window, "innerWidth", {
+      configurable: true,
+      value: viewportWidth(),
+    })
+    latestDrawerProps.value = null
     vi.restoreAllMocks()
   })
 
-  it("starts a passage fetch on first hover intent", async () => {
+  it("starts a passage fetch on first hover intent on desktop", async () => {
     vi.stubGlobal(
       "fetch",
       vi.fn().mockResolvedValue({
@@ -109,7 +122,7 @@ describe("ScriptureReference", () => {
     )
   })
 
-  it("does not refetch after the first hover intent", async () => {
+  it("does not refetch after the first hover intent on desktop", async () => {
     vi.stubGlobal(
       "fetch",
       vi.fn().mockResolvedValue({
@@ -136,6 +149,51 @@ describe("ScriptureReference", () => {
 
     await waitFor(() => {
       expect(fetch).toHaveBeenCalledTimes(1)
+    })
+  })
+
+  it("opens a bottom drawer and fetches on tap at mobile widths", async () => {
+    viewportWidth.mockReturnValue(640)
+    Object.defineProperty(window, "innerWidth", {
+      configurable: true,
+      value: 640,
+    })
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          passage: "Jesus wept.",
+        }),
+      }),
+    )
+
+    render(() => (
+      <ScriptureReference
+        book="John"
+        chapter={11}
+        startVerse={35}
+        normalized="John 11:35">
+        John 11:35
+      </ScriptureReference>
+    ))
+
+    await fireEvent.click(screen.getByText("John 11:35"))
+
+    await waitFor(() => {
+      expect(fetch).toHaveBeenCalledTimes(1)
+      expect(
+        screen.getByTestId("scripture-reference-drawer").getAttribute("data-open"),
+      ).toBe("true")
+    })
+
+    expect(latestDrawerProps.value).toMatchObject({
+      side: "bottom",
+      drawerProps: expect.objectContaining({
+        snapPoints: [0, 0.5, 1],
+        defaultSnapPoint: 0.5,
+        closeOnOutsidePointer: true,
+      }),
     })
   })
 })
