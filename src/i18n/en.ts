@@ -589,15 +589,19 @@ export const en = {
       collectionFormDrawer: {
         title: {
           create: "New Collection",
+          view: "Collection",
           edit: "Edit Collection",
         },
         actions: {
           close: "Close",
           cancel: "Cancel",
+          cancelEdit: "Cancel",
+          edit: "Edit",
           save: "Save",
           saving: "Saving...",
           delete: "Delete collection",
           deleting: "Deleting...",
+          viewReferences: "View references",
         },
         fields: {
           name: {
@@ -613,6 +617,13 @@ export const en = {
             placeholder: "collection-slug",
             hint: "Used in URLs. Auto-generated from the name until you edit it.",
           },
+          referenceCount:
+            "{count, plural, one {# reference} other {# references}}",
+          updatedAt: "Updated",
+          noDescription: "No description",
+        },
+        values: {
+          unavailable: "Unavailable",
         },
         confirmDelete: {
           title: "Delete collection?",
@@ -705,11 +716,16 @@ export const en = {
       referenceFormDrawer: {
         title: {
           create: "New Reference",
+          view: "Reference",
           edit: "Edit Reference",
         },
         actions: {
           close: "Close",
           cancel: "Cancel",
+          cancelEdit: "Cancel",
+          edit: "Edit",
+          delete: "Remove reference",
+          deleting: "Removing...",
           saveCreate: "Add reference",
           saveEdit: "Save changes",
           saving: "Verifying reference...",
@@ -733,6 +749,11 @@ export const en = {
             label: "Collections",
             placeholder: "Optional — search or type new collections",
           },
+          slug: {
+            label: "Slug",
+          },
+          updatedAt: "Updated",
+          uncollected: "Uncollected",
           preview: {
             label: "Normalized reference",
             placeholder: "Enter a valid reference to preview",
@@ -742,12 +763,26 @@ export const en = {
             error: "Unable to fetch this passage. Check the chapter and verses.",
           },
         },
+        values: {
+          unavailable: "Unavailable",
+        },
+        confirmDelete: {
+          title: "Remove reference?",
+          prompt: 'Remove "{reference}" from scripture references? This cannot be undone.',
+          actions: {
+            confirm: "Remove",
+            confirming: "Removing...",
+            cancel: "Cancel",
+          },
+        },
         notifications: {
           createSuccess: "Reference added.",
           createError: "Unable to add this reference right now.",
           updateSuccess: "Reference saved.",
           updateError: "Unable to save this reference right now.",
           createCollectionError: "Unable to create this collection right now.",
+          deleteSuccess: "Reference removed.",
+          deleteError: "Unable to remove this reference right now.",
         },
       },
     },

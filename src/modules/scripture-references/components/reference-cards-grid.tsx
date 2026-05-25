@@ -1,6 +1,5 @@
 import { For, Show } from "solid-js"
 import { Icon } from "@/components/icon"
-import { IconButton } from "@/components/icon-button"
 import { Tooltip } from "@/components/tooltip"
 import type {
   AdminReferenceCollection,
@@ -14,19 +13,14 @@ export type ReferenceCardsGridLabels = {
   uncollected: string
   updatedAt: string
   unavailable: string
-  edit: string
-  remove: string
-  removing: string
   collectionsOverflow: (count: number) => string
   viewCollection: (name: string) => string
 }
 
 type ReferenceCardsGridProps = {
   references: AdminReferenceRecord[]
-  deletingReferenceId: number | null
   labels: ReferenceCardsGridLabels
-  onEdit: (reference: AdminReferenceRecord) => void
-  onDelete: (reference: AdminReferenceRecord) => void
+  onSelect: (reference: AdminReferenceRecord) => void
 }
 
 const collectionHref = (collection: AdminReferenceCollection) =>
@@ -54,7 +48,10 @@ export function ReferenceCardsGrid(props: ReferenceCardsGridProps) {
     <div class="scripture-references-view-list">
       <For each={props.references}>
         {reference => (
-          <article class="scripture-references-view-card">
+          <button
+            type="button"
+            class="scripture-references-view-card"
+            onClick={() => props.onSelect(reference)}>
             <div class="scripture-references-view-card-header">
               <div class="scripture-references-view-card-copy">
                 <h2 class="scripture-references-view-card-reference">
@@ -123,30 +120,8 @@ export function ReferenceCardsGrid(props: ReferenceCardsGridProps) {
                   {formatLongDate(reference.updatedAt) ?? props.labels.unavailable}
                 </span>
               </div>
-              <div class="scripture-references-view-card-actions">
-                <IconButton
-                  size="xs"
-                  icon="edit"
-                  class="scripture-references-view-edit-button"
-                  aria-label={props.labels.edit}
-                  disabled={props.deletingReferenceId !== null}
-                  onClick={() => props.onEdit(reference)}
-                />
-                <IconButton
-                  size="xs"
-                  icon="delete"
-                  class="scripture-references-view-delete-button"
-                  aria-label={
-                    props.deletingReferenceId === reference.id
-                      ? props.labels.removing
-                      : props.labels.remove
-                  }
-                  disabled={props.deletingReferenceId !== null}
-                  onClick={() => props.onDelete(reference)}
-                />
-              </div>
             </div>
-          </article>
+          </button>
         )}
       </For>
     </div>

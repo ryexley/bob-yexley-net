@@ -26,7 +26,10 @@ import "./index.css"
 const tr = ptr("scriptureCollections.views.index")
 const FILTER_PANEL_ANIMATION_MS = 200
 
-type DrawerState = { mode: "closed" } | { mode: "create" }
+type DrawerState =
+  | { mode: "closed" }
+  | { mode: "create" }
+  | { mode: "view"; collectionId: number }
 
 export function ScriptureCollectionsView() {
   const navigate = useNavigate()
@@ -133,8 +136,19 @@ export function ScriptureCollectionsView() {
     }
   })
 
-  const drawerOpen = createMemo(() => drawerState().mode === "create")
-  const drawerMode = createMemo(() => "create" as const)
+  const drawerOpen = createMemo(() => drawerState().mode !== "closed")
+  const drawerMode = createMemo(() => {
+    const state = drawerState()
+    return state.mode === "closed" ? "create" : state.mode
+  })
+  const viewingCollection = createMemo(() => {
+    const state = drawerState()
+    if (state.mode !== "view") {
+      return null
+    }
+
+    return collections().find(collection => collection.id === state.collectionId) ?? null
+  })
   const hasQueryResult = createMemo(() => adminCollectionsQuery() !== undefined)
   const pageError = createMemo(() => adminCollectionsQuery()?.error ?? null)
   const hasFiltersApplied = createMemo(() => searchValue().trim().length > 0)
@@ -333,7 +347,9 @@ export function ScriptureCollectionsView() {
                       <button
                         type="button"
                         class="scripture-collections-view-card"
-                        onClick={() => navigate(pages.scriptureCollection(collection.slug))}>
+                        onClick={() =>
+                          setDrawerState({ mode: "view", collectionId: collection.id })
+                        }>
                         <div class="scripture-collections-view-card-header">
                           <div class="scripture-collections-view-card-copy">
                             <div class="scripture-collections-view-card-name">
@@ -378,7 +394,7 @@ export function ScriptureCollectionsView() {
         <CollectionFormDrawer
           open={drawerOpen()}
           mode={drawerMode()}
-          collection={null}
+          collection={viewingCollection()}
           store={store}
           onOpenChange={open => {
             if (!open) {

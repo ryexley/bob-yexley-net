@@ -2,10 +2,8 @@ import { createAsync, useNavigate } from "@solidjs/router"
 import { Meta, Title } from "@solidjs/meta"
 import { createEffect, createMemo, createSignal, Show, onCleanup } from "solid-js"
 import { Button } from "@/components/button"
-import { useConfirm } from "@/components/confirm-dialog"
 import { Icon, LoadingSpinner } from "@/components/icon"
 import { Input } from "@/components/input"
-import { useNotify } from "@/components/notification"
 import { Select, type SelectOption } from "@/components/select"
 import { useSupabase } from "@/context/services-context"
 import { useAuth } from "@/context/auth-context"
@@ -35,14 +33,12 @@ import "./index.css"
 const tr = ptr("scriptureReferences.views.index")
 const FILTER_PANEL_ANIMATION_MS = 200
 
-type ReferenceDrawerState = { mode: "create" } | { mode: "edit"; referenceId: number }
+type ReferenceDrawerState = { mode: "create" } | { mode: "view"; referenceId: number }
 
 export function ScriptureReferencesView() {
   const navigate = useNavigate()
   const auth = useAuth()
   const supabase = useSupabase()
-  const confirm = useConfirm()
-  const notify = useNotify()
   const adminReferencesQuery = createAsync(() => getAdminReferences())
   const adminCollectionsQuery = createAsync(() => getAdminCollections())
   const referenceStore = scriptureReferenceStore(supabase.client, { subscribe: false })
@@ -52,9 +48,9 @@ export function ScriptureReferencesView() {
   const drawerMode = createMemo(() => drawerState().mode)
   const references = createMemo(() => referenceStore.adminRecords())
   const collections = createMemo(() => collectionStore.adminRecords())
-  const editingReference = createMemo(() => {
+  const viewingReference = createMemo(() => {
     const state = drawerState()
-    if (state.mode !== "edit") {
+    if (state.mode !== "view") {
       return null
     }
 
@@ -67,7 +63,6 @@ export function ScriptureReferencesView() {
   const [filtersOpen, setFiltersOpen] = createSignal(false)
   const [filtersRendered, setFiltersRendered] = createSignal(false)
   const [filtersVisible, setFiltersVisible] = createSignal(false)
-  const [deletingReferenceId, setDeletingReferenceId] = createSignal<number | null>(null)
   let filtersUnmountTimeout: ReturnType<typeof setTimeout> | null = null
   let filtersOpenAnimationFrame: number | null = null
 
@@ -241,9 +236,6 @@ export function ScriptureReferencesView() {
     uncollected: tr("fields.uncollected"),
     updatedAt: tr("fields.updatedAt"),
     unavailable: tr("values.unavailable"),
-    edit: tr("actions.edit"),
-    remove: tr("actions.remove"),
-    removing: tr("actions.removing"),
     collectionsOverflow: (count: number) => tr("fields.collectionsOverflow", { count }),
     viewCollection: (name: string) => tr("fields.viewCollection", { name }),
   }))
@@ -280,45 +272,13 @@ export function ScriptureReferencesView() {
     setDrawerOpen(true)
   }
 
-  const openEditDrawer = (reference: AdminReferenceRecord) => {
-    setDrawerState({ mode: "edit", referenceId: reference.id })
+  const openViewDrawer = (reference: AdminReferenceRecord) => {
+    setDrawerState({ mode: "view", referenceId: reference.id })
     setDrawerOpen(true)
   }
 
   const handleDrawerOpenChange = (open: boolean) => {
     setDrawerOpen(open)
-  }
-
-  const handleDeleteReference = (reference: AdminReferenceRecord) => {
-    if (deletingReferenceId() !== null) {
-      return
-    }
-
-    confirm({
-      title: tr("confirmDelete.title"),
-      prompt: tr("confirmDelete.prompt", { reference: reference.normalized }),
-      variant: "destructive",
-      confirmationActionLabel: tr("confirmDelete.actions.confirm"),
-      confirmationActionLoadingLabel: tr("confirmDelete.actions.confirming"),
-      cancelActionLabel: tr("confirmDelete.actions.cancel"),
-      onConfirm: async () => {
-        setDeletingReferenceId(reference.id)
-        const result = await referenceStore.deleteReference(reference.id)
-        setDeletingReferenceId(null)
-
-        if (!result.success) {
-          notify.error({
-            title: tr("notifications.deleteError"),
-            content: result.error ?? tr("notifications.deleteError"),
-          })
-          return
-        }
-
-        notify.success({
-          content: tr("notifications.deleteSuccess"),
-        })
-      },
-    })
   }
 
   return (
@@ -463,10 +423,8 @@ export function ScriptureReferencesView() {
                 }>
                 <ReferenceCardsGrid
                   references={filteredReferences()}
-                  deletingReferenceId={deletingReferenceId()}
                   labels={referenceCardLabels()}
-                  onEdit={openEditDrawer}
-                  onDelete={handleDeleteReference}
+                  onSelect={openViewDrawer}
                 />
               </Show>
             </Show>
@@ -476,7 +434,7 @@ export function ScriptureReferencesView() {
         <ReferenceFormDrawer
           open={drawerOpen()}
           mode={drawerMode()}
-          reference={editingReference()}
+          reference={viewingReference()}
           collections={collections()}
           defaultCollectionNames={defaultDrawerCollectionNames()}
           referenceStore={referenceStore}

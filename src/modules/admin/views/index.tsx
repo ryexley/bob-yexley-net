@@ -92,40 +92,40 @@ export function AdminHomeView() {
         content={tr("metaDescription")}
       />
       <main class="admin-home-view">
-        <div class="admin-home-view-shell">
-          <div class="admin-home-view-header">
-            <h1 class="admin-home-view-title">{tr("title")}</h1>
+        <div class="shell">
+          <div class="header">
+            <h1 class="title">{tr("title")}</h1>
           </div>
 
           <RequiresSuperUser
             fallback={
-              <div class="admin-home-view-loading-state">
+              <div class="loading-state">
                 <LoadingSpinner size="2rem" />
                 <p>{tr("loading")}</p>
               </div>
             }>
             {isReady() ? (
-              <div class="admin-home-view-grid">
+              <div class="grid">
                 <a
                   href={pages.users}
-                  class="admin-home-view-card">
-                  <div class="admin-home-view-card-header">
+                  class="card">
+                  <div class="card-header">
                     <Icon
                       name="group"
-                      class="admin-home-view-card-icon"
+                      class="icon"
                     />
-                    <h2 class="admin-home-view-card-title">{tr("cards.users.title")}</h2>
+                    <h2 class="card-title">{tr("cards.users.title")}</h2>
                   </div>
-                  <div class="admin-home-view-card-copy">
-                    <p class="admin-home-view-card-description">
+                  <div class="copy">
+                    <p class="description">
                       {tr("cards.users.description")}
                     </p>
                   </div>
-                  <div class="admin-home-view-card-bubbles">
+                  <div class="bubbles">
                     <For each={statusBubbles()}>
                       {item => (
                         <span
-                          class="admin-home-view-status-bubble"
+                          class="bubble"
                           data-status={item.key}>
                           {tr(`cards.users.statuses.${item.key}`, {
                             count: item.count,
@@ -135,35 +135,37 @@ export function AdminHomeView() {
                     </For>
                   </div>
                 </a>
-                <div class="admin-home-view-card admin-home-view-scripture-card">
+                <div class="card scripture-card">
                   <a
                     href={pages.scripture}
-                    class="admin-home-view-card-stretched-link"
+                    class="stretched-link"
                     aria-label={tr("cards.scripture.openLabel")}
                   />
-                  <div class="admin-home-view-card-header">
+                  <div class="card-header">
                     <Icon
                       name="menu_book"
-                      class="admin-home-view-card-icon"
+                      class="icon"
                     />
-                    <h2 class="admin-home-view-card-title">{tr("cards.scripture.title")}</h2>
+                    <h2 class="card-title">{tr("cards.scripture.title")}</h2>
                   </div>
-                  <div class="admin-home-view-card-copy">
-                    <p class="admin-home-view-card-description">
+                  <div class="copy">
+                    <p class="description">
                       {tr("cards.scripture.description")}
                     </p>
                   </div>
-                  <div class="admin-home-view-card-bubbles">
+                  <div class="bubbles">
                     <a
                       href={pages.scriptureCollections}
-                      class="admin-home-view-card-direct-link admin-home-view-status-bubble">
+                      class="bubble"
+                      data-status="info">
                       {tr("cards.scripture.collections", {
                         count: collectionCount(),
                       })}
                     </a>
                     <a
                       href={pages.scriptureReferences}
-                      class="admin-home-view-card-direct-link admin-home-view-status-bubble">
+                      class="bubble"
+                      data-status="info">
                       {tr("cards.scripture.references", {
                         count: referenceCount(),
                       })}
@@ -172,7 +174,7 @@ export function AdminHomeView() {
                 </div>
               </div>
             ) : (
-              <div class="admin-home-view-loading-state">
+              <div class="loading-state">
                 <LoadingSpinner size="2rem" />
                 <p>{tr("loading")}</p>
               </div>

@@ -1,10 +1,10 @@
-import { createEffect, createMemo, createSignal, onCleanup, Show } from "solid-js"
-import { Drawer, DrawerPosition } from "@/components/drawer"
+import { createEffect, createMemo, createSignal, For, onCleanup, Show } from "solid-js"
 import { Button } from "@/components/button"
 import { Combobox } from "@/components/combobox"
-import { Icon } from "@/components/icon"
+import { FormDrawer } from "@/components/form-drawer"
 import { Input } from "@/components/input"
 import { useNotify } from "@/components/notification"
+import { useConfirm } from "@/components/confirm-dialog"
 import {
   ScripturePassagePanel,
   type PassageState,
@@ -20,7 +20,8 @@ import type { scriptureReferenceStore } from "@/modules/scripture-references/dat
 import type { AdminReferenceRecord } from "@/modules/scripture-references/data/types"
 import { buildNormalizedReferencePreview } from "@/modules/scripture-references/util/reference-preview"
 import { ptr } from "@/i18n"
-import { withWindow } from "@/util/browser"
+import { pages } from "@/urls"
+import { formatLongDate } from "@/util/formatters"
 import "./reference-form-drawer.css"
 
 const tr = ptr("scriptureReferences.components.referenceFormDrawer")
@@ -39,7 +40,7 @@ const bookOptions: BookOption[] = CANONICAL_BOOK_NAMES.map(name => ({
   label: name,
 }))
 
-type ReferenceFormDrawerMode = "create" | "edit"
+type ReferenceFormDrawerMode = "create" | "view"
 
 type ReferenceFormDrawerProps = {
   open: boolean
@@ -122,8 +123,10 @@ async function fetchPassagePreview(reference: string, book: string, query: {
 }
 
 export function ReferenceFormDrawer(props: ReferenceFormDrawerProps) {
-  const CLOSE_ANIMATION_MS = 500
   const notify = useNotify()
+  const confirm = useConfirm()
+  const [isEditing, setIsEditing] = createSignal(false)
+  const [isDeleting, setIsDeleting] = createSignal(false)
   const [mountedReference, setMountedReference] = createSignal<AdminReferenceRecord | null>(
     props.reference ?? null,
   )
@@ -138,15 +141,23 @@ export function ReferenceFormDrawer(props: ReferenceFormDrawerProps) {
     ReferenceCollectionOption[]
   >([])
   const [isSaving, setIsSaving] = createSignal(false)
-  const [isMounted, setIsMounted] = createSignal(false)
   const [contentElement, setContentElement] = createSignal<HTMLElement | null>(null)
   const [passagePreview, setPassagePreview] = createSignal<PassageState>({ status: "idle" })
-  let closeUnmountTimeout: ReturnType<typeof setTimeout> | null = null
 
   const currentReference = createMemo(() => props.reference ?? mountedReference())
-  const drawerTitle = createMemo(() =>
-    props.mode === "create" ? tr("title.create") : tr("title.edit"),
-  )
+  const isFormMode = createMemo(() => props.mode === "create" || isEditing())
+  const drawerTitle = createMemo(() => {
+    if (props.mode === "create") {
+      return tr("title.create")
+    }
+
+    const reference = currentReference()
+    if (isEditing()) {
+      return tr("title.edit")
+    }
+
+    return reference?.normalized ?? tr("title.view")
+  })
   const saveLabel = createMemo(() =>
     isSaving()
       ? tr("actions.saving")
@@ -166,13 +177,13 @@ export function ReferenceFormDrawer(props: ReferenceFormDrawerProps) {
     ),
   )
   const isDirty = createMemo(() => {
-    if (props.mode !== "edit") {
+    if (props.mode === "create") {
       return true
     }
 
     const reference = currentReference()
     const preview = normalizedPreview()
-    if (!reference || !preview) {
+    if (!reference || !preview || !isEditing()) {
       return false
     }
 
@@ -196,6 +207,7 @@ export function ReferenceFormDrawer(props: ReferenceFormDrawerProps) {
       normalizedPreview() !== null &&
       passagePreview().status === "loaded" &&
       !isSaving() &&
+      !isDeleting() &&
       (props.mode === "create" || isDirty()),
   )
   const portalMount = createMemo(() => contentElement() ?? undefined)
@@ -220,34 +232,41 @@ export function ReferenceFormDrawer(props: ReferenceFormDrawerProps) {
     })
   }
   const passageFetchRequest = createMemo(() => {
-    const book = selectedBook()?.value
-    const reference = normalizedPreview()
-    if (!book || !reference) {
+    if (isFormMode()) {
+      const book = selectedBook()?.value
+      const reference = normalizedPreview()
+      if (!book || !reference) {
+        return null
+      }
+
+      const chapterValue = Number.parseInt(chapter(), 10)
+      const startVerseValue = Number.parseInt(startVerse(), 10)
+      const endVerseTrimmed = endVerse().trim()
+      const endVerseValue =
+        endVerseTrimmed.length > 0 ? Number.parseInt(endVerseTrimmed, 10) : null
+
+      return {
+        book,
+        reference,
+        chapter: chapterValue,
+        startVerse: startVerseValue,
+        endVerse: endVerseValue,
+      }
+    }
+
+    const reference = currentReference()
+    if (!reference) {
       return null
     }
 
-    const chapterValue = Number.parseInt(chapter(), 10)
-    const startVerseValue = Number.parseInt(startVerse(), 10)
-    const endVerseTrimmed = endVerse().trim()
-    const endVerseValue =
-      endVerseTrimmed.length > 0 ? Number.parseInt(endVerseTrimmed, 10) : null
-
     return {
-      book,
-      reference,
-      chapter: chapterValue,
-      startVerse: startVerseValue,
-      endVerse: endVerseValue,
+      book: reference.book,
+      reference: reference.normalized,
+      chapter: reference.chapter,
+      startVerse: reference.startVerse,
+      endVerse: reference.endVerse,
     }
   })
-  const drawerBehavior = createMemo(() => ({
-    closeOnEscapeKeyDown: false,
-    closeOnOutsidePointer: false,
-    closeOnOutsideFocus: false,
-    snapPoints: [1],
-    breakPoints: [],
-    defaultSnapPoint: 1,
-  }))
 
   const resetForm = () => {
     mergeCollectionOptions(props.collections.map(collection => collection.name))
@@ -280,19 +299,18 @@ export function ReferenceFormDrawer(props: ReferenceFormDrawerProps) {
     setSelectedCollections(toCollectionOptions(collectionNames))
   }
 
-  const requestClose = () => {
-    if (isSaving()) {
+  const resetEditingState = () => {
+    setIsEditing(false)
+    resetForm()
+  }
+
+  const handleCancel = () => {
+    if (props.mode === "view" && isEditing()) {
+      resetEditingState()
       return
     }
 
     props.onOpenChange(false)
-  }
-
-  const clearCloseUnmountTimeout = () => {
-    if (closeUnmountTimeout) {
-      clearTimeout(closeUnmountTimeout)
-      closeUnmountTimeout = null
-    }
   }
 
   createEffect(() => {
@@ -313,31 +331,13 @@ export function ReferenceFormDrawer(props: ReferenceFormDrawerProps) {
     props.defaultCollectionNames
     currentReference()?.id
     if (props.open) {
+      setIsEditing(false)
       resetForm()
     }
   })
 
   createEffect(() => {
-    if (props.open) {
-      clearCloseUnmountTimeout()
-      setIsMounted(true)
-      return
-    }
-
-    if (!isMounted()) {
-      return
-    }
-
-    clearCloseUnmountTimeout()
-    closeUnmountTimeout = setTimeout(() => {
-      setIsMounted(false)
-      setMountedReference(null)
-      closeUnmountTimeout = null
-    }, CLOSE_ANIMATION_MS)
-  })
-
-  createEffect(() => {
-    if (!props.open || isSaving()) {
+    if (!props.open || isSaving() || isDeleting()) {
       return
     }
 
@@ -367,49 +367,6 @@ export function ReferenceFormDrawer(props: ReferenceFormDrawerProps) {
     })
   })
 
-  createEffect(() => {
-    if (!props.open || isSaving()) {
-      return
-    }
-
-    const content = contentElement()
-    if (!content) {
-      return
-    }
-
-    withWindow(window => {
-      const handleKeyDown = (event: KeyboardEvent) => {
-        if (event.key !== "Escape") {
-          return
-        }
-
-        event.preventDefault()
-        requestClose()
-      }
-
-      const handlePointerDown = (event: PointerEvent) => {
-        const target = event.target
-        if (!(target instanceof Node) || content.contains(target)) {
-          return
-        }
-
-        requestClose()
-      }
-
-      window.document.addEventListener("keydown", handleKeyDown)
-      window.document.addEventListener("pointerdown", handlePointerDown, true)
-
-      onCleanup(() => {
-        window.document.removeEventListener("keydown", handleKeyDown)
-        window.document.removeEventListener("pointerdown", handlePointerDown, true)
-      })
-    })
-  })
-
-  onCleanup(() => {
-    clearCloseUnmountTimeout()
-  })
-
   const handleCollectionSelectionChange = (nextCollections: ReferenceCollectionOption[]) => {
     setSelectedCollections(nextCollections)
     mergeCollectionOptions(nextCollections.map(collection => collection.value))
@@ -428,7 +385,7 @@ export function ReferenceFormDrawer(props: ReferenceFormDrawerProps) {
       return
     }
 
-    if (props.mode === "edit" && !currentReference()) {
+    if (props.mode === "view" && !currentReference()) {
       return
     }
 
@@ -472,157 +429,312 @@ export function ReferenceFormDrawer(props: ReferenceFormDrawerProps) {
     }
 
     mergeCollectionOptions(result.data.collections.map(collection => collection.name))
-    props.onOpenChange(false)
+
+    if (props.mode === "create") {
+      props.onOpenChange(false)
+      notify.success({
+        content: tr("notifications.createSuccess"),
+      })
+      return
+    }
+
+    setMountedReference(result.data)
+    setIsEditing(false)
     notify.success({
-      content:
-        props.mode === "create"
-          ? tr("notifications.createSuccess")
-          : tr("notifications.updateSuccess"),
+      content: tr("notifications.updateSuccess"),
     })
   }
 
+  const handleDelete = () => {
+    const reference = currentReference()
+    if (!reference || props.mode !== "view" || isSaving() || isDeleting()) {
+      return
+    }
+
+    confirm({
+      title: tr("confirmDelete.title"),
+      prompt: tr("confirmDelete.prompt", { reference: reference.normalized }),
+      variant: "destructive",
+      confirmationActionLabel: tr("confirmDelete.actions.confirm"),
+      confirmationActionLoadingLabel: tr("confirmDelete.actions.confirming"),
+      cancelActionLabel: tr("confirmDelete.actions.cancel"),
+      onConfirm: async () => {
+        setIsDeleting(true)
+        const result = await props.referenceStore.deleteReference(reference.id)
+        setIsDeleting(false)
+
+        if (!result.success) {
+          notify.error({
+            title: tr("notifications.deleteError"),
+            content: result.error ?? tr("notifications.deleteError"),
+          })
+          return
+        }
+
+        props.onOpenChange(false)
+        notify.success({
+          content: tr("notifications.deleteSuccess"),
+        })
+      },
+    })
+  }
+
+  const renderPassagePreview = () => (
+    <Show when={passageFetchRequest()}>
+      <div class="reference-form-drawer-passage-preview">
+        <span class="reference-form-drawer-preview-label">
+          {tr("fields.passagePreview.label")}
+        </span>
+        <Show
+          when={passagePreview().status === "error"}
+          fallback={
+            <ScripturePassagePanel
+              reference={passageFetchRequest()!.reference}
+              state={passagePreview()}
+              showReference={false}
+            />
+          }>
+          <p class="reference-form-drawer-passage-preview-error">
+            {tr("fields.passagePreview.error")}
+          </p>
+        </Show>
+      </div>
+    </Show>
+  )
+
   return (
-    <Show when={isMounted()}>
-      <Drawer
-        side={DrawerPosition.RIGHT}
-        open={props.open}
-        onOpenChange={open => props.onOpenChange(open)}
-        contentRef={setContentElement}
-        showTrigger={false}
-        showClose={false}
-        drawerProps={drawerBehavior()}
-        class="reference-form-drawer"
-        title={drawerTitle()}
-        closeAriaLabel={tr("actions.close")}>
-        <button
-          type="button"
-          class="reference-form-drawer-close"
-          aria-label={tr("actions.close")}
-          onClick={() => requestClose()}>
-          <Icon name="chevron_right" />
-        </button>
-        <div class="reference-form-drawer-shell">
-          <div class="reference-form-drawer-form">
-            <Combobox<BookOption>
-              label={tr("fields.book.label")}
-              placeholder={tr("fields.book.placeholder")}
-              options={bookOptions}
-              value={selectedBook()}
-              onChange={setSelectedBook}
-              optionValue="value"
-              optionTextValue="label"
-              optionLabel="label"
-              openOnFocus
-              portalMount={portalMount()}
-              disabled={isSaving()}
-            />
-
-            <div class="reference-form-drawer-verse-fields">
-              <Input
-                label={tr("fields.chapter.label")}
-                type="number"
-                min={1}
-                inputmode="numeric"
-                value={chapter()}
-                onInput={event => setChapter(event.currentTarget.value)}
-                disabled={isSaving()}
-              />
-              <Input
-                label={tr("fields.startVerse.label")}
-                type="number"
-                min={1}
-                inputmode="numeric"
-                value={startVerse()}
-                onInput={event => setStartVerse(event.currentTarget.value)}
-                disabled={isSaving()}
-              />
-              <Input
-                label={tr("fields.endVerse.label")}
-                type="number"
-                min={1}
-                inputmode="numeric"
-                value={endVerse()}
-                placeholder={tr("fields.endVerse.placeholder")}
-                onInput={event => setEndVerse(event.currentTarget.value)}
-                disabled={isSaving()}
-              />
-            </div>
-
-            <ReferenceCollections
-              label={tr("fields.collection.label")}
-              placeholder={tr("fields.collection.placeholder")}
-              containerClass="reference-form-drawer-collection-combobox"
-              options={collectionOptions()}
-              value={selectedCollections()}
-              onChange={handleCollectionSelectionChange}
-              freeSolo
-              portalMount={portalMount()}
-              disabled={isSaving()}
-              onCreateOption={inputValue => {
-                const value = inputValue.trim()
-                if (!value) {
-                  return null
-                }
-
-                const existing = collectionOptions().find(
-                  option => option.label.trim().toLowerCase() === value.toLowerCase(),
-                )
-
-                return existing ?? { value, label: value }
-              }}
-            />
-
-            <div class="reference-form-drawer-preview">
-              <span class="reference-form-drawer-preview-label">
-                {tr("fields.preview.label")}
-              </span>
-              <span class="reference-form-drawer-preview-value">
-                {normalizedPreview() ?? tr("fields.preview.placeholder")}
-              </span>
-            </div>
-
-            <Show when={passageFetchRequest()}>
-              <div class="reference-form-drawer-passage-preview">
-                <span class="reference-form-drawer-preview-label">
-                  {tr("fields.passagePreview.label")}
-                </span>
-                <Show
-                  when={passagePreview().status === "error"}
-                  fallback={
-                    <ScripturePassagePanel
-                      reference={passageFetchRequest()!.reference}
-                      state={passagePreview()}
-                      showReference={false}
-                    />
-                  }>
-                  <p class="reference-form-drawer-passage-preview-error">
-                    {tr("fields.passagePreview.error")}
-                  </p>
-                </Show>
-              </div>
-            </Show>
-
-            <div class="reference-form-drawer-actions">
+    <FormDrawer
+      open={props.open}
+      onOpenChange={open => props.onOpenChange(open)}
+      title={drawerTitle()}
+      closeAriaLabel={tr("actions.close")}
+      class="reference-form-drawer"
+      when={props.mode === "create" || Boolean(currentReference())}
+      canDismiss={() => !isSaving() && !isDeleting()}
+      onContentRef={setContentElement}
+      onClosed={() => setMountedReference(null)}
+      actionsClass="form-drawer-actions reference-form-drawer-actions"
+      actions={
+        <Show
+          when={isFormMode()}
+          fallback={
+            <>
               <Button
                 type="button"
                 variant="ghost"
                 size="sm"
-                label={tr("actions.cancel")}
-                disabled={isSaving()}
-                onClick={() => requestClose()}
+                class="reference-form-drawer-delete"
+                label={
+                  isDeleting()
+                    ? tr("actions.deleting")
+                    : tr("actions.delete")
+                }
+                disabled={isSaving() || isDeleting()}
+                onClick={handleDelete}
               />
-              <Button
-                type="button"
-                variant="primary"
-                size="sm"
-                label={saveLabel()}
-                disabled={!canSave()}
-                onClick={() => void handleSave()}
-              />
-            </div>
+              <div class="reference-form-drawer-primary-actions">
+                <Button
+                  type="button"
+                  variant="primary"
+                  size="sm"
+                  label={tr("actions.edit")}
+                  disabled={isSaving() || isDeleting()}
+                  onClick={() => {
+                    resetForm()
+                    setIsEditing(true)
+                  }}
+                />
+              </div>
+            </>
+          }>
+          <Show when={props.mode === "view"}>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              class="reference-form-drawer-delete"
+              label={
+                isDeleting()
+                  ? tr("actions.deleting")
+                  : tr("actions.delete")
+              }
+              disabled={isSaving() || isDeleting()}
+              onClick={handleDelete}
+            />
+          </Show>
+          <div class="reference-form-drawer-primary-actions">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              label={
+                props.mode === "view" ? tr("actions.cancelEdit") : tr("actions.cancel")
+              }
+              disabled={isSaving() || isDeleting()}
+              onClick={handleCancel}
+            />
+            <Button
+              type="button"
+              variant="primary"
+              size="sm"
+              label={saveLabel()}
+              disabled={!canSave()}
+              onClick={() => void handleSave()}
+            />
           </div>
+        </Show>
+      }>
+      <Show
+        when={isFormMode()}
+        fallback={
+          <Show when={currentReference()}>
+            {reference => (
+              <div class="reference-form-drawer-view">
+                <div class="reference-form-drawer-details">
+                  <p class="reference-form-drawer-detail-line">
+                    <span class="reference-form-drawer-detail-label">
+                      {tr("fields.slug.label")}:
+                    </span>{" "}
+                    {reference().slug}
+                  </p>
+                  <p class="reference-form-drawer-detail-line">
+                    <span class="reference-form-drawer-detail-label">
+                      {tr("fields.book.label")}:
+                    </span>{" "}
+                    {reference().book}
+                  </p>
+                  <p class="reference-form-drawer-detail-line">
+                    <span class="reference-form-drawer-detail-label">
+                      {tr("fields.chapter.label")}:
+                    </span>{" "}
+                    {reference().chapter}
+                  </p>
+                  <p class="reference-form-drawer-detail-line">
+                    <span class="reference-form-drawer-detail-label">
+                      {tr("fields.startVerse.label")}:
+                    </span>{" "}
+                    {reference().startVerse}
+                    <Show when={reference().endVerse != null}>
+                      {" "}
+                      – {reference().endVerse}
+                    </Show>
+                  </p>
+                  <p class="reference-form-drawer-detail-line">
+                    <span class="reference-form-drawer-detail-label">
+                      {tr("fields.collection.label")}:
+                    </span>{" "}
+                    <Show
+                      when={reference().collections.length > 0}
+                      fallback={tr("fields.uncollected")}>
+                      <span class="reference-form-drawer-view-collections">
+                        <For each={reference().collections}>
+                          {collection => (
+                            <a
+                              href={
+                                collection.slug
+                                  ? pages.scriptureCollection(collection.slug)
+                                  : pages.scriptureCollectionById(collection.id)
+                              }
+                              class="reference-form-drawer-view-collection-link">
+                              {collection.name}
+                            </a>
+                          )}
+                        </For>
+                      </span>
+                    </Show>
+                  </p>
+                  <p class="reference-form-drawer-detail-line">
+                    <span class="reference-form-drawer-detail-label">
+                      {tr("fields.updatedAt")}:
+                    </span>{" "}
+                    {formatLongDate(reference().updatedAt) ?? tr("values.unavailable")}
+                  </p>
+                </div>
+                {renderPassagePreview()}
+              </div>
+            )}
+          </Show>
+        }>
+        <Combobox<BookOption>
+          label={tr("fields.book.label")}
+          placeholder={tr("fields.book.placeholder")}
+          options={bookOptions}
+          value={selectedBook()}
+          onChange={setSelectedBook}
+          optionValue="value"
+          optionTextValue="label"
+          optionLabel="label"
+          openOnFocus
+          portalMount={portalMount()}
+          disabled={isSaving() || isDeleting()}
+        />
+
+        <div class="reference-form-drawer-verse-fields">
+          <Input
+            label={tr("fields.chapter.label")}
+            type="number"
+            min={1}
+            inputmode="numeric"
+            value={chapter()}
+            onInput={event => setChapter(event.currentTarget.value)}
+            disabled={isSaving() || isDeleting()}
+          />
+          <Input
+            label={tr("fields.startVerse.label")}
+            type="number"
+            min={1}
+            inputmode="numeric"
+            value={startVerse()}
+            onInput={event => setStartVerse(event.currentTarget.value)}
+            disabled={isSaving() || isDeleting()}
+          />
+          <Input
+            label={tr("fields.endVerse.label")}
+            type="number"
+            min={1}
+            inputmode="numeric"
+            value={endVerse()}
+            placeholder={tr("fields.endVerse.placeholder")}
+            onInput={event => setEndVerse(event.currentTarget.value)}
+            disabled={isSaving() || isDeleting()}
+          />
         </div>
-      </Drawer>
-    </Show>
+
+        <ReferenceCollections
+          label={tr("fields.collection.label")}
+          placeholder={tr("fields.collection.placeholder")}
+          containerClass="reference-form-drawer-collection-combobox"
+          options={collectionOptions()}
+          value={selectedCollections()}
+          onChange={handleCollectionSelectionChange}
+          freeSolo
+          portalMount={portalMount()}
+          disabled={isSaving() || isDeleting()}
+          onCreateOption={inputValue => {
+            const value = inputValue.trim()
+            if (!value) {
+              return null
+            }
+
+            const existing = collectionOptions().find(
+              option => option.label.trim().toLowerCase() === value.toLowerCase(),
+            )
+
+            return existing ?? { value, label: value }
+          }}
+        />
+
+        <div class="reference-form-drawer-preview">
+          <span class="reference-form-drawer-preview-label">
+            {tr("fields.preview.label")}
+          </span>
+          <span class="reference-form-drawer-preview-value">
+            {normalizedPreview() ?? tr("fields.preview.placeholder")}
+          </span>
+        </div>
+
+        {renderPassagePreview()}
+      </Show>
+    </FormDrawer>
   )
 }

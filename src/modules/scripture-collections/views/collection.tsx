@@ -2,10 +2,8 @@ import { createAsync, useNavigate, useParams } from "@solidjs/router"
 import { Meta, Title } from "@solidjs/meta"
 import { createEffect, createMemo, createSignal, Show, onCleanup } from "solid-js"
 import { Button } from "@/components/button"
-import { useConfirm } from "@/components/confirm-dialog"
 import { Icon, LoadingSpinner } from "@/components/icon"
 import { Input } from "@/components/input"
-import { useNotify } from "@/components/notification"
 import { Select, type SelectOption } from "@/components/select"
 import { useSupabase } from "@/context/services-context"
 import { useAuth } from "@/context/auth-context"
@@ -41,15 +39,13 @@ const tr = ptr("scriptureCollections.views.collection")
 const referenceTr = ptr("scriptureReferences.views.index")
 const FILTER_PANEL_ANIMATION_MS = 200
 
-type ReferenceDrawerState = { mode: "create" } | { mode: "edit"; referenceId: number }
+type ReferenceDrawerState = { mode: "create" } | { mode: "view"; referenceId: number }
 
 export function ScriptureCollectionDetailView() {
   const params = useParams()
   const navigate = useNavigate()
   const auth = useAuth()
   const supabase = useSupabase()
-  const confirm = useConfirm()
-  const notify = useNotify()
   const adminCollectionsQuery = createAsync(() => getAdminCollections())
   const adminReferencesQuery = createAsync(() => getAdminReferences())
   const collectionStore = scriptureCollectionStore(supabase.client, { subscribe: false })
@@ -65,7 +61,6 @@ export function ScriptureCollectionDetailView() {
   const [filtersOpen, setFiltersOpen] = createSignal(false)
   const [filtersRendered, setFiltersRendered] = createSignal(false)
   const [filtersVisible, setFiltersVisible] = createSignal(false)
-  const [deletingReferenceId, setDeletingReferenceId] = createSignal<number | null>(null)
   let filtersUnmountTimeout: ReturnType<typeof setTimeout> | null = null
   let filtersOpenAnimationFrame: number | null = null
 
@@ -92,9 +87,9 @@ export function ScriptureCollectionDetailView() {
     return collections().find(item => item.id === trackedId) ?? null
   })
   const referenceDrawerMode = createMemo(() => referenceDrawerState().mode)
-  const editingReference = createMemo(() => {
+  const viewingReference = createMemo(() => {
     const state = referenceDrawerState()
-    if (state.mode !== "edit") {
+    if (state.mode !== "view") {
       return null
     }
 
@@ -282,9 +277,6 @@ export function ScriptureCollectionDetailView() {
     uncollected: referenceTr("fields.uncollected"),
     updatedAt: referenceTr("fields.updatedAt"),
     unavailable: referenceTr("values.unavailable"),
-    edit: referenceTr("actions.edit"),
-    remove: referenceTr("actions.remove"),
-    removing: referenceTr("actions.removing"),
     collectionsOverflow: (count: number) =>
       referenceTr("fields.collectionsOverflow", { count }),
     viewCollection: (name: string) => referenceTr("fields.viewCollection", { name }),
@@ -311,41 +303,9 @@ export function ScriptureCollectionDetailView() {
     setReferenceDrawerOpen(true)
   }
 
-  const openEditReferenceDrawer = (reference: AdminReferenceRecord) => {
-    setReferenceDrawerState({ mode: "edit", referenceId: reference.id })
+  const openViewReferenceDrawer = (reference: AdminReferenceRecord) => {
+    setReferenceDrawerState({ mode: "view", referenceId: reference.id })
     setReferenceDrawerOpen(true)
-  }
-
-  const handleDeleteReference = (reference: AdminReferenceRecord) => {
-    if (deletingReferenceId() !== null) {
-      return
-    }
-
-    confirm({
-      title: referenceTr("confirmDelete.title"),
-      prompt: referenceTr("confirmDelete.prompt", { reference: reference.normalized }),
-      variant: "destructive",
-      confirmationActionLabel: referenceTr("confirmDelete.actions.confirm"),
-      confirmationActionLoadingLabel: referenceTr("confirmDelete.actions.confirming"),
-      cancelActionLabel: referenceTr("confirmDelete.actions.cancel"),
-      onConfirm: async () => {
-        setDeletingReferenceId(reference.id)
-        const result = await referenceStore.deleteReference(reference.id)
-        setDeletingReferenceId(null)
-
-        if (!result.success) {
-          notify.error({
-            title: referenceTr("notifications.deleteError"),
-            content: result.error ?? referenceTr("notifications.deleteError"),
-          })
-          return
-        }
-
-        notify.success({
-          content: referenceTr("notifications.deleteSuccess"),
-        })
-      },
-    })
   }
 
   return (
@@ -384,7 +344,10 @@ export function ScriptureCollectionDetailView() {
             {currentCollection => (
               <>
                 <div class="scripture-collection-detail-view-header">
-                  <div class="scripture-collection-detail-view-header-copy">
+                  <button
+                    type="button"
+                    class="scripture-collection-detail-view-header-copy scripture-collection-detail-view-header-trigger"
+                    onClick={() => setCollectionDrawerOpen(true)}>
                     <h1 class="scripture-collection-detail-view-title">
                       {currentCollection().name}
                     </h1>
@@ -396,16 +359,7 @@ export function ScriptureCollectionDetailView() {
                         </p>
                       )}
                     </Show>
-                  </div>
-                  <div class="scripture-collection-detail-view-header-actions">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      label={tr("actions.editCollection")}
-                      onClick={() => setCollectionDrawerOpen(true)}
-                    />
-                  </div>
+                  </button>
                 </div>
 
                 <RequiresSuperUser
@@ -519,10 +473,8 @@ export function ScriptureCollectionDetailView() {
                       }>
                       <ReferenceCardsGrid
                         references={filteredReferences()}
-                        deletingReferenceId={deletingReferenceId()}
                         labels={referenceCardLabels()}
-                        onEdit={openEditReferenceDrawer}
-                        onDelete={handleDeleteReference}
+                        onSelect={openViewReferenceDrawer}
                       />
                     </Show>
                   </Show>
@@ -534,7 +486,7 @@ export function ScriptureCollectionDetailView() {
 
         <CollectionFormDrawer
           open={collectionDrawerOpen()}
-          mode="edit"
+          mode="view"
           collection={collection()}
           store={collectionStore}
           onOpenChange={open => {
@@ -548,7 +500,7 @@ export function ScriptureCollectionDetailView() {
         <ReferenceFormDrawer
           open={referenceDrawerOpen()}
           mode={referenceDrawerMode()}
-          reference={editingReference()}
+          reference={viewingReference()}
           collections={collections()}
           defaultCollectionNames={
             collection() ? [collection()!.name] : []

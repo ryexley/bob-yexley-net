@@ -1,7 +1,6 @@
-import { createEffect, createMemo, createSignal, onCleanup, Show } from "solid-js"
-import { Drawer, DrawerPosition } from "@/components/drawer"
+import { createEffect, createMemo, createSignal, Show } from "solid-js"
 import { Button } from "@/components/button"
-import { Icon } from "@/components/icon"
+import { FormDrawer } from "@/components/form-drawer"
 import { Input } from "@/components/input"
 import { useNotify } from "@/components/notification"
 import { useConfirm } from "@/components/confirm-dialog"
@@ -9,12 +8,13 @@ import type { scriptureCollectionStore } from "@/modules/scripture-collections/d
 import { collectionSlugFromName } from "@/modules/scripture-collections/util/collection-slug"
 import type { AdminCollectionRecord } from "@/modules/scripture-collections/data/types"
 import { ptr } from "@/i18n"
-import { withWindow } from "@/util/browser"
+import { pages } from "@/urls"
+import { formatLongDate } from "@/util/formatters"
 import "./collection-form-drawer.css"
 
 const tr = ptr("scriptureCollections.components.collectionFormDrawer")
 
-type CollectionFormDrawerMode = "create" | "edit"
+type CollectionFormDrawerMode = "create" | "view"
 
 type CollectionStore = ReturnType<typeof scriptureCollectionStore>
 
@@ -26,34 +26,30 @@ type CollectionFormDrawerProps = {
   onOpenChange: (open: boolean) => void
 }
 
+const COLLECTION_FORM_ID = "collection-form-drawer-form"
+
 export function CollectionFormDrawer(props: CollectionFormDrawerProps) {
-  const CLOSE_ANIMATION_MS = 500
   const notify = useNotify()
   const confirm = useConfirm()
+  const [isEditing, setIsEditing] = createSignal(false)
   const [name, setName] = createSignal("")
   const [description, setDescription] = createSignal("")
   const [slug, setSlug] = createSignal("")
   const [slugManuallyEdited, setSlugManuallyEdited] = createSignal(false)
   const [isSaving, setIsSaving] = createSignal(false)
   const [isDeleting, setIsDeleting] = createSignal(false)
-  const [isMounted, setIsMounted] = createSignal(false)
   const [mountedCollection, setMountedCollection] =
     createSignal<AdminCollectionRecord | null>(props.collection)
-  const [contentElement, setContentElement] = createSignal<HTMLElement | null>(null)
-  let closeUnmountTimeout: ReturnType<typeof setTimeout> | null = null
 
   const currentCollection = createMemo(() => props.collection ?? mountedCollection())
-  const drawerTitle = createMemo(() =>
-    props.mode === "create" ? tr("title.create") : tr("title.edit"),
-  )
-  const drawerBehavior = createMemo(() => ({
-    closeOnEscapeKeyDown: false,
-    closeOnOutsidePointer: false,
-    closeOnOutsideFocus: false,
-    snapPoints: [1],
-    breakPoints: [],
-    defaultSnapPoint: 1,
-  }))
+  const isFormMode = createMemo(() => props.mode === "create" || isEditing())
+  const drawerTitle = createMemo(() => {
+    if (props.mode === "create") {
+      return tr("title.create")
+    }
+
+    return isEditing() ? tr("title.edit") : tr("title.view")
+  })
   const isDirty = createMemo(() => {
     if (props.mode === "create") {
       return (
@@ -64,7 +60,7 @@ export function CollectionFormDrawer(props: CollectionFormDrawerProps) {
     }
 
     const collection = currentCollection()
-    if (!collection) {
+    if (!collection || !isEditing()) {
       return false
     }
 
@@ -100,19 +96,18 @@ export function CollectionFormDrawer(props: CollectionFormDrawerProps) {
     setSlugManuallyEdited(false)
   }
 
-  const requestClose = () => {
-    if (isSaving() || isDeleting()) {
+  const resetEditingState = () => {
+    setIsEditing(false)
+    resetForm()
+  }
+
+  const handleCancel = () => {
+    if (props.mode === "view" && isEditing()) {
+      resetEditingState()
       return
     }
 
     props.onOpenChange(false)
-  }
-
-  const clearCloseUnmountTimeout = () => {
-    if (closeUnmountTimeout) {
-      clearTimeout(closeUnmountTimeout)
-      closeUnmountTimeout = null
-    }
   }
 
   createEffect(() => {
@@ -123,79 +118,20 @@ export function CollectionFormDrawer(props: CollectionFormDrawerProps) {
   })
 
   createEffect(() => {
+    props.open
     props.mode
     currentCollection()?.id
     if (props.open) {
+      setIsEditing(false)
       resetForm()
     }
   })
 
   createEffect(() => {
     if (!props.open) {
+      setIsEditing(false)
       resetForm()
     }
-  })
-
-  createEffect(() => {
-    if (props.open) {
-      clearCloseUnmountTimeout()
-      setIsMounted(true)
-      return
-    }
-
-    if (!isMounted()) {
-      return
-    }
-
-    clearCloseUnmountTimeout()
-    closeUnmountTimeout = setTimeout(() => {
-      setIsMounted(false)
-      setMountedCollection(null)
-      closeUnmountTimeout = null
-    }, CLOSE_ANIMATION_MS)
-  })
-
-  createEffect(() => {
-    if (!props.open || isSaving() || isDeleting()) {
-      return
-    }
-
-    const content = contentElement()
-    if (!content) {
-      return
-    }
-
-    withWindow(window => {
-      const handleKeyDown = (event: KeyboardEvent) => {
-        if (event.key !== "Escape") {
-          return
-        }
-
-        event.preventDefault()
-        requestClose()
-      }
-
-      const handlePointerDown = (event: PointerEvent) => {
-        const target = event.target
-        if (!(target instanceof Node) || content.contains(target)) {
-          return
-        }
-
-        requestClose()
-      }
-
-      window.document.addEventListener("keydown", handleKeyDown)
-      window.document.addEventListener("pointerdown", handlePointerDown, true)
-
-      onCleanup(() => {
-        window.document.removeEventListener("keydown", handleKeyDown)
-        window.document.removeEventListener("pointerdown", handlePointerDown, true)
-      })
-    })
-  })
-
-  onCleanup(() => {
-    clearCloseUnmountTimeout()
   })
 
   const handleNameInput = (value: string) => {
@@ -240,18 +176,24 @@ export function CollectionFormDrawer(props: CollectionFormDrawerProps) {
       return
     }
 
-    props.onOpenChange(false)
+    if (props.mode === "create") {
+      props.onOpenChange(false)
+      notify.success({
+        content: tr("notifications.createSuccess"),
+      })
+      return
+    }
+
+    setMountedCollection(result.data)
+    setIsEditing(false)
     notify.success({
-      content:
-        props.mode === "create"
-          ? tr("notifications.createSuccess")
-          : tr("notifications.saveSuccess"),
+      content: tr("notifications.saveSuccess"),
     })
   }
 
   const handleDelete = () => {
     const collection = currentCollection()
-    if (!collection || props.mode !== "edit" || isSaving() || isDeleting()) {
+    if (!collection || props.mode !== "view" || isSaving() || isDeleting()) {
       return
     }
 
@@ -284,92 +226,155 @@ export function CollectionFormDrawer(props: CollectionFormDrawerProps) {
   }
 
   return (
-    <Show when={isMounted() && (props.mode === "create" || currentCollection())}>
-      <Drawer
-        side={DrawerPosition.RIGHT}
-        open={props.open}
-        onOpenChange={open => props.onOpenChange(open)}
-        contentRef={setContentElement}
-        showTrigger={false}
-        showClose={false}
-        drawerProps={drawerBehavior()}
-        class="collection-form-drawer"
-        title={drawerTitle()}
-        closeAriaLabel={tr("actions.close")}>
-        <button
-          type="button"
-          class="collection-form-drawer-close"
-          aria-label={tr("actions.close")}
-          onClick={() => requestClose()}>
-          <Icon name="chevron_right" />
-        </button>
-        <div class="collection-form-drawer-shell">
-          <form
-            class="collection-form-drawer-form"
-            onSubmit={handleSave}>
-            <Input
-              label={tr("fields.name.label")}
-              value={name()}
-              maxlength={64}
-              placeholder={tr("fields.name.placeholder")}
-              onInput={event => handleNameInput(event.currentTarget.value)}
-              disabled={isSaving() || isDeleting()}
-            />
-            <Input
-              label={tr("fields.description.label")}
-              value={description()}
-              maxlength={256}
-              placeholder={tr("fields.description.placeholder")}
-              onInput={event => setDescription(event.currentTarget.value)}
-              disabled={isSaving() || isDeleting()}
-            />
-            <Input
-              label={tr("fields.slug.label")}
-              value={slug()}
-              maxlength={96}
-              placeholder={tr("fields.slug.placeholder")}
-              hint={tr("fields.slug.hint")}
-              onInput={event => handleSlugInput(event.currentTarget.value)}
-              disabled={isSaving() || isDeleting()}
-            />
-
-            <div class="collection-form-drawer-actions">
-              <Show when={props.mode === "edit"}>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  class="collection-form-drawer-delete"
-                  label={
-                    isDeleting()
-                      ? tr("actions.deleting")
-                      : tr("actions.delete")
-                  }
-                  disabled={isSaving() || isDeleting()}
-                  onClick={handleDelete}
-                />
-              </Show>
+    <FormDrawer
+      open={props.open}
+      onOpenChange={open => props.onOpenChange(open)}
+      title={drawerTitle()}
+      closeAriaLabel={tr("actions.close")}
+      class="collection-form-drawer"
+      when={props.mode === "create" || Boolean(currentCollection())}
+      canDismiss={() => !isSaving() && !isDeleting()}
+      onClosed={() => setMountedCollection(null)}
+      actionsClass="form-drawer-actions collection-form-drawer-actions"
+      actions={
+        <Show
+          when={isFormMode()}
+          fallback={
+            <>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                class="collection-form-drawer-delete"
+                label={
+                  isDeleting()
+                    ? tr("actions.deleting")
+                    : tr("actions.delete")
+                }
+                disabled={isSaving() || isDeleting()}
+                onClick={handleDelete}
+              />
               <div class="collection-form-drawer-primary-actions">
                 <Button
                   type="button"
-                  variant="ghost"
-                  size="sm"
-                  label={tr("actions.cancel")}
-                  disabled={isSaving() || isDeleting()}
-                  onClick={() => requestClose()}
-                />
-                <Button
-                  type="submit"
                   variant="primary"
                   size="sm"
-                  label={isSaving() ? tr("actions.saving") : tr("actions.save")}
-                  disabled={!canSave()}
+                  label={tr("actions.edit")}
+                  disabled={isSaving() || isDeleting()}
+                  onClick={() => {
+                    resetForm()
+                    setIsEditing(true)
+                  }}
                 />
               </div>
-            </div>
-          </form>
-        </div>
-      </Drawer>
-    </Show>
+            </>
+          }>
+          <Show when={props.mode === "view"}>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              class="collection-form-drawer-delete"
+              label={
+                isDeleting()
+                  ? tr("actions.deleting")
+                  : tr("actions.delete")
+              }
+              disabled={isSaving() || isDeleting()}
+              onClick={handleDelete}
+            />
+          </Show>
+          <div class="collection-form-drawer-primary-actions">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              label={
+                props.mode === "view" ? tr("actions.cancelEdit") : tr("actions.cancel")
+              }
+              disabled={isSaving() || isDeleting()}
+              onClick={handleCancel}
+            />
+            <Button
+              type="submit"
+              form={COLLECTION_FORM_ID}
+              variant="primary"
+              size="sm"
+              label={isSaving() ? tr("actions.saving") : tr("actions.save")}
+              disabled={!canSave()}
+            />
+          </div>
+        </Show>
+      }>
+      <Show
+        when={isFormMode()}
+        fallback={
+          <Show when={currentCollection()}>
+            {collection => (
+              <div class="collection-form-drawer-view">
+                <div class="collection-form-drawer-view-heading">
+                  <div class="collection-form-drawer-view-name">{collection().name}</div>
+                  <div class="collection-form-drawer-view-slug">{collection().slug}</div>
+                </div>
+                <div class="collection-form-drawer-details">
+                  <p class="collection-form-drawer-detail-line">
+                    <span class="collection-form-drawer-detail-label">
+                      {tr("fields.description.label")}:
+                    </span>{" "}
+                    {collection().description?.trim() || tr("fields.noDescription")}
+                  </p>
+                  <p class="collection-form-drawer-detail-line">
+                    {tr("fields.referenceCount", {
+                      count: collection().referenceCount,
+                    })}
+                  </p>
+                  <p class="collection-form-drawer-detail-line">
+                    <span class="collection-form-drawer-detail-label">
+                      {tr("fields.updatedAt")}:
+                    </span>{" "}
+                    {formatLongDate(collection().updatedAt) ?? tr("values.unavailable")}
+                  </p>
+                </div>
+                <a
+                  href={pages.scriptureCollection(collection().slug)}
+                  class="collection-form-drawer-view-references-link">
+                  {tr("actions.viewReferences")}
+                </a>
+              </div>
+            )}
+          </Show>
+        }>
+        <form
+          id={COLLECTION_FORM_ID}
+          class="collection-form-drawer-form"
+          onSubmit={handleSave}>
+          <Input
+            label={tr("fields.name.label")}
+            value={name()}
+            maxlength={64}
+            placeholder={tr("fields.name.placeholder")}
+            onInput={event => handleNameInput(event.currentTarget.value)}
+            disabled={isSaving() || isDeleting()}
+          />
+          <Input
+            label={tr("fields.description.label")}
+            value={description()}
+            maxlength={256}
+            placeholder={tr("fields.description.placeholder")}
+            onInput={event => setDescription(event.currentTarget.value)}
+            disabled={isSaving() || isDeleting()}
+          />
+          <Input
+            label={tr("fields.slug.label")}
+            value={slug()}
+            maxlength={96}
+            placeholder={tr("fields.slug.placeholder")}
+            hint={tr("fields.slug.hint")}
+            onInput={event => handleSlugInput(event.currentTarget.value)}
+            disabled={isSaving() || isDeleting()}
+          />
+        </form>
+      </Show>
+    </FormDrawer>
   )
 }
