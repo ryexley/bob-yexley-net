@@ -9,55 +9,55 @@ importers:
   .:
     dependencies:
       '@cookbook/solid-intl':
-        specifier: ^0.1.2
+        specifier: ^0.1.3
         version: 0.1.3(solid-js@1.9.12)(typescript@5.9.3)
       '@corvu/drawer':
         specifier: ^0.2.4
         version: 0.2.4(solid-js@1.9.12)
       '@formatjs/intl':
-        specifier: ^4.1.2
+        specifier: ^4.1.6
         version: 4.1.6
       '@kobalte/core':
         specifier: ^0.13.11
         version: 0.13.11(solid-js@1.9.12)
       '@milkdown/core':
-        specifier: ^7.19.0
+        specifier: ^7.20.0
         version: 7.20.0
       '@milkdown/plugin-emoji':
-        specifier: ^7.19.0
+        specifier: ^7.20.0
         version: 7.20.0
       '@milkdown/plugin-listener':
-        specifier: ^7.19.0
+        specifier: ^7.20.0
         version: 7.20.0
       '@milkdown/plugin-slash':
-        specifier: ^7.19.0
+        specifier: ^7.20.0
         version: 7.20.0
       '@milkdown/preset-commonmark':
-        specifier: ^7.19.0
+        specifier: ^7.20.0
         version: 7.20.0
       '@milkdown/prose':
-        specifier: ^7.19.0
+        specifier: ^7.20.0
         version: 7.20.0
       '@milkdown/theme-nord':
-        specifier: ^7.19.0
+        specifier: ^7.20.0
         version: 7.20.0
       '@milkdown/utils':
-        specifier: ^7.19.0
+        specifier: ^7.20.0
         version: 7.20.0
       '@solidjs/meta':
         specifier: ^0.29.4
         version: 0.29.4(solid-js@1.9.12)
       '@solidjs/router':
-        specifier: ^0.15.3
+        specifier: ^0.15.4
         version: 0.15.4(solid-js@1.9.12)
       '@solidjs/start':
-        specifier: ^1.1.4
+        specifier: ^1.3.2
         version: 1.3.2(solid-js@1.9.12)(vinxi@0.5.11(@types/node@25.6.0)(db0@0.3.4)(ioredis@5.10.1)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1))(vite@6.4.2(@types/node@25.6.0)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1))
       '@supabase/ssr':
         specifier: ^0.9.0
         version: 0.9.0(@supabase/supabase-js@2.103.2)
       '@supabase/supabase-js':
-        specifier: ^2.57.4
+        specifier: ^2.103.2
         version: 2.103.2
       '@unpic/solid':
         specifier: ^1.0.0
@@ -75,25 +75,25 @@ importers:
         specifier: ^2.3.0
         version: 2.3.0
       marked:
-        specifier: ^17.0.3
+        specifier: ^17.0.6
         version: 17.0.6
       micromark-extension-mark:
         specifier: ^1.0.2
         version: 1.0.2
       solid-js:
-        specifier: ^1.9.7
+        specifier: ^1.9.12
         version: 1.9.12
       solid-transition-group:
         specifier: ^0.3.0
         version: 0.3.0(solid-js@1.9.12)
       tailwind-merge:
-        specifier: ^3.3.1
+        specifier: ^3.5.0
         version: 3.5.0
       vinxi:
-        specifier: ^0.5.7
+        specifier: ^0.5.11
         version: 0.5.11(@types/node@25.6.0)(db0@0.3.4)(ioredis@5.10.1)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)
       zod:
-        specifier: ^4.1.11
+        specifier: ^4.3.6
         version: 4.3.6
     devDependencies:
       '@corvu/tailwind':
@@ -106,28 +106,28 @@ importers:
         specifier: ^0.8.10
         version: 0.8.10(@solidjs/router@0.15.4(solid-js@1.9.12))(solid-js@1.9.12)
       '@tailwindcss/vite':
-        specifier: ^4.1.10
+        specifier: ^4.2.2
         version: 4.2.2(vite@6.4.2(@types/node@25.6.0)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1))
       '@testing-library/user-event':
         specifier: ^14.6.1
         version: 14.6.1(@testing-library/dom@10.4.1)
       '@typescript-eslint/eslint-plugin':
-        specifier: ^8.34.1
+        specifier: ^8.58.2
         version: 8.58.2(@typescript-eslint/parser@8.58.2(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3)
       '@typescript-eslint/parser':
-        specifier: ^8.34.1
+        specifier: ^8.58.2
         version: 8.58.2(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3)
       concurrently:
-        specifier: ^9.1.2
+        specifier: ^9.2.1
         version: 9.2.1
       eslint:
-        specifier: ^9.39.3
+        specifier: ^9.39.4
         version: 9.39.4(jiti@2.6.1)
       eslint-config-prettier:
-        specifier: ^10.1.5
+        specifier: ^10.1.8
         version: 10.1.8(eslint@9.39.4(jiti@2.6.1))
       eslint-plugin-import:
-        specifier: ^2.31.0
+        specifier: ^2.32.0
         version: 2.32.0(@typescript-eslint/parser@8.58.2(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.4(jiti@2.6.1))
       eslint-plugin-jsx-a11y:
         specifier: ^6.10.2
@@ -139,31 +139,31 @@ importers:
         specifier: ^63.0.0
         version: 63.0.0(eslint@9.39.4(jiti@2.6.1))
       globals:
-        specifier: ^17.4.0
+        specifier: ^17.5.0
         version: 17.5.0
       jsdom:
-        specifier: ^29.0.1
+        specifier: ^29.0.2
         version: 29.0.2
       prettier:
-        specifier: ^3.5.3
+        specifier: ^3.8.3
         version: 3.8.3
       supabase:
-        specifier: ^2.90.0
+        specifier: ^2.91.2
         version: 2.91.2
       tailwindcss:
-        specifier: ^4.1.10
+        specifier: ^4.2.2
         version: 4.2.2
       tailwindcss-animate:
         specifier: ^1.0.7
         version: 1.0.7(tailwindcss@4.2.2)
       typescript:
-        specifier: ^5.8.3
+        specifier: ^5.9.3
         version: 5.9.3
       vite-plugin-solid:
-        specifier: ^2.11.11
+        specifier: ^2.11.12
         version: 2.11.12(solid-js@1.9.12)(vite@6.4.2(@types/node@25.6.0)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1))
       vitest:
-        specifier: ^4.1.2
+        specifier: ^4.1.4
         version: 4.1.4(@types/node@25.6.0)(jsdom@29.0.2)(vite@6.4.2(@types/node@25.6.0)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1))
 
 packages:
@@ -1600,6 +1600,7 @@ packages:
 
   '@ungap/structured-clone@1.3.0':
     resolution: {integrity: sha512-WmoN8qaIAo7WTYWbAZuG8PYEhn5fkz7dZrqTBZ7dtt//lL2Gwms1IcnQ5yHqjDfX8Ft5j4YzDM23f87zBfDe9g==}
+    deprecated: Potential CWE-502 - Update to 1.3.1 or higher
 
   '@unpic/core@1.0.3':
     resolution: {integrity: sha512-aum9YNVUGso7MjGLD0Rp/08kywCGLqZ03/q6VQBFFakDBOXWEc8D4kPGcZ8v5wEnGRex3lE+++bOuucBp3KJ/w==}
@@ -1914,8 +1915,8 @@ packages:
   brace-expansion@2.1.0:
     resolution: {integrity: sha512-TN1kCZAgdgweJhWWpgKYrQaMNHcDULHkWwQIspdtjV4Y5aurRdZpjAqn6yX3FPqTA9ngHCc4hJxMAMgGfve85w==}
 
-  brace-expansion@5.0.5:
-    resolution: {integrity: sha512-VZznLgtwhn+Mact9tfiwx64fA9erHH/MCXEUfB/0bX/6Fz6ny5EGTXYltMocqg4xFAQZtnO3DHWWXi8RiuN7cQ==}
+  brace-expansion@5.0.6:
+    resolution: {integrity: sha512-kLpxurY4Z4r9sgMsyG0Z9uzsBlgiU/EFKhj/h91/8yHu0edo7XuixOIH3VcJ8kkxs6/jPzoI6U9Vj3WqbMQ94g==}
     engines: {node: 18 || 20 || >=22}
 
   braces@3.0.3:
@@ -6713,7 +6714,7 @@ snapshots:
     dependencies:
       balanced-match: 1.0.2
 
-  brace-expansion@5.0.5:
+  brace-expansion@5.0.6:
     dependencies:
       balanced-match: 4.0.4
 
@@ -8463,7 +8464,7 @@ snapshots:
 
   minimatch@10.2.5:
     dependencies:
-      brace-expansion: 5.0.5
+      brace-expansion: 5.0.6
 
   minimatch@3.1.5:
     dependencies:
