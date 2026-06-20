@@ -1,0 +1,60 @@
+.device-breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+
+  .empty {
+    color: var(--colors-mono-08);
+    font-size: 0.875rem;
+    margin: 0;
+  }
+
+  .item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+  }
+
+  .meta {
+    align-items: baseline;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .label {
+    color: var(--colors-mono-10);
+    font-size: 0.875rem;
+  }
+
+  .value {
+    color: var(--colors-mono-11);
+    font-size: 0.8125rem;
+    font-weight: 700;
+  }
+
+  .track {
+    background: var(--colors-mono-03);
+    border-radius: var(--radius-pill);
+    height: 0.375rem;
+    overflow: hidden;
+  }
+
+  .fill {
+    border-radius: inherit;
+    height: 100%;
+    min-width: 0.25rem;
+    transition: width 240ms ease;
+  }
+
+  .item[data-device="mobile"] .fill {
+    background: var(--colors-cool-blue);
+  }
+
+  .item[data-device="tablet"] .fill {
+    background: var(--colors-info);
+  }
+
+  .item[data-device="desktop"] .fill {
+    background: var(--colors-success);
+  }
+}

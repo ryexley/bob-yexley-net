@@ -1,12 +1,15 @@
 import { createAsync, useNavigate } from "@solidjs/router"
 import { Meta, Title } from "@solidjs/meta"
 import { createEffect, createMemo, For } from "solid-js"
+import { subDays } from "date-fns/subDays"
 import { Icon, LoadingSpinner } from "@/components/icon"
 import { useAuth } from "@/context/auth-context"
 import { RequiresSuperUser } from "@/modules/auth/components/requires-role"
+import { getAnalyticsHubStats } from "@/modules/analytics/data/queries"
 import { getAdminCollections } from "@/modules/scripture-collections/data/queries"
 import { getAdminReferences } from "@/modules/scripture-references/data/queries"
 import { getAdminUsers } from "@/modules/users/data/queries"
+import { ANALYTICS_SITE_ID } from "@/lib/analytics/constants"
 import { ptr } from "@/i18n"
 import { pages } from "@/urls"
 import { windowTitle } from "@/util/browser"
@@ -20,6 +23,16 @@ export function AdminHomeView() {
   const adminUsersQuery = createAsync(() => getAdminUsers())
   const adminCollectionsQuery = createAsync(() => getAdminCollections())
   const adminReferencesQuery = createAsync(() => getAdminReferences())
+  const analyticsHubStatsQuery = createAsync(() => {
+    const to = new Date()
+    const from = subDays(to, 30)
+
+    return getAnalyticsHubStats({
+      siteId: ANALYTICS_SITE_ID,
+      from: from.toISOString(),
+      to: to.toISOString(),
+    })
+  })
   const counts = createMemo(() => {
     const users = adminUsersQuery()?.users ?? []
 
@@ -75,6 +88,7 @@ export function AdminHomeView() {
       adminUsersQuery() !== undefined &&
       adminCollectionsQuery() !== undefined &&
       adminReferencesQuery() !== undefined &&
+      analyticsHubStatsQuery() !== undefined &&
       auth.isSuperuser(),
   )
   const collectionCount = createMemo(
@@ -82,6 +96,12 @@ export function AdminHomeView() {
   )
   const referenceCount = createMemo(
     () => adminReferencesQuery()?.references.length ?? 0,
+  )
+  const analyticsPageviews30d = createMemo(
+    () => analyticsHubStatsQuery()?.totalPageviews30d ?? 0,
+  )
+  const analyticsSiteCount = createMemo(
+    () => analyticsHubStatsQuery()?.siteCount ?? 1,
   )
 
   return (
@@ -172,6 +192,38 @@ export function AdminHomeView() {
                     </a>
                   </div>
                 </div>
+                <a
+                  href={pages.analytics}
+                  class="card">
+                  <div class="card-header">
+                    <Icon
+                      name="bar_chart"
+                      class="icon"
+                    />
+                    <h2 class="card-title">{tr("cards.analytics.title")}</h2>
+                  </div>
+                  <div class="copy">
+                    <p class="description">
+                      {tr("cards.analytics.description")}
+                    </p>
+                  </div>
+                  <div class="bubbles">
+                    <span
+                      class="bubble"
+                      data-status="info">
+                      {tr("cards.analytics.pageviews", {
+                        count: analyticsPageviews30d(),
+                      })}
+                    </span>
+                    <span
+                      class="bubble"
+                      data-status="info">
+                      {tr("cards.analytics.sites", {
+                        count: analyticsSiteCount(),
+                      })}
+                    </span>
+                  </div>
+                </a>
               </div>
             ) : (
               <div class="loading-state">

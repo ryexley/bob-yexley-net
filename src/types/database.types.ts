@@ -34,6 +34,96 @@ export type Database = {
   }
   public: {
     Tables: {
+      analytics_events: {
+        Row: {
+          bot_name: string | null
+          browser: string | null
+          browser_version: string | null
+          city_name: string | null
+          country_code: string | null
+          created_at: string
+          device_type: string | null
+          event_type: string
+          id: number
+          is_bot: boolean
+          language: string | null
+          os: string | null
+          os_version: string | null
+          path: string
+          properties: Json | null
+          referrer: string | null
+          referrer_host: string | null
+          region_code: string | null
+          screen_height: number | null
+          screen_width: number | null
+          site_id: string
+          utm_campaign: string | null
+          utm_medium: string | null
+          utm_source: string | null
+          viewport_height: number | null
+          viewport_width: number | null
+          visitor_hash: string
+        }
+        Insert: {
+          bot_name?: string | null
+          browser?: string | null
+          browser_version?: string | null
+          city_name?: string | null
+          country_code?: string | null
+          created_at?: string
+          device_type?: string | null
+          event_type?: string
+          id?: number
+          is_bot?: boolean
+          language?: string | null
+          os?: string | null
+          os_version?: string | null
+          path: string
+          properties?: Json | null
+          referrer?: string | null
+          referrer_host?: string | null
+          region_code?: string | null
+          screen_height?: number | null
+          screen_width?: number | null
+          site_id: string
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          viewport_height?: number | null
+          viewport_width?: number | null
+          visitor_hash: string
+        }
+        Update: {
+          bot_name?: string | null
+          browser?: string | null
+          browser_version?: string | null
+          city_name?: string | null
+          country_code?: string | null
+          created_at?: string
+          device_type?: string | null
+          event_type?: string
+          id?: number
+          is_bot?: boolean
+          language?: string | null
+          os?: string | null
+          os_version?: string | null
+          path?: string
+          properties?: Json | null
+          referrer?: string | null
+          referrer_host?: string | null
+          region_code?: string | null
+          screen_height?: number | null
+          screen_width?: number | null
+          site_id?: string
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          viewport_height?: number | null
+          viewport_width?: number | null
+          visitor_hash?: string
+        }
+        Relationships: []
+      }
       bible_passage_collections: {
         Row: {
           created_at: string
@@ -596,6 +686,134 @@ export type Database = {
       }
     }
     Functions: {
+      analytics_admin_hub_stats: {
+        Args: { p_from: string; p_site_id: string; p_to: string }
+        Returns: {
+          site_count: number
+          total_pageviews: number
+        }[]
+      }
+      analytics_ai_bot_traffic: {
+        Args: { p_from: string; p_site_id: string; p_to: string }
+        Returns: {
+          bot_name: string
+          distinct_pages_hit: number
+          hits: number
+        }[]
+      }
+      analytics_browser_breakdown: {
+        Args: {
+          p_from: string
+          p_limit?: number
+          p_site_id: string
+          p_to: string
+        }
+        Returns: {
+          browser: string
+          visitors: number
+        }[]
+      }
+      analytics_device_breakdown: {
+        Args: { p_from: string; p_site_id: string; p_to: string }
+        Returns: {
+          device_type: string
+          visitors: number
+        }[]
+      }
+      analytics_os_breakdown: {
+        Args: {
+          p_from: string
+          p_limit?: number
+          p_site_id: string
+          p_to: string
+        }
+        Returns: {
+          os: string
+          visitors: number
+        }[]
+      }
+      analytics_pageviews_over_time: {
+        Args: {
+          p_bucket?: string
+          p_from: string
+          p_site_id: string
+          p_to: string
+        }
+        Returns: {
+          bucket: string
+          pageviews: number
+          unique_visitors: number
+        }[]
+      }
+      analytics_site_ids: {
+        Args: never
+        Returns: {
+          site_id: string
+        }[]
+      }
+      analytics_stat_cards: {
+        Args: { p_from: string; p_site_id: string; p_to: string }
+        Returns: {
+          total_pageviews: number
+          unique_visitors: number
+          views_per_visit: number
+        }[]
+      }
+      analytics_top_cities: {
+        Args: {
+          p_from: string
+          p_limit?: number
+          p_min_visitors?: number
+          p_site_id: string
+          p_to: string
+        }
+        Returns: {
+          city_name: string
+          country_code: string
+          pageviews: number
+          visitors: number
+        }[]
+      }
+      analytics_top_countries: {
+        Args: {
+          p_from: string
+          p_limit?: number
+          p_min_visitors?: number
+          p_site_id: string
+          p_to: string
+        }
+        Returns: {
+          country_code: string
+          pageviews: number
+          visitors: number
+        }[]
+      }
+      analytics_top_pages: {
+        Args: {
+          p_from: string
+          p_limit?: number
+          p_site_id: string
+          p_to: string
+        }
+        Returns: {
+          page_title: string
+          pageviews: number
+          path: string
+          visitors: number
+        }[]
+      }
+      analytics_top_sources: {
+        Args: {
+          p_from: string
+          p_limit?: number
+          p_site_id: string
+          p_to: string
+        }
+        Returns: {
+          source: string
+          visitors: number
+        }[]
+      }
       cleanup_old_sessions: { Args: { retention?: string }; Returns: number }
       current_user_role: {
         Args: never

@@ -886,6 +886,62 @@ export const en = {
       },
     },
   },
+  analytics: {
+    components: {
+      dateRangePicker: {
+        siteLabel: "Site",
+        rangeLabel: "Date range",
+        fromLabel: "From",
+        toLabel: "To",
+        presets: {
+          "24h": "Last 24 hours",
+          "7d": "Last 7 days",
+          "30d": "Last 30 days",
+          "90d": "Last 90 days",
+          custom: "Custom",
+        },
+      },
+    },
+    views: {
+      index: {
+        pageTitle: "Analytics",
+        metaDescription: "Review site traffic and visitor analytics.",
+        title: "Analytics",
+        subtitle:
+          "Review site traffic, top pages, referrer sources, and visitor device breakdown.",
+        loading: "Loading analytics...",
+        actions: {
+          backToAdmin: "admin",
+        },
+        stats: {
+          uniqueVisitors: "Unique Visitors",
+          totalPageviews: "Total Pageviews",
+          viewsPerVisit: "Pages per Visitor",
+          avgDailyPageviews: "Avg. Daily Pageviews",
+        },
+        charts: {
+          pageviews: "Pageviews",
+          visitors: "Visitors",
+        },
+        panels: {
+          pageviewsOverTime: "Pageviews Over Time",
+          topPages: "Top Pages",
+          topSources: "Top Sources",
+          devices: "Devices",
+          browsers: "Browsers",
+          operatingSystems: "Operating Systems",
+          aiBots: "AI Bot Traffic",
+        },
+        labels: {
+          pageviews: "pageviews",
+          pages: "pages",
+        },
+        empty: {
+          aiBots: "No AI bot traffic recorded for this period.",
+        },
+      },
+    },
+  },
   admin: {
     layout: {
       subtitle: "admin",
@@ -919,6 +975,14 @@ export const en = {
               "{count, plural, one {# collection} other {# collections}}",
             references:
               "{count, plural, one {# reference} other {# references}}",
+          },
+          analytics: {
+            title: "Analytics",
+            description:
+              "Review site traffic, top pages, referrer sources, and visitor device breakdown.",
+            pageviews:
+              "{count, plural, one {# pageview} other {# pageviews}} (30d)",
+            sites: "{count, plural, one {# site} other {# sites}}",
           },
         },
       },

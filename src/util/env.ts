@@ -19,5 +19,7 @@ export function getEnv() {
       process.env.UNSPLASH_ACCESS_KEY ||
       "",
     ESV_API_KEY: process.env.ESV_API_KEY || "",
+    ANALYTICS_HASH_SALT: process.env.ANALYTICS_HASH_SALT || "",
+    ANALYTICS_ALLOWED_ORIGINS: process.env.ANALYTICS_ALLOWED_ORIGINS || "",
   }
 }

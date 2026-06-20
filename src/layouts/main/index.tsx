@@ -1,5 +1,6 @@
 import { createMemo, Show } from "solid-js"
 import { useLocation } from "@solidjs/router"
+import { AnalyticsTracker } from "@/lib/analytics/tracker"
 import { SharedHeadContent } from "@/layouts/shared"
 import { MainHeader } from "@/modules/home/components/main-header"
 import { UserMenu } from "@/modules/home/components/user-menu"
@@ -14,6 +15,7 @@ export function MainLayout(props) {
   return (
     <BlipComposerProvider>
       <SharedHeadContent />
+      <AnalyticsTracker />
       <Show when={showMainChrome()}>
         <MainHeader />
       </Show>

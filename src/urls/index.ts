@@ -13,6 +13,7 @@ export const pages = {
   scriptureCollection: (slug: string) => `/a/scripture/collections/${encodeURIComponent(slug)}`,
   scriptureCollectionById: (id: number | string) => `/a/scripture/collections/${id}`,
   scriptureReferences: "/a/scripture/references",
+  analytics: "/a/analytics",
   visitors: "/a/visitors",
   logout: "/a/lo",
 }
