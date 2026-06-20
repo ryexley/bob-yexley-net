@@ -63,6 +63,44 @@ const trDetail = ptr("blips.views.detail")
 const trEditor = ptr("blips.components.blipEditor")
 const MOBILE_MAX_WIDTH = 768
 
+export const resolveUpdateEditorDraft = ({
+  editingUpdateId,
+  existingUpdate,
+  nextNewUpdateId,
+}: {
+  editingUpdateId?: string | null
+  existingUpdate?: Blip | null
+  nextNewUpdateId: string
+}) => {
+  if (editingUpdateId) {
+    if (!existingUpdate || existingUpdate.blip_type !== BLIP_TYPES.UPDATE) {
+      return {
+        updateId: editingUpdateId,
+        content: "",
+        lastSavedContent: "",
+        isPublished: true,
+        hasPersistedCurrentUpdate: false,
+      }
+    }
+
+    return {
+      updateId: existingUpdate.id,
+      content: existingUpdate.content ?? "",
+      lastSavedContent: existingUpdate.content ?? "",
+      isPublished: existingUpdate.published,
+      hasPersistedCurrentUpdate: true,
+    }
+  }
+
+  return {
+    updateId: nextNewUpdateId,
+    content: "",
+    lastSavedContent: "",
+    isPublished: true,
+    hasPersistedCurrentUpdate: false,
+  }
+}
+
 export function BlipUpdateEditor(props: BlipUpdateEditorProps) {
   const [local] = splitProps(props, [
     "open",
@@ -182,30 +220,17 @@ export function BlipUpdateEditor(props: BlipUpdateEditorProps) {
     }, TIME.FIVE_SECONDS)
   }
 
-  const resetForNewUpdate = () => {
+  const applyUpdateEditorDraft = (
+    draft: ReturnType<typeof resolveUpdateEditorDraft>,
+  ) => {
     debouncedDbSave.cancel()
     clearStatusTimeouts()
-    setCurrentUpdateId(blipId())
-    setContent("")
-    setLastSavedContent("")
+    setCurrentUpdateId(draft.updateId)
+    setContent(draft.content)
+    setLastSavedContent(draft.lastSavedContent)
     setIsDirty(false)
-    setHasPersistedCurrentUpdate(false)
-    setIsPublished(true)
-    setSaveStatus("idle")
-    setShowStatus(false)
-    setStatusFading(false)
-    focusBridge.scheduleFocusAfterOpen()
-  }
-
-  const loadExistingUpdate = (update: Blip) => {
-    debouncedDbSave.cancel()
-    clearStatusTimeouts()
-    setCurrentUpdateId(update.id)
-    setContent(update.content ?? "")
-    setLastSavedContent(update.content ?? "")
-    setIsDirty(false)
-    setHasPersistedCurrentUpdate(true)
-    setIsPublished(update.published)
+    setHasPersistedCurrentUpdate(draft.hasPersistedCurrentUpdate)
+    setIsPublished(draft.isPublished)
     setSaveStatus("idle")
     setShowStatus(false)
     setStatusFading(false)
@@ -340,22 +365,26 @@ export function BlipUpdateEditor(props: BlipUpdateEditorProps) {
   createEffect(
     on(
       () =>
-        [local.open, local.editingUpdateId, selectedExistingUpdate()] as const,
-      ([open, editingUpdateId, existing]) => {
+        [
+          local.open,
+          local.editingUpdateId,
+          local.editingUpdateId ? selectedExistingUpdate()?.id : null,
+        ] as const,
+      ([open, editingUpdateId, existingUpdateId]) => {
         if (!open) {
           return
         }
 
-        if (editingUpdateId) {
-          if (existing && currentUpdateId() !== existing.id) {
-            loadExistingUpdate(existing)
-          }
-          return
-        }
-
-        if (!currentUpdateId()) {
-          resetForNewUpdate()
-        }
+        applyUpdateEditorDraft(
+          resolveUpdateEditorDraft({
+            editingUpdateId,
+            existingUpdate:
+              editingUpdateId && existingUpdateId
+                ? selectedExistingUpdate()
+                : null,
+            nextNewUpdateId: blipId(),
+          }),
+        )
       },
     ),
   )
@@ -386,6 +415,19 @@ export function BlipUpdateEditor(props: BlipUpdateEditorProps) {
           debouncedDbSave.cancel()
           focusBridge.clearScheduledFocus()
           clearStatusTimeouts()
+
+          // Desktop clears draft state in handleDesktopAfterExit after the inline
+          // transition finishes. Mobile uses a dialog that unmounts immediately, so
+          // reset in-memory editor state here to avoid reopening with stale content.
+          if (isMobileViewport()) {
+            applyUpdateEditorDraft(
+              resolveUpdateEditorDraft({
+                editingUpdateId: null,
+                existingUpdate: null,
+                nextNewUpdateId: blipId(),
+              }),
+            )
+          }
 
           return
         }
@@ -617,15 +659,13 @@ export function BlipUpdateEditor(props: BlipUpdateEditorProps) {
   }
 
   const handleDesktopAfterExit = () => {
-    setCurrentUpdateId(blipId())
-    setContent("")
-    setLastSavedContent("")
-    setIsDirty(false)
-    setIsPublished(true)
-    setHasPersistedCurrentUpdate(false)
-    setSaveStatus("idle")
-    setShowStatus(false)
-    setStatusFading(false)
+    applyUpdateEditorDraft(
+      resolveUpdateEditorDraft({
+        editingUpdateId: null,
+        existingUpdate: null,
+        nextNewUpdateId: blipId(),
+      }),
+    )
   }
 
   createEffect(() => {

@@ -3,7 +3,8 @@ import { createSignal } from "solid-js"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { BlipUpdateEditor } from "@/modules/blips/components/blip-update-editor"
 
-const { state, confirmMock, dialogState, upsertMock } = vi.hoisted(() => ({
+const { state, confirmMock, dialogState, upsertMock, blipIdMock, inlineTransitionState } =
+  vi.hoisted(() => ({
   state: {
     entities: [] as any[],
     viewportWidth: 375,
@@ -16,6 +17,10 @@ const { state, confirmMock, dialogState, upsertMock } = vi.hoisted(() => ({
     error: null,
     data: { id: "update-1", published: true, tags: [] },
   })),
+  blipIdMock: vi.fn(() => "update-1"),
+  inlineTransitionState: {
+    lastProps: null as any,
+  },
 }))
 
 vi.mock("@/context/services-context", () => ({
@@ -72,7 +77,7 @@ vi.mock("@/modules/blips/data", () => ({
     ROOT: "root",
     UPDATE: "update",
   },
-  blipId: () => "update-1",
+  blipId: blipIdMock,
   blipStore: () => ({
     entities: () => state.entities,
     getById: (id: string) => state.entities.find(blip => blip.id === id) ?? null,
@@ -85,7 +90,9 @@ vi.mock("@/components/markdown/editor", () => ({
   MarkdownEditor: (props: any) => (
     <div
       data-testid="mock-update-markdown-editor"
-      data-focus-nonce={String(props.focusNonce ?? 0)}>
+      data-focus-nonce={String(props.focusNonce ?? 0)}
+      data-instance-key={props.instanceKey}
+      data-initial-value={props.initialValue ?? ""}>
       <button
         type="button"
         data-testid="mock-update-change"
@@ -93,6 +100,16 @@ vi.mock("@/components/markdown/editor", () => ({
       />
     </div>
   ),
+}))
+
+vi.mock("@/modules/blips/components/portaled-inline-transition", () => ({
+  PortaledInlineTransition: (props: any) => {
+    inlineTransitionState.lastProps = props
+
+    return props.open ? (
+      <div data-testid="mock-update-inline-transition">{props.children}</div>
+    ) : null
+  },
 }))
 
 vi.mock("@/i18n", () => ({
@@ -134,7 +151,10 @@ describe("BlipUpdateEditor", () => {
     state.viewportWidth = 375
     confirmMock.mockReset()
     upsertMock.mockClear()
+    blipIdMock.mockReset()
+    blipIdMock.mockImplementation(() => "update-1")
     dialogState.lastProps = null
+    inlineTransitionState.lastProps = null
   })
 
   it("uses the shared dialog wrapper on mobile", async () => {
@@ -182,11 +202,7 @@ describe("BlipUpdateEditor", () => {
       expect(screen.getByTestId("mock-update-markdown-editor")).toBeTruthy()
     })
     expect(screen.queryByTestId("mock-update-dialog")).toBeNull()
-    expect(
-      screen
-        .getByTestId("mock-update-desktop-mount")
-        .querySelector(".blip-update-editor-layer"),
-    ).toBeTruthy()
+    expect(screen.getByTestId("mock-update-inline-transition")).toBeTruthy()
   })
 
   it("bumps the markdown editor focus nonce when opened and when external focus changes", async () => {
@@ -278,5 +294,154 @@ describe("BlipUpdateEditor", () => {
     await waitFor(() => {
       expect(confirmMock).toHaveBeenCalledTimes(1)
     })
+  })
+
+  it("opens empty on mobile after closing a published update and starting a new one", async () => {
+    state.viewportWidth = 375
+    const [open, setOpen] = createSignal(true)
+    let nextUpdateId = 1
+    blipIdMock.mockImplementation(() => `update-${nextUpdateId++}`)
+
+    render(() => (
+      <BlipUpdateEditor
+        open={open()}
+        rootBlipId="root-1"
+        focusNonce={open() ? 1 : 0}
+        onRequestClose={() => setOpen(false)}
+      />
+    ))
+
+    await waitFor(() => {
+      expect(screen.getByTestId("mock-update-dialog")).toBeTruthy()
+    })
+
+    const firstSessionKey = screen
+      .getByTestId("mock-update-markdown-editor")
+      .getAttribute("data-instance-key")
+
+    await fireEvent.click(screen.getByTestId("mock-update-change"))
+    setOpen(false)
+
+    await waitFor(() => {
+      expect(screen.queryByTestId("mock-update-markdown-editor")).toBeNull()
+    })
+    expect(inlineTransitionState.lastProps).toBeNull()
+
+    setOpen(true)
+
+    await waitFor(() => {
+      const editor = screen.getByTestId("mock-update-markdown-editor")
+      expect(editor.getAttribute("data-initial-value")).toBe("")
+      expect(editor.getAttribute("data-instance-key")).not.toBe(firstSessionKey)
+    })
+    expect(screen.getByTestId("mock-dialog-title").textContent).toBe("New update")
+  })
+
+  it("wires desktop inline transition exit cleanup", async () => {
+    state.viewportWidth = 1024
+
+    render(() => (
+      (() => {
+        const [desktopMount, setDesktopMount] = createSignal<HTMLDivElement | null>(
+          null,
+        )
+
+        return (
+          <>
+            <div
+              data-testid="mock-update-desktop-mount"
+              ref={element => setDesktopMount(element)}
+            />
+            <BlipUpdateEditor
+              open
+              rootBlipId="root-1"
+              desktopMount={desktopMount()}
+              onRequestClose={() => undefined}
+            />
+          </>
+        )
+      })()
+    ))
+
+    await waitFor(() => {
+      expect(inlineTransitionState.lastProps?.onAfterExit).toBeTypeOf("function")
+    })
+    expect(screen.queryByTestId("mock-update-dialog")).toBeNull()
+  })
+
+  it("opens empty on desktop after inline transition exit and reopen", async () => {
+    state.viewportWidth = 1024
+    let nextUpdateId = 1
+    blipIdMock.mockImplementation(() => `update-${nextUpdateId++}`)
+
+    const [open, setOpen] = createSignal(true)
+    const [desktopMount, setDesktopMount] = createSignal<HTMLDivElement | null>(null)
+
+    render(() => (
+      <>
+        <div
+          data-testid="mock-update-desktop-mount"
+          ref={element => setDesktopMount(element)}
+        />
+        <BlipUpdateEditor
+          open={open()}
+          rootBlipId="root-1"
+          desktopMount={desktopMount()}
+          onRequestClose={() => setOpen(false)}
+        />
+      </>
+    ))
+
+    await waitFor(() => {
+      expect(screen.getByTestId("mock-update-markdown-editor")).toBeTruthy()
+    })
+
+    const firstSessionKey = screen
+      .getByTestId("mock-update-markdown-editor")
+      .getAttribute("data-instance-key")
+
+    await fireEvent.click(screen.getByTestId("mock-update-change"))
+    setOpen(false)
+    inlineTransitionState.lastProps?.onAfterExit?.()
+    setOpen(true)
+
+    await waitFor(() => {
+      const editor = screen.getByTestId("mock-update-markdown-editor")
+      expect(editor.getAttribute("data-initial-value")).toBe("")
+      expect(editor.getAttribute("data-instance-key")).not.toBe(firstSessionKey)
+    })
+  })
+
+  it("loads existing update content when editing", async () => {
+    state.entities = [
+      {
+        id: "update-existing",
+        content: "Previously published update",
+        blip_type: "update",
+        published: true,
+      },
+    ]
+
+    render(() => (
+      <BlipUpdateEditor
+        open
+        rootBlipId="root-1"
+        editingUpdateId="update-existing"
+        onRequestClose={() => undefined}
+      />
+    ))
+
+    await waitFor(() => {
+      const editor = screen.getByTestId("mock-update-markdown-editor")
+      expect(editor.getAttribute("data-initial-value")).toBe(
+        "Previously published update",
+      )
+      expect(editor.getAttribute("data-instance-key")).toBe(
+        "blip-update-editor:update-existing",
+      )
+    })
+    expect(screen.getByTestId("mock-dialog-title").textContent).toBe(
+      "Editing update",
+    )
   })
 })
