@@ -1,0 +1,13 @@
+peerDependencyRules:
+  allowedVersions:
+    "@corvu/tailwind>tailwindcss": "*"
+    "@kobalte/tailwindcss>tailwindcss": "*"
+
+# pnpm v11 defaults to 1440 (24h); disable for local/solo dev
+minimumReleaseAge: 0
+
+allowBuilds:
+  "@parcel/watcher": true
+  supabase: true
+  "@tailwindcss/oxide": true
+  esbuild: true

@@ -93,19 +93,5 @@
   },
   "engines": {
     "node": ">=22"
-  },
-  "pnpm": {
-    "peerDependencyRules": {
-      "allowedVersions": {
-        "@corvu/tailwind>tailwindcss": "*",
-        "@kobalte/tailwindcss>tailwindcss": "*"
-      }
-    },
-    "onlyBuiltDependencies": [
-      "@parcel/watcher",
-      "supabase",
-      "@tailwindcss/oxide",
-      "esbuild"
-    ]
   }
 }
