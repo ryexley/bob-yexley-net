@@ -9,6 +9,7 @@ import {
   Show,
   untrack,
 } from "solid-js"
+import { revalidate } from "@solidjs/router"
 import { DateTimePicker } from "@/components/date-time-picker"
 import { Stack } from "@/components/stack"
 import { Switch } from "@/components/switch"
@@ -39,6 +40,20 @@ import { useAuth } from "@/context/auth-context"
 import { useViewport } from "@/context/viewport"
 import { BLIP_TYPES, type Blip } from "@/modules/blips/data/schema"
 import { blipId, blipStore, tagStore } from "@/modules/blips/data"
+import {
+  mediaTypeTagsForAttachments,
+  reconcileTagsWithMediaTypes,
+} from "@/modules/blips/data/media-tags"
+import {
+  type Attachment,
+  ComposerMediaChrome,
+  ComposerPreviewModal,
+  MediaButton,
+  type MediaStore,
+  mediaStore,
+  validateMediaFiles,
+} from "@/modules/media"
+import { getBlipMediaFor } from "@/modules/media/data/queries"
 import { slugify } from "@/util/formatters"
 // Blip editor drawer styles are imported by `@/layouts/main/main.css` so they
 // remain available for portaled editor UI in the shared main-layout chrome.
@@ -202,6 +217,13 @@ export function BlipEditor(props: BlipEditorProps) {
   const [comboboxPortalMount, setComboboxPortalMount] = createSignal<
     HTMLElement | undefined
   >()
+  const [media, setMedia] = createSignal<MediaStore | null>(null)
+  const [previewAttachment, setPreviewAttachment] =
+    createSignal<Attachment | null>(null)
+  const [mediaError, setMediaError] = createSignal<string | null>(null)
+  // Plain ref mirror of `media()` so the lifecycle effect can tear down the
+  // previous instance without reactively depending on the signal it sets.
+  let mediaInstance: MediaStore | null = null
 
   const drafts = createMemo(() => store.drafts())
 
@@ -536,6 +558,41 @@ export function BlipEditor(props: BlipEditorProps) {
     )
 
     return true
+  }
+
+  const syncMediaTypeTags = async (instance = media()) => {
+    const blipId = currentBlipId()
+    if (!blipId || !instance) {
+      return
+    }
+
+    const presentMediaTypeTags = mediaTypeTagsForAttachments(instance.attachments())
+    const current = selectedTagValues()
+    const next = reconcileTagsWithMediaTypes(current, presentMediaTypeTags)
+
+    if (areTagValuesEqual(current, next)) {
+      return
+    }
+
+    setSelectedTags(toTagOptions(next))
+    mergeTagOptions(next)
+    setSaveStatus("idle")
+
+    if (content().trim() || hasPersistedCurrentBlip()) {
+      void saveToCacheOnly(content())
+    }
+
+    await persistTagsToDatabase(blipId, next)
+  }
+
+  const handleRemoveAttachment = async (key: string) => {
+    const instance = media()
+    if (!instance) {
+      return
+    }
+
+    await instance.removeAttachment(key)
+    await syncMediaTypeTags(instance)
   }
 
   // Save to cache only (localStorage + signal)
@@ -932,6 +989,157 @@ export function BlipEditor(props: BlipEditorProps) {
     restoreEditorDocumentInteractionState()
   })
 
+  // Force the lazily-created `blips` row to exist before the first `blip_media`
+  // insert (FK gotcha — see mediaStore docs). Bound to a specific blip id so a
+  // fast blip switch can't persist content into the wrong row. Idempotent:
+  // mediaStore serializes `onUploadSuccess`, so only the first call runs this.
+  // The reactive reads are intentional point-in-time snapshots (the callback is
+  // invoked from mediaStore's serialized persist chain, not a tracked scope).
+  // eslint-disable-next-line solid/reactivity
+  const makeEnsureBlipPersisted = (id: string) => async (): Promise<boolean> => {
+    if (currentBlipId() === id && hasPersistedCurrentBlip()) {
+      return true
+    }
+
+    const userId = user()?.id
+    if (!userId) {
+      return false
+    }
+
+    const result = await store.upsert({
+      id,
+      user_id: userId,
+      content: content(),
+      blip_type: BLIP_TYPES.ROOT,
+      parent_id: null,
+    } as Partial<Blip>)
+
+    if (result.error) {
+      return false
+    }
+
+    if (currentBlipId() === id) {
+      setHasPersistedCurrentBlip(true)
+    }
+    return true
+  }
+
+  // One `mediaStore` instance per opened blip. Recreated when `currentBlipId`
+  // changes; the previous instance is `reset()` (tears down uploads, drops this
+  // blip's cached rows — the DB is left intact for saved drafts).
+  createEffect(
+    on(currentBlipId, (id, previousId) => {
+      if (id === previousId) {
+        return
+      }
+
+      if (mediaInstance) {
+        mediaInstance.reset()
+        mediaInstance = null
+        setMedia(null)
+      }
+
+      setPreviewAttachment(null)
+      setMediaError(null)
+
+      if (!id) {
+        return
+      }
+
+      const userId = user()?.id
+      if (!userId) {
+        return
+      }
+
+      const instance = mediaStore(supabase.client, {
+        blipId: id,
+        userId,
+        ensureBlipPersisted: makeEnsureBlipPersisted(id),
+        onMediaPersisted: () => {
+          revalidate(getBlipMediaFor.key)
+          void syncMediaTypeTags(instance)
+        },
+      })
+      mediaInstance = instance
+      setMedia(instance)
+
+      // Reopening a saved draft: hydrate its committed media. A freshly minted
+      // blip isn't in the store yet, so skip the (empty) round-trip.
+      if (store.getById(id)) {
+        void instance.fetchByBlip()
+      }
+    }),
+  )
+
+  onCleanup(() => {
+    mediaInstance?.reset()
+    mediaInstance = null
+  })
+
+  const handleMediaFiles = (files: File[]) => {
+    const instance = media()
+    if (!instance) {
+      return
+    }
+
+    const { accepted, rejected } = validateMediaFiles(files)
+    setMediaError(
+      rejected.length > 0
+        ? tr("media.invalidFiles", { count: rejected.length })
+        : null,
+    )
+
+    if (accepted.length > 0) {
+      void instance.attach(accepted, { source: "picker" })
+    }
+  }
+
+  const handleClipboardPaste = (event: ClipboardEvent) => {
+    const instance = media()
+    if (!instance || !event.clipboardData) {
+      return
+    }
+
+    const files = Array.from(event.clipboardData.files ?? [])
+    const images = files.filter(file => file.type.startsWith("image/"))
+    if (images.length === 0) {
+      // No image payload — let ProseMirror handle text/HTML paste normally.
+      return
+    }
+
+    event.preventDefault()
+    const { accepted, rejected } = validateMediaFiles(images)
+    setMediaError(
+      rejected.length > 0
+        ? tr("media.invalidFiles", { count: rejected.length })
+        : null,
+    )
+    if (accepted.length > 0) {
+      void instance.attach(accepted, { source: "clipboard" })
+    }
+  }
+
+  const handleComposerDrop = (event: DragEvent) => {
+    const instance = media()
+    if (!instance || !event.dataTransfer) {
+      return
+    }
+
+    const files = Array.from(event.dataTransfer.files ?? [])
+    if (files.length === 0) {
+      return
+    }
+
+    event.preventDefault()
+    handleMediaFiles(files)
+  }
+
+  const handleComposerDragOver = (event: DragEvent) => {
+    if (event.dataTransfer?.types?.includes("Files")) {
+      event.preventDefault()
+    }
+  }
+
   // Handlers
   const handleContentChange = (markdown: string) => {
     setContent(markdown)
@@ -1223,6 +1431,11 @@ export function BlipEditor(props: BlipEditorProps) {
                   onClick={() => void requestCloseEditor()}
                   onMouseDown={preventEditorBlur}
                 />
+                <MediaButton
+                  onFiles={handleMediaFiles}
+                  onMouseDown={preventEditorBlur}
+                  label={tr("media.trigger")}
+                />
                 <div class="blip-editor-status-slot">
                   <Show when={ctx.showStatus && ctx.statusIcon}>
                     <div
@@ -1365,7 +1578,11 @@ export function BlipEditor(props: BlipEditorProps) {
           <Show
             when={editorView() === "picker"}
             fallback={
-              <form class="blip-editor-form">
+              <form
+                class="blip-editor-form"
+                onPaste={handleClipboardPaste}
+                onDrop={handleComposerDrop}
+                onDragOver={handleComposerDragOver}>
                 <MarkdownEditor
                   instanceKey="blip-editor"
                   MetadataPanel={MetadataPanel}
@@ -1376,6 +1593,13 @@ export function BlipEditor(props: BlipEditorProps) {
                   initialValue={content()}
                   onChange={handleContentChange}
                   onContentMetricsChange={handleContentMetricsChange}
+                  AboveControls={ComposerMediaChrome}
+                  aboveControlsProps={{
+                    media,
+                    mediaError,
+                    onPreview: setPreviewAttachment,
+                    onRemoveAttachment: handleRemoveAttachment,
+                  }}
                   EditorControls={EditorControls}
                   statusIcon={getStatusIcon()}
                   showStatus={showStatus()}
@@ -1389,6 +1613,11 @@ export function BlipEditor(props: BlipEditorProps) {
                     handlePublish,
                     handleSave,
                   }}
+                />
+                <ComposerPreviewModal
+                  attachment={previewAttachment()}
+                  onClose={() => setPreviewAttachment(null)}
+                  closeLabel={tr("media.closePreview")}
                 />
               </form>
             }>

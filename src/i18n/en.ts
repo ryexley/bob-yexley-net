@@ -335,6 +335,14 @@ export const en = {
           scheduled: "Scheduled",
           scheduledTooltip: "Scheduled to be published on {timestamp}",
         },
+        media: {
+          region: "Attached media",
+          close: "Close media viewer",
+          previous: "Previous media",
+          next: "Next media",
+          counter: "{current} / {total}",
+          openItem: "View media {index} of {total}",
+        },
         actions: {
           backToBlips: "back",
           postUpdate: "Post update",
@@ -411,6 +419,11 @@ export const en = {
           commentsTooltip: "{count, plural, one {# comment} other {# comments}}",
           commentsDisabled: "Comments disabled",
         },
+        media: {
+          region:
+            "{count, plural, one {# attachment} other {# attachments}}",
+          overflow: "+{count}",
+        },
         readMoreDialog: {
           closeAriaLabel: "Close dialog",
         },
@@ -474,6 +487,15 @@ export const en = {
           toggleToolbar: "Toggle formatting toolbar",
           showMetadata: "Show blip metadata",
           showEditor: "Return to editor",
+        },
+        media: {
+          trigger: "Add media",
+          remove: "Remove attachment",
+          retry: "Retry upload",
+          preview: "Preview attachment",
+          closePreview: "Close preview",
+          invalidFiles:
+            "{count, plural, one {# file couldn't be added — unsupported type or over 150MB.} other {# files couldn't be added — unsupported type or over 150MB.}}",
         },
         confirmDelete: {
           title: "Delete draft blip?",

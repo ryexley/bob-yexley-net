@@ -7,6 +7,7 @@ import {
   Show,
   splitProps,
 } from "solid-js"
+import { revalidate } from "@solidjs/router"
 import {
   MarkdownEditor,
   type MarkdownEditorControlsProps,
@@ -31,6 +32,16 @@ import { useAuth } from "@/context/auth-context"
 import { useViewport } from "@/context/viewport"
 import { BLIP_TYPES, blipId, blipStore, type Blip } from "@/modules/blips/data"
 import { PortaledInlineTransition } from "@/modules/blips/components/portaled-inline-transition"
+import {
+  type Attachment,
+  ComposerPreviewModal,
+  MediaButton,
+  type MediaStore,
+  mediaStore,
+  ComposerMediaChrome,
+  validateMediaFiles,
+} from "@/modules/media"
+import { getBlipMediaFor } from "@/modules/media/data/queries"
 import "./blip-update-editor.css"
 
 type BlipUpdateEditorProps = {
@@ -49,19 +60,54 @@ type SaveContext = {
   rootBlipId: string
   userId: string
 }
-type StatusContext = {
-  canDelete: boolean
-  canTogglePublish: boolean
-  canSave: boolean
-  isPublished: boolean
-  handleDelete: () => void
-  handleTogglePublish: () => void
-  handleSave: () => void
-}
 
 const trDetail = ptr("blips.views.detail")
 const trEditor = ptr("blips.components.blipEditor")
 const MOBILE_MAX_WIDTH = 768
+
+/** First media attach on a new update persists an FK stub — unpublished in DB only. */
+export const resolveMediaTriggeredUpdatePersistPublished = (
+  hasPersistedCurrentUpdate: boolean,
+  isPublished: boolean,
+): boolean => {
+  if (!hasPersistedCurrentUpdate) {
+    return false
+  }
+
+  return isPublished
+}
+
+export const resolveUpdateCanSave = ({
+  open,
+  hasSaveContext,
+  hasPendingTextChanges,
+  hasReadyMedia,
+  hasPersistedCurrentUpdate,
+}: {
+  open: boolean
+  hasSaveContext: boolean
+  hasPendingTextChanges: boolean
+  hasReadyMedia: boolean
+  hasPersistedCurrentUpdate: boolean
+}): boolean => {
+  if (!open || !hasSaveContext) {
+    return false
+  }
+
+  if (hasPendingTextChanges) {
+    return true
+  }
+
+  return hasReadyMedia && !hasPersistedCurrentUpdate
+}
+
+export const resolveUpdateHasComposeDraft = ({
+  hasText,
+  hasMedia,
+}: {
+  hasText: boolean
+  hasMedia: boolean
+}): boolean => hasText || hasMedia
 
 export const resolveUpdateEditorDraft = ({
   editingUpdateId,
@@ -131,6 +177,13 @@ export function BlipUpdateEditor(props: BlipUpdateEditorProps) {
   const [statusFading, setStatusFading] = createSignal(false)
   const [editorFocusNonce, setEditorFocusNonce] = createSignal(0)
   const [keyboardInsetPx, setKeyboardInsetPx] = createSignal(0)
+  const [media, setMedia] = createSignal<MediaStore | null>(null)
+  const [previewAttachment, setPreviewAttachment] =
+    createSignal<Attachment | null>(null)
+  const [mediaError, setMediaError] = createSignal<string | null>(null)
+  // Plain ref mirror of `media()` so the lifecycle effect can tear down the
+  // previous instance without reactively depending on the signal it sets.
+  let mediaInstance: MediaStore | null = null
 
   let hideStatusTimeout: ReturnType<typeof setTimeout> | null = null
   let fadeStatusTimeout: ReturnType<typeof setTimeout> | null = null
@@ -444,6 +497,164 @@ export function BlipUpdateEditor(props: BlipUpdateEditorProps) {
     restoreEditorDocumentInteractionState()
   })
 
+  // Force the update's `blips` row to exist before the first `blip_media` insert
+  // (FK gotcha — see mediaStore docs). The first call is a media FK stub only:
+  // persist as an unpublished draft so the activity feed does not gain an empty
+  // update before the author saves. Use `skipLocalCache` so the shared blips
+  // singleton (also read by the detail page) is not perturbed mid-compose.
+  // update before the author saves. Idempotent: mediaStore serializes
+  // `onUploadSuccess`, so only the first call runs this. Reactive reads are
+  // intentional point-in-time snapshots (invoked from the serialized persist
+  // chain, not a tracked scope).
+  // eslint-disable-next-line solid/reactivity
+  const makeEnsureBlipPersisted = (id: string) => async (): Promise<boolean> => {
+    if (currentUpdateId() === id && hasPersistedCurrentUpdate()) {
+      return true
+    }
+
+    const userId = user()?.id
+    const rootBlipId = local.rootBlipId
+    if (!userId || !rootBlipId) {
+      return false
+    }
+
+    const published = resolveMediaTriggeredUpdatePersistPublished(
+      hasPersistedCurrentUpdate(),
+      isPublished(),
+    )
+
+    const result = await store.upsert({
+      id,
+      user_id: userId,
+      parent_id: rootBlipId,
+      blip_type: BLIP_TYPES.UPDATE,
+      content: content(),
+      published,
+      moderation_status: "approved",
+    } as Partial<Blip>, { skipLocalCache: true })
+
+    if (result.error) {
+      return false
+    }
+
+    return true
+  }
+
+  // One `mediaStore` instance per edited update. Recreated when `currentUpdateId`
+  // changes; the previous instance is `reset()` (tears down uploads, drops this
+  // update's cached rows — the DB is left intact for saved updates).
+  createEffect(
+    on(currentUpdateId, (id, previousId) => {
+      if (id === previousId) {
+        return
+      }
+
+      if (mediaInstance) {
+        mediaInstance.reset()
+        mediaInstance = null
+        setMedia(null)
+      }
+
+      setPreviewAttachment(null)
+      setMediaError(null)
+
+      if (!id) {
+        return
+      }
+
+      const userId = user()?.id
+      if (!userId) {
+        return
+      }
+
+      const instance = mediaStore(supabase.client, {
+        blipId: id,
+        userId,
+        ensureBlipPersisted: makeEnsureBlipPersisted(id),
+        onMediaPersisted: () => {
+          revalidate(getBlipMediaFor.key)
+        },
+      })
+      mediaInstance = instance
+      setMedia(instance)
+
+      // Editing a saved update: hydrate its committed media. A freshly minted
+      // update isn't in the store yet, so skip the (empty) round-trip.
+      if (store.getById(id)) {
+        void instance.fetchByBlip()
+      }
+    }),
+  )
+
+  onCleanup(() => {
+    mediaInstance?.reset()
+    mediaInstance = null
+  })
+
+  const handleMediaFiles = (files: File[]) => {
+    const instance = media()
+    if (!instance) {
+      return
+    }
+
+    const { accepted, rejected } = validateMediaFiles(files)
+    setMediaError(
+      rejected.length > 0
+        ? trEditor("media.invalidFiles", { count: rejected.length })
+        : null,
+    )
+
+    if (accepted.length > 0) {
+      void instance.attach(accepted, { source: "picker" })
+    }
+  }
+
+  const handleClipboardPaste = (event: ClipboardEvent) => {
+    const instance = media()
+    if (!instance || !event.clipboardData) {
+      return
+    }
+
+    const files = Array.from(event.clipboardData.files ?? [])
+    const images = files.filter(file => file.type.startsWith("image/"))
+    if (images.length === 0) {
+      // No image payload — let ProseMirror handle text/HTML paste normally.
+      return
+    }
+
+    event.preventDefault()
+    const { accepted, rejected } = validateMediaFiles(images)
+    setMediaError(
+      rejected.length > 0
+        ? trEditor("media.invalidFiles", { count: rejected.length })
+        : null,
+    )
+    if (accepted.length > 0) {
+      void instance.attach(accepted, { source: "clipboard" })
+    }
+  }
+
+  const handleComposerDrop = (event: DragEvent) => {
+    const instance = media()
+    if (!instance || !event.dataTransfer) {
+      return
+    }
+
+    const files = Array.from(event.dataTransfer.files ?? [])
+    if (files.length === 0) {
+      return
+    }
+
+    event.preventDefault()
+    handleMediaFiles(files)
+  }
+
+  const handleComposerDragOver = (event: DragEvent) => {
+    if (event.dataTransfer?.types?.includes("Files")) {
+      event.preventDefault()
+    }
+  }
+
   const scheduleAutoSave = (markdown: string) => {
     if (
       !local.open ||
@@ -474,9 +685,35 @@ export function BlipUpdateEditor(props: BlipUpdateEditorProps) {
     () => isDirty() && content().trim().length > 0 && local.open,
   )
 
+  const hasReadyMedia = createMemo(() => {
+    const instance = media()
+    if (!instance) {
+      return false
+    }
+
+    return instance.hasMedia() && instance.canPublish()
+  })
+
+  const hasComposeDraft = createMemo(() =>
+    resolveUpdateHasComposeDraft({
+      hasText: content().trim().length > 0,
+      hasMedia: Boolean(media()?.hasMedia()),
+    }),
+  )
+
+  const canSave = createMemo(() =>
+    resolveUpdateCanSave({
+      open: local.open,
+      hasSaveContext: Boolean(saveContext()),
+      hasPendingTextChanges: hasPendingChanges(),
+      hasReadyMedia: hasReadyMedia(),
+      hasPersistedCurrentUpdate: hasPersistedCurrentUpdate(),
+    }),
+  )
+
   const handleSave = async (closeAfterSave = false) => {
     const ctx = saveContext()
-    if (!hasPendingChanges()) {
+    if (!canSave()) {
       return
     }
     if (!ctx) {
@@ -499,7 +736,7 @@ export function BlipUpdateEditor(props: BlipUpdateEditorProps) {
       return true
     }
 
-    return content().trim().length > 0
+    return hasComposeDraft()
   })
 
   const handleDelete = () => {
@@ -599,11 +836,11 @@ export function BlipUpdateEditor(props: BlipUpdateEditorProps) {
   }
 
   const hasCloseDraftContent = createMemo(() => {
-    const hasAnyContent = content().trim().length > 0
     const hasUnsavedEdits = hasPendingChanges()
     const hasUnpublishedPersistedUpdate =
       hasPersistedCurrentUpdate() && !isPublished()
-    const hasUnpersistedDraft = hasAnyContent && !hasPersistedCurrentUpdate()
+    const hasUnpersistedDraft =
+      hasComposeDraft() && !hasPersistedCurrentUpdate()
 
     return (
       hasUnsavedEdits || hasUnpublishedPersistedUpdate || hasUnpersistedDraft
@@ -613,15 +850,15 @@ export function BlipUpdateEditor(props: BlipUpdateEditorProps) {
   const closeAndDiscardDraft = async () => {
     debouncedDbSave.cancel()
 
-    if (hasPersistedCurrentUpdate()) {
-      const updateId = currentUpdateId()
-      if (updateId) {
-        const result = await store.remove(updateId)
-        if (result.error) {
-          throw new Error(result.error)
-        }
+    const updateId = currentUpdateId()
+    if (updateId && (hasPersistedCurrentUpdate() || media()?.hasMedia())) {
+      const result = await store.remove(updateId)
+      if (result.error) {
+        throw new Error(result.error)
       }
     }
+
+    mediaInstance?.reset()
 
     dismissKeyboard()
     local.onRequestClose?.()
@@ -724,6 +961,11 @@ export function BlipUpdateEditor(props: BlipUpdateEditorProps) {
                   onClick={handleClose}
                   onMouseDown={preventEditorBlur}
                 />
+                <MediaButton
+                  onFiles={handleMediaFiles}
+                  onMouseDown={preventEditorBlur}
+                  label={trEditor("media.trigger")}
+                />
                 <div class="blip-editor-status-slot">
                   <Show when={ctx.showStatus && ctx.statusIcon}>
                     <div
@@ -825,6 +1067,9 @@ export function BlipUpdateEditor(props: BlipUpdateEditorProps) {
       >
         <form
           class="blip-editor-form blip-update-editor-form"
+          onPaste={handleClipboardPaste}
+          onDrop={handleComposerDrop}
+          onDragOver={handleComposerDragOver}
           onSubmit={event => {
             event.preventDefault()
             void handleSave(true)
@@ -837,6 +1082,12 @@ export function BlipUpdateEditor(props: BlipUpdateEditorProps) {
             initialValue={content()}
             onChange={handleContentChange}
             onEditorReady={handleEditorReady}
+            AboveControls={ComposerMediaChrome}
+            aboveControlsProps={{
+              media,
+              mediaError,
+              onPreview: setPreviewAttachment,
+            }}
             EditorControls={EditorControls}
             statusIcon={getStatusIcon()}
             showStatus={showStatus()}
@@ -846,7 +1097,7 @@ export function BlipUpdateEditor(props: BlipUpdateEditorProps) {
               canDelete: canDelete(),
               canTogglePublish:
                 hasPersistedCurrentUpdate() && !hasPendingChanges(),
-              canSave: hasPendingChanges() && Boolean(saveContext()),
+              canSave: canSave(),
               isPublished: isPublished(),
               handleDelete,
               handleTogglePublish: () => {
@@ -856,6 +1107,11 @@ export function BlipUpdateEditor(props: BlipUpdateEditorProps) {
                 void handleSave(true)
               },
             }}
+          />
+          <ComposerPreviewModal
+            attachment={previewAttachment()}
+            onClose={() => setPreviewAttachment(null)}
+            closeLabel={trEditor("media.closePreview")}
           />
         </form>
       </EditorShell>

@@ -1,6 +1,7 @@
 import { differenceInDays, format, formatDistanceToNow } from "date-fns"
 import { enUS } from "date-fns/locale/en-US"
 import type { Blip } from "@/modules/blips/data/schema"
+import { BLIP_TYPES } from "@/modules/blips/data/schema"
 import { ptr } from "@/i18n"
 
 const tr = ptr("blips.util.relativeTime")
@@ -90,6 +91,28 @@ export function isBlipPubliclyVisible(
   }
 
   return !isBlipScheduled(blip)
+}
+
+/** Hide unpublished textless updates (e.g. media FK stubs before the author saves). */
+export function isUpdateActivityVisible(
+  update: Pick<Blip, "published" | "content">,
+): boolean {
+  if (update.published) {
+    return true
+  }
+
+  return Boolean(update.content?.trim())
+}
+
+/** In-progress media attach on a new update — persisted for FK only, not feed-ready. */
+export function isComposerFkStubUpdate(
+  update: Pick<Blip, "blip_type" | "published" | "content">,
+): boolean {
+  return (
+    update.blip_type === BLIP_TYPES.UPDATE &&
+    !update.published &&
+    !update.content?.trim()
+  )
 }
 
 export function formatBlipTimestamp(timestamp: string): string {

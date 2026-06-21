@@ -31,6 +31,8 @@ import {
 } from "@/modules/blips/data/reaction-optimistic"
 import { REACTION_ERROR_I18N_KEY } from "@/modules/blips/data/errors"
 import { reactionStore } from "@/modules/blips/data/reactions-store"
+import { BlipCardMediaStrip } from "@/modules/media"
+import type { BlipMediaRow } from "@/modules/media/data/queries"
 import {
   formatBlipScheduledTimestamp,
   formatBlipTimestamp,
@@ -48,10 +50,17 @@ const tr = ptr("blips.components.blip")
 export function Blip(props: {
   blip: BlipType
   tags?: string[]
+  media?: BlipMediaRow[]
   onEdit?: (blipId: string) => void
   onView?: (blipId: string) => void
 }) {
-  const [local] = splitProps(props, ["blip", "tags", "onEdit", "onView"])
+  const [local] = splitProps(props, [
+    "blip",
+    "tags",
+    "media",
+    "onEdit",
+    "onView",
+  ])
   const navigate = useNavigate()
   const preloadRoute = usePreloadRoute()
   const { isAuthenticated, userProfile, userSystem } = useAuth()
@@ -96,6 +105,13 @@ export function Blip(props: {
   const canOpenDetails = () => isClipped() || typeof local.onView === "function"
   const hasUpdates = () => (local.blip.updates_count ?? 0) > 0
   const hasComments = () => (local.blip.comments_count ?? 0) > 0
+  const media = () => local.media ?? []
+  const hasMedia = () => media().length > 0
+  const showMediaRow = () => hasMedia() || canOpenDetails()
+  const mediaStripLabels = {
+    region: (count: number) => tr("media.region", { count }),
+    overflow: (count: number) => tr("media.overflow", { count }),
+  }
 
   createEffect(() => {
     local.blip.id
@@ -242,20 +258,28 @@ export function Blip(props: {
               ref={contentRef}
               class={cx("content", { preview: isClipped() })}>
               <Markdown content={local.blip.content} />
-              <Show when={canOpenDetails()}>
-                <Button
-                  variant="ghost"
-                  size="xs"
-                  onClick={event => {
-                    event.stopPropagation()
-                    openDetails()
-                  }}
-                  class="read-more"
-                  label={tr("actions.readMore")}
-                  iconRight="arrow_forward"
-                />
-              </Show>
             </div>
+            <Show when={showMediaRow()}>
+              <div class="blip-media-row">
+                <BlipCardMediaStrip
+                  media={media()}
+                  labels={mediaStripLabels}
+                />
+                <Show when={canOpenDetails()}>
+                  <Button
+                    variant="ghost"
+                    size="xs"
+                    onClick={event => {
+                      event.stopPropagation()
+                      openDetails()
+                    }}
+                    class="read-more"
+                    label={tr("actions.readMore")}
+                    iconRight="arrow_forward"
+                  />
+                </Show>
+              </div>
+            </Show>
           </div>
           <footer>
             <div class="tags">

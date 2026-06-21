@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest"
-import { resolveUpdateEditorDraft } from "@/modules/blips/components/blip-update-editor"
+import {
+  resolveMediaTriggeredUpdatePersistPublished,
+  resolveUpdateCanSave,
+  resolveUpdateEditorDraft,
+  resolveUpdateHasComposeDraft,
+} from "@/modules/blips/components/blip-update-editor"
 import { BLIP_TYPES, type Blip } from "@/modules/blips/data/schema"
 
 const makeUpdate = (overrides: Partial<Blip> = {}): Blip => ({
@@ -70,5 +75,69 @@ describe("resolveUpdateEditorDraft", () => {
       isPublished: true,
       hasPersistedCurrentUpdate: false,
     })
+  })
+})
+
+describe("resolveMediaTriggeredUpdatePersistPublished", () => {
+  it("persists the first media FK stub as unpublished in the database only", () => {
+    expect(
+      resolveMediaTriggeredUpdatePersistPublished(false, true),
+    ).toBe(false)
+  })
+
+  it("uses the editor publish intent once the update row already exists", () => {
+    expect(resolveMediaTriggeredUpdatePersistPublished(true, true)).toBe(true)
+    expect(resolveMediaTriggeredUpdatePersistPublished(true, false)).toBe(
+      false,
+    )
+  })
+})
+
+describe("resolveUpdateCanSave", () => {
+  it("allows save for a media-only draft once uploads have settled", () => {
+    expect(
+      resolveUpdateCanSave({
+        open: true,
+        hasSaveContext: true,
+        hasPendingTextChanges: false,
+        hasReadyMedia: true,
+        hasPersistedCurrentUpdate: false,
+      }),
+    ).toBe(true)
+  })
+
+  it("blocks save while media is still uploading on a new update", () => {
+    expect(
+      resolveUpdateCanSave({
+        open: true,
+        hasSaveContext: true,
+        hasPendingTextChanges: false,
+        hasReadyMedia: false,
+        hasPersistedCurrentUpdate: false,
+      }),
+    ).toBe(false)
+  })
+
+  it("does not re-offer save after a media-only update was already saved", () => {
+    expect(
+      resolveUpdateCanSave({
+        open: true,
+        hasSaveContext: true,
+        hasPendingTextChanges: false,
+        hasReadyMedia: true,
+        hasPersistedCurrentUpdate: true,
+      }),
+    ).toBe(false)
+  })
+})
+
+describe("resolveUpdateHasComposeDraft", () => {
+  it("treats ready media without text as a draft", () => {
+    expect(
+      resolveUpdateHasComposeDraft({
+        hasText: false,
+        hasMedia: true,
+      }),
+    ).toBe(true)
   })
 })

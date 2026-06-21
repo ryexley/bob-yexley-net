@@ -4,6 +4,13 @@ import { Blip } from "@/modules/blips/components/blip"
 import { useAuth } from "@/context/auth-context"
 import { useSupabase } from "@/context/services-context"
 import { tagStore } from "@/modules/blips/data"
+import {
+  flattenBlipPageMedia,
+  getBlipMediaFor,
+  getUpdateBlipIdsForRoots,
+  groupMediaByBlipId,
+  type BlipMediaRow,
+} from "@/modules/media/data/queries"
 import { useOptionalBlipComposer } from "@/modules/blips/context/blip-composer-context"
 import { compareBlipsByPublishTimestampDesc } from "@/modules/blips/util"
 import "./blips.css"
@@ -21,6 +28,20 @@ export function Blips(props: {
     Record<string, string[]>
   >({})
   let activeHydrationRequest = 0
+  // Phase 7 feed media: batch-load committed `blip_media` for the rendered
+  // blips and key it by id (handoff fork 1). Mirrors the tag-hydration pattern
+  // below — fetch only the ids not yet loaded so `loadMore` pages append
+  // incrementally instead of refetching the whole set.
+  const [mediaByBlipId, setMediaByBlipId] = createSignal<
+    Record<string, BlipMediaRow[]>
+  >({})
+  const [updateIdsByRootId, setUpdateIdsByRootId] = createSignal<
+    Record<string, string[]>
+  >({})
+  const [loadedMediaIds, setLoadedMediaIds] = createSignal<Set<string>>(
+    new Set(),
+  )
+  let activeMediaRequest = 0
 
   const tagHydrationBlipIds = createMemo(() => {
     if (!isAuthenticated()) {
@@ -52,6 +73,61 @@ export function Blips(props: {
     })()
   })
 
+  const mediaPendingBlipIds = createMemo(() => {
+    const loaded = loadedMediaIds()
+    return [
+      ...new Set(local.blips.map(blip => blip.id).filter(Boolean)),
+    ].filter(id => !loaded.has(id))
+  })
+
+  createEffect(() => {
+    const ids = mediaPendingBlipIds()
+    if (ids.length === 0) {
+      return
+    }
+
+    const requestId = ++activeMediaRequest
+    void (async () => {
+      const blipsById = new Map(local.blips.map(blip => [blip.id, blip]))
+      const rootsNeedingUpdateIds = ids.filter(
+        id => (blipsById.get(id)?.updates_count ?? 0) > 0,
+      )
+      const updateIdsByRoot =
+        rootsNeedingUpdateIds.length > 0
+          ? await getUpdateBlipIdsForRoots(rootsNeedingUpdateIds)
+          : {}
+      const mediaBlipIds = [
+        ...new Set([...ids, ...Object.values(updateIdsByRoot).flat()]),
+      ]
+      const rows = await getBlipMediaFor(mediaBlipIds)
+      if (requestId !== activeMediaRequest) {
+        return
+      }
+
+      const grouped = groupMediaByBlipId(rows)
+      setMediaByBlipId(current => ({ ...current, ...grouped }))
+      setUpdateIdsByRootId(current => ({ ...current, ...updateIdsByRoot }))
+      // Mark every requested id as loaded — including those with no media —
+      // so we never refetch a blip that simply has no attachments.
+      setLoadedMediaIds(current => {
+        const next = new Set(current)
+        for (const id of ids) {
+          next.add(id)
+        }
+        return next
+      })
+    })()
+  })
+
+  const feedCardMediaFor = (rootBlipId: string) => {
+    const byBlip = mediaByBlipId()
+    return flattenBlipPageMedia(
+      byBlip[rootBlipId] ?? [],
+      byBlip,
+      updateIdsByRootId()[rootBlipId] ?? [],
+    )
+  }
+
   const handleEdit = (blipId: string) => {
     composer?.openEditRoot(blipId)
   }
@@ -72,6 +148,7 @@ export function Blips(props: {
                   ? blip.tags ?? []
                   : hydratedTagsByBlipId()[blip.id] ?? []
               }
+              media={feedCardMediaFor(blip.id)}
               onEdit={handleEdit}
               onView={local.onView}
             />

@@ -21,5 +21,14 @@ export function getEnv() {
     ESV_API_KEY: process.env.ESV_API_KEY || "",
     ANALYTICS_HASH_SALT: process.env.ANALYTICS_HASH_SALT || "",
     ANALYTICS_ALLOWED_ORIGINS: process.env.ANALYTICS_ALLOWED_ORIGINS || "",
+    MEDIA_STORAGE_URL:
+      process.env.MEDIA_STORAGE_URL ||
+      import.meta.env.VITE_MEDIA_STORAGE_URL ||
+      process.env.VITE_MEDIA_STORAGE_URL ||
+      "",
+    R2_ENDPOINT: process.env.R2_ENDPOINT || "",
+    R2_BUCKET: process.env.R2_BUCKET || "",
+    R2_ACCESS_KEY_ID: process.env.R2_ACCESS_KEY_ID || "",
+    R2_SECRET_ACCESS_KEY: process.env.R2_SECRET_ACCESS_KEY || "",
   }
 }

@@ -1,7 +1,8 @@
 import { Dialog as DialogPrimitive } from "@kobalte/core/dialog"
-import { type ComponentProps, type ParentProps, type JSX } from "solid-js"
+import { type ComponentProps, type ParentProps, type JSX, createEffect, onCleanup } from "solid-js"
 import { Icon } from "@/components/icon"
 import { cx } from "@/util"
+import { lockDocumentScroll } from "@/util/scroll-lock"
 import "./dialog.css"
 
 type DialogProps = ParentProps<{
@@ -22,12 +23,21 @@ type DialogProps = ParentProps<{
 }>
 
 export function Dialog(props: DialogProps) {
+  // `@kobalte/core` accepts `preventScroll` but does not implement it — lock locally.
+  createEffect(() => {
+    if (!props.preventScroll || !props.open) {
+      return
+    }
+
+    const unlock = lockDocumentScroll()
+    onCleanup(unlock)
+  })
+
   return (
     <DialogPrimitive
       defaultOpen={props.defaultOpen}
       open={props.open}
       modal={props.modal}
-      preventScroll={props.preventScroll}
       forceMount={props.forceMount}
       onOpenChange={props.onOpenChange}>
       <DialogPrimitive.Portal>

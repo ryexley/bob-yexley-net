@@ -40,6 +40,8 @@ export type StoreOptions = {
 // Upsert options type
 export type UpsertOptions = {
   cacheOnly?: boolean
+  /** Persist to the database but do not merge into the shared in-memory cache. */
+  skipLocalCache?: boolean
 }
 
 // Cache data structure
@@ -332,10 +334,20 @@ export function supaStore<T extends BaseEntity>(
 
       return withAsyncHandler(
         async () => {
-          // Generate ID if not provided and generator exists
-          const dataToInsert = {
-            ...entityData,
-            id: entityData.id || (generateId ? generateId() : undefined),
+          // Use a caller-provided id, else a configured generator. Tables whose
+          // primary key has a DB default (e.g. `blip_media.id uuid default
+          // gen_random_uuid()`) have neither — in that case `id` must be OMITTED
+          // entirely, not sent as `undefined`. supabase-js derives the PostgREST
+          // `?columns=` list from the row's keys, so a lingering `id` key makes
+          // PostgREST insert NULL (ignoring the column default) and the not-null
+          // constraint fails.
+          const resolvedId =
+            entityData.id || (generateId ? generateId() : undefined)
+          const dataToInsert: Partial<T> = { ...entityData }
+          if (resolvedId !== undefined) {
+            ;(dataToInsert as { id?: unknown }).id = resolvedId
+          } else {
+            delete (dataToInsert as { id?: unknown }).id
           }
 
           const { data, error: createError } = await supabaseClient
@@ -409,7 +421,7 @@ export function supaStore<T extends BaseEntity>(
       entityData: Partial<T>,
       options: UpsertOptions = {},
     ): Promise<OperationResult<T>> => {
-      const { cacheOnly = false } = options
+      const { cacheOnly = false, skipLocalCache = false } = options
 
       if (!entityData) {
         const errorMessage = `${tableName} data is required`
@@ -491,18 +503,19 @@ export function supaStore<T extends BaseEntity>(
 
           const upsertedEntity = data as T
 
-          // Update local state
-          const existingIndex = entities().findIndex(
-            e => e.id === upsertedEntity.id,
-          )
-          if (existingIndex >= 0) {
-            updateEntitiesState(current =>
-              current.map(e =>
-                e.id === upsertedEntity.id ? upsertedEntity : e,
-              ),
+          if (!skipLocalCache) {
+            const existingIndex = entities().findIndex(
+              e => e.id === upsertedEntity.id,
             )
-          } else {
-            updateEntitiesState(current => [upsertedEntity, ...current])
+            if (existingIndex >= 0) {
+              updateEntitiesState(current =>
+                current.map(e =>
+                  e.id === upsertedEntity.id ? upsertedEntity : e,
+                ),
+              )
+            } else {
+              updateEntitiesState(current => [upsertedEntity, ...current])
+            }
           }
 
           return { data: upsertedEntity, error: null }

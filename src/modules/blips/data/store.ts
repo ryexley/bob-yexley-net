@@ -45,6 +45,8 @@ const removeRealtimeChannelSafely = async (
 }
 
 export type BlipUpdateWatchHandlers = {
+  /** When false, the incoming row is not merged into the local blips cache. */
+  shouldCacheIncoming?: (blip: Blip) => boolean
   onInsert?: (blip: Blip) => void
   onUpdate?: (blip: Blip) => void
   onDelete?: (blipId: string) => void
@@ -425,7 +427,9 @@ export function blipStore(
             return
           }
 
-          void store.upsert(incoming, { cacheOnly: true })
+          if (handlers.shouldCacheIncoming?.(incoming) ?? true) {
+            void store.upsert(incoming, { cacheOnly: true })
+          }
           handlers.onInsert?.(incoming)
         },
       )
@@ -445,7 +449,9 @@ export function blipStore(
             return
           }
 
-          void store.upsert(incoming, { cacheOnly: true })
+          if (handlers.shouldCacheIncoming?.(incoming) ?? true) {
+            void store.upsert(incoming, { cacheOnly: true })
+          }
           void refreshReactionState(incoming.id)
           handlers.onUpdate?.(incoming)
         },

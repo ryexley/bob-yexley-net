@@ -27,6 +27,11 @@ import { REACTION_ERROR_I18N_KEY } from "@/modules/blips/data/errors"
 import { reactionStore } from "@/modules/blips/data/reactions-store"
 import { blipStore } from "@/modules/blips/data/store"
 import { BlipCommentThread } from "@/modules/blips/components/blip-comment-thread"
+import {
+  BlipMediaGallery,
+  type BlipMediaGalleryLabels,
+} from "@/modules/media"
+import type { BlipMediaRow } from "@/modules/media/data/queries"
 import { useBlipComposer } from "@/modules/blips/context/blip-composer-context"
 import {
   formatBlipTimestamp,
@@ -42,6 +47,10 @@ const commentThreadTr = ptr("blips.components.commentThread")
 export function UpdateBlip(props: {
   blip: Blip
   comments?: Blip[]
+  media?: BlipMediaRow[]
+  mediaLabels?: BlipMediaGalleryLabels
+  onOpenMediaItem?: (record: BlipMediaRow) => void
+  getMediaOpenItemLabel?: (record: BlipMediaRow) => string
   isRecentRealtime?: boolean
   isShimmering?: boolean
   onEdit?: (blipId: string) => void
@@ -171,6 +180,17 @@ export function UpdateBlip(props: {
         <div class="content">
           <Markdown content={props.blip.content ?? ""} />
         </div>
+        <Show when={props.mediaLabels}>
+          {labels => (
+            <BlipMediaGallery
+              media={props.media ?? []}
+              labels={labels()}
+              class="update-blip-media"
+              onOpenItem={props.onOpenMediaItem}
+              getOpenItemLabel={props.getMediaOpenItemLabel}
+            />
+          )}
+        </Show>
         <footer>
           <BlipReactionSummary
             class="reactions"

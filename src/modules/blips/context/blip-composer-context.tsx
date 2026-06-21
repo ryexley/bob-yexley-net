@@ -195,6 +195,13 @@ export function BlipComposerProvider(props: ParentProps) {
     }
 
     if (element) {
+      if (
+        updateInlineMountRootBlipId() === rootBlipId &&
+        updateInlineMount() === element
+      ) {
+        return
+      }
+
       setUpdateInlineMountRootBlipId(rootBlipId)
       setUpdateInlineMount(element)
     }

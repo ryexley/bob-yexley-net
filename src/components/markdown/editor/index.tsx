@@ -62,6 +62,9 @@ interface MarkdownEditorProps {
   statusContext?: any
   MetadataPanel?: Component<MarkdownEditorControlsProps>
   metadataPanelVisible?: boolean
+  /** Rendered between the editor body and `EditorControls` (stable module component recommended). */
+  AboveControls?: Component<Record<string, unknown>>
+  aboveControlsProps?: Record<string, unknown>
   EditorControls?: Component<MarkdownEditorControlsProps>
 }
 
@@ -198,6 +201,8 @@ export function MarkdownEditor(props: MarkdownEditorProps) {
     "statusContext",
     "MetadataPanel",
     "metadataPanelVisible",
+    "AboveControls",
+    "aboveControlsProps",
     "EditorControls",
   ])
 
@@ -548,6 +553,12 @@ export function MarkdownEditor(props: MarkdownEditorProps) {
             )}
           </Show>
         </div>
+        <Show when={local.AboveControls != null}>
+          <Dynamic
+            component={local.AboveControls!}
+            {...(local.aboveControlsProps ?? {})}
+          />
+        </Show>
         <Show when={local.EditorControls}>
           {local.EditorControls?.({
             onToggleToolbar: handleToggleToolbar,

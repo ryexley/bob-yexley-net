@@ -1,6 +1,7 @@
 import {
   A,
   createAsync,
+  revalidate,
   useLocation,
   useNavigate,
   useParams,
@@ -11,6 +12,7 @@ import {
   createMemo,
   createSignal,
   For,
+  on,
   onCleanup,
   Show,
   untrack,
@@ -47,6 +49,14 @@ import {
 } from "@/modules/blips/data/reaction-optimistic"
 import { reactionStore } from "@/modules/blips/data/reactions-store"
 import { UpdateBlip } from "@/modules/blips/components/update-blip"
+import { BlipMediaGallery, Lightbox } from "@/modules/media"
+import {
+  flattenBlipPageMedia,
+  getBlipMediaFor,
+  groupMediaByBlipId,
+  indexMediaById,
+} from "@/modules/media/data/queries"
+import type { BlipMediaRow } from "@/modules/media/data/queries"
 import { useBlipComposer } from "@/modules/blips/context/blip-composer-context"
 import {
   formatBlipScheduledTimestamp,
@@ -54,6 +64,8 @@ import {
   formatBlipTimestampTooltip,
   getBlipPublishTimestamp,
   isBlipPubliclyVisible,
+  isComposerFkStubUpdate,
+  isUpdateActivityVisible,
   isBlipScheduled,
 } from "@/modules/blips/util"
 import {
@@ -125,6 +137,7 @@ export function BlipView() {
   const supabase = useSupabase()
   const notify = useNotify()
   const {
+    activeKind,
     closeActive,
     isUpdateOpenFor,
     openEditRoot,
@@ -255,7 +268,7 @@ export function BlipView() {
     return hydratedRootTags()
   })
   const visibleUpdates = createMemo(() => {
-    const allUpdates = updates()
+    const allUpdates = updates().filter(update => isUpdateActivityVisible(update))
     if (isAuthenticated()) {
       return allUpdates
     }
@@ -343,6 +356,69 @@ export function BlipView() {
   const visibleUpdateIds = createMemo(() =>
     visibleUpdates().map(update => update.id),
   )
+  // Phase 6 reader media: load the root blip + its visible updates' committed
+  // `blip_media` in one batched round trip (handoff fork 1 → dedicated query).
+  const mediaBlipIds = createMemo(() => {
+    const rootId = blip()?.id
+    if (!rootId) {
+      return [] as string[]
+    }
+    return [rootId, ...visibleUpdateIds()]
+  })
+  const blipMediaQuery = createAsync(() => {
+    const ids = mediaBlipIds()
+    return ids.length > 0 ? getBlipMediaFor(ids) : Promise.resolve([])
+  })
+  const mediaByBlip = createMemo(() => groupMediaByBlipId(blipMediaQuery() ?? []))
+  const rootMedia = createMemo(() => mediaByBlip()[blip()?.id ?? ""] ?? [])
+  const galleryLabels = {
+    region: tr("media.region"),
+    close: tr("media.close"),
+    previous: tr("media.previous"),
+    next: tr("media.next"),
+    counter: (current: number, total: number) =>
+      tr("media.counter", { current, total }),
+    openItem: (index: number, total: number) =>
+      tr("media.openItem", { index, total }),
+  }
+  const updateIdsInPageOrder = createMemo(() =>
+    topLevelActivity()
+      .filter(item => item.kind === "update")
+      .map(item => item.blip.id),
+  )
+  const pageMedia = createMemo(() =>
+    flattenBlipPageMedia(rootMedia(), mediaByBlip(), updateIdsInPageOrder()),
+  )
+  const mediaIndexById = createMemo(() => indexMediaById(pageMedia()))
+  const [lightboxIndex, setLightboxIndex] = createSignal<number | null>(null)
+  const openPageMediaItem = (record: BlipMediaRow) => {
+    const index = mediaIndexById().get(record.id)
+    if (index !== undefined) {
+      setLightboxIndex(index)
+    }
+  }
+  const pageMediaOpenItemLabel = (record: BlipMediaRow) => {
+    const index = mediaIndexById().get(record.id)
+    if (index === undefined) {
+      return ""
+    }
+    return galleryLabels.openItem(index + 1, pageMedia().length)
+  }
+
+  // Reader media comes from a cached server query; refresh it when the author
+  // closes a composer or finishes persisting new attachments.
+  createEffect(
+    on(activeKind, (kind, previousKind) => {
+      if (previousKind && !kind) {
+        revalidate(getBlipMediaFor.key)
+      }
+    }),
+  )
+
+  createEffect(() => {
+    params.id
+    setLightboxIndex(null)
+  })
   const visibleCommentIds = createMemo(() => {
     const nextIds = new Set<string>()
 
@@ -542,10 +618,25 @@ export function BlipView() {
     }
 
     const unsubscribe = store.watchUpdates(rootBlipId, {
+      shouldCacheIncoming: incoming => {
+        if (!isUpdateOpenFor(rootBlipId)) {
+          return true
+        }
+
+        return !isComposerFkStubUpdate(incoming)
+      },
       onInsert: incoming => {
+        if (isUpdateOpenFor(rootBlipId) && isComposerFkStubUpdate(incoming)) {
+          return
+        }
+
         markRealtimeUpdateAsRecent(incoming.id)
       },
       onUpdate: incoming => {
+        if (isUpdateOpenFor(rootBlipId)) {
+          return
+        }
+
         markRealtimeUpdateAsRecent(incoming.id)
       },
     })
@@ -828,6 +919,13 @@ export function BlipView() {
                       <div class="blip-detail-content">
                         <Markdown content={data().content ?? ""} />
                       </div>
+                      <BlipMediaGallery
+                        media={rootMedia()}
+                        labels={galleryLabels}
+                        class="blip-detail-media"
+                        onOpenItem={openPageMediaItem}
+                        getOpenItemLabel={pageMediaOpenItemLabel}
+                      />
                       <footer class="blip-detail-footer">
                         <div class="blip-detail-footer-top-row">
                           <div class="tags">
@@ -1016,6 +1114,10 @@ export function BlipView() {
                                   <UpdateBlip
                                     blip={activity.blip}
                                     comments={getCommentsForParent(activity.blip.id)}
+                                    media={mediaByBlip()[activity.blip.id] ?? []}
+                                    mediaLabels={galleryLabels}
+                                    onOpenMediaItem={openPageMediaItem}
+                                    getMediaOpenItemLabel={pageMediaOpenItemLabel}
                                     onEdit={handleEditUpdate}
                                     isRecentRealtime={
                                       recentRealtimeUpdateStates()[activity.blip.id] !==
@@ -1035,6 +1137,14 @@ export function BlipView() {
                       </div>
                     </div>
                   </div>
+                  <Show when={pageMedia().length > 0}>
+                    <Lightbox
+                      media={pageMedia()}
+                      index={lightboxIndex()}
+                      onClose={() => setLightboxIndex(null)}
+                      labels={galleryLabels}
+                    />
+                  </Show>
                 </>
               )}
             </Show>

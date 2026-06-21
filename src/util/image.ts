@@ -20,21 +20,66 @@ export const placeholderBackgroundColorOptions = [
 
 export const randomInt = (min = 0, max = 100) => random(min, max)
 
+/** 1/64 rem steps — enough precision for small placeholder tiles without float RNG. */
+const REM_SCALE = 64
+
+function randomRem(min: number, max: number): number {
+  return random(Math.round(min * REM_SCALE), Math.round(max * REM_SCALE)) / REM_SCALE
+}
+
+/** Replace the alpha channel on palette `rgba(...)` strings. */
+export function applyGradientOpacity(color: string, opacity: number): string {
+  return color.replace(
+    /rgba\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*[\d.]+\s*\)/,
+    (_, r, g, b) => `rgba(${r}, ${g}, ${b}, ${opacity})`,
+  )
+}
+
+export type RandomRadialGradientOptions = {
+  palette?: readonly string[]
+  count?: number
+  /** Override palette alpha (default keeps each color's own opacity, usually `0.3`). */
+  opacity?: number
+  /**
+   * Smallest blob radius (rem) before the size boost. Default `3.125` (~50px) —
+   * tuned for large image placeholders.
+   */
+  sizeMin?: number
+  /**
+   * Largest blob radius (rem) before the size boost. Default `9.375` (~150px).
+   * Each blob's final radius is `random(sizeMin, sizeMax) + sizeMax / 2`.
+   */
+  sizeMax?: number
+  /** @deprecated Use `sizeMax`. */
+  blurSize?: number
+}
+
 export function generateRandomRadialGradients({
   palette = placeholderBackgroundColorOptions,
   count = randomInt(3, 7),
-  blurSize = 150,
-} = {}) {
+  opacity,
+  sizeMin = 3.125,
+  sizeMax = 9.375,
+  blurSize,
+}: RandomRadialGradientOptions = {}) {
+  const max = blurSize ?? sizeMax
+  const min = sizeMin
   const gradients = []
 
   for (let i = 0; i < count; i++) {
-    const color = palette[randomInt(0, palette.length - 1)]
+    const raw = palette[randomInt(0, palette.length - 1)]
+    const color =
+      opacity === undefined ? raw : applyGradientOpacity(raw, opacity)
     const x = randomInt(0, 100)
     const y = randomInt(0, 100)
-    const size = randomInt(50, blurSize) + blurSize / 2
+    const radius = randomRem(min, max) + max / 2
+    // Legacy large placeholders reused the px radius as a % stop (125–225%). For
+    // compact surfaces the same formula yields single-digit % stops and invisible
+    // blobs — floor at 100% so small tiles still show color.
+    const fadeStop = `${Math.max(100, Math.round(radius * 16))}%`
 
     gradients.push(
-      `radial-gradient(circle ${size}px at ${x}% ${y}%, ${color} 0%, transparent ${size}%)`,
+      `radial-gradient(circle ${radius}rem at ${x}% ${y}%, ${color} 0%, transparent ${fadeStop})`,
     )
   }
 

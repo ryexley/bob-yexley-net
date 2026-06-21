@@ -11,3 +11,17 @@ allowBuilds:
   supabase: true
   "@tailwindcss/oxide": true
   esbuild: true
+  sharp: true
+
+# sharp ships its native binary as platform-specific @img/sharp-* optional deps.
+# Vercel installs with a frozen lockfile on Linux x64, so the lockfile generated
+# on a dev machine (e.g. macOS arm64) must also carry the linux-x64 entries or the
+# deployed function fails at runtime with "Could not load the sharp module".
+# `current` keeps local dev working; `linux` + `x64` make the lockfile portable to Vercel.
+supportedArchitectures:
+  os:
+    - current
+    - linux
+  cpu:
+    - current
+    - x64

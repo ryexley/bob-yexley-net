@@ -6,6 +6,8 @@ import {
   getBlipPublishTimestamp,
   isBlipPubliclyVisible,
   isBlipScheduled,
+  isComposerFkStubUpdate,
+  isUpdateActivityVisible,
 } from "@/modules/blips/util"
 
 describe("blip scheduling helpers", () => {
@@ -93,5 +95,71 @@ describe("blip scheduling helpers", () => {
         `Scheduled to be published on ${fullTimestamp}`,
       ),
     ).toBe("Scheduled to be published on April 23rd, 2026 at 8:00 AM")
+  })
+})
+
+describe("isUpdateActivityVisible", () => {
+  it("hides unpublished textless updates", () => {
+    expect(
+      isUpdateActivityVisible({
+        published: false,
+        content: "",
+      } as any),
+    ).toBe(false)
+
+    expect(
+      isUpdateActivityVisible({
+        published: false,
+        content: "   ",
+      } as any),
+    ).toBe(false)
+  })
+
+  it("shows unpublished updates once they have saved content", () => {
+    expect(
+      isUpdateActivityVisible({
+        published: false,
+        content: "Draft update",
+      } as any),
+    ).toBe(true)
+  })
+
+  it("shows published updates even when content is empty", () => {
+    expect(
+      isUpdateActivityVisible({
+        published: true,
+        content: "",
+      } as any),
+    ).toBe(true)
+  })
+})
+
+describe("isComposerFkStubUpdate", () => {
+  it("identifies unpublished textless update rows", () => {
+    expect(
+      isComposerFkStubUpdate({
+        blip_type: "update",
+        published: false,
+        content: "",
+      } as any),
+    ).toBe(true)
+  })
+
+  it("does not treat saved or published updates as stubs", () => {
+    expect(
+      isComposerFkStubUpdate({
+        blip_type: "update",
+        published: false,
+        content: "Saved draft",
+      } as any),
+    ).toBe(false)
+
+    expect(
+      isComposerFkStubUpdate({
+        blip_type: "update",
+        published: true,
+        content: "",
+      } as any),
+    ).toBe(false)
   })
 })

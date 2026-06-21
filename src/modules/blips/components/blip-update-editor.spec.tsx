@@ -112,6 +112,33 @@ vi.mock("@/modules/blips/components/portaled-inline-transition", () => ({
   },
 }))
 
+// The media write-path is exercised in `src/modules/media/*`; here it's stubbed
+// so these tests stay focused on update-editor behavior (and the real mediaStore
+// never runs against the mocked Supabase client).
+vi.mock("@/modules/media", () => ({
+  mediaStore: () => ({
+    attachments: () => [],
+    hasMedia: () => false,
+    canPublish: () => true,
+    removeAttachment: vi.fn(),
+    retry: vi.fn(),
+    attach: vi.fn(),
+    reset: vi.fn(),
+    fetchByBlip: vi.fn(async () => ({ data: [], error: null })),
+  }),
+  validateMediaFiles: (files: File[]) => ({ accepted: files, rejected: [] }),
+  MediaButton: (props: any) => (
+    <button
+      type="button"
+      data-testid="mock-update-media-button"
+      aria-label={props.label}
+    />
+  ),
+  ThumbnailStrip: () => <div data-testid="mock-update-thumbnail-strip" />,
+  ComposerMediaChrome: () => <div data-testid="mock-update-media-chrome" />,
+  ComposerPreviewModal: () => null,
+}))
+
 vi.mock("@/i18n", () => ({
   ptr: (prefix: string) => {
     const values: Record<string, string> = {

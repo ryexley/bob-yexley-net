@@ -229,6 +229,69 @@ export type Database = {
         }
         Relationships: []
       }
+      blip_media: {
+        Row: {
+          blip_id: string
+          created_at: string
+          display_order: number
+          duration_s: number | null
+          file_size: number
+          height: number | null
+          id: string
+          media_type: string
+          mime_type: string
+          processing_status: string
+          storage_key: string
+          user_id: string
+          width: number | null
+        }
+        Insert: {
+          blip_id: string
+          created_at?: string
+          display_order?: number
+          duration_s?: number | null
+          file_size: number
+          height?: number | null
+          id?: string
+          media_type: string
+          mime_type: string
+          processing_status?: string
+          storage_key: string
+          user_id: string
+          width?: number | null
+        }
+        Update: {
+          blip_id?: string
+          created_at?: string
+          display_order?: number
+          duration_s?: number | null
+          file_size?: number
+          height?: number | null
+          id?: string
+          media_type?: string
+          mime_type?: string
+          processing_status?: string
+          storage_key?: string
+          user_id?: string
+          width?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blip_media_blip_id_fkey"
+            columns: ["blip_id"]
+            isOneToOne: false
+            referencedRelation: "blips"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "blip_media_blip_id_fkey"
+            columns: ["blip_id"]
+            isOneToOne: false
+            referencedRelation: "view_blips"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       blip_tags: {
         Row: {
           blip_id: string

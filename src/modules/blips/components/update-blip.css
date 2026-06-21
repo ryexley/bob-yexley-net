@@ -131,6 +131,10 @@
     font-size: 0.9rem;
   }
 
+  .blip-media-gallery {
+    margin-top: 0.5rem;
+  }
+
   footer {
     align-items: center;
     display: flex;

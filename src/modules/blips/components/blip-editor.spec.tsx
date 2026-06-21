@@ -258,6 +258,28 @@ describe("BlipEditor", () => {
     expect(onPanelOpenChange).toHaveBeenCalledWith(false)
   })
 
+  it("mounts the media attachment button in the control pill", async () => {
+    render(() => (
+      <BlipEditor
+        open
+        onPanelOpenChange={() => undefined}
+        close={() => undefined}
+      />
+    ))
+
+    await waitFor(() => {
+      expect(screen.getByTestId("mock-markdown-editor")).toBeTruthy()
+    })
+
+    await waitFor(() => {
+      expect(
+        document.querySelector(
+          ".blip-editor-control-pill .blip-editor-media-button",
+        ),
+      ).toBeTruthy()
+    })
+  })
+
   it("requests editor focus when switching from the draft picker into editor mode", async () => {
     state.drafts = [makeDraft()]
     render(() => (
