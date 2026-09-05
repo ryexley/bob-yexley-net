@@ -856,6 +856,47 @@
     width: 100%;
   }
 
+  .blip-editor-shell {
+    background: var(--colors-mono-01);
+    padding: 0;
+  }
+
+  .blip-editor-form {
+    .markdown-editor > .flex {
+      gap: 0.5rem !important;
+    }
+
+    .markdown-editor .editor-container {
+      background: var(--colors-mono-01);
+      border: 0;
+      border-radius: 0;
+    }
+
+    .markdown-editor > .flex > :not(.editor-container) {
+      padding-inline: 0.75rem;
+    }
+  }
+
+  .blip-editor-below-editor {
+    padding-bottom: 0.75rem;
+  }
+
+  .blip-editor-picker-header,
+  .blip-draft-picker {
+    padding-inline: 0.75rem;
+  }
+
+  .blip-draft-picker {
+    padding-bottom: 0.75rem;
+    padding-top: 0.5rem;
+  }
+
+  .blip-editor-control-pill {
+    background: var(--colors-mono-02);
+    border-color: var(--colors-mono-04);
+    box-shadow: 0 0.625rem 1.75rem rgba(0, 0, 0, 0.42);
+  }
+
   .blip-editor-dialog {
     &.dialog {
       .blip-editor-shell {
@@ -969,11 +1010,11 @@
 @media (max-width: calc(48rem - 0.001rem)) {
   .blip-editor-overlay {
     &.dialog-overlay {
-      background: var(--colors-mono-02);
+      background: var(--colors-mono-01);
     }
   }
 
   body.blip-composer-open {
-    background: var(--colors-mono-02);
+    background: var(--colors-mono-01);
   }
 }

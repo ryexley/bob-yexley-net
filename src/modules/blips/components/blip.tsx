@@ -48,12 +48,17 @@ import "./blip.css"
 const tr = ptr("blips.components.blip")
 
 export const BLIP_CARD_VISIBLE_TAG_LIMIT = 3
+export const BLIP_CARD_COMPACT_TAG_LIMIT = 1
 
-export function splitBlipCardTags(tags: readonly string[] | undefined) {
+export function splitBlipCardTags(
+  tags: readonly string[] | undefined,
+  visibleLimit: number = BLIP_CARD_VISIBLE_TAG_LIMIT,
+) {
   const all = tags ?? []
+  const limit = Math.max(0, visibleLimit)
   return {
-    visible: all.slice(0, BLIP_CARD_VISIBLE_TAG_LIMIT),
-    overflowCount: Math.max(0, all.length - BLIP_CARD_VISIBLE_TAG_LIMIT),
+    visible: all.slice(0, limit),
+    overflowCount: Math.max(0, all.length - limit),
   }
 }
 
@@ -122,7 +127,12 @@ export function Blip(props: {
     region: (count: number) => tr("media.region", { count }),
     overflow: (count: number) => tr("media.overflow", { count }),
   }
-  const cardTags = createMemo(() => splitBlipCardTags(local.tags))
+  const cardTagLimit = createMemo(() =>
+    hasUpdates() || hasComments()
+      ? BLIP_CARD_COMPACT_TAG_LIMIT
+      : BLIP_CARD_VISIBLE_TAG_LIMIT,
+  )
+  const cardTags = createMemo(() => splitBlipCardTags(local.tags, cardTagLimit()))
 
   createEffect(() => {
     local.blip.id
@@ -267,7 +277,10 @@ export function Blip(props: {
             </header>
             <div
               ref={contentRef}
-              class={cx("content", { preview: isClipped() })}>
+              class={cx("content", {
+                preview: isClipped(),
+                "has-below": showMediaRow(),
+              })}>
               <Markdown content={local.blip.content} />
             </div>
             <Show when={showMediaRow()}>

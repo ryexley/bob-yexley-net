@@ -37,7 +37,7 @@
 @media (max-width: calc(48rem - 0.001rem)) {
   .blip-update-editor-overlay {
     &.dialog-overlay {
-      background: var(--colors-mono-02);
+      background: var(--colors-mono-01);
     }
   }
 }
@@ -133,6 +133,7 @@
   .blip-update-editor-dialog {
     &.dialog {
       .blip-update-editor-surface {
+        background: var(--colors-mono-01);
         border-radius: 0;
         height: 100%;
       }
@@ -163,9 +164,9 @@
       }
 
       .editor-container {
-        background: rgba(var(--colors-mono-01-rgb), 0.32);
-        border: 0.0625rem solid var(--colors-mono-04);
-        border-radius: var(--radius-md);
+        background: var(--colors-mono-01);
+        border: 0;
+        border-radius: 0;
         display: flex;
         flex: 1;
         flex-direction: column;

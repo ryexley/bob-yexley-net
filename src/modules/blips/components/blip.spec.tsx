@@ -128,6 +128,15 @@ describe("splitBlipCardTags", () => {
     })
   })
 
+  it("keeps a single tag when the compact limit is used", () => {
+    expect(
+      splitBlipCardTags(["concord", "concord-football", "football", "go-vols"], 1),
+    ).toEqual({
+      visible: ["concord"],
+      overflowCount: 3,
+    })
+  })
+
   it("treats a missing tag list as empty", () => {
     expect(splitBlipCardTags(undefined)).toEqual({
       visible: [],
@@ -172,5 +181,20 @@ describe("Blip card tags", () => {
 
     expect(document.querySelectorAll(".blip-card .tag-list .tag")).toHaveLength(3)
     expect(document.querySelector(".blip-card .tag-list .overflow")).toBeNull()
+  })
+
+  it("shows one tag plus overflow when comment or update badges are present", () => {
+    render(() => (
+      <BlipCard
+        blip={makeBlip({ comments_count: 18, updates_count: 1 })}
+        tags={["concord", "concord-football", "football", "go-vols"]}
+      />
+    ))
+
+    const tagLinks = document.querySelectorAll(".blip-card .tag-list .tag a")
+    expect([...tagLinks].map(link => link.textContent)).toEqual(["concord"])
+    expect(document.querySelector(".blip-card .tag-list .overflow")?.textContent).toBe(
+      "+3",
+    )
   })
 })
