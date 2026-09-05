@@ -424,6 +424,11 @@ export const en = {
             "{count, plural, one {# attachment} other {# attachments}}",
           overflow: "+{count}",
         },
+        tags: {
+          overflow: "+{count}",
+          overflowAriaLabel:
+            "{count, plural, one {# more tag} other {# more tags}}",
+        },
         readMoreDialog: {
           closeAriaLabel: "Close dialog",
         },

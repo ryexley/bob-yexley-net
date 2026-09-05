@@ -65,6 +65,7 @@ interface MarkdownEditorProps {
   /** Rendered between the editor body and `EditorControls` (stable module component recommended). */
   AboveControls?: Component<Record<string, unknown>>
   aboveControlsProps?: Record<string, unknown>
+  /** Bottom chrome. Stable component required; rendered with `Dynamic` so status updates do not remount it. */
   EditorControls?: Component<MarkdownEditorControlsProps>
 }
 
@@ -559,17 +560,18 @@ export function MarkdownEditor(props: MarkdownEditorProps) {
             {...(local.aboveControlsProps ?? {})}
           />
         </Show>
-        <Show when={local.EditorControls}>
-          {local.EditorControls?.({
-            onToggleToolbar: handleToggleToolbar,
-            toolbarVisible: toolbarVisible(),
-            statusText: local.statusText,
-            statusIcon: local.statusIcon,
-            showStatus: local.showStatus,
-            statusFading: local.statusFading,
-            statusActions: local.statusActions,
-            statusContext: local.statusContext,
-          })}
+        <Show when={local.EditorControls != null}>
+          <Dynamic
+            component={local.EditorControls!}
+            onToggleToolbar={handleToggleToolbar}
+            toolbarVisible={toolbarVisible()}
+            statusText={local.statusText}
+            statusIcon={local.statusIcon}
+            showStatus={local.showStatus}
+            statusFading={local.statusFading}
+            statusActions={local.statusActions}
+            statusContext={local.statusContext}
+          />
         </Show>
         {local.showStatusBar ? (
           <StatusBar

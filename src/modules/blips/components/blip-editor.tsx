@@ -1477,16 +1477,15 @@ export function BlipEditor(props: BlipEditorProps) {
                   <Icon name="format_underlined" />
                 </button>
                 <div class="blip-editor-control-divider" />
-                <Show when={!ctx.statusContext?.isPublished && ctx.statusContext?.hasBlipId}>
-                  <IconButton
-                    size="xs"
-                    icon="delete"
-                    class="blip-action-delete"
-                    aria-label={tr("actions.delete")}
-                    onClick={ctx.statusContext?.handleDelete}
-                    onMouseDown={preventEditorBlur}
-                  />
-                </Show>
+                <IconButton
+                  size="xs"
+                  icon="cloud_upload"
+                  class="blip-action-save"
+                  aria-label={tr("actions.save")}
+                  disabled={!ctx.statusContext?.hasPendingChanges}
+                  onClick={ctx.statusContext?.handleSave}
+                  onMouseDown={preventEditorBlur}
+                />
                 <IconButton
                   size="xs"
                   icon={
@@ -1509,15 +1508,16 @@ export function BlipEditor(props: BlipEditorProps) {
                   }
                   onMouseDown={preventEditorBlur}
                 />
-                <IconButton
-                  size="xs"
-                  icon="cloud_upload"
-                  class="blip-action-save"
-                  aria-label={tr("actions.save")}
-                  disabled={!ctx.statusContext?.hasPendingChanges}
-                  onClick={ctx.statusContext?.handleSave}
-                  onMouseDown={preventEditorBlur}
-                />
+                <Show when={!ctx.statusContext?.isPublished && ctx.statusContext?.hasBlipId}>
+                  <IconButton
+                    size="xs"
+                    icon="delete"
+                    class="blip-action-delete"
+                    aria-label={tr("actions.delete")}
+                    onClick={ctx.statusContext?.handleDelete}
+                    onMouseDown={preventEditorBlur}
+                  />
+                </Show>
               </div>
             </div>
           </div>

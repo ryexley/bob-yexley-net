@@ -993,11 +993,11 @@ export function BlipUpdateEditor(props: BlipUpdateEditorProps) {
                 <div class="blip-editor-control-divider" />
                 <IconButton
                   size="xs"
-                  icon="delete"
-                  class="blip-action-delete"
-                  aria-label={trDetail("updates.actions.delete")}
-                  disabled={!ctx.statusContext?.canDelete}
-                  onClick={ctx.statusContext?.handleDelete}
+                  icon="cloud_upload"
+                  class="blip-action-save"
+                  aria-label={trEditor("actions.save")}
+                  disabled={!ctx.statusContext?.canSave}
+                  onClick={ctx.statusContext?.handleSave}
                   onMouseDown={preventEditorBlur}
                 />
                 <IconButton
@@ -1022,11 +1022,11 @@ export function BlipUpdateEditor(props: BlipUpdateEditorProps) {
                 />
                 <IconButton
                   size="xs"
-                  icon="cloud_upload"
-                  class="blip-action-save"
-                  aria-label={trEditor("actions.save")}
-                  disabled={!ctx.statusContext?.canSave}
-                  onClick={ctx.statusContext?.handleSave}
+                  icon="delete"
+                  class="blip-action-delete"
+                  aria-label={trDetail("updates.actions.delete")}
+                  disabled={!ctx.statusContext?.canDelete}
+                  onClick={ctx.statusContext?.handleDelete}
                   onMouseDown={preventEditorBlur}
                 />
               </div>

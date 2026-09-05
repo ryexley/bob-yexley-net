@@ -47,6 +47,16 @@ import "./blip.css"
 
 const tr = ptr("blips.components.blip")
 
+export const BLIP_CARD_VISIBLE_TAG_LIMIT = 3
+
+export function splitBlipCardTags(tags: readonly string[] | undefined) {
+  const all = tags ?? []
+  return {
+    visible: all.slice(0, BLIP_CARD_VISIBLE_TAG_LIMIT),
+    overflowCount: Math.max(0, all.length - BLIP_CARD_VISIBLE_TAG_LIMIT),
+  }
+}
+
 export function Blip(props: {
   blip: BlipType
   tags?: string[]
@@ -112,6 +122,7 @@ export function Blip(props: {
     region: (count: number) => tr("media.region", { count }),
     overflow: (count: number) => tr("media.overflow", { count }),
   }
+  const cardTags = createMemo(() => splitBlipCardTags(local.tags))
 
   createEffect(() => {
     local.blip.id
@@ -283,16 +294,25 @@ export function Blip(props: {
           </div>
           <footer>
             <div class="tags">
-              <Show when={(local.tags?.length ?? 0) > 0}>
+              <Show when={cardTags().visible.length > 0}>
                 <Hashtag />
                 <ul class="tag-list">
-                  <For each={local.tags}>
+                  <For each={cardTags().visible}>
                     {tag => (
                       <li class="tag">
                         <A href={pages.blipsTag(tag)}>{tag}</A>
                       </li>
                     )}
                   </For>
+                  <Show when={cardTags().overflowCount > 0}>
+                    <li
+                      class="overflow"
+                      aria-label={tr("tags.overflowAriaLabel", {
+                        count: cardTags().overflowCount,
+                      })}>
+                      {tr("tags.overflow", { count: cardTags().overflowCount })}
+                    </li>
+                  </Show>
                 </ul>
               </Show>
             </div>

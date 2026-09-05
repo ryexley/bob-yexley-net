@@ -1,6 +1,7 @@
 .blip-card {
   --blip-card-background: var(--colors-mono-02);
   --blip-card-border-radius: 0.5rem;
+  --blip-card-max-height: 15rem;
 
   .card {
     background: var(--blip-card-background);
@@ -8,7 +9,7 @@
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
-    height: 10rem;
+    max-height: var(--blip-card-max-height);
     max-width: 30rem;
     overflow: hidden;
     padding: 0.5rem 1rem;
@@ -17,7 +18,7 @@
 
     .main {
       display: flex;
-      flex: 1;
+      flex: 1 1 auto;
       flex-direction: column;
       gap: 0.5rem;
       min-height: 0;
@@ -41,8 +42,9 @@
     }
 
     .content {
-      flex: 1;
+      flex: 1 1 auto;
       font-size: 0.9rem;
+      min-height: 0;
       overflow: hidden;
       position: relative;
 
@@ -53,7 +55,7 @@
         );
         bottom: 0;
         content: "";
-        height: 5rem;
+        height: 3rem;
         left: 0;
         position: absolute;
         right: 0;
@@ -90,6 +92,7 @@
     footer {
       align-items: center;
       display: flex;
+      flex-shrink: 0;
       gap: 1rem;
       justify-content: space-between;
       width: 100%;
@@ -153,6 +156,19 @@
                 color: var(--colors-links);
               }
             }
+          }
+
+          .overflow {
+            align-items: center;
+            background: var(--colors-mono-03);
+            border-radius: 9999px;
+            color: var(--colors-mono-08);
+            display: inline-flex;
+            flex-shrink: 0;
+            font-size: 0.75rem;
+            font-weight: 500;
+            line-height: 1;
+            padding: 0.2rem 0.45rem;
           }
         }
       }

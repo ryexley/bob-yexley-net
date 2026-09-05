@@ -394,20 +394,20 @@ export function BlipCommentEditor(props: BlipCommentEditorProps) {
                 <div class="blip-editor-control-divider" />
                 <IconButton
                   size="xs"
-                  icon="delete"
-                  class="blip-action-delete"
-                  aria-label={tr("actions.delete")}
-                  disabled={!ctx.statusContext?.canDelete}
-                  onClick={ctx.statusContext?.handleDelete}
-                  onMouseDown={preventEditorBlur}
-                />
-                <IconButton
-                  size="xs"
                   icon="cloud_upload"
                   class="blip-action-save"
                   aria-label={isSaving() ? tr("actions.saving") : tr("actions.save")}
                   disabled={!ctx.statusContext?.canSave}
                   onClick={ctx.statusContext?.handleSave}
+                  onMouseDown={preventEditorBlur}
+                />
+                <IconButton
+                  size="xs"
+                  icon="delete"
+                  class="blip-action-delete"
+                  aria-label={tr("actions.delete")}
+                  disabled={!ctx.statusContext?.canDelete}
+                  onClick={ctx.statusContext?.handleDelete}
                   onMouseDown={preventEditorBlur}
                 />
               </div>
