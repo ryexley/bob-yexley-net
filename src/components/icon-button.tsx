@@ -1,4 +1,4 @@
-import { splitProps } from "solid-js"
+import { mergeProps, splitProps } from "solid-js"
 import { Button as KobalteButton } from "@kobalte/core/button"
 import { Icon } from "@/components/icon"
 import { cx } from "@/util"
@@ -18,11 +18,10 @@ export type IconButtonProps = {
 }
 
 export function IconButton(props: IconButtonProps) {
-  const propsWithDefaults = {
-    size: "md" as IconButtonSize,
-    ...props,
-  }
-
+  const propsWithDefaults = mergeProps(
+    { size: "md" as IconButtonSize },
+    props,
+  )
   const [local, attrs] = splitProps(propsWithDefaults, [
     "icon",
     "size",
