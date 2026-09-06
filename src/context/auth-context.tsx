@@ -16,6 +16,8 @@ import {
 } from "@/context/auth-controller"
 import { setVisitorAuthenticateHandler } from "@/modules/auth/components/visitor-auth-modal"
 import { getUserProfile } from "@/modules/auth/data/queries"
+import { debounce } from "@/util/debounce"
+import { TIME } from "@/util/enums"
 import { isEmpty, isNotEmpty } from "@/util"
 
 interface AuthContextType {
@@ -34,16 +36,18 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType>()
 
+const AUTH_RESUME_EVENTS = ["SIGNED_IN", "INITIAL_SESSION", "TOKEN_REFRESHED"] as const
+
 export function AuthProvider(props: { children: any }) {
   const [profile, setProfile] = createSignal<UserProfile | null>(null)
   const [loading, setLoading] = createSignal(true)
-  const [bootstrapped, setBootstrapped] = createSignal(false)
   const [initialSnapshotApplied, setInitialSnapshotApplied] = createSignal(false)
   const initialProfile = createAsync(() => getUserProfile())
   const user = createMemo(() => profile()?.user ?? null)
   const userProfile = createMemo(() => profile()?.profile ?? null)
   const userSystem = createMemo(() => profile()?.system ?? null)
   const role = createMemo(() => profile()?.role ?? null)
+  let authTransition: Promise<void> = Promise.resolve()
 
   const clearAuthState = () => {
     setProfile(null)
@@ -58,19 +62,50 @@ export function AuthProvider(props: { children: any }) {
     setProfile(profile)
   }
 
+  const runAuthTransition = (work: () => Promise<void>) => {
+    authTransition = authTransition.then(work, work)
+    return authTransition
+  }
+
+  const loadSessionProfile = (sessionUser: { id: string; email?: string | null }) =>
+    loadAuthProfile(sessionUser, supabase.getUserProfile)
+
+  const applySessionResult = (result: {
+    profile: UserProfile | null
+    shouldLogout: boolean
+  }) => {
+    if (result.shouldLogout) {
+      clearAuthState()
+      return
+    }
+
+    if (result.profile) {
+      applyAuthProfile(result.profile)
+    }
+  }
+
+  const healCurrentSession = () =>
+    bootstrapAuthSession({
+      getUser: supabase.getUser,
+      isSessionExpired: () => supabase.isSessionExpired(),
+      openCurrentSession: () => supabase.openCurrentSession(),
+      isServerSessionValid: () => supabase.isServerSessionValid(),
+      logout: () => supabase.logout(),
+      loadUserProfile: loadSessionProfile,
+    })
+
   createEffect(() => {
     if (initialSnapshotApplied()) {
       return
     }
 
-    const profile = initialProfile()
-    if (profile === undefined) {
+    const snapshot = initialProfile()
+    if (snapshot === undefined) {
       return
     }
 
-    applyAuthProfile(profile ?? null)
+    applyAuthProfile(snapshot ?? null)
     setLoading(false)
-    setBootstrapped(true)
     setInitialSnapshotApplied(true)
   })
 
@@ -95,27 +130,11 @@ export function AuthProvider(props: { children: any }) {
       }
     })
 
-    await Promise.resolve()
-    if (bootstrapped()) {
-      return
-    }
-
-    const { profile: nextProfile } = await bootstrapAuthSession({
-      getUser: supabase.getUser,
-      isSessionExpired: () => supabase.isSessionExpired(),
-      isServerSessionValid: () => supabase.isServerSessionValid(),
-      logout: () => supabase.logout(),
-      loadUserProfile: sessionUser =>
-        loadAuthProfile(sessionUser, supabase.getUserProfile),
+    await runAuthTransition(async () => {
+      const result = await healCurrentSession()
+      applySessionResult(result)
+      setLoading(false)
     })
-    if (bootstrapped()) {
-      return
-    }
-
-    applyAuthProfile(nextProfile)
-
-    setLoading(false)
-    setBootstrapped(true)
   })
 
   onCleanup(() => {
@@ -126,7 +145,7 @@ export function AuthProvider(props: { children: any }) {
     const {
       data: { subscription },
     } = supabase?.client?.auth?.onAuthStateChange((event, session) => {
-      void (async () => {
+      void runAuthTransition(async () => {
         if (event === "SIGNED_OUT") {
           supabase.clearSessionStart()
           clearAuthState()
@@ -134,10 +153,7 @@ export function AuthProvider(props: { children: any }) {
           return
         }
 
-        if (
-          !bootstrapped() ||
-          (event !== "SIGNED_IN" && event !== "INITIAL_SESSION")
-        ) {
+        if (!AUTH_RESUME_EVENTS.includes(event as (typeof AUTH_RESUME_EVENTS)[number])) {
           return
         }
 
@@ -147,34 +163,63 @@ export function AuthProvider(props: { children: any }) {
           return
         }
 
-        setLoading(true)
-        const { profile: nextProfile, shouldLogout } = await resolveSignedInAuth({
-          sessionUser: session.user,
-          currentUserId: user()?.id ?? null,
-          currentRole: role(),
-          cachedProfile: supabase.peekUserProfile(session.user.id),
-          openCurrentSession: () => supabase.openCurrentSession(),
-          markSessionStartIfMissing: () => supabase.markSessionStartIfMissing(),
-          logout: () => supabase.logout(),
-          loadUserProfile: sessionUser =>
-            loadAuthProfile(sessionUser, supabase.getUserProfile),
-        })
-
-        if (shouldLogout) {
-          clearAuthState()
+        if (event === "TOKEN_REFRESHED") {
+          applySessionResult(await healCurrentSession())
           setLoading(false)
           return
         }
 
-        if (nextProfile) {
-          applyAuthProfile(nextProfile)
+        if (isEmpty(userProfile()?.id)) {
+          setLoading(true)
         }
 
+        const result = await resolveSignedInAuth({
+          sessionUser: session.user,
+          currentUserId: user()?.id ?? null,
+          currentRole: role(),
+          currentProfileId: userProfile()?.id ?? null,
+          cachedProfile: supabase.peekUserProfile(session.user.id),
+          openCurrentSession: () => supabase.openCurrentSession(),
+          markSessionStartIfMissing: () => supabase.markSessionStartIfMissing(),
+          logout: () => supabase.logout(),
+          loadUserProfile: loadSessionProfile,
+        })
+
+        applySessionResult(result)
         setLoading(false)
-      })()
+      })
     })
 
     return () => subscription?.unsubscribe()
+  })
+
+  onMount(() => {
+    const revalidateVisibleSession = debounce(() => {
+      if (document.visibilityState !== "visible") {
+        return
+      }
+
+      void runAuthTransition(async () => {
+        if (!user()?.id) {
+          return
+        }
+
+        applySessionResult(await healCurrentSession())
+      })
+    }, TIME.ONE_SECOND)
+
+    const handleVisibility = () => {
+      revalidateVisibleSession()
+    }
+
+    document.addEventListener("visibilitychange", handleVisibility)
+    window.addEventListener("focus", handleVisibility)
+
+    onCleanup(() => {
+      revalidateVisibleSession.cancel()
+      document.removeEventListener("visibilitychange", handleVisibility)
+      window.removeEventListener("focus", handleVisibility)
+    })
   })
 
   const logout = async () => {
@@ -191,7 +236,7 @@ export function AuthProvider(props: { children: any }) {
     loading,
     replaceProfile: applyAuthProfile,
     logout,
-    isAuthenticated: () => isNotEmpty(user()),
+    isAuthenticated: () => isNotEmpty(user()) && isNotEmpty(userProfile()?.id),
     isAdmin: () => role() === "admin" || role() === "superuser",
     isSuperuser: () => role() === "superuser",
   }

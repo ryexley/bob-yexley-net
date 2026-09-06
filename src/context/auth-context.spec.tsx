@@ -1,4 +1,5 @@
 import { render, screen, waitFor } from "@solidjs/testing-library"
+import { createEffect, createSignal } from "solid-js"
 import { describe, expect, it, vi, beforeEach } from "vitest"
 import { AuthProvider, useAuth } from "@/context/auth-context"
 
@@ -64,7 +65,10 @@ vi.mock("@/lib/vendor/supabase/browser", () => ({
   supabase: {
     visitorSignUp: vi.fn(),
     visitorLogin: vi.fn(),
-    getUser: vi.fn(async () => ({ data: null, error: null })),
+    getUser: vi.fn(async () => ({
+      data: { id: "user-1", email: "bob@example.com" },
+      error: null,
+    })),
     isSessionExpired: vi.fn(() => false),
     isServerSessionValid: vi.fn(async () => ({ data: true, error: null })),
     logout: vi.fn(async () => {}),
@@ -92,6 +96,19 @@ vi.mock("@/lib/vendor/supabase/browser", () => ({
 
 function AuthStatusProbe() {
   const auth = useAuth()
+  const [readyOnce, setReadyOnce] = createSignal(false)
+  const [reenteredLoading, setReenteredLoading] = createSignal(false)
+
+  createEffect(() => {
+    if (!auth.loading()) {
+      setReadyOnce(true)
+      return
+    }
+
+    if (readyOnce()) {
+      setReenteredLoading(true)
+    }
+  })
 
   return (
     <>
@@ -99,6 +116,8 @@ function AuthStatusProbe() {
         {auth.isAuthenticated() ? "authenticated" : "anonymous"}
       </div>
       <div data-testid="display-name">{auth.userProfile()?.displayName ?? ""}</div>
+      <div data-testid="auth-loading">{auth.loading() ? "loading" : "ready"}</div>
+      <div data-testid="auth-flicker">{reenteredLoading() ? "flickered" : "stable"}</div>
     </>
   )
 }
@@ -128,7 +147,39 @@ describe("AuthProvider", () => {
     })
 
     expect(screen.getByTestId("display-name").textContent).toBe("Bob")
-    expect(authMockState.openCurrentSession).toHaveBeenCalledTimes(1)
-    expect(authMockState.getUserProfile).toHaveBeenCalledTimes(1)
+    expect(authMockState.openCurrentSession).toHaveBeenCalled()
+    expect(authMockState.getUserProfile).toHaveBeenCalled()
+  })
+
+  it("reopens the server session after a token refresh", async () => {
+    render(() => (
+      <AuthProvider>
+        <AuthStatusProbe />
+      </AuthProvider>
+    ))
+
+    authMockState.emit("INITIAL_SESSION", {
+      user: { id: "user-1", email: "bob@example.com" },
+    })
+
+    await waitFor(() => {
+      expect(screen.getByTestId("auth-state").textContent).toBe("authenticated")
+    })
+
+    authMockState.openCurrentSession.mockClear()
+    authMockState.getUserProfile.mockClear()
+
+    authMockState.emit("TOKEN_REFRESHED", {
+      user: { id: "user-1", email: "bob@example.com" },
+    })
+
+    await waitFor(() => {
+      expect(authMockState.openCurrentSession).toHaveBeenCalled()
+    })
+
+    expect(screen.getByTestId("auth-state").textContent).toBe("authenticated")
+    expect(screen.getByTestId("display-name").textContent).toBe("Bob")
+    expect(screen.getByTestId("auth-loading").textContent).toBe("ready")
+    expect(screen.getByTestId("auth-flicker").textContent).toBe("stable")
   })
 })

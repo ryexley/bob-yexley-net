@@ -428,6 +428,20 @@ function Supabase() {
           return { data: null, error: VISITOR_AUTH_ERROR.UNEXPECTED }
         }
 
+        this.markSessionStartIfMissing()
+        const { error: openSessionError } = await this.openCurrentSession()
+        if (openSessionError) {
+          await client.auth.signOut()
+          userProfiles.clearCachedUserProfile()
+          emitVisitorAuthTelemetry(
+            "signup",
+            "failure",
+            normalizedEmail,
+            "open_session_failed",
+          )
+          return { data: null, error: VISITOR_AUTH_ERROR.UNEXPECTED }
+        }
+
         setSessionStartedAtMs(Date.now())
         emitVisitorAuthTelemetry("signup", "success", normalizedEmail)
 
