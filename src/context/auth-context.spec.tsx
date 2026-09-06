@@ -98,16 +98,21 @@ function AuthStatusProbe() {
   const auth = useAuth()
   const [readyOnce, setReadyOnce] = createSignal(false)
   const [reenteredLoading, setReenteredLoading] = createSignal(false)
+  const [busyPulses, setBusyPulses] = createSignal(0)
+  let wasBusy = false
 
   createEffect(() => {
     if (!auth.loading()) {
       setReadyOnce(true)
-      return
-    }
-
-    if (readyOnce()) {
+    } else if (readyOnce()) {
       setReenteredLoading(true)
     }
+
+    const isBusy = auth.busy()
+    if (isBusy && !wasBusy) {
+      setBusyPulses(count => count + 1)
+    }
+    wasBusy = isBusy
   })
 
   return (
@@ -117,7 +122,9 @@ function AuthStatusProbe() {
       </div>
       <div data-testid="display-name">{auth.userProfile()?.displayName ?? ""}</div>
       <div data-testid="auth-loading">{auth.loading() ? "loading" : "ready"}</div>
+      <div data-testid="auth-busy">{auth.busy() ? "busy" : "idle"}</div>
       <div data-testid="auth-flicker">{reenteredLoading() ? "flickered" : "stable"}</div>
+      <div data-testid="auth-busy-pulses">{busyPulses()}</div>
     </>
   )
 }
@@ -164,8 +171,10 @@ describe("AuthProvider", () => {
 
     await waitFor(() => {
       expect(screen.getByTestId("auth-state").textContent).toBe("authenticated")
+      expect(screen.getByTestId("auth-busy").textContent).toBe("idle")
     })
 
+    const pulsesBeforeRefresh = Number(screen.getByTestId("auth-busy-pulses").textContent)
     authMockState.openCurrentSession.mockClear()
     authMockState.getUserProfile.mockClear()
 
@@ -181,5 +190,9 @@ describe("AuthProvider", () => {
     expect(screen.getByTestId("display-name").textContent).toBe("Bob")
     expect(screen.getByTestId("auth-loading").textContent).toBe("ready")
     expect(screen.getByTestId("auth-flicker").textContent).toBe("stable")
+    expect(Number(screen.getByTestId("auth-busy-pulses").textContent)).toBeGreaterThan(
+      pulsesBeforeRefresh,
+    )
+    expect(screen.getByTestId("auth-busy").textContent).toBe("idle")
   })
 })

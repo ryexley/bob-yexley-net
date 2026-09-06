@@ -3,6 +3,7 @@ import { Router } from "@solidjs/router"
 import { FileRoutes } from "@solidjs/start/router"
 import { onMount, Suspense } from "solid-js"
 import { ConfirmationProvider } from "@/components/confirm-dialog"
+import { GlobalLoadingIndicator } from "@/components/global-loading-indicator"
 import { NotificationProvider } from "@/components/notification"
 import { AuthProvider } from "@/context/auth-context"
 import { ServicesProvider } from "@/context/services-context"
@@ -34,6 +35,7 @@ export default function App() {
                     <NotificationProvider>
                       <ConfirmationProvider>
                         <VisitorAuthProvider>
+                          <GlobalLoadingIndicator />
                           <MainLayout>{props.children}</MainLayout>
                         </VisitorAuthProvider>
                       </ConfirmationProvider>

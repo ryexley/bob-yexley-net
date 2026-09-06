@@ -27,6 +27,7 @@ interface AuthContextType {
   userSystem: () => UserProfile["system"] | null
   role: () => AppRole | null
   loading: () => boolean
+  busy: () => boolean
   replaceProfile: (profile: UserProfile | null) => void
   logout: () => Promise<void>
   isAuthenticated: () => boolean
@@ -41,6 +42,7 @@ const AUTH_RESUME_EVENTS = ["SIGNED_IN", "INITIAL_SESSION", "TOKEN_REFRESHED"] a
 export function AuthProvider(props: { children: any }) {
   const [profile, setProfile] = createSignal<UserProfile | null>(null)
   const [loading, setLoading] = createSignal(true)
+  const [busy, setBusy] = createSignal(true)
   const [initialSnapshotApplied, setInitialSnapshotApplied] = createSignal(false)
   const initialProfile = createAsync(() => getUserProfile())
   const user = createMemo(() => profile()?.user ?? null)
@@ -63,7 +65,16 @@ export function AuthProvider(props: { children: any }) {
   }
 
   const runAuthTransition = (work: () => Promise<void>) => {
-    authTransition = authTransition.then(work, work)
+    const run = async () => {
+      setBusy(true)
+      try {
+        await work()
+      } finally {
+        setBusy(false)
+      }
+    }
+
+    authTransition = authTransition.then(run, run)
     return authTransition
   }
 
@@ -199,11 +210,11 @@ export function AuthProvider(props: { children: any }) {
         return
       }
 
-      void runAuthTransition(async () => {
-        if (!user()?.id) {
-          return
-        }
+      if (!user()?.id) {
+        return
+      }
 
+      void runAuthTransition(async () => {
         applySessionResult(await healCurrentSession())
       })
     }, TIME.ONE_SECOND)
@@ -234,6 +245,7 @@ export function AuthProvider(props: { children: any }) {
     userSystem,
     role,
     loading,
+    busy,
     replaceProfile: applyAuthProfile,
     logout,
     isAuthenticated: () => isNotEmpty(user()) && isNotEmpty(userProfile()?.id),

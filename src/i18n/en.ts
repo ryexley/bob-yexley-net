@@ -26,6 +26,9 @@ export const en = {
       unsplashImage: {
         attribution: "Photo by {photographer} at Unsplash",
       },
+      globalLoadingIndicator: {
+        ariaLabel: "Loading",
+      },
       notification: {
         region: {
           ariaLabel: "Notifications ({hotkey})",
