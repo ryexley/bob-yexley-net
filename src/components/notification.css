@@ -151,9 +151,9 @@
   }
 }
 
-@media (max-width: 40rem) {
+@media (max-width: 47.999rem) {
   .notification-region {
-    bottom: 0;
+    bottom: var(--site-dock-offset);
     left: 0;
     right: 0;
     max-width: none;

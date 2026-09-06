@@ -108,6 +108,7 @@
   border-radius: var(--radius-md);
   color: var(--colors-text-primary);
   cursor: pointer;
+  text-decoration: none;
   display: flex;
   font-size: 0.95rem;
   font-weight: 500;
@@ -150,6 +151,13 @@
     box-shadow: none;
     outline: none;
   }
+
+  &.active {
+    background: rgb(from var(--colors-info) r g b / 0.16);
+    border-color: rgb(from var(--colors-info) r g b / 0.32);
+    box-shadow: none;
+    outline: none;
+  }
 }
 
 .user-menu-drawer-item,
@@ -164,6 +172,11 @@
   .user-menu-drawer-item:hover {
     background: rgba(var(--colors-mono-02-rgb), 0.8);
     border-color: var(--colors-cool-blue);
+  }
+
+  .user-menu-drawer-item.active:hover {
+    background: rgb(from var(--colors-info) r g b / 0.2);
+    border-color: rgb(from var(--colors-info) r g b / 0.4);
   }
 }
 

@@ -36,6 +36,7 @@ export interface DrawerProps {
   triggerIcon?: string
   triggerClass?: string
   triggerIconClass?: string
+  triggerAriaLabel?: string
 
   showClose?: boolean
   Close?: ValidComponent
@@ -94,6 +95,7 @@ export function Drawer(props: DrawerProps) {
     "triggerIcon",
     "triggerClass",
     "triggerIconClass",
+    "triggerAriaLabel",
     "showClose",
     "Close",
     "closeClass",
@@ -133,13 +135,15 @@ export function Drawer(props: DrawerProps) {
         return local.Trigger({
           as: DrawerPrimitive.Trigger,
           class: cx("drawer-trigger", local.triggerClass),
+          "aria-label": local.triggerAriaLabel,
         })
       } else {
         // If it's a component, render it wrapped in DrawerTrigger
         const TriggerComponent = local.Trigger as any
         return (
           <DrawerPrimitive.Trigger
-            class={cx("drawer-trigger", local.triggerClass)}>
+            class={cx("drawer-trigger", local.triggerClass)}
+            aria-label={local.triggerAriaLabel}>
             <TriggerComponent />
           </DrawerPrimitive.Trigger>
         )
@@ -150,7 +154,8 @@ export function Drawer(props: DrawerProps) {
     if (local.triggerIcon) {
       return (
         <DrawerPrimitive.Trigger
-          class={cx("drawer-trigger", local.triggerClass)}>
+          class={cx("drawer-trigger", local.triggerClass)}
+          aria-label={local.triggerAriaLabel}>
           <Icon
             name={local.triggerIcon}
             class={local.triggerIconClass}

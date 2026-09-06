@@ -43,10 +43,22 @@ export const en = {
   home: {
     components: {
       mainHeader: {
+        nav: {
+          home: "Home",
+          blips: "Blips",
+          resume: "Resume",
+        },
         mobileNav: {
           title: "Menu",
           subtitle: "Mobile navigation menu",
         },
+      },
+      siteDock: {
+        ariaLabel: "Primary",
+        home: "Home",
+        blips: "Blips",
+        menu: "Open menu",
+        signIn: "Sign in",
       },
       userMenu: {
         header: { label: "Signed in as" },
