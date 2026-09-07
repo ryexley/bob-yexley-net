@@ -154,7 +154,7 @@
     -webkit-backdrop-filter: none;
     border: 0;
     border-radius: 0;
-    bottom: calc(0.5rem + 0.125rem);
+    bottom: auto;
     box-shadow: none;
     gap: 0;
     height: auto;
@@ -162,10 +162,11 @@
     margin-inline: 0;
     max-width: none;
     padding: 0;
-    right: calc(0.5rem + 0.125rem);
+    right: auto;
     width: auto;
 
-    .item:not(.user) {
+    .item:not(.user),
+    .site-dock-menu-wrap {
       display: none;
     }
 
@@ -178,8 +179,13 @@
       min-width: 0;
       width: auto;
 
+      /* Same viewport pin the avatar used before it lived in the dock. */
       .user-menu {
-        position: static;
+        bottom: calc(var(--corner-offset) + 0.125rem);
+        height: auto;
+        position: fixed;
+        right: calc(var(--corner-offset) + 0.125rem);
+        width: auto;
       }
 
       .user-avatar.md {

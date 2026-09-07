@@ -15,15 +15,23 @@ import { createServerClient } from "@supabase/ssr"
 import { getRequestEvent } from "solid-js/web"
 import { getSupabaseAuthStorageKey } from "@/lib/vendor/supabase/browser-url"
 import type { AppSupabaseClient, Database } from "@/lib/vendor/supabase/types"
+import { getEnv } from "@/util/env"
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY
+const getSupabasePublicConfig = () => {
+  // Call-time read. A top-level `import.meta.env` check throws while the
+  // module loads, which Nitro surfaces as an unhandled 500 on API routes
+  // when those values were not inlined into the server chunk.
+  const env = getEnv()
+  if (!env.SUPABASE_URL || !env.SUPABASE_ANON_KEY) {
+    throw new Error("Missing required Supabase environment variables")
+  }
 
-if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-  throw new Error("Missing required Supabase environment variables")
+  return {
+    url: env.SUPABASE_URL,
+    anonKey: env.SUPABASE_ANON_KEY,
+    authStorageKey: getSupabaseAuthStorageKey(env.SUPABASE_URL),
+  }
 }
-
-const SUPABASE_AUTH_STORAGE_KEY = getSupabaseAuthStorageKey(SUPABASE_URL)
 
 type CookieWriteOptions = {
   domain?: string
@@ -113,9 +121,10 @@ const writeResponseCookie = (
 }
 
 export async function getServerClient(): Promise<AppSupabaseClient> {
-  const client = createServerClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  const { url, anonKey, authStorageKey } = getSupabasePublicConfig()
+  const client = createServerClient<Database>(url, anonKey, {
     cookieOptions: {
-      name: SUPABASE_AUTH_STORAGE_KEY,
+      name: authStorageKey,
     },
     cookies: {
       getAll() {
@@ -129,10 +138,12 @@ export async function getServerClient(): Promise<AppSupabaseClient> {
               path: cookie.options?.path ?? "/",
             })
           } catch (error: unknown) {
-            if (isHeadersSentError(error)) {
-              return
+            // Cookie refresh is best-effort. A write failure must not 500 the
+            // request — the incoming session cookies are still enough to auth.
+            if (!isHeadersSentError(error)) {
+              console.warn("Failed to persist refreshed auth cookies:", error)
             }
-            throw error
+            return
           }
         }
       },

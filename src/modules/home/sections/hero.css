@@ -1,0 +1,12 @@
+.hero-portrait.cdn-image-container {
+  height: 15rem !important;
+  margin-top: -8rem;
+  width: 15rem !important;
+}
+
+@media (min-width: 48rem) {
+  .hero-portrait.cdn-image-container {
+    height: 20rem !important;
+    width: 20rem !important;
+  }
+}

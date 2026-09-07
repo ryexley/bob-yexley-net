@@ -1,3 +1,4 @@
+/** @vitest-environment node */
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
 // Configurable auth result for the mocked Supabase server client.
@@ -21,11 +22,9 @@ vi.mock("@/lib/vendor/supabase/server", () => ({
   }),
 }))
 
-// The AWS SDK's S3Client + SigV4 presigner do not initialize cleanly under the
-// jsdom test environment. The real signing path is verified separately by
-// scripts/r2-presign-check.mjs against live R2. Here we mock the R2 client +
-// presigner so the test isolates the server's auth, ownership, validation, and
-// wiring logic, asserting the correct key + content type flow through.
+// Vite's default `browser` export condition resolves @aws-sdk/core to a
+// broken browser build. Mock the SDK here; the real signing path is covered
+// by scripts/r2-presign-check.mjs against live R2.
 vi.mock("@/lib/vendor/r2/client", () => ({
   getR2Client: () => ({ send: mockSend }),
   getR2Config: () => ({
@@ -35,6 +34,26 @@ vi.mock("@/lib/vendor/r2/client", () => ({
     secretAccessKey: "test-secret-access-key",
   }),
 }))
+
+vi.mock("@aws-sdk/client-s3", () => {
+  class FakeCommand {
+    input: Record<string, unknown>
+    constructor(input: Record<string, unknown>) {
+      this.input = input
+    }
+  }
+
+  return {
+    AbortMultipartUploadCommand: class AbortMultipartUploadCommand extends FakeCommand {},
+    CompleteMultipartUploadCommand: class CompleteMultipartUploadCommand extends FakeCommand {},
+    CreateMultipartUploadCommand: class CreateMultipartUploadCommand extends FakeCommand {},
+    DeleteObjectCommand: class DeleteObjectCommand extends FakeCommand {},
+    GetObjectCommand: class GetObjectCommand extends FakeCommand {},
+    ListPartsCommand: class ListPartsCommand extends FakeCommand {},
+    PutObjectCommand: class PutObjectCommand extends FakeCommand {},
+    UploadPartCommand: class UploadPartCommand extends FakeCommand {},
+  }
+})
 
 vi.mock("@aws-sdk/s3-request-presigner", () => ({
   getSignedUrl: async (_client: unknown, command: { input: { Key: string } }) =>

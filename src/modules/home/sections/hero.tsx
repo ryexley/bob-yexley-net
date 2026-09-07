@@ -5,6 +5,7 @@ import { PageSection } from "@/modules/home/components/page-section"
 import { preloadUnsplashImages } from "@/lib/vendor/unsplash"
 import { randomIndex } from "@/util/random"
 import { tr } from "@/i18n"
+import "./hero.css"
 
 const heroImageIds = [
   "green-trees-with-mountain-on-the-horizon-high-angle-photography-dtxihV-sX8k",
@@ -44,7 +45,7 @@ export function Hero(props) {
           <CloudinaryImage
             imageId="crys-and-i_i0aulu"
             alt={tr("site.title") as string}
-            class="transition-all duration-250 ease-in-out rounded-full drop-shadow-[0_1rem_2rem_rgba(0,0,0,1)] mt-[-8rem] h-[15rem]! w-[15rem]! md:h-[20rem]! md:w-[20rem]!"
+            class="hero-portrait transition-all duration-250 ease-in-out rounded-full drop-shadow-[0_1rem_2rem_rgba(0,0,0,1)]"
           />
         </div>
         <div class="/*flex-1*/ flex flex-col items-center justify-start gap-8 opacity-0 animate-[fade-in_1.5s_ease_1s_forwards]">

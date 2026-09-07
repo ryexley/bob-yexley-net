@@ -21,6 +21,23 @@ export default defineConfig({
       },
     },
   },
+  ssr: {
+    // Keep Node-only packages out of the server bundle. Vite 8 + Nitro 3
+    // otherwise can resolve the AWS SDK browser build (or fail to load
+    // sharp's native binary), which 500s every /api/media/* route.
+    target: "node",
+    resolve: {
+      conditions: ["node", "import", "module", "default"],
+      externalConditions: ["node", "import", "module", "default"],
+    },
+    external: [
+      "@aws-sdk/client-s3",
+      "@aws-sdk/core",
+      "@aws-sdk/s3-request-presigner",
+      "heic-convert",
+      "sharp",
+    ],
+  },
   optimizeDeps: {
     // Start 2 + Vite 8 rediscovers client deps after the first transform,
     // then 504s the in-flight `?v=` hashes. Prebundle the ones the home

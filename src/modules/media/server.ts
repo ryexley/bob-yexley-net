@@ -20,7 +20,6 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner"
 import { z } from "zod"
 import { getR2Client, getR2Config } from "@/lib/vendor/r2/client"
 import { getServerClient } from "@/lib/vendor/supabase/server"
-import { processImage } from "./process"
 import type {
   AbortMultipartRequest,
   CompleteMultipartRequest,
@@ -401,6 +400,9 @@ export async function processMedia(
     }
 
     const bytes = await original.Body.transformToByteArray()
+    // Load sharp only when processing. Signing/multipart routes must not
+    // import the native binary or a Vercel load failure 500s every upload.
+    const { processImage } = await import("./process")
     const processed = await processImage(bytes)
 
     const variantEntries = await Promise.all(
