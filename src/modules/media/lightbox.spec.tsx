@@ -1,6 +1,12 @@
-import { fireEvent, render } from "@solidjs/testing-library"
+import { fireEvent, render, waitFor } from "@solidjs/testing-library"
+import { createSignal } from "solid-js"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { Lightbox, isClickInsideObjectFitContain, type LightboxLabels } from "./lightbox"
+import {
+  Lightbox,
+  LIGHTBOX_DOT_PAGER_MAX,
+  isClickInsideObjectFitContain,
+  type LightboxLabels,
+} from "./lightbox"
 import type { BlipMediaRow } from "./data/queries"
 
 const labels: LightboxLabels = {
@@ -252,6 +258,44 @@ describe("Lightbox", () => {
     expect(onClose).toHaveBeenCalled()
   })
 
+  it("keeps the dot pager at or below the compact threshold", () => {
+    render(() => (
+      <Lightbox media={set} index={0} onClose={vi.fn()} labels={labels} />
+    ))
+
+    expect(document.querySelector(".lightbox-dots")).toBeTruthy()
+    expect(document.querySelector(".lightbox-indicator")?.classList.contains("is-compact")).toBe(
+      false,
+    )
+    expect(document.querySelector(".lightbox-pager-next")).toBeNull()
+  })
+
+  it("switches to a compact chevron pager above the dot threshold", () => {
+    const many = Array.from({ length: LIGHTBOX_DOT_PAGER_MAX + 1 }, (_, index) =>
+      media({
+        id: `row-${index}`,
+        storage_key: `media/u/b/${index}`,
+        display_order: index,
+      }),
+    )
+
+    render(() => (
+      <Lightbox media={many} index={1} onClose={vi.fn()} labels={labels} />
+    ))
+
+    expect(document.querySelector(".lightbox-dots")).toBeNull()
+    expect(document.querySelector(".lightbox-indicator")?.classList.contains("is-compact")).toBe(
+      true,
+    )
+    expect(counter()).toBe(`2 / ${many.length}`)
+
+    fireEvent.click(document.querySelector(".lightbox-pager-next") as Element)
+    expect(counter()).toBe(`3 / ${many.length}`)
+
+    fireEvent.click(document.querySelector(".lightbox-pager-previous") as Element)
+    expect(counter()).toBe(`2 / ${many.length}`)
+  })
+
   it("calls onClose when the close button is activated", () => {
     const onClose = vi.fn()
     render(() => (
@@ -260,6 +304,31 @@ describe("Lightbox", () => {
 
     fireEvent.click(document.querySelector(".lightbox-close") as Element)
     expect(onClose).toHaveBeenCalled()
+  })
+
+  it("releases document scroll after the lightbox unmounts", async () => {
+    const Harness = () => {
+      const [index, setIndex] = createSignal<number | null>(0)
+      return (
+        <Lightbox
+          media={set}
+          index={index()}
+          onClose={() => setIndex(null)}
+          labels={labels}
+        />
+      )
+    }
+
+    render(() => <Harness />)
+
+    fireEvent.click(document.querySelector(".lightbox-close") as Element)
+
+    await waitFor(() => {
+      expect(document.querySelector(".lightbox")).toBeNull()
+      expect(document.querySelector(".lightbox-dialog")).toBeNull()
+      expect(document.documentElement.style.overflow).not.toBe("hidden")
+      expect(document.body.style.overflow).not.toBe("hidden")
+    })
   })
 
   it("closes on a dominant vertical swipe on mobile", () => {

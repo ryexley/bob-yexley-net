@@ -875,13 +875,20 @@ a.blip-detail-back-link {
 
   .lightbox-indicator {
     position: absolute;
-    bottom: 1rem;
+    bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
     left: 50%;
     transform: translateX(-50%);
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 0.35rem;
+    z-index: 2;
+
+    &.is-compact {
+      flex-direction: row;
+      gap: 0.75rem;
+      bottom: calc(1.25rem + env(safe-area-inset-bottom, 0px));
+    }
   }
 
   .lightbox-counter {
@@ -889,8 +896,49 @@ a.blip-detail-back-link {
     font-size: 0.8rem;
   }
 
+  .lightbox-indicator.is-compact .lightbox-counter {
+    font-size: 1rem;
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    min-width: 4.75ch;
+    text-align: center;
+  }
+
+  .lightbox-pager {
+    appearance: none;
+    -webkit-appearance: none;
+    -webkit-tap-highlight-color: transparent;
+    border-color: rgb(255 255 255 / 0.5);
+    background: rgb(0 0 0 / 0.25);
+    box-shadow: none;
+    color: rgb(255 255 255 / 0.92);
+    height: 2.75rem;
+    outline: none;
+    width: 2.75rem;
+
+    .icon {
+      color: inherit;
+      font-size: 1.75rem;
+    }
+
+    &:hover {
+      background: rgb(0 0 0 / 0.35);
+      border-color: rgb(255 255 255 / 0.65);
+      box-shadow: none;
+    }
+
+    &:focus,
+    &:focus-visible,
+    &:active {
+      box-shadow: none;
+      outline: none;
+    }
+  }
+
   .lightbox-dots {
     display: flex;
+    flex-wrap: nowrap;
     gap: 0.35rem;
   }
 

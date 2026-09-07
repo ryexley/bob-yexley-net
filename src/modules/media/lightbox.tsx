@@ -36,6 +36,8 @@ export type LightboxProps = {
 }
 
 const AXIS_LOCK_PX = 10
+/** Above this count, dots become an unreadable strip — switch to chevron paging. */
+export const LIGHTBOX_DOT_PAGER_MAX = 15
 
 const readIsDesktop = (): boolean => {
   if (typeof window === "undefined") {
@@ -454,7 +456,11 @@ function LightboxContent(props: LightboxContentProps) {
       return false
     }
 
-    if (target.closest(".lightbox-nav, .lightbox-close, .lightbox-indicator")) {
+    if (
+      target.closest(
+        ".lightbox-nav, .lightbox-pager, .lightbox-close, .lightbox-indicator",
+      )
+    ) {
       return true
     }
 
@@ -680,23 +686,46 @@ function LightboxContent(props: LightboxContentProps) {
       </Show>
 
       <Show when={total() > 1}>
-        <div class="lightbox-indicator">
+        <div
+          class={cx("lightbox-indicator", {
+            "is-compact": total() > LIGHTBOX_DOT_PAGER_MAX,
+          })}>
+          <Show when={total() > LIGHTBOX_DOT_PAGER_MAX}>
+            <IconButton
+              class="lightbox-pager lightbox-pager-previous"
+              size="sm"
+              icon="chevron_left"
+              aria-label={props.labels.previous}
+              onClick={goPrevious}
+            />
+          </Show>
           <span class="lightbox-counter">
             {props.labels.counter(active() + 1, total())}
           </span>
-          <div
-            class="lightbox-dots"
-            aria-hidden="true">
-            <For each={props.media}>
-              {(_, dotIndex) => (
-                <span
-                  class={cx("lightbox-dot", {
-                    "is-active": dotIndex() === active(),
-                  })}
-                />
-              )}
-            </For>
-          </div>
+          <Show when={total() > LIGHTBOX_DOT_PAGER_MAX}>
+            <IconButton
+              class="lightbox-pager lightbox-pager-next"
+              size="sm"
+              icon="chevron_right"
+              aria-label={props.labels.next}
+              onClick={goNext}
+            />
+          </Show>
+          <Show when={total() <= LIGHTBOX_DOT_PAGER_MAX}>
+            <div
+              class="lightbox-dots"
+              aria-hidden="true">
+              <For each={props.media}>
+                {(_, dotIndex) => (
+                  <span
+                    class={cx("lightbox-dot", {
+                      "is-active": dotIndex() === active(),
+                    })}
+                  />
+                )}
+              </For>
+            </div>
+          </Show>
         </div>
       </Show>
 
@@ -721,18 +750,18 @@ export function Lightbox(props: LightboxProps) {
   }
 
   return (
-    <Dialog
-      open={isOpen()}
-      onOpenChange={open => {
-        if (!open) {
-          closeLightbox()
-        }
-      }}
-      modal
-      preventScroll
-      overlayClass="lightbox-overlay"
-      class="lightbox-dialog">
-      <Show when={isOpen()}>
+    <Show when={isOpen()}>
+      <Dialog
+        open
+        onOpenChange={open => {
+          if (!open) {
+            closeLightbox()
+          }
+        }}
+        modal
+        preventScroll
+        overlayClass="lightbox-overlay"
+        class="lightbox-dialog">
         <LightboxContent
           initialIndex={props.index!}
           media={props.media}
@@ -740,7 +769,7 @@ export function Lightbox(props: LightboxProps) {
           swipeThreshold={props.swipeThreshold}
           onClose={closeLightbox}
         />
-      </Show>
-    </Dialog>
+      </Dialog>
+    </Show>
   )
 }
