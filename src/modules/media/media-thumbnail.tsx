@@ -178,8 +178,8 @@ export function MediaThumbnail(props: MediaThumbnailProps) {
                 cx="16"
                 cy="16"
                 r={PROGRESS_RADIUS}
-                stroke-dasharray={PROGRESS_CIRCUMFERENCE}
-                stroke-dashoffset={progressOffset()}
+                stroke-dasharray={String(PROGRESS_CIRCUMFERENCE)}
+                stroke-dashoffset={String(progressOffset())}
               />
             </svg>
           </span>
@@ -196,8 +196,8 @@ export function MediaThumbnail(props: MediaThumbnailProps) {
                 cx="16"
                 cy="16"
                 r={PROGRESS_RADIUS}
-                stroke-dasharray={PROGRESS_CIRCUMFERENCE}
-                stroke-dashoffset={PROGRESS_CIRCUMFERENCE * 0.7}
+                stroke-dasharray={String(PROGRESS_CIRCUMFERENCE)}
+                stroke-dashoffset={String(PROGRESS_CIRCUMFERENCE * 0.7)}
               />
             </svg>
           </span>

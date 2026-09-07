@@ -985,7 +985,7 @@ export function DateTimePicker(props: DateTimePickerProps) {
 
                     closeTimeSelect()
                   }}
-                  class="select-field _time-select-field"
+                  class="select-field time-select-field"
                   // The shared Select wrapper does not expose enough control for
                   // this nested-overlay case, so the time menu uses primitives
                   // directly to manage its open state and dismiss behavior.
@@ -1001,7 +1001,7 @@ export function DateTimePicker(props: DateTimePickerProps) {
                   )}>
                   <SelectPrimitive.HiddenSelect />
                   <SelectPrimitive.Trigger
-                    class="select-trigger _time-select"
+                    class="select-trigger time-select"
                     aria-label="Select time">
                     <SelectPrimitive.Value<SelectOption> class="select-value">
                       {state => state.selectedOption().label}
@@ -1012,7 +1012,7 @@ export function DateTimePicker(props: DateTimePickerProps) {
                   </SelectPrimitive.Trigger>
                   <SelectPrimitive.Portal mount={local.portalMount ?? rootRef}>
                     <SelectPrimitive.Content
-                      class="select-content _time-select-content date-time-picker-owned-overlay"
+                      class="select-content time-select-content date-time-picker-owned-overlay"
                       // These handlers intentionally keep the nested time menu
                       // inside the parent picker's interaction boundary.
                       onCloseAutoFocus={event => event.preventDefault()}

@@ -85,10 +85,12 @@ type QueryAggregateEntry = {
 }
 
 const shouldLogQueryMetrics = () =>
-  import.meta.env.DEV || process.env.BLIPS_QUERY_DEBUG === "1"
+  import.meta.env.DEV ||
+  (typeof process !== "undefined" && process.env?.BLIPS_QUERY_DEBUG === "1")
 
 const getSlowQueryThresholdMs = () => {
-  const raw = Number(process.env.BLIPS_QUERY_SLOW_MS)
+  const raw =
+    typeof process === "undefined" ? Number.NaN : Number(process.env?.BLIPS_QUERY_SLOW_MS)
   return Number.isFinite(raw) && raw > 0 ? raw : 250
 }
 

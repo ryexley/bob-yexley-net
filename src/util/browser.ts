@@ -15,8 +15,7 @@ export function withWindow(fn, fallbackFn = () => {}) {
 }
 
 export function windowTitle(pageTitle: string) {
-  const persistentAppTitle =
-    `${tr("site.title")} - ${tr("site.description")}` || ""
+  const persistentAppTitle = `${tr("site.title")} - ${tr("site.description")}`
 
   if (isNotEmpty(pageTitle)) {
     return `${pageTitle} ← ${persistentAppTitle}`

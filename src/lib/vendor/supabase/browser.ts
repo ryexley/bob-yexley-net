@@ -460,7 +460,7 @@ function Supabase() {
       try {
         await this.revokeCurrentSession()
 
-        const { error } = await getClient()?.auth?.signOut()
+        const { error } = await getClient().auth.signOut()
 
         if (error) {
           return { data: null, error: formatAuthError(error) }

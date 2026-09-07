@@ -1,8 +1,4 @@
 import { query } from "@solidjs/router"
-import {
-  loadAnalyticsDashboard,
-  loadAnalyticsHubStats,
-} from "./server"
 import type { AnalyticsDashboardData, AnalyticsHubStats } from "./types"
 
 export const getAnalyticsDashboard = query(
@@ -14,6 +10,7 @@ export const getAnalyticsDashboard = query(
   }): Promise<AnalyticsDashboardData> => {
     "use server"
 
+    const { loadAnalyticsDashboard } = await import("./server")
     return loadAnalyticsDashboard(input)
   },
   "analytics-dashboard",
@@ -27,6 +24,7 @@ export const getAnalyticsHubStats = query(
   }): Promise<AnalyticsHubStats> => {
     "use server"
 
+    const { loadAnalyticsHubStats } = await import("./server")
     return loadAnalyticsHubStats(input.siteId, input.from, input.to)
   },
   "analytics-hub-stats",

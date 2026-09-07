@@ -268,6 +268,7 @@ export function VisitorAuthModal(props: VisitorAuthModalProps) {
                     value={pin()}
                     onChange={setPin}
                     onComplete={() => {
+                      // oxlint-disable-next-line solid/reactivity
                       queueMicrotask(() => {
                         if (isSignupMode()) {
                           nameInputRef?.focus()

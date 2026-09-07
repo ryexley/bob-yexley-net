@@ -26,12 +26,14 @@ export function Button(props: ButtonProps) {
     "iconRight",
   ])
 
-  const variant = local.variant || "primary"
-  const size = local.size || "md"
-
   return (
     <KobalteButton
-      class={cx("button", variant, size, local.class)}
+      class={cx(
+        "button",
+        local.variant || "primary",
+        local.size || "md",
+        local.class,
+      )}
       {...attrs}>
       {isNotEmpty(local.icon) ? <Icon name={local.icon!} /> : null}
       {local.label}

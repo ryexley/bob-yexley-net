@@ -11,12 +11,12 @@ import { Popover, PopoverAnchor, PopoverContent } from "@/components/popover"
 import { Tooltip } from "@/components/tooltip"
 import { useAuth } from "@/context/auth-context"
 import { useViewport } from "@/context/viewport"
-import type { BlipReactionSummary } from "@/modules/blips/data/reactions-schema"
+import type { BlipReactionSummary as BlipReactionSummaryData } from "@/modules/blips/data/reactions-schema"
 import { cx } from "@/util"
 import "./blip-reactions.css"
 
 type BlipReactionSummaryProps = {
-  reactions?: BlipReactionSummary[]
+  reactions?: BlipReactionSummaryData[]
   onToggleReaction?: (emoji: string) => void
   busy?: boolean
   class?: string
@@ -62,7 +62,7 @@ export function BlipReactionSummary(props: BlipReactionSummaryProps) {
     longPressOrigins.clear()
   }
 
-  const getReactionNames = (reaction: BlipReactionSummary) =>
+  const getReactionNames = (reaction: BlipReactionSummaryData) =>
     canViewReactionNames() ? reaction.display_names : []
   const openReactionPopover = (emoji: string) => {
     setOpenPopoverEmoji(emoji)

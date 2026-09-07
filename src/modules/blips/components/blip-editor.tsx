@@ -286,11 +286,13 @@ export function BlipEditor(props: BlipEditorProps) {
     focusBridge.clearTextInputSession(reason)
     blurEditorElements()
 
+    // oxlint-disable-next-line solid/reactivity
     queueMicrotask(() => {
       blurEditorElements()
     })
 
     if (typeof window !== "undefined") {
+      // oxlint-disable-next-line solid/reactivity
       window.requestAnimationFrame(() => {
         blurEditorElements()
       })

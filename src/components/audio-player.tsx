@@ -9,6 +9,7 @@ import {
   onCleanup,
   Show,
   splitProps,
+  untrack,
   type Component,
 } from "solid-js"
 import { isServer } from "solid-js/web"
@@ -406,8 +407,8 @@ function samplePlayPulseLevel(
   freqData: Uint8Array,
   timeData: Uint8Array,
 ): number {
-  analyser.getByteFrequencyData(freqData)
-  analyser.getByteTimeDomainData(timeData)
+  analyser.getByteFrequencyData(freqData as Uint8Array<ArrayBuffer>)
+  analyser.getByteTimeDomainData(timeData as Uint8Array<ArrayBuffer>)
 
   const binCount = Math.max(1, Math.floor(freqData.length * PLAY_PULSE_BIN_RATIO))
   let bassSum = 0
@@ -566,7 +567,7 @@ export const AudioPlayer: Component<AudioPlayerProps> = rawProps => {
 
   /** SSR-safe defaults — persisted state is restored in the client-only effect below. */
   const initial: InitialPlayerState = {
-    volume: defaultVolume(),
+    volume: untrack(() => defaultVolume()),
     showCover: false,
     pendingSeek: null,
   }
@@ -576,6 +577,9 @@ export const AudioPlayer: Component<AudioPlayerProps> = rawProps => {
   const progressRangeRef = { current: null as HTMLInputElement | null }
 
   function bindAudioEl(el: HTMLAudioElement | null): void {
+    if (el) {
+      el.setAttribute("playsinline", "")
+    }
     audioElBox.current = el
     setAudioRef(el)
   }
@@ -1427,6 +1431,7 @@ export const AudioPlayer: Component<AudioPlayerProps> = rawProps => {
     let lastAdvance = performance.now()
     let recoveryAttempts = 0
 
+    // oxlint-disable-next-line solid/reactivity
     const id = window.setInterval(() => {
       if (!playing()) {
         return
@@ -1573,9 +1578,11 @@ export const AudioPlayer: Component<AudioPlayerProps> = rawProps => {
         markExplicitPause()
         audioElBox.current?.pause()
       })
+      // oxlint-disable-next-line solid/reactivity
       ms.setActionHandler("seekbackward", details => {
         seekBy(-(details.seekOffset ?? local.scrubSeconds))
       })
+      // oxlint-disable-next-line solid/reactivity
       ms.setActionHandler("seekforward", details => {
         seekBy(details.seekOffset ?? local.scrubSeconds)
       })
@@ -1687,7 +1694,6 @@ export const AudioPlayer: Component<AudioPlayerProps> = rawProps => {
         src={local.src}
         crossOrigin={audioCrossOrigin()}
         preload="metadata"
-        playsInline
         onError={e => handleAudioMediaError(e.currentTarget)}
         onPlay={() => {
           intendsPlayback.current = true
@@ -1745,7 +1751,7 @@ export const AudioPlayer: Component<AudioPlayerProps> = rawProps => {
               class="cover-art"
               src={trimmedCoverSrc()}
               alt={coverArtAlt()}
-              attr:title={coverArtTitle()}
+              title={coverArtTitle()}
               decoding="async"
             />
           </div>

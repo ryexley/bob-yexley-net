@@ -1,4 +1,4 @@
-import { createEffect, createMemo, createSignal, onCleanup, Show } from "solid-js"
+import { createEffect, createMemo, createSignal, onCleanup, Show, untrack } from "solid-js"
 import { Drawer, DrawerPosition } from "@/components/drawer"
 import { Button } from "@/components/button"
 import { Icon } from "@/components/icon"
@@ -40,7 +40,7 @@ export function ProfileDrawer(props: ProfileDrawerProps) {
   const [isSaving, setIsSaving] = createSignal(false)
   const [isRefreshingAvatar, setIsRefreshingAvatar] = createSignal(false)
   const [isLoggingOut, setIsLoggingOut] = createSignal(false)
-  const [isMounted, setIsMounted] = createSignal(props.open)
+  const [isMounted, setIsMounted] = createSignal(untrack(() => props.open))
   const [contentElement, setContentElement] = createSignal<HTMLElement | null>(null)
   let closeUnmountTimeout: ReturnType<typeof setTimeout> | null = null
 
@@ -118,7 +118,7 @@ export function ProfileDrawer(props: ProfileDrawerProps) {
   }
 
   createEffect(() => {
-    auth.userProfile()?.displayName
+    void auth.userProfile()?.displayName
     if (!isEditing()) {
       setDraftDisplayName(auth.userProfile()?.displayName ?? "")
     }

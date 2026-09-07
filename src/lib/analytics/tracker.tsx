@@ -50,8 +50,8 @@ export function AnalyticsTracker() {
   })
 
   createEffect(() => {
-    location.pathname
-    location.search
+    void location.pathname
+    void location.search
     trackPath(`${location.pathname}${location.search}`)
   })
 

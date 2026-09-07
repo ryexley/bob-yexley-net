@@ -384,6 +384,7 @@
   }
 }
 
+.date-time-picker-owned-overlay.select-content,
 .select-content.time-select-content {
   z-index: 1303;
 }

@@ -1,4 +1,4 @@
-import { For, Show, createEffect, createMemo, createSignal } from "solid-js"
+import { For, Show, createEffect, createMemo, createSignal, untrack } from "solid-js"
 import { ToggleGroup } from "@kobalte/core"
 import { Icon } from "@/components/icon"
 import { clsx as cx } from "@/util"
@@ -33,8 +33,8 @@ export default function Toolbar(props: ToolbarProps) {
 
     return formats
   })
-  let previousLinkEditorRequestNonce = props.linkEditorRequestNonce
-  let previousLinkEditorOpen = showLinkEditor()
+  let previousLinkEditorRequestNonce = untrack(() => props.linkEditorRequestNonce)
+  let previousLinkEditorOpen = untrack(() => showLinkEditor())
   let linkHrefInputRef: HTMLInputElement | undefined
 
   const closeLinkEditor = () => {

@@ -29,6 +29,8 @@ import { clsx as cx } from "@/util"
 import { ptr } from "@/i18n"
 import "./blip-comment-editor.css"
 
+type SaveStatus = "idle" | "saving" | "saved" | "error"
+
 type BlipCommentEditorProps = {
   open: boolean
   parentBlipId?: string | null

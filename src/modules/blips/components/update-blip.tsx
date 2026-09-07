@@ -86,10 +86,10 @@ export function UpdateBlip(props: {
   const isScheduled = createMemo(() => isBlipScheduled(props.blip))
 
   createEffect(() => {
-    props.blip.id
-    props.blip.my_reaction_count
-    props.blip.reactions_count
-    reactionSignature()
+    void props.blip.id
+    void props.blip.my_reaction_count
+    void props.blip.reactions_count
+    void reactionSignature()
     setReactionStateOverride(null)
   })
 

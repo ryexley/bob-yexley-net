@@ -79,10 +79,14 @@ function checkEquality(a, b, refs) {
     }
 
     case "ArrayBuffer":
-      ;(a = new Uint8Array(a)), (b = new Uint8Array(b)) // fall through to be handled as an Array
+      a = new Uint8Array(a)
+      b = new Uint8Array(b)
+    // fall through to be handled as an Array
 
     case "DataView":
-      ;(a = new Uint8Array(a.buffer)), (b = new Uint8Array(b.buffer)) // fall through to be handled as an Array
+      a = new Uint8Array(a.buffer)
+      b = new Uint8Array(b.buffer)
+    // fall through to be handled as an Array
 
     case "Float32Array":
     case "Float64Array":

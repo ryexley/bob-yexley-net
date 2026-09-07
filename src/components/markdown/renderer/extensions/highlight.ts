@@ -10,7 +10,7 @@ type HighlightToken = Tokens.Generic & {
   tokens: Token[]
 }
 
-const highlightPattern = /^==(?=\S)([\s\S]*?\S)==(?!\=)/
+const highlightPattern = /^==(?=\S)([\s\S]*?\S)==(?!=)/
 
 export const highlightExtension: TokenizerAndRendererExtension<string, string> = {
   name: "highlight",

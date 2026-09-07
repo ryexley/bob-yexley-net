@@ -47,8 +47,9 @@
   --radius-round: 50%;
   --transitions-primary: all 250ms ease-in-out;
   --main-header-height: 4rem;
-  --site-dock-height: 3.75rem;
-  --site-dock-item: 3.125rem;
+  --site-dock-item: 2.75rem;
+  --site-dock-pad: 0.25rem;
+  --site-dock-height: calc(var(--site-dock-item) + 2 * var(--site-dock-pad));
   --site-dock-gap: 0.625rem;
   --site-dock-inset: 0.75rem;
   --site-dock-offset: calc(

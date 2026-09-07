@@ -5,7 +5,9 @@ import {
   createSignal,
   onCleanup,
   onMount,
+  Show,
   splitProps,
+  untrack,
 } from "solid-js"
 import { ImagePlaceholder } from "@/components/icon"
 import { tr } from "@/i18n"
@@ -90,7 +92,9 @@ export const PersonalCloudImage: Component<PersonalCloudImageProps> = props => {
   const [imageStatus, setImageStatus] = createSignal(
     tr("shared.components.image.imageStatusPending"),
   )
-  const [isInView, setIsInView] = createSignal(local.eager ?? false)
+  const [isInView, setIsInView] = createSignal(
+    untrack(() => local.eager ?? false),
+  )
   const [candidateIndex, setCandidateIndex] = createSignal(0)
 
   const placeholderBackground = createMemo(() =>
@@ -188,9 +192,9 @@ export const PersonalCloudImage: Component<PersonalCloudImageProps> = props => {
   // variant, or processing transition) so a recycled component re-attempts
   // from the largest candidate.
   createEffect(() => {
-    local.imageKey
-    variant()
-    getProcessingStatus()
+    void local.imageKey
+    void variant()
+    void getProcessingStatus()
     setCandidateIndex(0)
     setImageLoaded(false)
   })
@@ -311,7 +315,7 @@ export const PersonalCloudImage: Component<PersonalCloudImageProps> = props => {
           <ImagePlaceholder
             class="h-7 w-7 shrink-0 text-[var(--colors-cerise-pink)]/45"
             role="img"
-            aria-label={imageStatus()}
+            aria-label={String(imageStatus())}
           />
         </Show>
       </div>

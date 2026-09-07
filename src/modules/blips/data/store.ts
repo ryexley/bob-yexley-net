@@ -723,41 +723,6 @@ export function blipStore(
     }
   }
 
-  const publish = async (blipId: string): Promise<OperationResult<Blip>> => {
-    // Get the existing blip to ensure we have user_id
-    const existingBlip = store.entities().find(b => b.id === blipId)
-    if (!existingBlip) {
-      return { data: null, error: "Blip not found" }
-    }
-
-    const publishAt =
-      existingBlip.publish_at ?? existingBlip.created_at ?? new Date().toISOString()
-
-    return store.upsert({
-      id: blipId,
-      user_id: existingBlip.user_id, // Include user_id for RLS
-      publish_at: publishAt,
-      published: true,
-      moderation_status: "approved",
-      updated_at: new Date().toISOString(),
-    } as Partial<Blip>)
-  }
-
-  const unpublish = async (blipId: string): Promise<OperationResult<Blip>> => {
-    // Get the existing blip to ensure we have user_id
-    const existingBlip = store.entities().find(b => b.id === blipId)
-    if (!existingBlip) {
-      return { data: null, error: "Blip not found" }
-    }
-
-    return store.upsert({
-      id: blipId,
-      user_id: existingBlip.user_id, // Include user_id for RLS
-      published: false,
-      updated_at: new Date().toISOString(),
-    } as Partial<Blip>)
-  }
-
   const fetchTagsForBlip = async (blipId: string): Promise<string[] | null> => {
     const { data: blipTagRows, error: blipTagError } = await supabaseClient
       .from("blip_tags")

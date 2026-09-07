@@ -26,10 +26,7 @@ import { Tooltip } from "@/components/tooltip"
 import { useSupabase } from "@/context/services-context"
 import { useAuth } from "@/context/auth-context"
 import { BlipActions } from "@/modules/blips/components/blip-actions"
-import {
-  BlipCommentListItem,
-  BlipCommentThread,
-} from "@/modules/blips/components/blip-comment-thread"
+import { BlipCommentListItem } from "@/modules/blips/components/blip-comment-thread"
 import { BlipCommentTrigger } from "@/modules/blips/components/blip-comment-trigger"
 import { BlipReactionSummary } from "@/modules/blips/components/blip-reaction-summary"
 import { BlipReactionTrigger } from "@/modules/blips/components/blip-reaction-trigger"
@@ -324,10 +321,10 @@ export function BlipView() {
   }
   const rootComments = createMemo(() => getCommentsForParent(blip()?.id))
   const visibleCommentCount = createMemo(() => {
-    const updateCommentCount = visibleUpdates().reduce(
-      (total, update) => total + getCommentsForParent(update.id).length,
-      0,
-    )
+    // oxlint-disable-next-line solid/reactivity
+    const updateCommentCount = visibleUpdates().reduce((total, update) => {
+      return total + getCommentsForParent(update.id).length
+    }, 0)
 
     return rootComments().length + updateCommentCount
   })
@@ -422,7 +419,7 @@ export function BlipView() {
   )
 
   createEffect(() => {
-    params.id
+    void params.id
     setLightboxIndex(null)
   })
   const visibleCommentIds = createMemo(() => {
@@ -553,7 +550,7 @@ export function BlipView() {
   })
 
   createEffect(() => {
-    params.id
+    void params.id
     setHasSeededInitialUpdates(false)
     setHasSeededInitialComments(false)
   })
@@ -604,10 +601,10 @@ export function BlipView() {
       return
     }
 
-    currentBlip.id
-    currentBlip.my_reaction_count
-    currentBlip.reactions_count
-    reactionSignature()
+    void currentBlip.id
+    void currentBlip.my_reaction_count
+    void currentBlip.reactions_count
+    void reactionSignature()
     setReactionStateOverride(null)
   })
 

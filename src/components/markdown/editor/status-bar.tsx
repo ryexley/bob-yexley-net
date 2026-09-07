@@ -25,7 +25,7 @@ const propDefaults = {
 
 export function StatusBar(props: StatusBarProps) {
   const propsWithDefaults = mergeProps(propDefaults, props)
-  const [local, attrs] = splitProps(propsWithDefaults, [
+  const [local] = splitProps(propsWithDefaults, [
     "onToggleToolbar",
     "statusText",
     "statusIcon",
@@ -50,7 +50,7 @@ export function StatusBar(props: StatusBarProps) {
         <button
           type="button"
           class="toggle-toolbar"
-          onClick={local.onToggleToolbar}
+          onClick={() => local.onToggleToolbar()}
           // Prevent this button from stealing focus
           // which causes the soft keyboard to close
           // when it is open on mobile devices and the

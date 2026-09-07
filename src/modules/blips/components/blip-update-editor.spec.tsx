@@ -202,7 +202,7 @@ describe("BlipUpdateEditor", () => {
 
   it("keeps the inline shell on desktop", async () => {
     state.viewportWidth = 1024
-    const view = render(() => (
+    render(() => (
       (() => {
         const [desktopMount, setDesktopMount] = createSignal<HTMLDivElement | null>(
           null,

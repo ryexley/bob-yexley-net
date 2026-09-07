@@ -168,7 +168,9 @@ export function Tooltip(props: TooltipProps) {
     onCleanup(() => mediaQuery.removeListener(updateTouchMode))
   })
 
+  // oxlint-disable-next-line solid/reactivity
   if (props.disabled) {
+    // oxlint-disable-next-line solid/components-return-once, solid/reactivity
     return props.children
   }
 
@@ -289,7 +291,7 @@ export function Tooltip(props: TooltipProps) {
             }}
             placement={props.placement ?? "top"}
             flip
-            shift={touchFullWidth ? false : true}
+            shift={touchFullWidth ? 0 : 8}
             sameWidth={touchFullWidth ? true : undefined}
             overflowPadding={touchFullWidth ? touchMargin : undefined}
             getAnchorRect={touchFullWidth ? getTouchFullWidthAnchorRect : undefined}>

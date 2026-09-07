@@ -135,10 +135,10 @@ export function Blip(props: {
   const cardTags = createMemo(() => splitBlipCardTags(local.tags, cardTagLimit()))
 
   createEffect(() => {
-    local.blip.id
-    local.blip.my_reaction_count
-    local.blip.reactions_count
-    reactionSignature()
+    void local.blip.id
+    void local.blip.my_reaction_count
+    void local.blip.reactions_count
+    void reactionSignature()
     setReactionStateOverride(null)
   })
 

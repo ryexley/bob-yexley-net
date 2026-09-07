@@ -100,10 +100,10 @@ function BlipCommentCard(props: BlipCommentCardProps) {
   )
 
   createEffect(() => {
-    props.comment.id
-    props.comment.my_reaction_count
-    props.comment.reactions_count
-    reactionSignature()
+    void props.comment.id
+    void props.comment.my_reaction_count
+    void props.comment.reactions_count
+    void reactionSignature()
     setReactionStateOverride(null)
   })
 

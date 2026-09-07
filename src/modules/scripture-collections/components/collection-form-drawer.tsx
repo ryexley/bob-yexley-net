@@ -1,4 +1,4 @@
-import { createEffect, createMemo, createSignal, Show } from "solid-js"
+import { createEffect, createMemo, createSignal, Show, untrack } from "solid-js"
 import { Button } from "@/components/button"
 import { FormDrawer } from "@/components/form-drawer"
 import { Input } from "@/components/input"
@@ -39,7 +39,7 @@ export function CollectionFormDrawer(props: CollectionFormDrawerProps) {
   const [isSaving, setIsSaving] = createSignal(false)
   const [isDeleting, setIsDeleting] = createSignal(false)
   const [mountedCollection, setMountedCollection] =
-    createSignal<AdminCollectionRecord | null>(props.collection)
+    createSignal<AdminCollectionRecord | null>(untrack(() => props.collection))
 
   const currentCollection = createMemo(() => props.collection ?? mountedCollection())
   const isFormMode = createMemo(() => props.mode === "create" || isEditing())
@@ -118,9 +118,9 @@ export function CollectionFormDrawer(props: CollectionFormDrawerProps) {
   })
 
   createEffect(() => {
-    props.open
-    props.mode
-    currentCollection()?.id
+    void props.open
+    void props.mode
+    void currentCollection()?.id
     if (props.open) {
       setIsEditing(false)
       resetForm()

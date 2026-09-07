@@ -188,6 +188,7 @@ export function LightboxPinchZoom(props: LightboxPinchZoomProps) {
           PINCH_RESET_TRANSITION_MS + 50,
         )
 
+        // oxlint-disable-next-line solid/reactivity
         resetAnimationCleanup = () => {
           inner?.removeEventListener("transitionend", onTransitionEnd)
           window.clearTimeout(fallbackTimer)

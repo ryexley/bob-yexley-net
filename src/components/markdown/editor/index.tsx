@@ -5,6 +5,7 @@ import {
   mergeProps,
   splitProps,
   Show,
+  untrack,
   type Component,
   type JSX,
 } from "solid-js"
@@ -210,11 +211,11 @@ export function MarkdownEditor(props: MarkdownEditorProps) {
   let editorRef: HTMLDivElement | undefined
   let editorInstance: Editor | undefined
   let editorKeydownCleanup: (() => void) | undefined
-  const editorCallbacks = {
+  const editorCallbacks = untrack(() => ({
     onChange: local.onChange,
     onEditorReady: local.onEditorReady,
     onContentMetricsChange: local.onContentMetricsChange,
-  }
+  }))
   let focusRetryTimeout: ReturnType<typeof setTimeout> | undefined
   let pendingFocusAfterMount: "start" | "end" | null = null
   let lastHandledFocusNonce: number | undefined
@@ -318,6 +319,7 @@ export function MarkdownEditor(props: MarkdownEditorProps) {
         ctx.set(rootCtx, editorRef)
         ctx.set(defaultValueCtx, initialValue)
         ctx.update(prosePluginsCtx, prev => [...prev, history()])
+        // oxlint-disable-next-line solid/reactivity
         ctx.get(listenerCtx).mounted(() => {
           editorCallbacks.onEditorReady?.()
           emitContentMetrics(initialValue)
@@ -381,6 +383,7 @@ export function MarkdownEditor(props: MarkdownEditorProps) {
           }
 
           editorDom.addEventListener("keydown", handleKeyDown)
+          // oxlint-disable-next-line solid/reactivity
           editorKeydownCleanup = () => {
             editorDom.removeEventListener("keydown", handleKeyDown)
           }
@@ -393,6 +396,7 @@ export function MarkdownEditor(props: MarkdownEditorProps) {
   })
 
   createEffect(() => {
+    // oxlint-disable-next-line solid/reactivity
     withWindow(() => {
       writeToolbarVisiblePreference(localStorage, toolbarVisible())
     })

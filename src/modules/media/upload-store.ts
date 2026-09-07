@@ -630,7 +630,7 @@ export function createUploadStore(
   }
 
   const clearCompleted: UploadStore["clearCompleted"] = () => {
-    for (const entry of [...byId.values()]) {
+    for (const entry of byId.values()) {
       if (entry.status === "complete") {
         // Removes from Uppy state too; `file-removed` revokes + drops the entry.
         uppy.removeFile(entry.id)

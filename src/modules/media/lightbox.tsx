@@ -6,6 +6,7 @@ import {
   createSignal,
   onCleanup,
   onMount,
+  untrack,
 } from "solid-js"
 import { Dialog, DialogCloseButton } from "@/components/dialog"
 import { IconButton } from "@/components/icon-button"
@@ -273,9 +274,9 @@ type LightboxContentProps = {
 function LightboxContent(props: LightboxContentProps) {
   const swipeThreshold = () => props.swipeThreshold ?? 40
 
-  const [active, setActive] = createSignal(props.initialIndex)
+  const [active, setActive] = createSignal(untrack(() => props.initialIndex))
   const [trackIndex, setTrackIndex] = createSignal(
-    props.media.length > 1 ? props.initialIndex + 1 : 0,
+    untrack(() => (props.media.length > 1 ? props.initialIndex + 1 : 0)),
   )
   const [isDesktop, setIsDesktop] = createSignal(readIsDesktop())
   const [dragOffsetX, setDragOffsetX] = createSignal(0)
@@ -319,6 +320,7 @@ function LightboxContent(props: LightboxContentProps) {
 
   onMount(() => {
     if (typeof window === "undefined" || typeof window.matchMedia !== "function") {
+      // oxlint-disable-next-line solid/reactivity
       queueMicrotask(() => playVideoForTrack(trackIndex()))
       return
     }
@@ -326,6 +328,7 @@ function LightboxContent(props: LightboxContentProps) {
     const sync = () => setIsDesktop(queryList.matches)
     sync()
     queryList.addEventListener("change", sync)
+    // oxlint-disable-next-line solid/reactivity
     queueMicrotask(() => playVideoForTrack(trackIndex()))
     onCleanup(() => queryList.removeEventListener("change", sync))
   })
@@ -730,15 +733,13 @@ export function Lightbox(props: LightboxProps) {
       overlayClass="lightbox-overlay"
       class="lightbox-dialog">
       <Show when={isOpen()}>
-        {() => (
-          <LightboxContent
-            initialIndex={props.index!}
-            media={props.media}
-            labels={props.labels}
-            swipeThreshold={props.swipeThreshold}
-            onClose={closeLightbox}
-          />
-        )}
+        <LightboxContent
+          initialIndex={props.index!}
+          media={props.media}
+          labels={props.labels}
+          swipeThreshold={props.swipeThreshold}
+          onClose={closeLightbox}
+        />
       </Show>
     </Dialog>
   )

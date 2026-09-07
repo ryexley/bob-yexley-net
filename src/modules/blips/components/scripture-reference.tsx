@@ -25,7 +25,7 @@ const scriptureReferenceDrawerBehavior = {
   breakPoints: [null, null],
   defaultSnapPoint: 0.5,
   closeOnOutsidePointer: true,
-} as const
+}
 
 export type ScriptureReferenceProps = ParentProps<{
   book: string
@@ -54,25 +54,25 @@ export function ScriptureReferenceTrigger(props: ScriptureReferenceTriggerProps)
   return (
     <span
       class={cx("scripture-reference-trigger", local.class)}
-      onPointerEnter={local.onPointerEnter}
-      onFocus={local.onFocus}
-      onClick={local.onClick}>
+      onPointerEnter={event => local.onPointerEnter?.(event)}
+      onFocus={event => local.onFocus?.(event)}
+      onClick={event => local.onClick?.(event)}>
       {local.children}
     </span>
   )
 }
 
 async function requestPassage(
-  props: Pick<
+  reference: Pick<
     ScriptureReferenceProps,
     "book" | "chapter" | "startVerse" | "endVerse"
   >,
 ): Promise<PassageState> {
   const params = new URLSearchParams({
-    book: props.book,
-    chapter: String(props.chapter),
-    start_verse: String(props.startVerse),
-    ...(props.endVerse ? { end_verse: String(props.endVerse) } : {}),
+    book: reference.book,
+    chapter: String(reference.chapter),
+    start_verse: String(reference.startVerse),
+    ...(reference.endVerse ? { end_verse: String(reference.endVerse) } : {}),
   })
 
   try {

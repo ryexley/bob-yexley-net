@@ -10,12 +10,12 @@
   box-sizing: border-box;
   display: flex;
   gap: var(--site-dock-gap);
-  height: var(--site-dock-height);
+  height: auto;
   justify-content: center;
   left: 0;
   margin-inline: auto;
   max-width: calc(100% - (2 * var(--site-dock-inset)));
-  padding: 0.25rem;
+  padding: var(--site-dock-pad);
   position: fixed;
   right: 0;
   width: max-content;
@@ -27,6 +27,7 @@
 
   .item,
   [data-corvu-drawer-trigger].item {
+    --size: var(--site-dock-item);
     -webkit-appearance: none;
     appearance: none;
     -webkit-tap-highlight-color: transparent;
@@ -53,7 +54,8 @@
     width: var(--site-dock-item);
 
     .icon,
-    .site-dock-blip-icon {
+    .site-dock-blip-icon,
+    .site-dock-menu-icon {
       font-size: 1.5rem;
       pointer-events: none;
     }
@@ -121,8 +123,21 @@
     }
 
     .user-avatar.md {
-      height: 2.75rem;
-      width: 2.75rem;
+      height: var(--site-dock-item);
+      width: var(--site-dock-item);
+    }
+
+    .user-avatar-badge {
+      bottom: -0.0625rem;
+      height: 0.75rem;
+      right: -0.0625rem;
+      width: 0.75rem;
+
+      .icon {
+        font-size: 0.625rem;
+        height: auto;
+        width: auto;
+      }
     }
   }
 }

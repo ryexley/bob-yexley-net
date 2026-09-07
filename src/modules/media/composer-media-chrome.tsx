@@ -25,12 +25,14 @@ export function ComposerMediaChrome(props: ComposerMediaChromeProps) {
     <div class="blip-editor-media-chrome">
       <ComposerMediaStrip
         attachments={attachments}
-        onRemove={key =>
-          void (
-            props.onRemoveAttachment ??
-            (removedKey => props.media()?.removeAttachment(removedKey))
-          )(key)
-        }
+        onRemove={key => {
+          if (props.onRemoveAttachment) {
+            void props.onRemoveAttachment(key)
+            return
+          }
+
+          void props.media()?.removeAttachment(key)
+        }}
         onRetry={key => props.media()?.retry(key)}
         onPreview={props.onPreview}
         removeLabel={tr("media.remove")}

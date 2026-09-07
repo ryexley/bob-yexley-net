@@ -91,7 +91,6 @@ export function supaStore<T extends BaseEntity>(
   const CACHE_MINUTES = 5
   const STORAGE_KEY = `${tableName}-cache`
   const DRAFT_STORAGE_KEY = `${tableName}-drafts`
-  const HYDRATION_KEY = `${tableName}-hydrated`
 
   const readDrafts = (): DraftHash<T> =>
     persistedStorage.getItem<DraftHash<T>>(DRAFT_STORAGE_KEY) ?? {}
@@ -333,6 +332,7 @@ export function supaStore<T extends BaseEntity>(
       }
 
       return withAsyncHandler(
+        // oxlint-disable-next-line solid/reactivity
         async () => {
           // Use a caller-provided id, else a configured generator. Tables whose
           // primary key has a DB default (e.g. `blip_media.id uuid default
@@ -352,7 +352,7 @@ export function supaStore<T extends BaseEntity>(
 
           const { data, error: createError } = await supabaseClient
             .from(tableName)
-            .insert([dataToInsert])
+            .insert([dataToInsert as T])
             .select()
             .single()
 
@@ -390,6 +390,7 @@ export function supaStore<T extends BaseEntity>(
       }
 
       return withAsyncHandler(
+        // oxlint-disable-next-line solid/reactivity
         async () => {
           const { data, error: updateError } = await supabaseClient
             .from(tableName)
@@ -476,6 +477,7 @@ export function supaStore<T extends BaseEntity>(
 
       // Normal upsert - use Supabase's native upsert
       return withAsyncHandler(
+        // oxlint-disable-next-line solid/reactivity
         async () => {
           // Ensure we have an ID
           const id = entityData.id || (generateId ? generateId() : undefined)
@@ -534,6 +536,7 @@ export function supaStore<T extends BaseEntity>(
       }
 
       return withAsyncHandler(
+        // oxlint-disable-next-line solid/reactivity
         async () => {
           const { error: deleteError } = await supabaseClient
             .from(tableName)

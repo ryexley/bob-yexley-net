@@ -6,6 +6,7 @@ import {
   JSX,
   createMemo,
   ComponentProps,
+  untrack,
 } from "solid-js"
 import DrawerPrimitive from "@corvu/drawer"
 import { Icon } from "./icon"
@@ -75,7 +76,9 @@ export function Drawer(props: DrawerProps) {
       open: false,
       onOpenChange: () => {},
       showTrigger: true,
-      triggerIcon: resolveTriggerIcon(props.side || DrawerPosition.RIGHT),
+      triggerIcon: resolveTriggerIcon(
+        untrack(() => props.side || DrawerPosition.RIGHT),
+      ),
       showClose: true,
       closeIcon: "close",
       closeAriaLabel: "Close",

@@ -1,4 +1,4 @@
-import { createEffect, createMemo, createSignal } from "solid-js"
+import { createEffect, createMemo, createSignal, untrack } from "solid-js"
 import { Button } from "@/components/button"
 import { FormDrawer } from "@/components/form-drawer"
 import { InfoTooltip } from "@/components/info-tooltip"
@@ -33,7 +33,9 @@ export function UserEditDrawer(props: UserEditDrawerProps) {
   const [notes, setNotes] = createSignal("")
   const [pin, setPin] = createSignal("")
   const [isSaving, setIsSaving] = createSignal(false)
-  const [mountedUser, setMountedUser] = createSignal<AdminUserRecord | null>(props.user)
+  const [mountedUser, setMountedUser] = createSignal<AdminUserRecord | null>(
+    untrack(() => props.user),
+  )
 
   const currentUser = createMemo(() => props.user ?? mountedUser())
   const joinedAt = createMemo(() => {
@@ -75,7 +77,7 @@ export function UserEditDrawer(props: UserEditDrawerProps) {
   })
 
   createEffect(() => {
-    currentUser()?.userId
+    void currentUser()?.userId
     if (props.open) {
       resetForm()
     }

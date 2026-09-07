@@ -32,7 +32,7 @@ export function Menu(props: MenuProps) {
     ...props,
   }
 
-  const [local, rest] = splitProps(propsWithDefaults, [
+  const [local] = splitProps(propsWithDefaults, [
     "Trigger",
     "triggerIcon",
     "triggerButtonSize",
@@ -43,7 +43,8 @@ export function Menu(props: MenuProps) {
     "dropdownMenuProps",
   ])
 
-  const triggerClass = cx("menu-trigger", local.triggerButtonSize, local.triggerClass)
+  const triggerClass = () =>
+    cx("menu-trigger", local.triggerButtonSize, local.triggerClass)
   const hasTrigger = () => local.Trigger != null
   const hasHeader = () => local.Header != null
   const hasFooter = () => local.Footer != null
@@ -84,7 +85,7 @@ export function Menu(props: MenuProps) {
 
   return (
     <DropdownMenu {...local.dropdownMenuProps}>
-      <DropdownMenu.Trigger class={triggerClass}>
+      <DropdownMenu.Trigger class={triggerClass()}>
         {renderTrigger()}
       </DropdownMenu.Trigger>
       <DropdownMenu.Portal>

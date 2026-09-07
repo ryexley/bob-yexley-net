@@ -1,4 +1,4 @@
-import { createEffect, createMemo, createSignal, For, onCleanup, Show } from "solid-js"
+import { createEffect, createMemo, createSignal, For, onCleanup, Show, untrack } from "solid-js"
 import { Button } from "@/components/button"
 import { Combobox } from "@/components/combobox"
 import { FormDrawer } from "@/components/form-drawer"
@@ -128,7 +128,7 @@ export function ReferenceFormDrawer(props: ReferenceFormDrawerProps) {
   const [isEditing, setIsEditing] = createSignal(false)
   const [isDeleting, setIsDeleting] = createSignal(false)
   const [mountedReference, setMountedReference] = createSignal<AdminReferenceRecord | null>(
-    props.reference ?? null,
+    untrack(() => props.reference ?? null),
   )
   const [selectedBook, setSelectedBook] = createSignal<BookOption | null>(null)
   const [chapter, setChapter] = createSignal("")
@@ -326,10 +326,10 @@ export function ReferenceFormDrawer(props: ReferenceFormDrawerProps) {
   })
 
   createEffect(() => {
-    props.open
-    props.mode
-    props.defaultCollectionNames
-    currentReference()?.id
+    void props.open
+    void props.mode
+    void props.defaultCollectionNames
+    void currentReference()?.id
     if (props.open) {
       setIsEditing(false)
       resetForm()

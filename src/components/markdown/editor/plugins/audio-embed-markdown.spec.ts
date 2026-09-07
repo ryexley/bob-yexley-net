@@ -63,7 +63,9 @@ describe("transformAudioEmbedParagraphs", () => {
 
     expect(tree.children).toHaveLength(1)
     expect(tree.children[0]?.type).toBe("audioEmbed")
-    expect(tree.children[0]?.value).toContain("src: \"https://example.com/ep-1.mp3\"")
+    expect((tree.children[0] as { value?: string }).value).toContain(
+      "src: \"https://example.com/ep-1.mp3\"",
+    )
   })
 
   it("leaves mixed paragraphs unchanged", () => {

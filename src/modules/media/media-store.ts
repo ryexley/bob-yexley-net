@@ -21,7 +21,7 @@
  *   a scoped `blip_media` channel is deferred to the reader UI (spec §13.5).
  */
 import type { SupabaseClient } from "@supabase/supabase-js"
-import { Accessor, createEffect, createMemo, createSignal } from "solid-js"
+import { Accessor, createEffect, createMemo, createSignal, untrack } from "solid-js"
 import { createStore, reconcile } from "solid-js/store"
 import { supaStore, type OperationResult } from "@/lib/data/supa-store"
 import type { Tables } from "@/types/database.types"
@@ -326,7 +326,9 @@ export function mediaStore(
   }
 
   // Rows may already live in the module-level cache from a prior editor session.
-  seedUploadKeysFromRecords(records())
+  untrack(() => {
+    seedUploadKeysFromRecords(records())
+  })
 
   const uploads = upload.files
   const allComplete = upload.allComplete

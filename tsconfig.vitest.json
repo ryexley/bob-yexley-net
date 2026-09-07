@@ -1,7 +1,7 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "types": ["vitest/globals", "vitest/importMeta", "vinxi/types/client"]
+    "types": ["vitest/globals", "vitest/importMeta", "vite/client", "@solidjs/start/env"]
   },
   "include": ["src/**/*.ts", "src/**/*.tsx", "vitest.config.ts"]
 }

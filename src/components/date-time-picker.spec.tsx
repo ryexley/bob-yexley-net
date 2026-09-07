@@ -191,6 +191,17 @@ describe("DateTimePicker", () => {
     expect(trigger).toBeTruthy()
   })
 
+  it("keeps the time-select class names that stack the menu above the calendar", async () => {
+    render(() => <DateTimePicker showTime timeGranularity={5} />)
+
+    await fireEvent.focus(screen.getByRole("textbox"))
+
+    expect(screen.getByRole("button", { name: "Select time 10:35" }).className).toContain(
+      "time-select",
+    )
+    expect(document.querySelector(".time-select-field")).toBeTruthy()
+  })
+
   it("shows a validation error when manual input does not match the format", async () => {
     render(() => <DateTimePicker />)
 

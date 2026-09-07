@@ -76,9 +76,9 @@ export function BlipReactionTrigger(props: BlipReactionTriggerProps) {
   )
 
   createEffect(() => {
-    props.blip.id
-    props.blip.my_reaction_count
-    reactionSignature()
+    void props.blip.id
+    void props.blip.my_reaction_count
+    void reactionSignature()
     setActiveEmojisOverride(null)
     setMyReactionCountOverride(null)
   })

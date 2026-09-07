@@ -155,7 +155,8 @@ export function AuthProvider(props: { children: any }) {
   createEffect(() => {
     const {
       data: { subscription },
-    } = supabase?.client?.auth?.onAuthStateChange((event, session) => {
+    } = supabase.client.auth.onAuthStateChange((event, session) => {
+      // oxlint-disable-next-line solid/reactivity
       void runAuthTransition(async () => {
         if (event === "SIGNED_OUT") {
           supabase.clearSessionStart()
@@ -205,6 +206,7 @@ export function AuthProvider(props: { children: any }) {
   })
 
   onMount(() => {
+    // oxlint-disable-next-line solid/reactivity
     const revalidateVisibleSession = debounce(() => {
       if (document.visibilityState !== "visible") {
         return

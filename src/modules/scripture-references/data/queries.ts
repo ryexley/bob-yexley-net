@@ -1,11 +1,13 @@
 import { query } from "@solidjs/router"
-import { getServerClient } from "@/lib/vendor/supabase/server"
 import { selectUserProfileRecord } from "@/lib/vendor/supabase/user-profile"
 import { toAdminReferenceRecord } from "./mappers"
 import { queryReferences } from "./store"
 import type { AdminReferencesQueryResult } from "./types"
 
-async function canCurrentRequestAccessAdminReferences(): Promise<boolean> {
+export const getAdminReferences = query(async (): Promise<AdminReferencesQueryResult> => {
+  "use server"
+
+  const { getServerClient } = await import("@/lib/vendor/supabase/server")
   const supabase = await getServerClient()
   const {
     data: { user },
@@ -13,7 +15,11 @@ async function canCurrentRequestAccessAdminReferences(): Promise<boolean> {
   } = await supabase.auth.getUser()
 
   if (userError || !user?.id) {
-    return false
+    return {
+      authorized: false,
+      references: [],
+      error: null,
+    }
   }
 
   const { data: profile, error: profileError } = await selectUserProfileRecord(
@@ -21,18 +27,7 @@ async function canCurrentRequestAccessAdminReferences(): Promise<boolean> {
     user.id,
   )
 
-  if (profileError || !profile) {
-    return false
-  }
-
-  return profile.role === "superuser"
-}
-
-export const getAdminReferences = query(async (): Promise<AdminReferencesQueryResult> => {
-  "use server"
-
-  const authorized = await canCurrentRequestAccessAdminReferences()
-  if (!authorized) {
+  if (profileError || !profile || profile.role !== "superuser") {
     return {
       authorized: false,
       references: [],
@@ -41,7 +36,6 @@ export const getAdminReferences = query(async (): Promise<AdminReferencesQueryRe
   }
 
   try {
-    const supabase = await getServerClient()
     const references = await queryReferences(supabase)
 
     return {

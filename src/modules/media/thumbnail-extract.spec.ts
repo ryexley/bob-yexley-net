@@ -22,8 +22,7 @@ describe("extractThumbnail", () => {
   })
 
   it("returns null when object URLs are unavailable", async () => {
-    // @ts-expect-error — simulate an environment without createObjectURL.
-    URL.createObjectURL = undefined
+    URL.createObjectURL = undefined as unknown as typeof URL.createObjectURL
     expect(await extractThumbnail(file("video/mp4"), "video")).toBeNull()
     expect(await extractThumbnail(file("image/gif"), "gif")).toBeNull()
   })
