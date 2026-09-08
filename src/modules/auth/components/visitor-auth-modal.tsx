@@ -23,6 +23,7 @@ import {
 } from "@/lib/auth/visitor-auth-errors"
 import { Pin } from "@/modules/auth/components/pin"
 import { ptr } from "@/i18n"
+import { pages } from "@/urls"
 import { generateRandomRadialGradients } from "@/util/image"
 import { clsx as cx, isNotEmpty } from "@/util"
 import "./visitor-auth-modal.css"
@@ -226,7 +227,14 @@ export function VisitorAuthModal(props: VisitorAuthModalProps) {
               <DialogHeader class="visitor-auth-header">
                 <div class="visitor-auth-header-row">
                   <DialogTitle class="visitor-auth-title">
-                    <Icon name="shield_lock" />
+                    <a
+                      href={pages.login}
+                      class="visitor-auth-staff-link"
+                      tabindex="-1"
+                      aria-hidden="true"
+                      onClick={() => props.onOpenChange(false)}>
+                      <Icon name="shield_lock" />
+                    </a>
                     <h2>{title()}</h2>
                   </DialogTitle>
                   <button

@@ -100,6 +100,24 @@
     width: 100%;
   }
 
+  .visitor-auth-staff-link {
+    align-items: center;
+    color: inherit;
+    cursor: inherit;
+    display: inline-flex;
+    text-decoration: none;
+
+    &:link,
+    &:visited,
+    &:hover,
+    &:focus,
+    &:active {
+      color: inherit;
+      outline: none;
+      text-decoration: none;
+    }
+  }
+
   .visitor-auth-header-row {
     align-items: center;
     display: flex;
