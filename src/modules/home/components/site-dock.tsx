@@ -11,6 +11,7 @@ import "@/modules/home/components/user-menu.css"
 import {
   assignPath,
   getMainNavLinks,
+  isHomePath,
   scrollToHomeSectionIfPresent,
 } from "@/modules/home/components/main-nav"
 import { ptr } from "@/i18n"
@@ -38,7 +39,7 @@ export function SiteDock() {
     "background-image": generateRandomRadialGradients(),
   }))
   const homeCurrent = (): "page" | undefined =>
-    location.pathname === pages.home ? "page" : undefined
+    isHomePath(location.pathname) ? "page" : undefined
   const blipsCurrent = (): "page" | undefined =>
     location.pathname === pages.blips || location.pathname.startsWith(`${pages.blips}/`)
       ? "page"

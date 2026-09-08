@@ -94,6 +94,20 @@ describe("SiteDock", () => {
     expect(screen.getByRole("button", { name: "Open menu" })).toBeTruthy()
   })
 
+  it("keeps home current on the home Signals section", () => {
+    pathname.value = "/signals"
+    isAuthenticated.value = true
+
+    render(() => <SiteDock />)
+
+    expect(screen.getByRole("link", { name: "Home" }).getAttribute("aria-current")).toBe(
+      "page",
+    )
+    expect(
+      screen.getByRole("link", { name: "Blips" }).getAttribute("aria-current"),
+    ).toBeNull()
+  })
+
   it("marks the blips shortcut current on a blip detail page", () => {
     pathname.value = "/blips/abc"
     isAuthenticated.value = true

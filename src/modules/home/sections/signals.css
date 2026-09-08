@@ -1,10 +1,21 @@
+.signals[data-home-section-id="signals"] {
+  min-height: auto;
+  overflow: clip;
+}
+
 .signals {
   .signals-see-more {
     display: flex;
     justify-content: center;
-    margin: 1.75rem auto 0;
+    margin: 1rem auto 0;
     max-width: 60rem;
     width: 100%;
+  }
+
+  @media (max-width: 47.999rem) {
+    .signals-see-more {
+      margin-top: 1.5rem;
+    }
   }
 
   .signals-see-more-link {

@@ -15,4 +15,11 @@ describe("getMainNavLinks", () => {
     expect(links.find(link => link.path === pages.blips)?.label).toBe("Blips")
     expect(links.find(link => link.path === pages.resume)?.isStatic).toBe(true)
   })
+
+  it("treats the home Signals section as the home destination", () => {
+    const links = getMainNavLinks(pages.signals)
+
+    expect(links.find(link => link.path === pages.home)?.isActive).toBe(true)
+    expect(links.find(link => link.path === pages.blips)?.isActive).toBe(false)
+  })
 })

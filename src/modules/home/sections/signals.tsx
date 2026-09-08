@@ -1,6 +1,6 @@
 import { createEffect } from "solid-js"
 import { createAsync, useNavigate } from "@solidjs/router"
-import { Icon } from "@/components/icon"
+import { Blip as BlipIcon, Icon } from "@/components/icon"
 import { PageSection } from "@/modules/home/components/page-section"
 import { Blips } from "@/modules/blips/components/blips"
 import { useAuth } from "@/context/auth-context"
@@ -9,9 +9,11 @@ import { blipStore, getBlips } from "@/modules/blips/data"
 import { isBlipPubliclyVisible } from "@/modules/blips/util"
 import { ptr } from "@/i18n"
 import { pages } from "@/urls"
+import "@/modules/blips/views/blips-section-chrome.css"
 import "./signals.css"
 
 const tr = ptr("home.pageSections.signals")
+const blipsHeading = ptr("blips.views.index")
 
 export function Signals(props) {
   const initialBlips = createAsync(() => getBlips(4))
@@ -48,8 +50,19 @@ export function Signals(props) {
   return (
     <PageSection
       ref={props.ref}
-      class="thoughts signals"
+      class="signals blips-index"
       {...props}>
+      <BlipIcon
+        class="blips-index-mark"
+        aria-hidden="true"
+      />
+      <h2 class="blips-page-heading">
+        <span class="blips-page-heading-start">
+          <span class="blips-page-heading-lead">{blipsHeading("headingLead")}</span>
+          <span class="blips-page-heading-mark">{blipsHeading("headingMark")}</span>
+        </span>
+        <span class="blips-page-heading-tail">{blipsHeading("headingTail")}</span>
+      </h2>
       <Blips
         blips={visibleBlips()}
         onView={blipId =>

@@ -88,14 +88,19 @@
     &[aria-current="page"]:visited,
     &[data-open],
     &[data-open]:active {
-      background: color-mix(in srgb, var(--colors-info) 22%, transparent);
-      box-shadow: 0 0 0 1px color-mix(in srgb, var(--colors-info) 55%, transparent);
-      color: #fff;
+      background: color-mix(
+        in srgb,
+        var(--colors-resonant-blue) 7%,
+        transparent
+      );
+      box-shadow: 0 0 0 1px
+        color-mix(in srgb, var(--colors-resonant-blue) 35%, transparent);
+      color: var(--colors-resonant-blue);
       opacity: 1;
 
       .icon,
       .site-dock-blip-icon {
-        color: #fff;
+        color: var(--colors-resonant-blue);
       }
     }
   }

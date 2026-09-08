@@ -11,11 +11,14 @@ export type MainNavLink = {
   isStatic?: boolean
 }
 
+export const isHomePath = (path: string) =>
+  path === pages.home || path === pages.signals
+
 export const getMainNavLinks = (activePath: string): MainNavLink[] => [
   {
     path: pages.home,
     label: tr("home"),
-    isActive: activePath === pages.home,
+    isActive: isHomePath(activePath),
   },
   {
     path: pages.blips,

@@ -104,7 +104,7 @@
 @media (max-width: 47.999rem) {
   .blips-date-header {
     --date-fade-end: 100%;
-    top: 0;
+    top: 1rem;
 
     &::after {
       right: auto;
