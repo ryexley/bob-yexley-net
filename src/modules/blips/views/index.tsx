@@ -2,6 +2,7 @@ import { createAsync, useNavigate } from "@solidjs/router"
 import { Meta, Title } from "@solidjs/meta"
 import { createEffect, createMemo, createSignal, onCleanup, Show, untrack } from "solid-js"
 import { Button } from "@/components/button"
+import { Blip as BlipIcon } from "@/components/icon"
 import { useGlobalPageLoading } from "@/components/global-loading-indicator"
 import { BlipCardSkeletonList } from "@/modules/blips/components/blip-card-skeleton"
 import { PageSection } from "@/modules/home/components/page-section"
@@ -196,7 +197,18 @@ export function BlipsView() {
         content={tr("metaDescription")}
       />
       <main>
-        <PageSection class="signals">
+        <PageSection class="signals blips-index">
+          <BlipIcon
+            class="blips-index-mark"
+            aria-hidden="true"
+          />
+          <h1 class="blips-page-heading">
+            <span class="blips-page-heading-start">
+              <span class="blips-page-heading-lead">{tr("headingLead")}</span>
+              <span class="blips-page-heading-mark">{tr("headingMark")}</span>
+            </span>
+            <span class="blips-page-heading-tail">{tr("headingTail")}</span>
+          </h1>
           <Show
             when={hasInitialData()}
             fallback={
@@ -206,6 +218,7 @@ export function BlipsView() {
             }>
             <Blips
               blips={visibleRootFeedBlips() ?? []}
+              groupByDate
               onView={handleViewBlip}
             />
           </Show>

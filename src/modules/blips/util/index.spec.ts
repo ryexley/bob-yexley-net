@@ -1,9 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import {
   compareBlipsByPublishTimestampDesc,
+  formatBlipDateGroupLabel,
   formatBlipScheduledTimestamp,
   formatBlipTimestampTooltip,
+  getBlipDateGroupKey,
   getBlipPublishTimestamp,
+  groupBlipsByDate,
   isBlipPubliclyVisible,
   isBlipScheduled,
   isComposerFkStubUpdate,
@@ -161,5 +164,65 @@ describe("isComposerFkStubUpdate", () => {
         content: "",
       } as any),
     ).toBe(false)
+  })
+})
+
+describe("blip date groups", () => {
+  const now = new Date("2026-04-22T16:00:00.000Z")
+
+  beforeEach(() => {
+    vi.useFakeTimers()
+    vi.setSystemTime(now)
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it("keys groups by the local calendar day of the publish timestamp", () => {
+    expect(
+      getBlipDateGroupKey({
+        publish_at: "2026-04-22T16:00:00.000Z",
+        created_at: "2026-04-20T16:00:00.000Z",
+      } as any),
+    ).toBe("2026-04-22")
+  })
+
+  it("uses relative labels for recent days and calendar dates after that", () => {
+    expect(formatBlipDateGroupLabel("2026-04-22", now)).toBe("Today")
+    expect(formatBlipDateGroupLabel("2026-04-21", now)).toBe("Yesterday")
+    expect(formatBlipDateGroupLabel("2026-04-20", now)).toBe("Monday")
+    expect(formatBlipDateGroupLabel("2026-04-10", now)).toBe("April 10")
+    expect(formatBlipDateGroupLabel("2025-08-20", now)).toBe("August 20, 2025")
+  })
+
+  it("groups a sorted feed and keeps newest days first", () => {
+    const groups = groupBlipsByDate(
+      [
+        {
+          id: "older-same-day",
+          publish_at: "2026-04-21T14:00:00.000Z",
+          created_at: "2026-04-21T14:00:00.000Z",
+        },
+        {
+          id: "today",
+          publish_at: "2026-04-22T16:00:00.000Z",
+          created_at: "2026-04-22T16:00:00.000Z",
+        },
+        {
+          id: "newer-same-day",
+          publish_at: "2026-04-21T18:00:00.000Z",
+          created_at: "2026-04-21T18:00:00.000Z",
+        },
+      ] as any[],
+      now,
+    )
+
+    expect(groups.map(group => group.label)).toEqual(["Today", "Yesterday"])
+    expect(groups[0]?.blips.map(blip => blip.id)).toEqual(["today"])
+    expect(groups[1]?.blips.map(blip => blip.id)).toEqual([
+      "newer-same-day",
+      "older-same-day",
+    ])
   })
 })

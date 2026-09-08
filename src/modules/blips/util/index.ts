@@ -1,10 +1,18 @@
-import { differenceInDays, format, formatDistanceToNow } from "date-fns"
+import {
+  differenceInCalendarDays,
+  differenceInDays,
+  format,
+  formatDistanceToNow,
+  isSameYear,
+  parseISO,
+} from "date-fns"
 import { enUS } from "date-fns/locale/en-US"
 import type { Blip } from "@/modules/blips/data/schema"
 import { BLIP_TYPES } from "@/modules/blips/data/schema"
 import { ptr } from "@/i18n"
 
 const tr = ptr("blips.util.relativeTime")
+const dateGroupTr = ptr("blips.util.dateGroups")
 
 // Create a custom locale with shorter strings
 const shortEnLocale = {
@@ -180,4 +188,75 @@ export function formatBlipTimestampTooltip(
   }
 
   return fullTimestamp
+}
+
+export type BlipDateGroup<T extends Pick<Blip, "id" | "publish_at" | "created_at">> = {
+  key: string
+  label: string
+  blips: T[]
+}
+
+/** Local calendar day key, e.g. `2026-04-22`. */
+export function getBlipDateGroupKey(
+  blip: Pick<Blip, "publish_at" | "created_at">,
+): string {
+  const date = toValidDate(getBlipPublishTimestamp(blip))
+  if (!date) {
+    return "unknown"
+  }
+
+  return format(date, "yyyy-MM-dd")
+}
+
+export function formatBlipDateGroupLabel(
+  key: string,
+  now: Date = new Date(),
+): string {
+  if (key === "unknown") {
+    return dateGroupTr("today")
+  }
+
+  const date = parseISO(`${key}T12:00:00`)
+  const dayDelta = differenceInCalendarDays(date, now)
+
+  if (dayDelta === 0) {
+    return dateGroupTr("today")
+  }
+  if (dayDelta === -1) {
+    return dateGroupTr("yesterday")
+  }
+  if (dayDelta === 1) {
+    return dateGroupTr("tomorrow")
+  }
+  if (dayDelta < 0 && dayDelta > -7) {
+    return format(date, "EEEE")
+  }
+  if (isSameYear(date, now)) {
+    return format(date, "MMMM d")
+  }
+
+  return format(date, "MMMM d, yyyy")
+}
+
+export function groupBlipsByDate<
+  T extends Pick<Blip, "id" | "publish_at" | "created_at">,
+>(blips: T[], now: Date = new Date()): BlipDateGroup<T>[] {
+  const groups: BlipDateGroup<T>[] = []
+
+  for (const blip of [...blips].sort(compareBlipsByPublishTimestampDesc)) {
+    const key = getBlipDateGroupKey(blip)
+    const current = groups[groups.length - 1]
+    if (current?.key === key) {
+      current.blips.push(blip)
+      continue
+    }
+
+    groups.push({
+      key,
+      label: formatBlipDateGroupLabel(key, now),
+      blips: [blip],
+    })
+  }
+
+  return groups
 }

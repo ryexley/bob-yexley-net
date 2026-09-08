@@ -136,7 +136,10 @@ export function Blip(
         cy="12"
         r="2"
       />
-      <path d="m13.41 10.59 5.66-5.66" />
+      <path
+        class="blip-icon-sweep"
+        d="m13.41 10.59 5.66-5.66"
+      />
     </svg>
   )
 }

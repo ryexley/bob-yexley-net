@@ -328,6 +328,9 @@ export const en = {
       index: {
         pageTitle: "Blips",
         metaDescription: "Blips",
+        headingLead: "moments, thoughts and updates — just ",
+        headingMark: "Blips",
+        headingTail: " on the radar",
         loading: "Loading blips...",
         nav: {
           home: "Home",
@@ -623,6 +626,11 @@ export const en = {
         weeksAgo: "{weeks, plural, one {last week} other {# weeks ago}}",
         monthsAgo: "{months, plural, one {last month} other {# months ago}}",
         yearsAgo: "{years, plural, one {last year} other {# years ago}}",
+      },
+      dateGroups: {
+        today: "Today",
+        yesterday: "Yesterday",
+        tomorrow: "Tomorrow",
       },
     },
   },

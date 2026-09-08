@@ -1,5 +1,5 @@
 import type { Blip as BlipType } from "@/modules/blips/data/schema"
-import { createEffect, createMemo, createSignal, For, splitProps } from "solid-js"
+import { createEffect, createMemo, createSignal, For, Show, splitProps } from "solid-js"
 import { Blip } from "@/modules/blips/components/blip"
 import { useAuth } from "@/context/auth-context"
 import { useSupabase } from "@/context/services-context"
@@ -12,14 +12,18 @@ import {
   type BlipMediaRow,
 } from "@/modules/media/data/queries"
 import { useOptionalBlipComposer } from "@/modules/blips/context/blip-composer-context"
-import { compareBlipsByPublishTimestampDesc } from "@/modules/blips/util"
+import {
+  compareBlipsByPublishTimestampDesc,
+  groupBlipsByDate,
+} from "@/modules/blips/util"
 import "./blips.css"
 
 export function Blips(props: {
   blips: BlipType[]
+  groupByDate?: boolean
   onView?: (blipId: string) => void
 }) {
-  const [local] = splitProps(props, ["blips", "onView"])
+  const [local] = splitProps(props, ["blips", "groupByDate", "onView"])
   const { isAuthenticated } = useAuth() as any
   const supabase = useSupabase()
   const tags = tagStore(supabase.client)
@@ -135,25 +139,45 @@ export function Blips(props: {
   const sortedBlips = createMemo(() =>
     [...local.blips].sort(compareBlipsByPublishTimestampDesc),
   )
+  const dateGroups = createMemo(() =>
+    local.groupByDate ? groupBlipsByDate(sortedBlips()) : [],
+  )
+
+  const renderBlip = (blip: BlipType) => (
+    <Blip
+      blip={blip}
+      tags={
+        (blip.tags?.length ?? 0) > 0
+          ? blip.tags ?? []
+          : hydratedTagsByBlipId()[blip.id] ?? []
+      }
+      media={feedCardMediaFor(blip.id)}
+      onEdit={handleEdit}
+      onView={local.onView}
+    />
+  )
 
   return (
     <>
-      <ul class="blips">
-        <For each={sortedBlips()}>
-          {blip => (
-            <Blip
-              blip={blip}
-              tags={
-                (blip.tags?.length ?? 0) > 0
-                  ? blip.tags ?? []
-                  : hydratedTagsByBlipId()[blip.id] ?? []
-              }
-              media={feedCardMediaFor(blip.id)}
-              onEdit={handleEdit}
-              onView={local.onView}
-            />
-          )}
-        </For>
+      <ul
+        class="blips"
+        classList={{ "has-date-groups": Boolean(local.groupByDate) }}>
+        <Show
+          when={local.groupByDate}
+          fallback={
+            <For each={sortedBlips()}>{blip => renderBlip(blip)}</For>
+          }>
+          <For each={dateGroups()}>
+            {group => (
+              <>
+                <li class="blips-date-header">
+                  <h2 class="blips-date-header-label">{group.label}</h2>
+                </li>
+                <For each={group.blips}>{blip => renderBlip(blip)}</For>
+              </>
+            )}
+          </For>
+        </Show>
       </ul>
     </>
   )
