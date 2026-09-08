@@ -1,3 +1,4 @@
+// @refresh reload
 import { createContext, useContext, ParentComponent } from "solid-js"
 import { supabase } from "@/lib/vendor/supabase/browser"
 import { isEmpty } from "@/util"

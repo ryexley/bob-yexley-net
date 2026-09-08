@@ -24,13 +24,23 @@
 
 .desktop-nav-link {
   align-items: center;
-  background-color: rgba(var(--colors-mono-01-rgb), 0);
+  background-color: transparent;
   border-radius: 9999px !important;
   display: flex;
   font-weight: 500;
   padding: 0.5rem 1rem !important;
+  text-decoration: none;
   text-transform: uppercase;
   transition: all 250ms ease-in-out;
+
+  &:link,
+  &:visited,
+  &:hover,
+  &:active,
+  &:focus,
+  &:focus-visible {
+    text-decoration: none;
+  }
 
   &:hover {
     background-color: rgba(var(--colors-mono-01-rgb), 0.5);
@@ -38,7 +48,11 @@
   }
 
   &.active {
-    background-color: rgba(var(--colors-mono-01-rgb), 0.5);
+    background-color: color-mix(
+      in srgb,
+      var(--colors-resonant-blue) 7%,
+      transparent
+    );
     color: var(--colors-resonant-blue);
   }
 }

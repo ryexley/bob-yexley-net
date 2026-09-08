@@ -130,6 +130,15 @@ function AuthStatusProbe() {
 }
 
 describe("AuthProvider", () => {
+  it("throws when useAuth is used outside AuthProvider", () => {
+    expect(() => {
+      render(() => {
+        useAuth()
+        return null
+      })
+    }).toThrow("useAuth must be used within an AuthProvider")
+  })
+
   beforeEach(() => {
     initialProfileState.value = null
     authMockState.openCurrentSession.mockClear()

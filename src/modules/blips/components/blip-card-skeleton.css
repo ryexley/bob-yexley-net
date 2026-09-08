@@ -23,6 +23,8 @@
   padding: 0;
 
   > li {
+    display: flex;
+    flex-direction: column;
     min-width: 0;
   }
 
@@ -47,17 +49,23 @@
 
 .blip-card-skeleton-item {
   display: flex;
+  flex: 1 1 auto;
   flex-direction: column;
   gap: 0.75rem;
+  min-height: 0;
+  width: 100%;
 }
 
 .blip-card-skeleton-card {
   background: var(--colors-mono-02);
   border-radius: 0.5rem;
   display: flex;
+  flex: 1 1 auto;
   flex-direction: column;
   gap: 0.5rem;
+  height: 100%;
   max-height: 15rem;
+  min-height: 0;
   overflow: hidden;
   padding: 0.5rem 1rem;
 }

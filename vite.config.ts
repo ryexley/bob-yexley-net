@@ -7,7 +7,36 @@ import { defineConfig } from "vite"
 const src = fileURLToPath(new URL("./src", import.meta.url))
 
 export default defineConfig({
-  plugins: [solidStart(), nitro(), tailwindcss()],
+  plugins: [
+    {
+      name: "jridgewell-resolve-uri-esm",
+      enforce: "pre",
+      async resolveId(id, importer, options) {
+        if (id !== "@jridgewell/resolve-uri") {
+          return
+        }
+
+        const resolved = await this.resolve(id, importer, {
+          ...options,
+          skipSelf: true,
+        })
+        if (!resolved) {
+          return
+        }
+
+        return {
+          ...resolved,
+          id: resolved.id.replace(
+            /resolve-uri\.umd\.js(?:\?.*)?$/,
+            "resolve-uri.mjs",
+          ),
+        }
+      },
+    },
+    solidStart(),
+    nitro(),
+    tailwindcss(),
+  ],
   resolve: {
     alias: {
       "~": src,
@@ -50,6 +79,8 @@ export default defineConfig({
       "!src/**/*.spec.{ts,tsx}",
     ],
     include: [
+      "@jridgewell/resolve-uri",
+      "@jridgewell/trace-mapping",
       "@formatjs/intl",
       "@kobalte/core",
       "@kobalte/core/**",
@@ -78,6 +109,7 @@ export default defineConfig({
       "tailwind-merge",
       "zod",
     ],
+    needsInterop: ["@jridgewell/resolve-uri"],
   },
   server: {
     port: 7808,

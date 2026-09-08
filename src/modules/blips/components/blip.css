@@ -2,15 +2,21 @@
   --blip-card-background: var(--colors-mono-02);
   --blip-card-border-radius: 0.5rem;
   --blip-card-max-height: 15rem;
+  --blip-card-meta-row-min-height: 1.45rem;
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
 
   .card {
     background: var(--blip-card-background);
     border-radius: var(--blip-card-border-radius);
     display: flex;
+    flex: 1 1 auto;
     flex-direction: column;
     gap: 0.5rem;
     max-height: var(--blip-card-max-height);
     max-width: 30rem;
+    min-height: 0;
     overflow: hidden;
     padding: 0.5rem 1rem;
     position: relative;
@@ -265,8 +271,10 @@
   .meta-row {
     align-items: flex-start;
     display: flex;
+    flex-shrink: 0;
     gap: 0.75rem;
     justify-content: space-between;
+    min-height: var(--blip-card-meta-row-min-height);
     width: 100%;
   }
 

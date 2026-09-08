@@ -1,4 +1,5 @@
 .blips {
+  align-items: stretch;
   display: grid;
   gap: 1rem;
   grid-template-columns: minmax(0, 1fr);
@@ -12,37 +13,123 @@
     min-width: 0;
   }
 
+  &:not(.has-date-groups) > li {
+    display: flex;
+    flex-direction: column;
+  }
+
+  &.has-date-groups {
+    display: flex;
+    flex-direction: column;
+  }
+
   @media (min-width: 48rem) {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
+.blips-date-group {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  list-style: none;
+  overflow: visible;
+}
+
 .blips-date-header {
+  --date-corner: var(--radius-md);
+  --date-edge: 0.0625rem;
+  --date-fade-end: 70%;
   background: color-mix(in srgb, var(--colors-mono-01) 50%, transparent);
   backdrop-filter: blur(0.55rem);
   -webkit-backdrop-filter: blur(0.55rem);
-  border-radius: 9999px;
-  grid-column: 1 / -1;
-  list-style: none;
+  border-radius: 0 0 0 var(--date-corner);
   margin: 0.25rem 0 0;
   padding: 0.45rem 0.9rem 0.35rem;
   position: sticky;
   top: var(--main-header-height);
-  z-index: 4;
-}
+  width: 100%;
+  z-index: 5;
 
-.blips-date-header-label {
-  color: rgb(255 255 255 / 0.55);
-  font-size: 0.8rem;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  line-height: 1.2;
-  margin: 0;
-  text-transform: uppercase;
+  &::before,
+  &::after,
+  .corner {
+    pointer-events: none;
+    position: absolute;
+  }
+
+  &::before {
+    background: linear-gradient(to bottom, transparent, var(--colors-info));
+    bottom: var(--date-corner);
+    content: "";
+    left: 0;
+    top: 0;
+    width: var(--date-edge);
+  }
+
+  &::after {
+    background: linear-gradient(
+      to right,
+      var(--colors-info),
+      transparent var(--date-fade-end)
+    );
+    bottom: 0;
+    content: "";
+    height: var(--date-edge);
+    left: var(--date-corner);
+    right: 0;
+  }
+
+  .corner {
+    border-bottom: var(--date-edge) solid var(--colors-info);
+    border-left: var(--date-edge) solid var(--colors-info);
+    border-bottom-left-radius: var(--date-corner);
+    bottom: 0;
+    height: var(--date-corner);
+    left: 0;
+    width: var(--date-corner);
+  }
+
+  .blips-date-header-label {
+    color: rgb(255 255 255 / 0.55);
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    line-height: 1.2;
+    margin: 0;
+    text-transform: uppercase;
+  }
 }
 
 @media (max-width: 47.999rem) {
   .blips-date-header {
+    --date-fade-end: 100%;
     top: 0;
+
+    &::after {
+      right: auto;
+      width: min(30rem, calc(100% - var(--date-corner)));
+    }
   }
 }
+
+.blips-date-cards {
+  align-items: stretch;
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: minmax(0, 1fr);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+
+  > li {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  @media (min-width: 48rem) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+

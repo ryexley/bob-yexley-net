@@ -246,7 +246,11 @@ export function Blip(props: {
 
   return (
     <li>
-      <Stack class="blip-card">
+      <Stack
+        class="blip-card"
+        align="stretch"
+        fullHeight
+        fullWidth>
         <div
           class="card"
           classList={{

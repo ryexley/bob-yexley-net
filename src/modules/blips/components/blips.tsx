@@ -169,12 +169,18 @@ export function Blips(props: {
           }>
           <For each={dateGroups()}>
             {group => (
-              <>
-                <li class="blips-date-header">
+              <li class="blips-date-group">
+                <div class="blips-date-header">
+                  <span
+                    class="corner"
+                    aria-hidden="true"
+                  />
                   <h2 class="blips-date-header-label">{group.label}</h2>
-                </li>
-                <For each={group.blips}>{blip => renderBlip(blip)}</For>
-              </>
+                </div>
+                <ul class="blips-date-cards">
+                  <For each={group.blips}>{blip => renderBlip(blip)}</For>
+                </ul>
+              </li>
             )}
           </For>
         </Show>

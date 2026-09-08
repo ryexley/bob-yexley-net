@@ -22,7 +22,9 @@ export function Stack(props) {
         ? "items-center"
         : local.align === "end"
           ? "items-end"
-          : "items-start",
+          : local.align === "stretch"
+            ? "items-stretch"
+            : "items-start",
       local.justify === "center"
         ? "justify-center"
         : local.justify === "end"

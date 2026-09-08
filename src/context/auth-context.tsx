@@ -1,3 +1,4 @@
+// @refresh reload
 import {
   createContext,
   createEffect,
@@ -6,6 +7,7 @@ import {
   onCleanup,
   onMount,
   useContext,
+  type Context,
 } from "solid-js"
 import { createAsync } from "@solidjs/router"
 import { supabase, type AppRole, type UserProfile } from "@/lib/vendor/supabase/browser"
@@ -35,7 +37,13 @@ interface AuthContextType {
   isSuperuser: () => boolean
 }
 
-const AuthContext = createContext<AuthContextType>()
+const AuthContext =
+  (import.meta.hot?.data?.AuthContext as Context<AuthContextType> | undefined) ??
+  createContext<AuthContextType>()
+
+if (import.meta.hot?.data) {
+  import.meta.hot.data.AuthContext = AuthContext
+}
 
 const AUTH_RESUME_EVENTS = ["SIGNED_IN", "INITIAL_SESSION", "TOKEN_REFRESHED"] as const
 
