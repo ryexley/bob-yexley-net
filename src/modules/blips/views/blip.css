@@ -16,6 +16,46 @@
   padding-top: var(--main-header-height);
   position: relative;
   width: 100%;
+
+  .blip-detail-back-link,
+  .blip-detail-back-link:link,
+  .blip-detail-back-link:visited {
+    align-items: center;
+    backdrop-filter: blur(0.75rem);
+    -webkit-backdrop-filter: blur(0.75rem);
+    background: color-mix(in srgb, var(--colors-mono-01) 48%, transparent);
+    border: 0;
+    border-radius: var(--radius-pill);
+    display: inline-flex;
+    gap: 0.25rem;
+    height: auto;
+    left: 0.75rem;
+    margin: 0;
+    padding: 0.3rem 0.85rem 0.3rem 0.6rem;
+    position: fixed;
+    text-decoration: none;
+    text-transform: lowercase;
+    top: calc(var(--main-header-height) / 2);
+    transform: translateY(-50%);
+    z-index: 11;
+
+    &:hover,
+    &:active,
+    &:focus,
+    &:focus-visible {
+      text-decoration: none;
+    }
+
+    &:focus-visible {
+      outline: 0.125rem solid var(--colors-info);
+      outline-offset: 0.125rem;
+    }
+
+    .icon {
+      color: inherit;
+      font-size: 1rem;
+    }
+  }
 }
 
 .blip-detail-container {
@@ -36,24 +76,6 @@
 
   &.l {
     max-width: 60rem; /* 960px */
-  }
-}
-
-a.blip-detail-back-link {
-  align-items: center;
-  display: inline-flex;
-  gap: 0.25rem;
-  left: 0;
-  height: var(--main-header-height);
-  padding: 0 2rem 0 1.25rem;
-  position: fixed;
-  top: 0;
-  text-transform: lowercase;
-  z-index: 11;
-
-  .icon {
-    color: inherit;
-    font-size: 1rem;
   }
 }
 

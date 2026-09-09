@@ -188,9 +188,10 @@
     background-clip: padding-box, border-box;
     border: 0.0625rem solid transparent;
     border-radius: var(--radius-sm);
+    display: grid;
     margin: 0 0 1rem;
     max-width: 100%;
-    overflow-x: auto;
+    min-width: 0;
     padding: 0.75rem;
     position: relative;
 
@@ -198,7 +199,9 @@
       background: transparent;
       border-radius: 0;
       color: var(--colors-chartreuse);
+      min-width: 0;
       overflow-wrap: normal;
+      overflow-x: auto;
       padding: 0;
       white-space: inherit;
       word-break: normal;
