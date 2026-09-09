@@ -38,7 +38,7 @@
 
 .blips-date-header {
   --date-corner: var(--radius-md);
-  --date-edge: 0.0625rem;
+  --date-edge: 1px;
   --date-fade-end: 70%;
   background: color-mix(in srgb, var(--colors-mono-01) 50%, transparent);
   backdrop-filter: blur(0.55rem);
@@ -60,7 +60,7 @@
 
   &::before {
     background: linear-gradient(to bottom, transparent, var(--colors-info));
-    bottom: var(--date-corner);
+    bottom: calc(var(--date-corner) - var(--date-edge));
     content: "";
     left: 0;
     top: 0;
@@ -76,15 +76,15 @@
     bottom: 0;
     content: "";
     height: var(--date-edge);
-    left: var(--date-corner);
+    left: calc(var(--date-corner) - var(--date-edge));
     right: 0;
   }
 
   .corner {
-    border-bottom: var(--date-edge) solid var(--colors-info);
-    border-left: var(--date-edge) solid var(--colors-info);
     border-bottom-left-radius: var(--date-corner);
     bottom: 0;
+    box-shadow: inset var(--date-edge) calc(-1 * var(--date-edge)) 0 0
+      var(--colors-info);
     height: var(--date-corner);
     left: 0;
     width: var(--date-corner);
@@ -108,7 +108,7 @@
 
     &::after {
       right: auto;
-      width: min(30rem, calc(100% - var(--date-corner)));
+      width: min(30rem, calc(100% - var(--date-corner) + var(--date-edge)));
     }
   }
 }

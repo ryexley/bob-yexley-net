@@ -3,7 +3,6 @@ import { Meta, Title } from "@solidjs/meta"
 import { createEffect, createMemo, createSignal, onCleanup, Show, untrack } from "solid-js"
 import { Button } from "@/components/button"
 import { Blip as BlipIcon } from "@/components/icon"
-import { useGlobalPageLoading } from "@/components/global-loading-indicator"
 import { BlipCardSkeletonList } from "@/modules/blips/components/blip-card-skeleton"
 import { PageSection } from "@/modules/home/components/page-section"
 import { Blips } from "@/modules/blips/components/blips"
@@ -60,7 +59,6 @@ export function BlipsView() {
   )
   const hasInitialData = createMemo(() => initialBlips() !== undefined)
   const hasBlipItems = createMemo(() => (visibleRootFeedBlips()?.length ?? 0) > 0)
-  useGlobalPageLoading(() => !hasInitialData())
 
   createEffect(() => {
     const ssrData = initialBlips()

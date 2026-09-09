@@ -2,7 +2,6 @@ import { createAsync, useNavigate, useParams } from "@solidjs/router"
 import { Meta, Title } from "@solidjs/meta"
 import { createEffect, createMemo, createSignal, Show } from "solid-js"
 import { Button } from "@/components/button"
-import { useGlobalPageLoading } from "@/components/global-loading-indicator"
 import { LoadingSpinner } from "@/components/icon"
 import { Blips } from "@/modules/blips/components/blips"
 import { getBlipsByTag } from "@/modules/blips/data"
@@ -27,7 +26,6 @@ export function BlipsTagView() {
   const [isLoadingMore, setIsLoadingMore] = createSignal(false)
   const [hasMore, setHasMore] = createSignal(true)
   const hasInitialData = createMemo(() => initialBlips() !== undefined)
-  useGlobalPageLoading(() => !hasInitialData())
   const visibleBlips = createMemo(() => {
     const allBlips = blips()
     if (isAuthenticated()) {

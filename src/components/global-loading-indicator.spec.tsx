@@ -4,32 +4,18 @@ import { describe, expect, it, vi } from "vitest"
 import {
   GlobalLoadingIndicator,
   TopLoadingBar,
-  useGlobalPageLoading,
 } from "@/components/global-loading-indicator"
 
-function PageLoadProbe(props: { loading: () => boolean }) {
-  useGlobalPageLoading(props.loading)
-  return <GlobalLoadingIndicator />
-}
+const routingState = vi.hoisted(() => ({
+  active: false,
+}))
 
 vi.mock("@solidjs/router", () => ({
-  useIsRouting: () => () => false,
-}))
-
-const authState = vi.hoisted(() => ({
-  loading: false,
-  busy: false,
-}))
-
-vi.mock("@/context/auth-context", () => ({
-  useAuth: () => ({
-    loading: () => authState.loading,
-    busy: () => authState.busy,
-  }),
+  useIsRouting: () => () => routingState.active,
 }))
 
 describe("TopLoadingBar", () => {
-  it("shows progress while active and completes without staying visible", async () => {
+  it("shows progress while routing and hides when the transition ends", async () => {
     const [active, setActive] = createSignal(false)
 
     render(() => (
@@ -40,8 +26,9 @@ describe("TopLoadingBar", () => {
       />
     ))
 
-    const bar = screen.getByRole("progressbar", { hidden: true })
-    expect(bar.getAttribute("aria-hidden")).toBe("true")
+    expect(screen.getByRole("progressbar", { hidden: true }).getAttribute("aria-hidden")).toBe(
+      "true",
+    )
 
     setActive(true)
 
@@ -52,61 +39,67 @@ describe("TopLoadingBar", () => {
 
     setActive(false)
 
-    await waitFor(() => {
-      expect(screen.getByRole("progressbar", { hidden: true }).getAttribute("aria-hidden")).toBe(
-        "true",
-      )
-    })
+    await waitFor(
+      () => {
+        expect(screen.getByRole("progressbar", { hidden: true }).getAttribute("aria-hidden")).toBe(
+          "true",
+        )
+      },
+      { timeout: 1500 },
+    )
   })
 
-  it("keeps crawling instead of jumping to 100 when work ends immediately", async () => {
+  it("stays visible until the minimum progress time has elapsed", async () => {
     const [active, setActive] = createSignal(false)
 
     render(() => (
       <TopLoadingBar
         active={active()}
-        waitingTime={20}
+        waitingTime={10}
         minVisibleTime={80}
-        incrementInterval={20}
       />
     ))
 
     setActive(true)
-
     await waitFor(() => {
       expect(screen.getByRole("progressbar").getAttribute("aria-hidden")).toBeNull()
     })
 
     setActive(false)
+    expect(screen.getByRole("progressbar").getAttribute("aria-hidden")).toBeNull()
+  })
 
-    expect(Number(screen.getByRole("progressbar").getAttribute("aria-valuenow"))).toBeLessThan(100)
+  it("does not rewind if routing stays active", async () => {
+    const [active] = createSignal(true)
+
+    render(() => (
+      <TopLoadingBar
+        active={active()}
+        incrementInterval={20}
+        waitingTime={20}
+      />
+    ))
+
+    await waitFor(() => {
+      expect(Number(screen.getByRole("progressbar").getAttribute("aria-valuenow"))).toBeGreaterThan(0)
+    })
+
+    const before = Number(screen.getByRole("progressbar").getAttribute("aria-valuenow"))
+    await new Promise(resolve => setTimeout(resolve, 40))
+    expect(Number(screen.getByRole("progressbar").getAttribute("aria-valuenow"))).toBeGreaterThanOrEqual(
+      before,
+    )
   })
 })
 
 describe("GlobalLoadingIndicator", () => {
-  it("starts when auth is busy even if page loading is false", async () => {
-    authState.loading = false
-    authState.busy = true
+  it("follows useIsRouting", async () => {
+    routingState.active = true
 
     render(() => <GlobalLoadingIndicator />)
 
     await waitFor(() => {
       expect(screen.getByRole("progressbar").getAttribute("aria-hidden")).toBeNull()
     })
-  })
-
-  it("stays active while a page reports loading", async () => {
-    authState.loading = false
-    authState.busy = false
-    const [pageLoading, setPageLoading] = createSignal(true)
-
-    render(() => <PageLoadProbe loading={pageLoading} />)
-
-    await waitFor(() => {
-      expect(screen.getByRole("progressbar").getAttribute("aria-hidden")).toBeNull()
-    })
-
-    expect(Number(screen.getByRole("progressbar").getAttribute("aria-valuenow"))).toBeLessThan(100)
-    setPageLoading(false)
   })
 })

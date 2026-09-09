@@ -17,7 +17,6 @@ import {
   Show,
   untrack,
 } from "solid-js"
-import { useGlobalPageLoading } from "@/components/global-loading-indicator"
 import { Hashtag, Icon } from "@/components/icon"
 import { Button } from "@/components/button"
 import { MarkdownRenderer as Markdown } from "@/components/markdown/renderer"
@@ -367,11 +366,6 @@ export function BlipView() {
     const ids = mediaBlipIds()
     return ids.length > 0 ? getBlipMediaFor(ids) : Promise.resolve([])
   })
-  useGlobalPageLoading(
-    () =>
-      blipGraphQuery() === undefined ||
-      (mediaBlipIds().length > 0 && blipMediaQuery() === undefined),
-  )
   const mediaByBlip = createMemo(() => groupMediaByBlipId(blipMediaQuery() ?? []))
   const rootMedia = createMemo(() => mediaByBlip()[blip()?.id ?? ""] ?? [])
   const galleryLabels = {
