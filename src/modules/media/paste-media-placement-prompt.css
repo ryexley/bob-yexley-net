@@ -11,50 +11,74 @@
 }
 
 /*
- * Phone chooser must live inside the composer, not as a document-fixed
- * drawer. iOS keeps `position: fixed; bottom: 0` in the layout viewport,
- * which sits behind the keyboard. The composer dialog is already inset
- * to the visual viewport, so an absolute sheet at its bottom stays visible.
+ * Nested inside the composer dialog (already keyboard-inset). Portaling to
+ * document.body with `position: fixed` either hides a bottom sheet behind the
+ * iOS keyboard or lets `body:has(drawer)` pin the page and resize the editor.
  */
-.paste-media-placement-phone-layer {
+.paste-media-placement {
   position: absolute;
   inset: 0;
   z-index: 40;
   pointer-events: none;
+
+  [data-corvu-drawer-overlay] {
+    position: absolute;
+    z-index: 1;
+    pointer-events: auto;
+    background-color: rgb(0 0 0 / 0.45);
+  }
+
+  [data-corvu-drawer-content][data-side="top"] {
+    position: absolute;
+    inset-inline: 0;
+    top: 0;
+    right: 0;
+    bottom: auto;
+    left: 0;
+    z-index: 2;
+    height: auto;
+    min-height: 0;
+    max-height: 100%;
+    width: 100%;
+    pointer-events: auto;
+    touch-action: manipulation;
+    overflow: auto;
+    border-radius: 0 0 1.25rem 1.25rem;
+    background-color: var(--colors-mono-02);
+    color: var(--colors-text-primary);
+    box-shadow: 0 1.5rem 3rem rgb(0 0 0 / 24%);
+
+    @supports (-webkit-touch-callout: none) {
+      min-height: 0;
+    }
+
+    &::after {
+      content: none;
+    }
+  }
+
+  .sheet {
+    display: flex;
+    flex-direction: column;
+    padding: 1.25rem 1.25rem 0.75rem;
+  }
+
+  .handle {
+    width: 2.5rem;
+    height: 0.3rem;
+    margin: 0.85rem auto 0.15rem;
+    border-radius: 999px;
+    background: var(--colors-mono-06);
+  }
 }
 
-.paste-media-placement-phone-overlay {
-  position: absolute;
-  inset: 0;
-  background: rgb(0 0 0 / 0.45);
-  pointer-events: auto;
-}
-
-.paste-media-placement-phone-sheet {
-  position: absolute;
-  inset-inline: 0;
-  bottom: 0;
-  z-index: 1;
-  display: flex;
-  flex-direction: column;
-  max-height: 100%;
-  overflow: auto;
-  padding: 0.75rem 1.25rem 1.25rem;
-  border-radius: 1.25rem 1.25rem 0 0;
-  background: var(--colors-mono-02);
-  color: var(--colors-text-primary);
-  border-top: 1px solid var(--colors-mono-05);
-  box-shadow: 0 -1.5rem 3rem rgb(0 0 0 / 24%);
-  pointer-events: auto;
-  touch-action: manipulation;
-}
-
-.paste-media-placement-phone-handle {
-  width: 2.5rem;
-  height: 0.3rem;
-  margin: 0.15rem auto 0.85rem;
-  border-radius: 999px;
-  background: var(--colors-mono-06);
+html
+  body:has(
+    [data-corvu-drawer-content].paste-media-placement-drawer[data-open]
+  ) {
+  overflow: hidden;
+  position: static;
+  width: 100%;
 }
 
 .paste-media-placement-prompt-title {

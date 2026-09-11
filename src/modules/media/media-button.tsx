@@ -43,9 +43,15 @@ export function MediaButton(props: MediaButtonProps) {
         icon="perm_media"
         class="blip-editor-media-button"
         aria-label={props.label}
+        tabIndex={-1}
         disabled={props.disabled}
         onClick={() => input?.click()}
         onMouseDown={props.onMouseDown}
+        onPointerUp={event => {
+          if (event.currentTarget instanceof HTMLElement) {
+            event.currentTarget.blur()
+          }
+        }}
       />
       <input
         ref={input}

@@ -20,6 +20,10 @@ import { useSupabase } from "@/context/services-context"
 import { useViewport } from "@/context/viewport"
 import { createEditorFocusBridge } from "@/modules/blips/components/editor-focus-bridge"
 import { EditorShell } from "@/modules/blips/components/editor-shell"
+import {
+  blurControl,
+  preventControlFocus,
+} from "@/components/markdown/editor/prevent-control-focus"
 import { useEditorMobileViewportRuntime } from "@/modules/blips/components/editor-mobile-viewport-runtime"
 import { UserAvatar } from "@/modules/users/components/user-avatar"
 import { BLIP_TYPES, blipId, blipStore, type Blip } from "@/modules/blips/data"
@@ -41,7 +45,6 @@ type BlipCommentEditorProps = {
   onRequestClose?: () => void
   onAfterClose?: () => void
 }
-
 
 const tr = ptr("blips.components.commentEditor")
 const MOBILE_MAX_WIDTH = 768
@@ -95,7 +98,9 @@ export function BlipCommentEditor(props: BlipCommentEditorProps) {
   let fadeStatusTimeout: ReturnType<typeof setTimeout> | null = null
   let lastHandledCloseRequestNonce: number | undefined
 
-  const isMobileViewport = createMemo(() => viewport.width() <= MOBILE_MAX_WIDTH)
+  const isMobileViewport = createMemo(
+    () => viewport.width() <= MOBILE_MAX_WIDTH,
+  )
   const requestEditorFocus = () => {
     setEditorFocusNonce(previous => previous + 1)
   }
@@ -337,7 +342,7 @@ export function BlipCommentEditor(props: BlipCommentEditorProps) {
   }
 
   const preventEditorBlur = (event: MouseEvent) => {
-    event.preventDefault()
+    preventControlFocus(event)
   }
 
   const getStatusIcon = () => {
@@ -348,7 +353,12 @@ export function BlipCommentEditor(props: BlipCommentEditorProps) {
     }
 
     if (status === "saved") {
-      return <Icon name="cloud_upload" class="status-saved-icon" />
+      return (
+        <Icon
+          name="cloud_upload"
+          class="status-saved-icon"
+        />
+      )
     }
 
     return null
@@ -366,8 +376,10 @@ export function BlipCommentEditor(props: BlipCommentEditorProps) {
                   icon="close"
                   class="blip-editor-close"
                   aria-label={tr("actions.close")}
+                  tabIndex={-1}
                   onClick={() => props.onRequestClose?.()}
                   onMouseDown={preventEditorBlur}
+                  onPointerUp={blurControl}
                 />
                 <div class="blip-editor-status-slot">
                   <Show when={ctx.showStatus && ctx.statusIcon}>
@@ -383,12 +395,14 @@ export function BlipCommentEditor(props: BlipCommentEditorProps) {
               <div class="blip-editor-control-pill-right">
                 <button
                   type="button"
+                  tabIndex={-1}
                   class={cx("blip-editor-toolbar-toggle", {
                     "is-active": ctx.toolbarVisible,
                   })}
                   aria-label={tr("actions.toggleToolbar")}
                   onClick={() => ctx.onToggleToolbar()}
-                  onMouseDown={preventEditorBlur}>
+                  onMouseDown={preventEditorBlur}
+                  onPointerUp={blurControl}>
                   <Icon name="format_bold" />
                   <Icon name="format_italic" />
                   <Icon name="format_underlined" />
@@ -398,19 +412,25 @@ export function BlipCommentEditor(props: BlipCommentEditorProps) {
                   size="xs"
                   icon="cloud_upload"
                   class="blip-action-save"
-                  aria-label={isSaving() ? tr("actions.saving") : tr("actions.save")}
+                  aria-label={
+                    isSaving() ? tr("actions.saving") : tr("actions.save")
+                  }
+                  tabIndex={-1}
                   disabled={!ctx.statusContext?.canSave}
                   onClick={ctx.statusContext?.handleSave}
                   onMouseDown={preventEditorBlur}
+                  onPointerUp={blurControl}
                 />
                 <IconButton
                   size="xs"
                   icon="delete"
                   class="blip-action-delete"
                   aria-label={tr("actions.delete")}
+                  tabIndex={-1}
                   disabled={!ctx.statusContext?.canDelete}
                   onClick={ctx.statusContext?.handleDelete}
                   onMouseDown={preventEditorBlur}
+                  onPointerUp={blurControl}
                 />
               </div>
             </div>
@@ -475,14 +495,18 @@ export function BlipCommentEditor(props: BlipCommentEditorProps) {
       <div class="bubble">
         <CommentEditorSurface />
       </div>
-      <div class="avatar-column" aria-hidden="true">
+      <div
+        class="avatar-column"
+        aria-hidden="true">
         <div class="avatar-wrap">
           <UserAvatar
             role={auth.isSuperuser() ? "superuser" : null}
             class="avatar"
             size="md"
             variant="surface"
-            displayName={auth.userProfile()?.displayName ?? auth.user()?.email ?? null}
+            displayName={
+              auth.userProfile()?.displayName ?? auth.user()?.email ?? null
+            }
             avatarSeed={auth.userProfile()?.avatarSeed ?? null}
             avatarVersion={auth.userProfile()?.avatarVersion ?? null}
           />

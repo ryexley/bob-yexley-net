@@ -36,6 +36,10 @@ import { restoreEditorDocumentInteractionState } from "@/modules/blips/component
 import { createEditorFocusBridge } from "@/modules/blips/components/editor-focus-bridge"
 import { useEditorMobileViewportRuntime } from "@/modules/blips/components/editor-mobile-viewport-runtime"
 import { EditorShell } from "@/modules/blips/components/editor-shell"
+import {
+  blurControl,
+  preventControlFocus,
+} from "@/components/markdown/editor/prevent-control-focus"
 import { clsx as cx } from "@/util"
 import { ptr } from "@/i18n"
 import { debounce } from "@/util/debounce"
@@ -272,7 +276,7 @@ export function BlipEditor(props: BlipEditorProps) {
   })
 
   const preventEditorBlur = (event: MouseEvent | TouchEvent) => {
-    event.preventDefault()
+    preventControlFocus(event)
   }
 
   const isMobileViewport = () => viewport.width() < DESKTOP_LAYOUT_BREAKPOINT_PX
@@ -1500,8 +1504,10 @@ export function BlipEditor(props: BlipEditorProps) {
                   icon="close"
                   class="blip-editor-close"
                   aria-label={tr("actions.close")}
+                  tabIndex={-1}
                   onClick={() => void requestCloseEditor()}
                   onMouseDown={preventEditorBlur}
+                  onPointerUp={blurControl}
                 />
                 <MediaButton
                   onFiles={handleMediaFiles}
@@ -1522,6 +1528,7 @@ export function BlipEditor(props: BlipEditorProps) {
               <div class="blip-editor-control-pill-right">
                 <button
                   type="button"
+                  tabIndex={-1}
                   class={cx("blip-editor-metadata-toggle", {
                     "is-active": metadataOpen(),
                   })}
@@ -1532,18 +1539,21 @@ export function BlipEditor(props: BlipEditorProps) {
                   }
                   onClick={handleToggleMetadataView}
                   onMouseDown={handleMetadataToggleMouseDown}
+                  onPointerUp={blurControl}
                   onTouchStart={handleMetadataToggleTouchStart}>
                   <Icon name={metadataOpen() ? "edit_note" : "page_info"} />
                 </button>
                 <button
                   type="button"
+                  tabIndex={-1}
                   class={cx("blip-editor-toolbar-toggle", {
                     "is-active": ctx.toolbarVisible,
                   })}
                   aria-label={tr("actions.toggleToolbar")}
                   disabled={metadataOpen()}
                   onClick={() => ctx.onToggleToolbar()}
-                  onMouseDown={preventEditorBlur}>
+                  onMouseDown={preventEditorBlur}
+                  onPointerUp={blurControl}>
                   <Icon name="format_bold" />
                   <Icon name="format_italic" />
                   <Icon name="format_underlined" />
@@ -1554,9 +1564,11 @@ export function BlipEditor(props: BlipEditorProps) {
                   icon="cloud_upload"
                   class="blip-action-save"
                   aria-label={tr("actions.save")}
+                  tabIndex={-1}
                   disabled={!ctx.statusContext?.hasPendingChanges}
                   onClick={ctx.statusContext?.handleSave}
                   onMouseDown={preventEditorBlur}
+                  onPointerUp={blurControl}
                 />
                 <IconButton
                   size="xs"
@@ -1579,7 +1591,9 @@ export function BlipEditor(props: BlipEditorProps) {
                       ? tr("actions.unpublish")
                       : tr("actions.publish")
                   }
+                  tabIndex={-1}
                   onMouseDown={preventEditorBlur}
+                  onPointerUp={blurControl}
                 />
                 <Show
                   when={
@@ -1591,8 +1605,10 @@ export function BlipEditor(props: BlipEditorProps) {
                     icon="delete"
                     class="blip-action-delete"
                     aria-label={tr("actions.delete")}
+                    tabIndex={-1}
                     onClick={ctx.statusContext?.handleDelete}
                     onMouseDown={preventEditorBlur}
+                    onPointerUp={blurControl}
                   />
                 </Show>
               </div>

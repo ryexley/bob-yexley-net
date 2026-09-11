@@ -6,11 +6,11 @@ import {
   createSignal,
   untrack,
 } from "solid-js"
-import { ToggleGroup } from "@kobalte/core"
 import { Icon } from "@/components/icon"
 import { ptr } from "@/i18n"
 import { clsx as cx } from "@/util"
 import { formattingOptions } from "./formatting-config"
+import { blurControl, preventControlFocus } from "./prevent-control-focus"
 import { mediaLayoutOptionsForType } from "./plugins/media-embed-layout"
 import "./toolbar.css"
 
@@ -177,17 +177,15 @@ export default function Toolbar(props: ToolbarProps) {
         visible: props.visible,
         "with-link-editor": showLinkEditor() && toolbarMode() === "text",
       })}>
-      <ToggleGroup.Root
-        multiple
-        value={pressedFormats()}
-        class="toolbar-content thin-scrollbar"
-        aria-orientation="horizontal">
+      <div class="toolbar-content thin-scrollbar">
         <For each={options()}>
           {(option, index) => (
             <>
-              <ToggleGroup.Item
-                value={option.key}
+              <button
+                type="button"
+                tabIndex={-1}
                 aria-label={option.ariaLabel}
+                aria-pressed={pressedFormats().includes(option.key)}
                 disabled={props.disabledFormats.includes(option.key)}
                 onClick={() =>
                   option.key === "link"
@@ -200,8 +198,8 @@ export default function Toolbar(props: ToolbarProps) {
                         }))
                       : (closeLinkEditor(), props.onFormatApply(option.key))
                 }
-                // Preserve editor focus/selection so commands apply correctly.
-                onMouseDown={e => e.preventDefault()}
+                onMouseDown={preventControlFocus}
+                onPointerUp={blurControl}
                 class={cx("toolbar-button", {
                   "has-label": Boolean(option.label),
                 })}>
@@ -210,7 +208,7 @@ export default function Toolbar(props: ToolbarProps) {
                   fallback={<Icon name={option.icon ?? ""} />}>
                   <span class="toolbar-button-label">{option.label}</span>
                 </Show>
-              </ToggleGroup.Item>
+              </button>
 
               {index() < options().length - 1 &&
                 option.group !== options()[index() + 1].group && (
@@ -219,7 +217,7 @@ export default function Toolbar(props: ToolbarProps) {
             </>
           )}
         </For>
-      </ToggleGroup.Root>
+      </div>
       <form
         class={cx("toolbar-link-editor", { open: showLinkEditor() })}
         onSubmit={event => {
@@ -255,28 +253,34 @@ export default function Toolbar(props: ToolbarProps) {
         <div class="toolbar-link-actions">
           <button
             type="button"
+            tabIndex={-1}
             class="toolbar-link-action"
             aria-label="Apply link"
             onClick={handleApplyLink}
-            onMouseDown={e => e.preventDefault()}>
+            onMouseDown={preventControlFocus}
+            onPointerUp={blurControl}>
             <Icon name="check" />
           </button>
           <Show when={linkIsActive()}>
             <button
               type="button"
+              tabIndex={-1}
               class="toolbar-link-action"
               aria-label="Remove link"
               onClick={handleRemoveLink}
-              onMouseDown={e => e.preventDefault()}>
+              onMouseDown={preventControlFocus}
+              onPointerUp={blurControl}>
               <Icon name="link_off" />
             </button>
           </Show>
           <button
             type="button"
+            tabIndex={-1}
             class="toolbar-link-action"
             aria-label="Cancel link editing"
             onClick={closeLinkEditor}
-            onMouseDown={e => e.preventDefault()}>
+            onMouseDown={preventControlFocus}
+            onPointerUp={blurControl}>
             <Icon name="close" />
           </button>
         </div>

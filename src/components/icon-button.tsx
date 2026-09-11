@@ -12,16 +12,15 @@ export type IconButtonProps = {
   class?: string
   iconClass?: string
   "aria-label"?: string
+  tabIndex?: number
   onClick?: () => void
   onMouseDown?: (e: MouseEvent | TouchEvent) => void
+  onPointerUp?: (e: PointerEvent) => void
   disabled?: boolean
 }
 
 export function IconButton(props: IconButtonProps) {
-  const propsWithDefaults = mergeProps(
-    { size: "md" as IconButtonSize },
-    props,
-  )
+  const propsWithDefaults = mergeProps({ size: "md" as IconButtonSize }, props)
   const [local, attrs] = splitProps(propsWithDefaults, [
     "icon",
     "size",
@@ -30,14 +29,18 @@ export function IconButton(props: IconButtonProps) {
     "onClick",
     "disabled",
     "onMouseDown",
+    "onPointerUp",
+    "tabIndex",
   ])
 
   return (
     <KobalteButton
       type="button"
       class={cx("icon-button", local.size, local.class)}
+      tabIndex={local.tabIndex}
       onClick={local.onClick}
       onMouseDown={local.onMouseDown}
+      onPointerUp={local.onPointerUp}
       disabled={local.disabled}
       {...attrs}>
       <Icon

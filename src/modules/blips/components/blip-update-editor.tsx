@@ -28,6 +28,10 @@ import {
 } from "@/modules/blips/components/editor-focus-bridge"
 import { useEditorMobileViewportRuntime } from "@/modules/blips/components/editor-mobile-viewport-runtime"
 import { EditorShell } from "@/modules/blips/components/editor-shell"
+import {
+  blurControl,
+  preventControlFocus,
+} from "@/components/markdown/editor/prevent-control-focus"
 import { ptr } from "@/i18n"
 import { debounce } from "@/util/debounce"
 import { TIME } from "@/util/enums"
@@ -997,7 +1001,7 @@ export function BlipUpdateEditor(props: BlipUpdateEditorProps) {
   }
 
   const preventEditorBlur = (event: MouseEvent) => {
-    event.preventDefault()
+    preventControlFocus(event)
   }
 
   const EditorControls = (ctx: MarkdownEditorControlsProps) => {
@@ -1012,8 +1016,10 @@ export function BlipUpdateEditor(props: BlipUpdateEditorProps) {
                   icon="close"
                   class="blip-editor-close"
                   aria-label={trEditor("actions.close")}
+                  tabIndex={-1}
                   onClick={handleClose}
                   onMouseDown={preventEditorBlur}
+                  onPointerUp={blurControl}
                 />
                 <MediaButton
                   onFiles={handleMediaFiles}
@@ -1034,12 +1040,14 @@ export function BlipUpdateEditor(props: BlipUpdateEditorProps) {
               <div class="blip-editor-control-pill-right">
                 <button
                   type="button"
+                  tabIndex={-1}
                   class={cx("blip-editor-toolbar-toggle", {
                     "is-active": ctx.toolbarVisible,
                   })}
                   aria-label={trEditor("actions.toggleToolbar")}
                   onClick={() => ctx.onToggleToolbar()}
-                  onMouseDown={preventEditorBlur}>
+                  onMouseDown={preventEditorBlur}
+                  onPointerUp={blurControl}>
                   <Icon name="format_bold" />
                   <Icon name="format_italic" />
                   <Icon name="format_underlined" />
@@ -1050,9 +1058,11 @@ export function BlipUpdateEditor(props: BlipUpdateEditorProps) {
                   icon="cloud_upload"
                   class="blip-action-save"
                   aria-label={trEditor("actions.save")}
+                  tabIndex={-1}
                   disabled={!ctx.statusContext?.canSave}
                   onClick={ctx.statusContext?.handleSave}
                   onMouseDown={preventEditorBlur}
+                  onPointerUp={blurControl}
                 />
                 <IconButton
                   size="xs"
@@ -1072,16 +1082,20 @@ export function BlipUpdateEditor(props: BlipUpdateEditorProps) {
                       ? trEditor("actions.unpublish")
                       : trEditor("actions.publish")
                   }
+                  tabIndex={-1}
                   onMouseDown={preventEditorBlur}
+                  onPointerUp={blurControl}
                 />
                 <IconButton
                   size="xs"
                   icon="delete"
                   class="blip-action-delete"
                   aria-label={trDetail("updates.actions.delete")}
+                  tabIndex={-1}
                   disabled={!ctx.statusContext?.canDelete}
                   onClick={ctx.statusContext?.handleDelete}
                   onMouseDown={preventEditorBlur}
+                  onPointerUp={blurControl}
                 />
               </div>
             </div>

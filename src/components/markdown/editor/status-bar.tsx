@@ -7,6 +7,7 @@ import {
 } from "solid-js"
 import { clsx as cx } from "@/util"
 import { Icon } from "@/components/icon"
+import { blurControl, preventControlFocus } from "./prevent-control-focus"
 import "./status-bar.css"
 
 type StatusBarProps = {
@@ -49,13 +50,11 @@ export function StatusBar(props: StatusBarProps) {
       <div class="status-bar-actions">
         <button
           type="button"
+          tabIndex={-1}
           class="toggle-toolbar"
           onClick={() => local.onToggleToolbar()}
-          // Prevent this button from stealing focus
-          // which causes the soft keyboard to close
-          // when it is open on mobile devices and the
-          // user taps this button to toggle the toolbar
-          onMouseDown={e => e.preventDefault()}>
+          onMouseDown={preventControlFocus}
+          onPointerUp={blurControl}>
           <Icon name="format_bold" />
           <Icon name="format_italic" />
           <Icon name="format_underlined" />

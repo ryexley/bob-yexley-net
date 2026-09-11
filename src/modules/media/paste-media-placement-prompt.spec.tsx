@@ -1,6 +1,14 @@
 import { fireEvent, render, screen } from "@solidjs/testing-library"
-import { describe, expect, it, vi } from "vitest"
+import { beforeAll, describe, expect, it, vi } from "vitest"
 import { PasteMediaPlacementPrompt } from "./paste-media-placement-prompt"
+
+beforeAll(() => {
+  globalThis.ResizeObserver = class {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  } as typeof ResizeObserver
+})
 
 const labels = {
   title: "Place pasted media",
@@ -49,7 +57,7 @@ describe("PasteMediaPlacementPrompt", () => {
     expect(onCancel).toHaveBeenCalled()
   })
 
-  it("docks a sheet inside the composer on phone-sized viewports", async () => {
+  it("opens a nested top drawer on phone-sized viewports", async () => {
     render(() => (
       <PasteMediaPlacementPrompt
         open
@@ -61,12 +69,17 @@ describe("PasteMediaPlacementPrompt", () => {
     ))
 
     expect(await screen.findByText(labels.title)).toBeTruthy()
+    const host = document.querySelector(".paste-media-placement")
+    const drawer = host?.querySelector(
+      "[data-corvu-drawer-content].paste-media-placement-drawer",
+    )
+    expect(host).toBeTruthy()
+    expect(drawer).toBeTruthy()
+    expect(drawer?.getAttribute("data-side")).toBe("top")
     expect(
-      document.querySelector(".paste-media-placement-phone-layer"),
-    ).toBeTruthy()
-    expect(
-      document.querySelector(".paste-media-placement-phone-sheet"),
-    ).toBeTruthy()
-    expect(document.querySelector("[data-corvu-drawer-content]")).toBeNull()
+      document.body.querySelector(
+        ":scope > [data-corvu-drawer-content].paste-media-placement-drawer",
+      ),
+    ).toBeNull()
   })
 })

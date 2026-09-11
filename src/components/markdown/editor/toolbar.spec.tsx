@@ -37,6 +37,9 @@ describe("MarkdownEditor Toolbar", () => {
     ).toBe("true")
     expect(screen.queryByLabelText("format_bold")).toBeNull()
 
+    expect(
+      screen.getByRole("button", { name: "50% of column width" }).tabIndex,
+    ).toBe(-1)
     fireEvent.click(screen.getByRole("button", { name: "25% of column width" }))
     expect(onFormatApply).toHaveBeenCalledWith("media-size-25")
   })

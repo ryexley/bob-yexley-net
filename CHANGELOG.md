@@ -5,6 +5,14 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.45.3] - 2026-09-11
+
+### Fixed
+
+- The phone paste placement chooser is a nested top drawer so it no longer
+  covers the editor toolbar or sits behind the iOS keyboard
+- Editor formatting and control-pill buttons no longer keep focus after a tap
+
 ## [0.45.2] - 2026-09-11
 
 ### Fixed

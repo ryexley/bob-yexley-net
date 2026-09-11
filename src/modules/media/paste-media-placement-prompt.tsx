@@ -1,5 +1,6 @@
 import { Dialog } from "@/components/dialog"
 import { Button } from "@/components/button"
+import { Drawer, DrawerPosition } from "@/components/drawer"
 import { Show, createEffect, createSignal, onCleanup } from "solid-js"
 import type { MediaPlacement } from "./placement"
 import "./paste-media-placement-prompt.css"
@@ -18,6 +19,16 @@ type PasteMediaPlacementPromptProps = {
 
 const PRESENT_DELAY_MS = 50
 const IGNORE_CLOSE_MS = 400
+
+const nestedTopDrawerBehavior = {
+  snapPoints: [0, 1],
+  breakPoints: [null],
+  defaultSnapPoint: 1,
+  closeOnOutsidePointer: false,
+  trapFocus: false,
+  restoreFocus: false,
+  noOutsidePointerEvents: false,
+}
 
 function PlacementChoices(props: {
   stacked: boolean
@@ -71,6 +82,7 @@ export function PasteMediaPlacementPrompt(
 ) {
   const [presented, setPresented] = createSignal(false)
   const [ignoreCloseUntil, setIgnoreCloseUntil] = createSignal(0)
+  const [drawerHost, setDrawerHost] = createSignal<HTMLDivElement>()
 
   createEffect(() => {
     if (!props.open) {
@@ -126,36 +138,42 @@ export function PasteMediaPlacementPrompt(
             />
           </Dialog>
         }>
-        <Show when={presented()}>
-          <div class="paste-media-placement-phone-layer">
-            <div
-              class="paste-media-placement-phone-overlay"
-              onClick={handleCancel}
-            />
-            <div
-              class="paste-media-placement-phone-sheet"
-              role="dialog"
-              aria-modal="true"
-              aria-labelledby="paste-media-placement-title"
-              aria-describedby="paste-media-placement-description"
-              onClick={event => event.stopPropagation()}>
-              <div
-                class="paste-media-placement-phone-handle"
-                aria-hidden="true"
-              />
-              <PlacementChoices
-                stacked
-                title={props.title}
-                description={props.description}
-                inlineLabel={props.inlineLabel}
-                galleryLabel={props.galleryLabel}
-                cancelLabel={props.cancelLabel}
-                onChoose={props.onChoose}
-                onCancel={props.onCancel}
-              />
-            </div>
-          </div>
-        </Show>
+        <div
+          class="paste-media-placement"
+          ref={setDrawerHost}>
+          <Show when={presented() && drawerHost()}>
+            <Drawer
+              side={DrawerPosition.TOP}
+              open
+              portalMount={drawerHost()}
+              onOpenChange={open => {
+                if (!open) {
+                  handleCancel()
+                }
+              }}
+              showTrigger={false}
+              showClose={false}
+              class="paste-media-placement-drawer"
+              drawerProps={nestedTopDrawerBehavior}>
+              <div class="sheet">
+                <PlacementChoices
+                  stacked
+                  title={props.title}
+                  description={props.description}
+                  inlineLabel={props.inlineLabel}
+                  galleryLabel={props.galleryLabel}
+                  cancelLabel={props.cancelLabel}
+                  onChoose={props.onChoose}
+                  onCancel={props.onCancel}
+                />
+                <div
+                  class="handle"
+                  aria-hidden="true"
+                />
+              </div>
+            </Drawer>
+          </Show>
+        </div>
       </Show>
     </Show>
   )
