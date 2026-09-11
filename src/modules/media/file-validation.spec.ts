@@ -99,6 +99,35 @@ describe("clipboardMediaFiles", () => {
     expect(clipboardMediaFiles(data)).toEqual([png])
   })
 
+  it("treats iOS screenshot files with an empty mime type as media", () => {
+    const png = fileOfSize("image.png", "", 10)
+    const data = {
+      files: [png],
+      items: [],
+    } as unknown as DataTransfer
+
+    const [file] = clipboardMediaFiles(data)
+    expect(file?.type).toBe("image/png")
+    expect(file?.name).toBe("image.png")
+  })
+
+  it("reads image items even when the File type is empty", () => {
+    const png = fileOfSize("image.png", "", 10)
+    const data = {
+      files: [],
+      items: [
+        {
+          kind: "file",
+          type: "image/png",
+          getAsFile: () => png,
+        },
+      ],
+    } as unknown as DataTransfer
+
+    const [file] = clipboardMediaFiles(data)
+    expect(file?.type).toBe("image/png")
+  })
+
   it("returns [] when there is no clipboard data", () => {
     expect(clipboardMediaFiles(null)).toEqual([])
     expect(clipboardMediaFiles(undefined)).toEqual([])

@@ -19,7 +19,14 @@
   }
 }
 
-.paste-media-placement-drawer-content {
+body:has([data-corvu-drawer-content].paste-media-placement-drawer[data-open]) {
+  [data-corvu-drawer-overlay] {
+    z-index: 1300;
+  }
+}
+
+[data-corvu-drawer-content].paste-media-placement-drawer,
+[data-corvu-drawer-content].paste-media-placement-drawer-content {
   z-index: 1301;
 }
 

@@ -54,7 +54,7 @@ import {
   applyPasteMediaPlacement,
   ComposerMediaChrome,
   ComposerPreviewModal,
-  inspectClipboardMediaPaste,
+  consumeClipboardMediaPaste,
   MediaButton,
   type MediaPlacement,
   type MediaStore,
@@ -1116,9 +1116,24 @@ export function BlipEditor(props: BlipEditorProps) {
       setMediaEmbedRuntime(null)
       return
     }
-    setMediaEmbedRuntime(composerMediaEmbedRuntime(instance))
+    setMediaEmbedRuntime(
+      composerMediaEmbedRuntime(instance, {
+        consumeClipboardPaste: handleClipboardPaste,
+      }),
+    )
+    const onPaste = (event: ClipboardEvent) => {
+      handleClipboardPaste(event)
+    }
+    if (typeof document !== "undefined") {
+      document.addEventListener("paste", onPaste, true)
+    }
     void instance.attachments()
-    onCleanup(() => setMediaEmbedRuntime(null))
+    onCleanup(() => {
+      if (typeof document !== "undefined") {
+        document.removeEventListener("paste", onPaste, true)
+      }
+      setMediaEmbedRuntime(null)
+    })
   })
 
   const handleMediaFiles = (files: File[]) => {
@@ -1139,26 +1154,22 @@ export function BlipEditor(props: BlipEditorProps) {
     }
   }
 
-  const handleClipboardPaste = (event: ClipboardEvent) => {
+  function handleClipboardPaste(event: ClipboardEvent) {
     const instance = media()
     if (!instance) {
-      return
+      return false
     }
 
-    const inspected = inspectClipboardMediaPaste(event.clipboardData)
-    if (!inspected) {
-      return
-    }
-
-    event.preventDefault()
-    setMediaError(
-      inspected.rejected.length > 0
-        ? tr("media.invalidFiles", { count: inspected.rejected.length })
-        : null,
-    )
-    if (inspected.accepted.length > 0) {
-      setPasteFiles(inspected.accepted)
-    }
+    return consumeClipboardMediaPaste(event, inspected => {
+      setMediaError(
+        inspected.rejected.length > 0
+          ? tr("media.invalidFiles", { count: inspected.rejected.length })
+          : null,
+      )
+      if (inspected.accepted.length > 0) {
+        setPasteFiles(inspected.accepted)
+      }
+    })
   }
 
   const closePastePrompt = () => {
@@ -1627,6 +1638,7 @@ export function BlipEditor(props: BlipEditorProps) {
           focusProxyRef={focusBridge.setFocusProxyRef}
           focusProxyAriaLabel={tr("placeholder")}
           showFocusProxy
+          onPasteCapture={handleClipboardPaste}
           Header={
             <Show when={editorView() === "picker"}>
               <div class="blip-editor-picker-header">
@@ -1646,7 +1658,7 @@ export function BlipEditor(props: BlipEditorProps) {
             fallback={
               <form
                 class="blip-editor-form"
-                onPaste={handleClipboardPaste}
+                onPasteCapture={handleClipboardPaste}
                 onDrop={handleComposerDrop}
                 onDragOver={handleComposerDragOver}>
                 <MarkdownEditor

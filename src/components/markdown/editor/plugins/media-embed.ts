@@ -15,6 +15,7 @@ import {
 } from "./media-embed-markdown"
 import {
   insertMediaEmbedCommand,
+  mediaEmbedClipboardPlugin,
   mediaEmbedKeymap,
   mediaEmbedRemovedPlugin,
   mediaEmbedTrailingParagraphPlugin,
@@ -119,6 +120,7 @@ export const mediaEmbed = [
   mediaEmbedView,
   insertMediaEmbedCommand,
   mediaEmbedKeymap,
+  mediaEmbedClipboardPlugin,
   mediaEmbedRemovedPlugin,
   mediaEmbedTrailingParagraphPlugin,
   remarkMediaEmbedTransform,

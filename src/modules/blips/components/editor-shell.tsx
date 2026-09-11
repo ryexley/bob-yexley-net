@@ -14,11 +14,14 @@ type EditorShellProps = {
   shellClass?: string
   transitionClass?: string
   isOpen?: boolean
+  onPasteCapture?: (event: ClipboardEvent) => void
 }
 
 function EditorShellSurface(props: EditorShellProps) {
   return (
-    <div class={cx("blip-editor-shell", props.shellClass)}>
+    <div
+      class={cx("blip-editor-shell", props.shellClass)}
+      onPasteCapture={event => props.onPasteCapture?.(event)}>
       <Show when={props.showFocusProxy ?? true}>
         {/* iOS Safari is more willing to keep the soft keyboard attached to the
             opening tap when focus first lands on a real text control. We focus
@@ -38,7 +41,9 @@ function EditorShellSurface(props: EditorShellProps) {
         />
       </Show>
       <Show when={props.Header}>{props.Header}</Show>
-      <div class={cx("blip-editor-body", props.bodyClass)}>{props.children}</div>
+      <div class={cx("blip-editor-body", props.bodyClass)}>
+        {props.children}
+      </div>
     </div>
   )
 }

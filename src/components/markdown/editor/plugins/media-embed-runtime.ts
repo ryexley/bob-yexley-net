@@ -16,6 +16,7 @@ export type MediaEmbedRuntime = {
   getPreview: (key: string) => MediaEmbedPreview | null
   subscribe: (listener: () => void) => () => void
   onNodeRemoved?: (key: string) => void
+  consumeClipboardPaste?: (event: ClipboardEvent) => boolean
 }
 
 type MediaEmbedPreviewSource = {
@@ -44,10 +45,15 @@ export function mediaEmbedPreviewFromAttachment(
   }
 }
 
-export function composerMediaEmbedRuntime(instance: {
-  attachments: () => MediaEmbedPreviewSource[]
-  removeAttachment: (key: string) => unknown
-}): MediaEmbedRuntime {
+export function composerMediaEmbedRuntime(
+  instance: {
+    attachments: () => MediaEmbedPreviewSource[]
+    removeAttachment: (key: string) => unknown
+  },
+  options: {
+    consumeClipboardPaste?: (event: ClipboardEvent) => boolean
+  } = {},
+): MediaEmbedRuntime {
   return {
     getPreview: key => {
       const attachment = instance.attachments().find(item => item.key === key)
@@ -57,6 +63,7 @@ export function composerMediaEmbedRuntime(instance: {
     onNodeRemoved: key => {
       void instance.removeAttachment(key)
     },
+    consumeClipboardPaste: options.consumeClipboardPaste,
   }
 }
 

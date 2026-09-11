@@ -1,6 +1,14 @@
 import { fireEvent, render, screen } from "@solidjs/testing-library"
-import { describe, expect, it, vi } from "vitest"
+import { beforeAll, describe, expect, it, vi } from "vitest"
 import { PasteMediaPlacementPrompt } from "./paste-media-placement-prompt"
+
+beforeAll(() => {
+  globalThis.ResizeObserver = class {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  } as typeof ResizeObserver
+})
 
 const labels = {
   title: "Place pasted media",
@@ -24,7 +32,7 @@ describe("PasteMediaPlacementPrompt", () => {
     expect(screen.queryByText(labels.title)).toBeNull()
   })
 
-  it("chooses inline or gallery and can cancel", () => {
+  it("chooses inline or gallery and can cancel", async () => {
     const onChoose = vi.fn()
     const onCancel = vi.fn()
     render(() => (
@@ -37,6 +45,8 @@ describe("PasteMediaPlacementPrompt", () => {
       />
     ))
 
+    expect(await screen.findByText(labels.title)).toBeTruthy()
+
     fireEvent.click(screen.getByText(labels.inlineLabel))
     expect(onChoose).toHaveBeenCalledWith("inline")
 
@@ -45,5 +55,20 @@ describe("PasteMediaPlacementPrompt", () => {
 
     fireEvent.click(screen.getByText(labels.cancelLabel))
     expect(onCancel).toHaveBeenCalled()
+  })
+
+  it("presents a bottom sheet on phone-sized viewports", async () => {
+    render(() => (
+      <PasteMediaPlacementPrompt
+        open
+        isMobile
+        {...labels}
+        onChoose={vi.fn()}
+        onCancel={vi.fn()}
+      />
+    ))
+
+    expect(await screen.findByText(labels.title)).toBeTruthy()
+    expect(document.querySelector(".paste-media-placement-drawer")).toBeTruthy()
   })
 })

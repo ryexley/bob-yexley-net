@@ -29,6 +29,19 @@ const ACCEPTED_EXTENSIONS = new Set(
   ),
 )
 
+const EXT_TO_MIME: Record<string, string> = {
+  ".png": "image/png",
+  ".jpg": "image/jpeg",
+  ".jpeg": "image/jpeg",
+  ".gif": "image/gif",
+  ".webp": "image/webp",
+  ".heic": "image/heic",
+  ".heif": "image/heic",
+  ".mp4": "video/mp4",
+  ".mov": "video/quicktime",
+  ".webm": "video/webm",
+}
+
 const extensionOf = (name: string): string | null => {
   const base = name.split(/[\\/]/).pop() ?? ""
   const dot = base.lastIndexOf(".")
@@ -38,8 +51,11 @@ const extensionOf = (name: string): string | null => {
   return `.${base.slice(dot + 1).toLowerCase()}`
 }
 
+const mimeOf = (value: string | undefined): string =>
+  (value ?? "").toLowerCase().split(";")[0].trim()
+
 const isAcceptedType = (file: File): boolean => {
-  const mime = (file.type ?? "").toLowerCase().split(";")[0].trim()
+  const mime = mimeOf(file.type)
   if (mime && ACCEPTED_MIME_TYPES.has(mime)) {
     return true
   }
@@ -47,15 +63,59 @@ const isAcceptedType = (file: File): boolean => {
   return ext != null && ACCEPTED_EXTENSIONS.has(ext)
 }
 
+const isMediaMime = (mime: string): boolean =>
+  mime.startsWith("image/") || mime.startsWith("video/")
+
 /** Clipboard/OS paste items that can become blip media (images, GIFs, video). */
-export const isClipboardMediaFile = (file: File): boolean => {
-  const mime = (file.type ?? "").toLowerCase().split(";")[0].trim()
-  return mime.startsWith("image/") || mime.startsWith("video/")
+export const isClipboardMediaFile = (
+  file: File,
+  mimeHint?: string,
+): boolean => {
+  const mime = mimeOf(file.type) || mimeOf(mimeHint)
+  if (isMediaMime(mime)) {
+    return true
+  }
+  const ext = extensionOf(file.name ?? "")
+  if (ext && EXT_TO_MIME[ext]) {
+    return true
+  }
+  const name = (file.name ?? "").toLowerCase()
+  return /^image\.(png|jpe?g|gif|webp|heic|heif)$/.test(name)
+}
+
+export const normalizeClipboardMediaFile = (
+  file: File,
+  mimeHint?: string,
+): File => {
+  const mime =
+    mimeOf(file.type) ||
+    mimeOf(mimeHint) ||
+    EXT_TO_MIME[extensionOf(file.name ?? "") ?? ""] ||
+    "image/png"
+  const name = file.name?.trim() ? file.name : clipboardFilename(mime)
+  if (file.type === mime && file.name === name) {
+    return file
+  }
+  return new File([file], name, { type: mime, lastModified: file.lastModified })
+}
+
+const clipboardFilename = (mime: string): string => {
+  if (mime === "image/jpeg") {
+    return "image.jpg"
+  }
+  if (mime === "image/heic" || mime === "image/heif") {
+    return "image.heic"
+  }
+  if (mime === "video/quicktime") {
+    return "video.mov"
+  }
+  const subtype = mime.split("/")[1] || "png"
+  return mime.startsWith("video/") ? `video.${subtype}` : `image.${subtype}`
 }
 
 /**
- * Files from a paste `DataTransfer`. Prefers `files`; some browsers only expose
- * a screenshot on `items`.
+ * Files from a paste `DataTransfer`. Prefers `files`; iOS often only exposes
+ * a screenshot on `items`, sometimes with an empty `type`.
  */
 export const clipboardMediaFiles = (
   data: DataTransfer | null | undefined,
@@ -64,22 +124,65 @@ export const clipboardMediaFiles = (
     return []
   }
 
-  const fromFiles = Array.from(data.files ?? []).filter(isClipboardMediaFile)
-  if (fromFiles.length > 0) {
-    return fromFiles
+  const collected: File[] = []
+  const seen = new Set<File>()
+  const seenKeys = new Set<string>()
+
+  const take = (file: File | null | undefined, mimeHint?: string) => {
+    if (!file || seen.has(file) || !isClipboardMediaFile(file, mimeHint)) {
+      return
+    }
+    seen.add(file)
+    const next = normalizeClipboardMediaFile(file, mimeHint)
+    const key = `${next.name}:${next.size}:${next.type}`
+    if (seenKeys.has(key)) {
+      return
+    }
+    seenKeys.add(key)
+    collected.push(next)
   }
 
-  const fromItems: File[] = []
+  for (const file of Array.from(data.files ?? [])) {
+    take(file)
+  }
+
   for (const item of Array.from(data.items ?? [])) {
-    if (item.kind !== "file") {
+    const type = mimeOf(item.type)
+    if (item.kind !== "file" && !isMediaMime(type)) {
       continue
     }
-    const file = item.getAsFile()
-    if (file && isClipboardMediaFile(file)) {
-      fromItems.push(file)
+    take(item.getAsFile(), type)
+  }
+
+  return collected
+}
+
+export function clipboardLooksLikeMedia(
+  data: DataTransfer | null | undefined,
+): boolean {
+  if (!data) {
+    return false
+  }
+  if (clipboardMediaFiles(data).length > 0) {
+    return true
+  }
+
+  const types = Array.from(data.types ?? [])
+  if (
+    types.includes("Files") ||
+    types.some(type => isMediaMime(mimeOf(type)))
+  ) {
+    return true
+  }
+
+  for (const item of Array.from(data.items ?? [])) {
+    const type = mimeOf(item.type)
+    if (item.kind === "file" || isMediaMime(type)) {
+      return true
     }
   }
-  return fromItems
+
+  return false
 }
 
 /** Partition files into those that pass `uploadStore`'s restrictions and those that don't. */

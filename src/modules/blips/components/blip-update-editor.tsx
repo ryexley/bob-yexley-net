@@ -41,7 +41,7 @@ import {
   type Attachment,
   applyPasteMediaPlacement,
   ComposerPreviewModal,
-  inspectClipboardMediaPaste,
+  consumeClipboardMediaPaste,
   MediaButton,
   type MediaPlacement,
   type MediaStore,
@@ -613,9 +613,24 @@ export function BlipUpdateEditor(props: BlipUpdateEditorProps) {
       setMediaEmbedRuntime(null)
       return
     }
-    setMediaEmbedRuntime(composerMediaEmbedRuntime(instance))
+    setMediaEmbedRuntime(
+      composerMediaEmbedRuntime(instance, {
+        consumeClipboardPaste: handleClipboardPaste,
+      }),
+    )
+    const onPaste = (event: ClipboardEvent) => {
+      handleClipboardPaste(event)
+    }
+    if (typeof document !== "undefined") {
+      document.addEventListener("paste", onPaste, true)
+    }
     void instance.attachments()
-    onCleanup(() => setMediaEmbedRuntime(null))
+    onCleanup(() => {
+      if (typeof document !== "undefined") {
+        document.removeEventListener("paste", onPaste, true)
+      }
+      setMediaEmbedRuntime(null)
+    })
   })
 
   const handleMediaFiles = (files: File[]) => {
@@ -636,26 +651,22 @@ export function BlipUpdateEditor(props: BlipUpdateEditorProps) {
     }
   }
 
-  const handleClipboardPaste = (event: ClipboardEvent) => {
+  function handleClipboardPaste(event: ClipboardEvent) {
     const instance = media()
     if (!instance) {
-      return
+      return false
     }
 
-    const inspected = inspectClipboardMediaPaste(event.clipboardData)
-    if (!inspected) {
-      return
-    }
-
-    event.preventDefault()
-    setMediaError(
-      inspected.rejected.length > 0
-        ? trEditor("media.invalidFiles", { count: inspected.rejected.length })
-        : null,
-    )
-    if (inspected.accepted.length > 0) {
-      setPasteFiles(inspected.accepted)
-    }
+    return consumeClipboardMediaPaste(event, inspected => {
+      setMediaError(
+        inspected.rejected.length > 0
+          ? trEditor("media.invalidFiles", { count: inspected.rejected.length })
+          : null,
+      )
+      if (inspected.accepted.length > 0) {
+        setPasteFiles(inspected.accepted)
+      }
+    })
   }
 
   const closePastePrompt = () => {
@@ -1094,6 +1105,7 @@ export function BlipUpdateEditor(props: BlipUpdateEditorProps) {
         focusProxyAriaLabel={trDetail("updates.placeholder")}
         icon={isMobileViewport() ? undefined : "chat"}
         showFocusProxy={false}
+        onPasteCapture={handleClipboardPaste}
         Header={
           props.useDialogTitle ? (
             <DialogTitle class="blip-update-editor-dialog-title">
@@ -1109,7 +1121,7 @@ export function BlipUpdateEditor(props: BlipUpdateEditorProps) {
         }>
         <form
           class="blip-editor-form blip-update-editor-form"
-          onPaste={handleClipboardPaste}
+          onPasteCapture={handleClipboardPaste}
           onDrop={handleComposerDrop}
           onDragOver={handleComposerDragOver}
           onSubmit={event => {

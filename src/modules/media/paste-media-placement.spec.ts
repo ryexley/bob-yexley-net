@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest"
 import {
   applyPasteMediaPlacement,
+  consumeClipboardMediaPaste,
   inspectClipboardMediaPaste,
 } from "./paste-media-placement"
 
@@ -27,6 +28,37 @@ describe("inspectClipboardMediaPaste", () => {
     const file = png()
     const result = inspectClipboardMediaPaste(clipboard([file]))
     expect(result).toEqual({ accepted: [file], rejected: [] })
+  })
+})
+
+describe("consumeClipboardMediaPaste", () => {
+  it("swallows the paste and reports clipboard images", () => {
+    const file = png()
+    const event = {
+      clipboardData: clipboard([file]),
+      preventDefault: vi.fn(),
+      stopPropagation: vi.fn(),
+      stopImmediatePropagation: vi.fn(),
+    } as unknown as ClipboardEvent
+    const onMedia = vi.fn()
+
+    expect(consumeClipboardMediaPaste(event, onMedia)).toBe(true)
+    expect(event.preventDefault).toHaveBeenCalled()
+    expect(event.stopPropagation).toHaveBeenCalled()
+    expect(onMedia).toHaveBeenCalledWith({ accepted: [file], rejected: [] })
+  })
+
+  it("leaves ordinary text paste alone", () => {
+    const event = {
+      clipboardData: clipboard([
+        new File(["x"], "note.txt", { type: "text/plain" }),
+      ]),
+      preventDefault: vi.fn(),
+      stopPropagation: vi.fn(),
+    } as unknown as ClipboardEvent
+
+    expect(consumeClipboardMediaPaste(event, vi.fn())).toBe(false)
+    expect(event.preventDefault).not.toHaveBeenCalled()
   })
 })
 

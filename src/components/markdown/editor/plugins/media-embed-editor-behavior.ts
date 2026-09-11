@@ -18,6 +18,7 @@ export type MediaEmbedInsert = {
 
 const trailingParagraphKey = new PluginKey("mediaEmbedTrailingParagraph")
 const removedKey = new PluginKey("mediaEmbedRemoved")
+const clipboardKey = new PluginKey("mediaEmbedClipboard")
 
 function collectMediaEmbedKeys(doc: {
   descendants: (
@@ -136,6 +137,17 @@ export const mediaEmbedTrailingParagraphPlugin = $prose(() => {
       return newState.tr
         .insert(newState.doc.content.size, paragraph.create())
         .setMeta("addToHistory", false)
+    },
+  })
+})
+
+export const mediaEmbedClipboardPlugin = $prose(() => {
+  return new Plugin({
+    key: clipboardKey,
+    props: {
+      handlePaste(_view, event) {
+        return getMediaEmbedRuntime()?.consumeClipboardPaste?.(event) === true
+      },
     },
   })
 })

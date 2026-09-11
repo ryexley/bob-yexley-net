@@ -1,4 +1,4 @@
-import { Show } from "solid-js"
+import { Show, createEffect, createSignal, onCleanup } from "solid-js"
 import { Button } from "@/components/button"
 import {
   Dialog,
@@ -22,17 +22,39 @@ export type PasteMediaPlacementPromptProps = {
   onCancel: () => void
 }
 
+const PRESENT_DELAY_MS = 50
+const IGNORE_CLOSE_MS = 400
+
 /**
- * Paste-only chooser: put the clipboard files inline in the markdown body, or
- * in the gallery strip. Dismiss / Escape cancels the paste.
+ * Paste destination chooser. Phone-sized viewports use a bottom drawer; desktop
+ * uses a dialog. Opening is deferred slightly so an iOS paste gesture cannot
+ * immediately dismiss the overlay.
  */
 export function PasteMediaPlacementPrompt(
   props: PasteMediaPlacementPromptProps,
 ) {
-  const handleOpenChange = (open: boolean) => {
-    if (!open) {
-      props.onCancel()
+  const [presented, setPresented] = createSignal(false)
+  let ignoreCloseUntil = 0
+
+  createEffect(() => {
+    if (!props.open) {
+      setPresented(false)
+      return
     }
+
+    const timer = window.setTimeout(() => {
+      ignoreCloseUntil = Date.now() + IGNORE_CLOSE_MS
+      setPresented(true)
+    }, PRESENT_DELAY_MS)
+
+    onCleanup(() => window.clearTimeout(timer))
+  })
+
+  const handleOpenChange = (open: boolean) => {
+    if (open || Date.now() < ignoreCloseUntil) {
+      return
+    }
+    props.onCancel()
   }
 
   const actions = () => (
@@ -55,45 +77,18 @@ export function PasteMediaPlacementPrompt(
   )
 
   return (
-    <Show when={props.open}>
-      <Show
-        when={props.isMobile}
-        fallback={
-          <Dialog
-            open={props.open}
-            modal
-            class="paste-media-placement-dialog"
-            overlayClass="paste-media-placement-overlay"
-            onOpenChange={handleOpenChange}>
-            <DialogTitle>{props.title}</DialogTitle>
-            <DialogDescription>{props.description}</DialogDescription>
-            <DialogFooter class="actions">
-              <Button
-                variant="ghost"
-                size="sm"
-                class="cancel-action"
-                label={props.cancelLabel}
-                onClick={props.onCancel}
-              />
-              <div class="choices">{actions()}</div>
-            </DialogFooter>
-          </Dialog>
-        }>
-        <Drawer
-          side={DrawerPosition.BOTTOM}
-          open={props.open}
-          onOpenChange={handleOpenChange}
-          showTrigger={false}
-          class="paste-media-placement-drawer"
-          contentClass="paste-media-placement-drawer-content">
-          <div class="paste-media-placement-sheet">
-            <div
-              class="handle"
-              aria-hidden="true"
-            />
-            <h2 class="title">{props.title}</h2>
-            <p class="description">{props.description}</p>
-            <div class="choices">{actions()}</div>
+    <Show
+      when={props.isMobile}
+      fallback={
+        <Dialog
+          open={presented()}
+          modal
+          class="paste-media-placement-dialog"
+          overlayClass="paste-media-placement-overlay"
+          onOpenChange={handleOpenChange}>
+          <DialogTitle>{props.title}</DialogTitle>
+          <DialogDescription>{props.description}</DialogDescription>
+          <DialogFooter class="actions">
             <Button
               variant="ghost"
               size="sm"
@@ -101,9 +96,38 @@ export function PasteMediaPlacementPrompt(
               label={props.cancelLabel}
               onClick={props.onCancel}
             />
-          </div>
-        </Drawer>
-      </Show>
+            <div class="choices">{actions()}</div>
+          </DialogFooter>
+        </Dialog>
+      }>
+      <Drawer
+        side={DrawerPosition.BOTTOM}
+        open={presented()}
+        onOpenChange={handleOpenChange}
+        showTrigger={false}
+        showClose={false}
+        class="paste-media-placement-drawer"
+        contentClass="paste-media-placement-drawer-content"
+        drawerProps={{
+          closeOnOutsidePointer: false,
+        }}>
+        <div class="paste-media-placement-sheet">
+          <div
+            class="handle"
+            aria-hidden="true"
+          />
+          <h2 class="title">{props.title}</h2>
+          <p class="description">{props.description}</p>
+          <div class="choices">{actions()}</div>
+          <Button
+            variant="ghost"
+            size="sm"
+            class="cancel-action"
+            label={props.cancelLabel}
+            onClick={props.onCancel}
+          />
+        </div>
+      </Drawer>
     </Show>
   )
 }

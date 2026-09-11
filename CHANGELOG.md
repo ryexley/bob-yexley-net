@@ -5,6 +5,13 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.45.1] - 2026-09-11
+
+### Fixed
+
+- Pasting images and GIFs into a blip on iOS actually attaches them, with the
+  placement chooser on a bottom drawer on phones
+
 ## [0.45.0] - 2026-09-10
 
 ### Added
