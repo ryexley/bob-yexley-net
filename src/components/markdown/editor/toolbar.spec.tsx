@@ -84,21 +84,25 @@ describe("MarkdownEditor Toolbar", () => {
   })
 
   it("restores text formatting controls when no embed is selected", () => {
+    const onFormatApply = vi.fn()
     render(() => (
       <Toolbar
         {...toolbarProps}
         mode="text"
         activeFormats={["bold"]}
         disabledFormats={[]}
-        onFormatApply={() => {}}
+        onFormatApply={onFormatApply}
       />
     ))
 
     expect(
       screen.getByRole("toolbar", { name: "Markdown formatting toolbar" }),
     ).toBeTruthy()
+    expect(screen.getByRole("button", { name: "Paste" })).toBeTruthy()
     expect(
       screen.queryByRole("button", { name: "50% of column width" }),
     ).toBeNull()
+    fireEvent.click(screen.getByRole("button", { name: "Paste" }))
+    expect(onFormatApply).toHaveBeenCalledWith("paste")
   })
 })

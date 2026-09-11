@@ -17,6 +17,7 @@ import {
   toggleLinkCommand,
 } from "@milkdown/preset-commonmark"
 import { toggleHighlightCommand } from "./plugins/highlight"
+import { clipboardReadIsAvailable } from "@/modules/media/clipboard-snapshot"
 
 export interface FormattingOption {
   key: string
@@ -87,6 +88,16 @@ export const formattingOptions: FormattingOption[] = [
       redo(view.state, view.dispatch)
     },
     isDisabled: ctx => redoDepth(ctx.get(editorStateCtx)) <= 0,
+    group: 0,
+  },
+  {
+    key: "paste",
+    icon: "content_paste",
+    ariaLabel: "Paste",
+    handler: () => {
+      // Handled by MarkdownEditor so it can read the clipboard in the tap gesture.
+    },
+    isDisabled: () => !clipboardReadIsAvailable(),
     group: 0,
   },
   {

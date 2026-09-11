@@ -1,7 +1,7 @@
 {
   "name": "bob.yexley.net",
   "description": "my personal web site",
-  "version": "0.45.5",
+  "version": "0.45.6",
   "type": "module",
   "scripts": {
     "refresh": "rm -rf node_modules && rm -f pnpm-lock.yaml && pnpm install",

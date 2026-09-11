@@ -1158,22 +1158,34 @@ export function BlipEditor(props: BlipEditorProps) {
     }
   }
 
+  function ingestClipboardMedia(inspected: {
+    accepted: File[]
+    rejected: { file: File }[]
+  }) {
+    setMediaError(
+      inspected.rejected.length > 0
+        ? tr("media.invalidFiles", { count: inspected.rejected.length })
+        : null,
+    )
+    if (inspected.accepted.length > 0) {
+      setPasteFiles(inspected.accepted)
+    }
+  }
+
   function handleClipboardPaste(event: ClipboardEvent) {
     const instance = media()
     if (!instance) {
       return false
     }
 
-    return consumeClipboardMediaPaste(event, inspected => {
-      setMediaError(
-        inspected.rejected.length > 0
-          ? tr("media.invalidFiles", { count: inspected.rejected.length })
-          : null,
-      )
-      if (inspected.accepted.length > 0) {
-        setPasteFiles(inspected.accepted)
-      }
-    })
+    return consumeClipboardMediaPaste(event, ingestClipboardMedia)
+  }
+
+  const handleToolbarClipboardMedia = (files: File[]) => {
+    if (!media()) {
+      return
+    }
+    ingestClipboardMedia(validateMediaFiles(files))
   }
 
   const closePastePrompt = () => {
@@ -1688,6 +1700,7 @@ export function BlipEditor(props: BlipEditorProps) {
                   onChange={handleContentChange}
                   onEditorApi={setEditorApi}
                   onContentMetricsChange={handleContentMetricsChange}
+                  onClipboardMedia={handleToolbarClipboardMedia}
                   AboveControls={ComposerMediaChrome}
                   aboveControlsProps={{
                     media,
