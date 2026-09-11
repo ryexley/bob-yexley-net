@@ -664,7 +664,7 @@ export function BlipUpdateEditor(props: BlipUpdateEditorProps) {
         ? trEditor("media.invalidFiles", { count: inspected.rejected.length })
         : null,
     )
-    if (inspected.accepted.length > 0) {
+    if (inspected.accepted.length > 0 && pasteFiles() == null) {
       setPasteFiles(inspected.accepted)
     }
   }

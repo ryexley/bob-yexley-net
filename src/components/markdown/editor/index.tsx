@@ -270,12 +270,14 @@ export function MarkdownEditor(props: MarkdownEditorProps) {
   const handleToolbarPaste = async () => {
     // Call read() from the click itself. pointerdown is too early: Safari
     // treats the rest of that tap as dismissing its Paste callout.
+    // Keep the editor focused (toolbar preventDefault). Safari only exposes
+    // GIFs on the native paste event; if the button steals focus, the chip
+    // tap pastes into nothing.
     const snapshot = await readClipboardSnapshot()
     if (!editorInstance) {
       return
     }
     if (snapshot.denied) {
-      focusEditor()
       return
     }
     if (snapshot.files.length > 0) {
@@ -283,7 +285,6 @@ export function MarkdownEditor(props: MarkdownEditorProps) {
       return
     }
     if (!snapshot.text) {
-      focusEditor()
       return
     }
     editorInstance.action(ctx => {

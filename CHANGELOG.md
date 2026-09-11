@@ -5,6 +5,13 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.45.9] - 2026-09-11
+
+### Fixed
+
+- Toolbar Paste keeps the editor focused so Safari's Paste confirmation can
+  land the GIF in the field instead of the toolbar button
+
 ## [0.45.8] - 2026-09-11
 
 ### Fixed

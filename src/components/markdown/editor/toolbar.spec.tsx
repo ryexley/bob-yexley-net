@@ -105,24 +105,4 @@ describe("MarkdownEditor Toolbar", () => {
     fireEvent.click(screen.getByRole("button", { name: "Paste" }))
     expect(onFormatApply).toHaveBeenCalledWith("paste")
   })
-
-  it("does not preventDefault on Paste pointerdown", () => {
-    render(() => (
-      <Toolbar
-        {...toolbarProps}
-        mode="text"
-        activeFormats={[]}
-        disabledFormats={[]}
-        onFormatApply={() => {}}
-      />
-    ))
-
-    const paste = screen.getByRole("button", { name: "Paste" })
-    const event = new PointerEvent("pointerdown", {
-      bubbles: true,
-      cancelable: true,
-    })
-    paste.dispatchEvent(event)
-    expect(event.defaultPrevented).toBe(false)
-  })
 })

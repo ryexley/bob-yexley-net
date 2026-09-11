@@ -198,27 +198,9 @@ export default function Toolbar(props: ToolbarProps) {
                         }))
                       : (closeLinkEditor(), props.onFormatApply(option.key))
                 }
-                onPointerDown={event => {
-                  if (option.key === "paste") {
-                    // Do not preventDefault or start a clipboard read here.
-                    // Safari shows its Paste callout for other-app content;
-                    // pointerdown+read makes this same tap dismiss that callout.
-                    return
-                  }
-                  preventControlFocus(event)
-                }}
-                onMouseDown={event => {
-                  if (option.key === "paste") {
-                    return
-                  }
-                  preventControlFocus(event)
-                }}
-                onPointerUp={event => {
-                  if (option.key === "paste") {
-                    return
-                  }
-                  blurControl(event)
-                }}
+                onPointerDown={preventControlFocus}
+                onMouseDown={preventControlFocus}
+                onPointerUp={blurControl}
                 class={cx("toolbar-button", {
                   "has-label": Boolean(option.label),
                 })}>

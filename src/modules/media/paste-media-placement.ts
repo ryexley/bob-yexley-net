@@ -2,14 +2,12 @@ import type { AttachedUpload } from "./upload-store"
 import {
   clipboardLooksLikeMedia,
   clipboardMediaFiles,
-  normalizeClipboardMediaFile,
+  filesFromHtmlDataUrls,
   validateMediaFiles,
   type MediaValidationResult,
 } from "./file-validation"
 import { MEDIA_PLACEMENT, type MediaPlacement } from "./placement"
-
-const DATA_URL_IMAGE =
-  /src=["'](data:(image\/[a-zA-Z0-9.+-]+);base64,[A-Za-z0-9+/]+=*)["']/gi
+import { snapshotFromClipboardItems } from "./clipboard-snapshot"
 
 /**
  * Inspect a paste event for media files. `null` means leave the paste alone
@@ -30,40 +28,6 @@ function markPasteHandled(event: ClipboardEvent) {
   event.preventDefault()
   event.stopPropagation()
   event.stopImmediatePropagation?.()
-}
-
-function filesFromHtmlDataUrls(html: string): File[] {
-  if (!html) {
-    return []
-  }
-  const files: File[] = []
-  for (const match of html.matchAll(DATA_URL_IMAGE)) {
-    const dataUrl = match[1]
-    const mime = match[2]
-    if (!dataUrl || !mime) {
-      continue
-    }
-    const comma = dataUrl.indexOf(",")
-    if (comma < 0) {
-      continue
-    }
-    try {
-      const binary = atob(dataUrl.slice(comma + 1))
-      const bytes = new Uint8Array(binary.length)
-      for (let index = 0; index < binary.length; index += 1) {
-        bytes[index] = binary.charCodeAt(index)
-      }
-      files.push(
-        normalizeClipboardMediaFile(
-          new File([bytes], "image", { type: mime }),
-          mime,
-        ),
-      )
-    } catch {
-      // Ignore malformed data URLs.
-    }
-  }
-  return files
 }
 
 export async function readClipboardMediaFiles(
@@ -87,22 +51,8 @@ export async function readClipboardMediaFiles(
   }
 
   try {
-    const items = await clipboard.read()
-    const files: File[] = []
-    for (const item of items) {
-      const type = item.types.find(
-        candidate =>
-          candidate.startsWith("image/") || candidate.startsWith("video/"),
-      )
-      if (!type) {
-        continue
-      }
-      const blob = await item.getType(type)
-      files.push(
-        normalizeClipboardMediaFile(new File([blob], "image", { type }), type),
-      )
-    }
-    return files
+    const snapshot = await snapshotFromClipboardItems(await clipboard.read())
+    return snapshot.files
   } catch {
     return []
   }

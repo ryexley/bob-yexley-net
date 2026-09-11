@@ -3,6 +3,7 @@ import {
   clipboardReadIsAvailable,
   clipboardSnapshotIsPasteable,
   readClipboardSnapshot,
+  snapshotFromClipboardItems,
 } from "./clipboard-snapshot"
 
 const originalClipboard = navigator.clipboard
@@ -91,5 +92,44 @@ describe("readClipboardSnapshot", () => {
     expect(snapshot.files).toHaveLength(1)
     expect(snapshot.files[0]?.type).toBe("image/png")
     expect(snapshot.text).toBe("hello")
+  })
+})
+
+describe("snapshotFromClipboardItems", () => {
+  it("pulls a gif out of clipboard HTML when image types are absent", async () => {
+    const html = `<img src="data:image/gif;base64,R0lGODlhAQABAAAAACw=">`
+    const item = {
+      types: ["text/html"],
+      getType: vi.fn(async (type: string) => {
+        if (type === "text/html") {
+          return new Blob([html], { type: "text/html" })
+        }
+        throw new Error(`missing ${type}`)
+      }),
+    }
+
+    const snapshot = await snapshotFromClipboardItems([
+      item as unknown as ClipboardItem,
+    ])
+    expect(snapshot.files).toHaveLength(1)
+    expect(snapshot.files[0]?.type).toBe("image/gif")
+  })
+
+  it("does not treat a missing image representation as a denied read", async () => {
+    const item = {
+      types: ["text/plain"],
+      getType: vi.fn(async (type: string) => {
+        if (type === "text/plain") {
+          return new Blob(["hello"], { type: "text/plain" })
+        }
+        throw new Error(`missing ${type}`)
+      }),
+    }
+
+    const snapshot = await snapshotFromClipboardItems([
+      item as unknown as ClipboardItem,
+    ])
+    expect(snapshot).toEqual({ files: [], text: "hello" })
+    expect(snapshot.denied).toBeUndefined()
   })
 })

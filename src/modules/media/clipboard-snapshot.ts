@@ -1,4 +1,7 @@
-import { normalizeClipboardMediaFile } from "./file-validation"
+import {
+  filesFromHtmlDataUrls,
+  normalizeClipboardMediaFile,
+} from "./file-validation"
 
 export type ClipboardSnapshot = {
   files: File[]
@@ -24,6 +27,94 @@ export function clipboardSnapshotIsPasteable(
   return snapshot.files.length > 0 || snapshot.text.trim().length > 0
 }
 
+// WebKit's async clipboard API only documents image/png for images. GIFs
+// copied from Photos usually arrive on the native paste event instead. Still
+// try common media types; getType throws if that representation is absent.
+const MEDIA_TYPES_TO_TRY = [
+  "image/png",
+  "image/gif",
+  "image/jpeg",
+  "image/webp",
+  "image/heic",
+  "image/heif",
+  "video/mp4",
+  "video/quicktime",
+]
+
+const isMediaMime = (mime: string): boolean =>
+  mime.startsWith("image/") || mime.startsWith("video/")
+
+export async function snapshotFromClipboardItems(
+  items: ClipboardItem[],
+): Promise<ClipboardSnapshot> {
+  const files: File[] = []
+  let text = ""
+
+  for (const item of items) {
+    const listed = Array.from(item.types ?? [])
+    const candidates = [
+      ...listed.filter(type => isMediaMime(type)),
+      ...MEDIA_TYPES_TO_TRY,
+    ]
+    const tried = new Set<string>()
+    let foundMedia = false
+
+    for (const type of candidates) {
+      if (tried.has(type)) {
+        continue
+      }
+      tried.add(type)
+      try {
+        const blob = await item.getType(type)
+        if (!blob || blob.size === 0) {
+          continue
+        }
+        const mime = (blob.type || type).toLowerCase()
+        if (!isMediaMime(mime)) {
+          continue
+        }
+        files.push(
+          normalizeClipboardMediaFile(
+            new File([blob], "image", { type: mime }),
+            mime,
+          ),
+        )
+        foundMedia = true
+        break
+      } catch {
+        // Representation is not on this item.
+      }
+    }
+
+    if (foundMedia) {
+      continue
+    }
+
+    if (listed.includes("text/html")) {
+      try {
+        const html = await (await item.getType("text/html")).text()
+        const fromHtml = filesFromHtmlDataUrls(html)
+        if (fromHtml.length > 0) {
+          files.push(...fromHtml)
+          continue
+        }
+      } catch {
+        // Ignore missing HTML.
+      }
+    }
+
+    if (!text && listed.includes("text/plain")) {
+      try {
+        text = await (await item.getType("text/plain")).text()
+      } catch {
+        // Ignore missing text.
+      }
+    }
+  }
+
+  return { files, text }
+}
+
 /**
  * Read the clipboard. Must be invoked synchronously from a click handler.
  *
@@ -42,30 +133,7 @@ export async function readClipboardSnapshot(): Promise<ClipboardSnapshot> {
 
   if (typeof clipboard.read === "function") {
     try {
-      const items = await clipboard.read()
-      const files: File[] = []
-      let text = ""
-      for (const item of items) {
-        const mediaType = item.types.find(
-          candidate =>
-            candidate.startsWith("image/") || candidate.startsWith("video/"),
-        )
-        if (mediaType) {
-          const blob = await item.getType(mediaType)
-          files.push(
-            normalizeClipboardMediaFile(
-              new File([blob], "image", { type: mediaType }),
-              mediaType,
-            ),
-          )
-          continue
-        }
-        if (!text && item.types.includes("text/plain")) {
-          const blob = await item.getType("text/plain")
-          text = await blob.text()
-        }
-      }
-      return { files, text }
+      return await snapshotFromClipboardItems(await clipboard.read())
     } catch {
       return { files: [], text: "", denied: true }
     }
