@@ -25,12 +25,14 @@ export function clipboardSnapshotIsPasteable(
 }
 
 /**
- * Read the clipboard. Must be invoked during a user gesture on iOS/Safari
- * (typically `pointerdown` on the Paste control, *before* preventDefault).
+ * Read the clipboard. Must be invoked synchronously from a click handler.
+ *
+ * Do not call this from pointerdown: on iOS, Safari shows a Paste callout
+ * for other-app clipboard content, and the rest of that same tap dismisses
+ * it, so the read looks like a no-op.
  *
  * A denied read is not "empty clipboard" — callers must not disable Paste.
- * We also do not fall through to `readText()` after `read()` is denied;
- * that second call is what surfaces Safari's extra Paste chip.
+ * We also do not fall through to `readText()` after `read()` is denied.
  */
 export async function readClipboardSnapshot(): Promise<ClipboardSnapshot> {
   const clipboard = globalThis.navigator?.clipboard

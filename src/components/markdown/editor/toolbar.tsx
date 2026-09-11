@@ -39,8 +39,6 @@ interface ToolbarProps {
   linkEditorRequestNonce: number
   onRequestEditorFocus: () => void
   onFormatApply: (format: string, payload?: any) => void
-  /** Start the clipboard read during pointerdown so iOS keeps the user gesture. */
-  onPastePrepare?: () => void
 }
 
 export default function Toolbar(props: ToolbarProps) {
@@ -202,8 +200,9 @@ export default function Toolbar(props: ToolbarProps) {
                 }
                 onPointerDown={event => {
                   if (option.key === "paste") {
-                    // Keep this tap as a clipboard user gesture (no preventDefault).
-                    props.onPastePrepare?.()
+                    // Do not preventDefault or start a clipboard read here.
+                    // Safari shows its Paste callout for other-app content;
+                    // pointerdown+read makes this same tap dismiss that callout.
                     return
                   }
                   preventControlFocus(event)
@@ -214,7 +213,12 @@ export default function Toolbar(props: ToolbarProps) {
                   }
                   preventControlFocus(event)
                 }}
-                onPointerUp={blurControl}
+                onPointerUp={event => {
+                  if (option.key === "paste") {
+                    return
+                  }
+                  blurControl(event)
+                }}
                 class={cx("toolbar-button", {
                   "has-label": Boolean(option.label),
                 })}>

@@ -5,6 +5,13 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.45.8] - 2026-09-11
+
+### Fixed
+
+- Toolbar Paste on iOS reads the clipboard on click, not finger-down, so
+  Safari's Paste confirmation is not cancelled by the same tap
+
 ## [0.45.7] - 2026-09-11
 
 ### Fixed

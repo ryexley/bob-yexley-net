@@ -38,10 +38,7 @@ import {
 import { placeholder } from "./plugins/placeholder"
 import { applyFormat, getEditorToolbarSnapshot } from "./commands"
 import { insertClipboardText } from "./insert-clipboard-text"
-import {
-  readClipboardSnapshot,
-  type ClipboardSnapshot,
-} from "@/modules/media/clipboard-snapshot"
+import { readClipboardSnapshot } from "@/modules/media/clipboard-snapshot"
 import type { EmbedSelection } from "./plugins/media-embed-layout"
 import Toolbar from "./toolbar"
 import { StatusBar } from "./status-bar"
@@ -270,17 +267,10 @@ export function MarkdownEditor(props: MarkdownEditorProps) {
     ),
   )
 
-  let pendingClipboardRead: Promise<ClipboardSnapshot> | null = null
-
-  const beginToolbarPaste = () => {
-    // Kick off the read during pointerdown so Safari treats this tap as a
-    // user gesture and pastes instead of showing its own Paste chip.
-    pendingClipboardRead = readClipboardSnapshot()
-  }
-
   const handleToolbarPaste = async () => {
-    const snapshot = await (pendingClipboardRead ?? readClipboardSnapshot())
-    pendingClipboardRead = null
+    // Call read() from the click itself. pointerdown is too early: Safari
+    // treats the rest of that tap as dismissing its Paste callout.
+    const snapshot = await readClipboardSnapshot()
     if (!editorInstance) {
       return
     }
@@ -579,7 +569,6 @@ export function MarkdownEditor(props: MarkdownEditorProps) {
       linkEditorRequestNonce={linkEditorRequestNonce()}
       onRequestEditorFocus={focusEditor}
       onFormatApply={handleApplyFormat}
-      onPastePrepare={beginToolbarPaste}
     />
   )
 

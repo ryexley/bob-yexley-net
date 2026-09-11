@@ -106,26 +106,23 @@ describe("MarkdownEditor Toolbar", () => {
     expect(onFormatApply).toHaveBeenCalledWith("paste")
   })
 
-  it("starts clipboard read on Paste pointerdown before click", () => {
-    const onPastePrepare = vi.fn()
-    const onFormatApply = vi.fn()
-
+  it("does not preventDefault on Paste pointerdown", () => {
     render(() => (
       <Toolbar
         {...toolbarProps}
         mode="text"
         activeFormats={[]}
         disabledFormats={[]}
-        onFormatApply={onFormatApply}
-        onPastePrepare={onPastePrepare}
+        onFormatApply={() => {}}
       />
     ))
 
     const paste = screen.getByRole("button", { name: "Paste" })
-    fireEvent.pointerDown(paste)
-    expect(onPastePrepare).toHaveBeenCalledTimes(1)
-    expect(onFormatApply).not.toHaveBeenCalled()
-    fireEvent.click(paste)
-    expect(onFormatApply).toHaveBeenCalledWith("paste")
+    const event = new PointerEvent("pointerdown", {
+      bubbles: true,
+      cancelable: true,
+    })
+    paste.dispatchEvent(event)
+    expect(event.defaultPrevented).toBe(false)
   })
 })
