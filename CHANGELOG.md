@@ -5,6 +5,13 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.45.2] - 2026-09-11
+
+### Fixed
+
+- The phone paste placement chooser docks inside the composer so it stays
+  above the iOS keyboard instead of opening behind it
+
 ## [0.45.1] - 2026-09-11
 
 ### Fixed

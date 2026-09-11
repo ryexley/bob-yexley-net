@@ -1,68 +1,86 @@
-.paste-media-placement-overlay {
+.dialog-overlay.paste-media-placement-overlay {
   z-index: 1300;
+  background: rgb(0 0 0 / 0.45);
 }
 
-.paste-media-placement-dialog {
+.dialog.paste-media-placement-dialog {
   z-index: 1301;
-  width: min(22rem, calc(100vw - 2rem));
-
-  .actions {
-    display: flex;
-    justify-content: space-between;
-    gap: 0.75rem;
-    width: 100%;
-  }
-
-  .choices {
-    display: flex;
-    gap: 0.5rem;
-  }
+  width: min(24rem, calc(100vw - 2rem));
+  padding: 1.25rem;
+  background: var(--colors-mono-02);
 }
 
-body:has([data-corvu-drawer-content].paste-media-placement-drawer[data-open]) {
-  [data-corvu-drawer-overlay] {
-    z-index: 1300;
-  }
+/*
+ * Phone chooser must live inside the composer, not as a document-fixed
+ * drawer. iOS keeps `position: fixed; bottom: 0` in the layout viewport,
+ * which sits behind the keyboard. The composer dialog is already inset
+ * to the visual viewport, so an absolute sheet at its bottom stays visible.
+ */
+.paste-media-placement-phone-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  pointer-events: none;
 }
 
-[data-corvu-drawer-content].paste-media-placement-drawer,
-[data-corvu-drawer-content].paste-media-placement-drawer-content {
-  z-index: 1301;
+.paste-media-placement-phone-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgb(0 0 0 / 0.45);
+  pointer-events: auto;
 }
 
-.paste-media-placement-sheet {
+.paste-media-placement-phone-sheet {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  z-index: 1;
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
-  padding: 0.5rem 1rem 1.25rem;
+  max-height: 100%;
+  overflow: auto;
+  padding: 0.75rem 1.25rem 1.25rem;
+  border-radius: 1.25rem 1.25rem 0 0;
+  background: var(--colors-mono-02);
+  color: var(--colors-text-primary);
+  border-top: 1px solid var(--colors-mono-05);
+  box-shadow: 0 -1.5rem 3rem rgb(0 0 0 / 24%);
+  pointer-events: auto;
+  touch-action: manipulation;
+}
 
-  .handle {
-    align-self: center;
-    background: var(--colors-mono-05);
-    border-radius: 999px;
-    height: 0.25rem;
-    width: 2.5rem;
-  }
+.paste-media-placement-phone-handle {
+  width: 2.5rem;
+  height: 0.3rem;
+  margin: 0.15rem auto 0.85rem;
+  border-radius: 999px;
+  background: var(--colors-mono-06);
+}
 
-  .title {
-    font-size: 1.05rem;
-    font-weight: 600;
-    margin: 0;
-  }
+.paste-media-placement-prompt-title {
+  margin: 0 0 0.35rem;
+  font-size: 1.05rem;
+  font-weight: 650;
+}
 
-  .description {
-    color: var(--colors-mono-10);
-    font-size: 0.875rem;
-    margin: 0;
-  }
+.paste-media-placement-prompt-description {
+  margin: 0 0 1rem;
+  color: var(--colors-mono-10);
+  font-size: 0.92rem;
+  line-height: 1.4;
+}
 
-  .choices {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
+.paste-media-placement-prompt-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  justify-content: flex-end;
+}
 
-    .button {
-      width: 100%;
-    }
-  }
+.paste-media-placement-prompt-actions-stacked {
+  flex-direction: column;
+}
+
+.paste-media-placement-prompt-actions-stacked .button {
+  width: 100%;
 }

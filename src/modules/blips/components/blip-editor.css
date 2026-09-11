@@ -115,6 +115,7 @@
   flex: 1;
   min-height: 0;
   overflow: hidden;
+  position: relative;
   width: 100%;
 
   .markdown-editor {
@@ -671,7 +672,8 @@
 
     .icon {
       filter: drop-shadow(
-        0 0 0.1875rem color-mix(in srgb, var(--colors-cool-blue) 55%, transparent)
+        0 0 0.1875rem
+          color-mix(in srgb, var(--colors-cool-blue) 55%, transparent)
       );
       font-size: 1.75rem;
       margin-inline-start: 0.125rem;
@@ -993,8 +995,8 @@
     max-height: var(--blip-editor-shell-max-height);
     min-height: 16rem;
     padding-top: 0.75rem;
-    transition:
-      max-height var(--resize-transition-duration) var(--resize-transition-easing);
+    transition: max-height var(--resize-transition-duration)
+      var(--resize-transition-easing);
     width: 100%;
   }
 
