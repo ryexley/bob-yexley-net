@@ -32,13 +32,38 @@ describe("clipboardSnapshotIsPasteable", () => {
 })
 
 describe("readClipboardSnapshot", () => {
-  it("returns empty when the clipboard API is missing", async () => {
+  it("returns denied when the clipboard API is missing", async () => {
     Object.defineProperty(navigator, "clipboard", {
       configurable: true,
       value: undefined,
     })
     expect(clipboardReadIsAvailable()).toBe(false)
-    expect(await readClipboardSnapshot()).toEqual({ files: [], text: "" })
+    expect(await readClipboardSnapshot()).toEqual({
+      files: [],
+      text: "",
+      denied: true,
+    })
+  })
+
+  it("does not fall through to readText after read is denied", async () => {
+    const clipboard = {
+      read: vi.fn(async () => {
+        throw new Error("Document is not focused.")
+      }),
+      readText: vi.fn(async () => "should-not-run"),
+    }
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: clipboard,
+    })
+
+    expect(await readClipboardSnapshot()).toEqual({
+      files: [],
+      text: "",
+      denied: true,
+    })
+    expect(clipboard.read).toHaveBeenCalledTimes(1)
+    expect(clipboard.readText).not.toHaveBeenCalled()
   })
 
   it("reads image and text clipboard items", async () => {

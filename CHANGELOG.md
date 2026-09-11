@@ -5,6 +5,14 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.45.7] - 2026-09-11
+
+### Fixed
+
+- Toolbar Paste on iOS reads the clipboard on the tap itself so Safari pastes
+  instead of showing its own Paste chip, and a dismissed prompt no longer
+  disables the button
+
 ## [0.45.6] - 2026-09-11
 
 ### Added

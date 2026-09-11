@@ -3,6 +3,8 @@ import { normalizeClipboardMediaFile } from "./file-validation"
 export type ClipboardSnapshot = {
   files: File[]
   text: string
+  /** True when the browser refused the read (iOS dismissed the Paste chip). */
+  denied?: boolean
 }
 
 export function clipboardReadIsAvailable(): boolean {
@@ -23,14 +25,17 @@ export function clipboardSnapshotIsPasteable(
 }
 
 /**
- * Read whatever the clipboard will give us. Must run in a user gesture on
- * iOS/Safari — probing in the background is denied, so callers treat a thrown
- * permission error as "unknown" rather than empty.
+ * Read the clipboard. Must be invoked during a user gesture on iOS/Safari
+ * (typically `pointerdown` on the Paste control, *before* preventDefault).
+ *
+ * A denied read is not "empty clipboard" — callers must not disable Paste.
+ * We also do not fall through to `readText()` after `read()` is denied;
+ * that second call is what surfaces Safari's extra Paste chip.
  */
 export async function readClipboardSnapshot(): Promise<ClipboardSnapshot> {
   const clipboard = globalThis.navigator?.clipboard
   if (!clipboard) {
-    return { files: [], text: "" }
+    return { files: [], text: "", denied: true }
   }
 
   if (typeof clipboard.read === "function") {
@@ -60,7 +65,7 @@ export async function readClipboardSnapshot(): Promise<ClipboardSnapshot> {
       }
       return { files, text }
     } catch {
-      // Permission denied or unsupported — try the text-only path.
+      return { files: [], text: "", denied: true }
     }
   }
 
@@ -68,9 +73,9 @@ export async function readClipboardSnapshot(): Promise<ClipboardSnapshot> {
     try {
       return { files: [], text: await clipboard.readText() }
     } catch {
-      return { files: [], text: "" }
+      return { files: [], text: "", denied: true }
     }
   }
 
-  return { files: [], text: "" }
+  return { files: [], text: "", denied: true }
 }

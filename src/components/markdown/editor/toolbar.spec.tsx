@@ -105,4 +105,27 @@ describe("MarkdownEditor Toolbar", () => {
     fireEvent.click(screen.getByRole("button", { name: "Paste" }))
     expect(onFormatApply).toHaveBeenCalledWith("paste")
   })
+
+  it("starts clipboard read on Paste pointerdown before click", () => {
+    const onPastePrepare = vi.fn()
+    const onFormatApply = vi.fn()
+
+    render(() => (
+      <Toolbar
+        {...toolbarProps}
+        mode="text"
+        activeFormats={[]}
+        disabledFormats={[]}
+        onFormatApply={onFormatApply}
+        onPastePrepare={onPastePrepare}
+      />
+    ))
+
+    const paste = screen.getByRole("button", { name: "Paste" })
+    fireEvent.pointerDown(paste)
+    expect(onPastePrepare).toHaveBeenCalledTimes(1)
+    expect(onFormatApply).not.toHaveBeenCalled()
+    fireEvent.click(paste)
+    expect(onFormatApply).toHaveBeenCalledWith("paste")
+  })
 })

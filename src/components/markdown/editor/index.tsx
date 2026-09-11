@@ -39,9 +39,8 @@ import { placeholder } from "./plugins/placeholder"
 import { applyFormat, getEditorToolbarSnapshot } from "./commands"
 import { insertClipboardText } from "./insert-clipboard-text"
 import {
-  clipboardReadIsAvailable,
-  clipboardSnapshotIsPasteable,
   readClipboardSnapshot,
+  type ClipboardSnapshot,
 } from "@/modules/media/clipboard-snapshot"
 import type { EmbedSelection } from "./plugins/media-embed-layout"
 import Toolbar from "./toolbar"
@@ -264,9 +263,6 @@ export function MarkdownEditor(props: MarkdownEditorProps) {
   const [mediaToolbarType, setMediaToolbarType] = createSignal<
     string | undefined
   >(undefined)
-  const [pasteHasContent, setPasteHasContent] = createSignal<boolean | null>(
-    null,
-  )
   const [toolbarVisible, setToolbarVisible] = createSignal(
     withWindow(
       () => readToolbarVisiblePreference(localStorage, local.showToolbar),
@@ -274,18 +270,30 @@ export function MarkdownEditor(props: MarkdownEditorProps) {
     ),
   )
 
+  let pendingClipboardRead: Promise<ClipboardSnapshot> | null = null
+
+  const beginToolbarPaste = () => {
+    // Kick off the read during pointerdown so Safari treats this tap as a
+    // user gesture and pastes instead of showing its own Paste chip.
+    pendingClipboardRead = readClipboardSnapshot()
+  }
+
   const handleToolbarPaste = async () => {
+    const snapshot = await (pendingClipboardRead ?? readClipboardSnapshot())
+    pendingClipboardRead = null
     if (!editorInstance) {
       return
     }
-    // Read first so iOS still treats this as the user-gesture for clipboard.
-    const snapshot = await readClipboardSnapshot()
-    setPasteHasContent(clipboardSnapshotIsPasteable(snapshot))
+    if (snapshot.denied) {
+      focusEditor()
+      return
+    }
     if (snapshot.files.length > 0) {
       editorCallbacks.onClipboardMedia?.(snapshot.files)
       return
     }
     if (!snapshot.text) {
+      focusEditor()
       return
     }
     editorInstance.action(ctx => {
@@ -315,13 +323,7 @@ export function MarkdownEditor(props: MarkdownEditorProps) {
 
     const snapshot = getEditorToolbarSnapshot(editorInstance, selection)
     setActiveFormats(snapshot.activeFormats)
-    const disabled = [...snapshot.disabledFormats]
-    if (!clipboardReadIsAvailable() || pasteHasContent() === false) {
-      if (!disabled.includes("paste")) {
-        disabled.push("paste")
-      }
-    }
-    setDisabledFormats(disabled)
+    setDisabledFormats(snapshot.disabledFormats)
     setToolbarMode(snapshot.mode)
     setMediaToolbarType(snapshot.mediaType)
     setSelectedLinkText(snapshot.linkSelectionState.selectedLinkText)
@@ -345,39 +347,6 @@ export function MarkdownEditor(props: MarkdownEditorProps) {
     editorCallbacks.onEditorApi = local.onEditorApi
     editorCallbacks.onContentMetricsChange = local.onContentMetricsChange
     editorCallbacks.onClipboardMedia = local.onClipboardMedia
-  })
-
-  createEffect(() => {
-    if (typeof window === "undefined" || !clipboardReadIsAvailable()) {
-      setPasteHasContent(false)
-      return
-    }
-
-    const probe = () => {
-      void readClipboardSnapshot()
-        .then(snapshot => {
-          setPasteHasContent(clipboardSnapshotIsPasteable(snapshot))
-        })
-        .catch(() => {
-          setPasteHasContent(null)
-        })
-    }
-
-    const onClipboardChange = () => {
-      probe()
-    }
-
-    window.addEventListener("clipboardchange", onClipboardChange)
-    onCleanup(() => {
-      window.removeEventListener("clipboardchange", onClipboardChange)
-    })
-  })
-
-  createEffect(() => {
-    void pasteHasContent()
-    if (editorInstance) {
-      syncToolbarState()
-    }
   })
 
   const emitContentMetrics = debounce((markdown: string) => {
@@ -610,6 +579,7 @@ export function MarkdownEditor(props: MarkdownEditorProps) {
       linkEditorRequestNonce={linkEditorRequestNonce()}
       onRequestEditorFocus={focusEditor}
       onFormatApply={handleApplyFormat}
+      onPastePrepare={beginToolbarPaste}
     />
   )
 
