@@ -5,7 +5,9 @@ import { PersonalCloudImage } from "./personal-cloud-image"
 const KEY = "media/u/b/photo"
 
 const img = () =>
-  document.querySelector("img.personal-cloud-image-img") as HTMLImageElement | null
+  document.querySelector(
+    "img.personal-cloud-image-img",
+  ) as HTMLImageElement | null
 
 beforeEach(() => {
   vi.stubEnv("VITE_MEDIA_STORAGE_URL", "https://cdn.test")
@@ -28,7 +30,9 @@ describe("PersonalCloudImage", () => {
     ))
 
     // 64px render context → micro variant.
-    expect(img()?.getAttribute("src")).toBe(`https://cdn.test/${KEY}-micro.webp`)
+    expect(img()?.getAttribute("src")).toBe(
+      `https://cdn.test/${KEY}-micro.webp`,
+    )
   })
 
   it("falls back through WebP siblings before the original", () => {
@@ -46,7 +50,9 @@ describe("PersonalCloudImage", () => {
     expect(el?.getAttribute("src")).toBe(`https://cdn.test/${KEY}-micro.webp`)
 
     fireEvent.error(el as HTMLImageElement)
-    expect(img()?.getAttribute("src")).toBe(`https://cdn.test/${KEY}-small.webp`)
+    expect(img()?.getAttribute("src")).toBe(
+      `https://cdn.test/${KEY}-small.webp`,
+    )
   })
 
   it("falls back variant → original → placeholder on load error", () => {
@@ -63,7 +69,14 @@ describe("PersonalCloudImage", () => {
     expect(el?.getAttribute("src")).toBe(`https://cdn.test/${KEY}-large.webp`)
 
     fireEvent.error(el as HTMLImageElement)
-    expect(img()?.getAttribute("src")).toBe(`https://cdn.test/${KEY}-original.jpg`)
+    expect(img()?.getAttribute("src")).toBe(
+      `https://cdn.test/${KEY}-original.jpg`,
+    )
+
+    fireEvent.error(img() as HTMLImageElement)
+    expect(img()?.getAttribute("src")).toBe(
+      `https://cdn.test/${KEY}-original.jpeg`,
+    )
 
     // Exhausting the candidates removes the <img> and leaves the placeholder.
     fireEvent.error(img() as HTMLImageElement)
@@ -84,7 +97,9 @@ describe("PersonalCloudImage", () => {
       />
     ))
 
-    expect(img()?.getAttribute("src")).toBe(`https://cdn.test/${KEY}-medium.webp`)
+    expect(img()?.getAttribute("src")).toBe(
+      `https://cdn.test/${KEY}-medium.webp`,
+    )
   })
 
   it("shows a compact broken-image icon in small tiles instead of status text", () => {
@@ -104,7 +119,9 @@ describe("PersonalCloudImage", () => {
       el = img()
     }
 
-    const placeholder = document.querySelector(".personal-cloud-image-placeholder")
+    const placeholder = document.querySelector(
+      ".personal-cloud-image-placeholder",
+    )
     expect(placeholder?.querySelector("svg")).toBeTruthy()
     expect(placeholder?.querySelector("div")).toBeNull()
   })
@@ -124,5 +141,41 @@ describe("PersonalCloudImage", () => {
     expect(
       document.querySelector(".personal-cloud-image-placeholder"),
     ).toBeTruthy()
+  })
+
+  it("skips WebP variants when processing failed and tries jpeg aliases", () => {
+    render(() => (
+      <PersonalCloudImage
+        imageKey={KEY}
+        mimeType="image/jpeg"
+        processingStatus="failed"
+        alt="failed"
+      />
+    ))
+
+    expect(img()?.getAttribute("src")).toBe(
+      `https://cdn.test/${KEY}-original.jpg`,
+    )
+
+    fireEvent.error(img() as HTMLImageElement)
+    expect(img()?.getAttribute("src")).toBe(
+      `https://cdn.test/${KEY}-original.jpeg`,
+    )
+  })
+
+  it("sizes the frame from stored intrinsic pixels instead of 16:9", () => {
+    render(() => (
+      <PersonalCloudImage
+        imageKey={KEY}
+        mimeType="image/jpeg"
+        processingStatus="failed"
+        intrinsicWidth={800}
+        intrinsicHeight={1200}
+        alt="poster"
+      />
+    ))
+
+    const frame = document.querySelector(".personal-cloud-image") as HTMLElement
+    expect(frame.style.aspectRatio).toBe("800 / 1200")
   })
 })

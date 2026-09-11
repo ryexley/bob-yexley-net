@@ -21,8 +21,11 @@ const bytes = () => new Uint8Array([0xff, 0xd8, 0xff]) // arbitrary non-empty bu
 
 describe("extensionForFile", () => {
   it("prefers a real extension from the filename", () => {
-    expect(extensionForFile({ name: "IMG_1234.JPEG", type: "image/jpeg" })).toBe(
-      "jpeg",
+    expect(
+      extensionForFile({ name: "IMG_1234.JPEG", type: "image/jpeg" }),
+    ).toBe("jpg")
+    expect(extensionForFile({ name: "shot.jpeg", type: "image/jpeg" })).toBe(
+      "jpg",
     )
   })
 
@@ -33,9 +36,9 @@ describe("extensionForFile", () => {
   })
 
   it("defaults clipboard pastes with no other signal to png", () => {
-    expect(extensionForFile({ name: "", type: "" }, { isClipboard: true })).toBe(
-      "png",
-    )
+    expect(
+      extensionForFile({ name: "", type: "" }, { isClipboard: true }),
+    ).toBe("png")
   })
 
   it("falls back to bin for an unknown, non-clipboard file", () => {

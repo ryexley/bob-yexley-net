@@ -47,7 +47,7 @@ import {
 } from "./placement"
 import {
   MediaVariant,
-  originalKey,
+  originalKeyCandidates,
   originalUrl,
   variantKey,
   variantUrl,
@@ -405,7 +405,7 @@ export function mediaStore(
   }
 
   const deleteRecordObjects = (record: BlipMedia): void => {
-    const keys = [originalKey(record.storage_key, record.mime_type)]
+    const keys = originalKeyCandidates(record.storage_key, record.mime_type)
     // Variants only exist for images whose processing completed (spec §4.2).
     if (
       record.media_type === "image" &&

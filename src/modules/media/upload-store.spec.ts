@@ -1,4 +1,15 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+
+const { mockReadImageDisplaySize } = vi.hoisted(() => ({
+  mockReadImageDisplaySize: vi.fn(
+    async (): Promise<{ width: number; height: number } | null> => null,
+  ),
+}))
+
+vi.mock("./image-display-size", () => ({
+  readImageDisplaySize: mockReadImageDisplaySize,
+}))
+
 import {
   createUploadStore,
   MAX_FILE_SIZE_BYTES,
@@ -72,19 +83,23 @@ class FakeXHR {
 const originalXHR = globalThis.XMLHttpRequest
 
 const makeR2 = (): R2Service => ({
-  getUploadParameters: vi.fn(async (params: { key: string; contentType: string }) => ({
-    method: "PUT" as const,
-    url: `https://r2.test/${params.key}`,
-    headers: { "Content-Type": params.contentType },
-    fields: {} as Record<string, never>,
-  })),
+  getUploadParameters: vi.fn(
+    async (params: { key: string; contentType: string }) => ({
+      method: "PUT" as const,
+      url: `https://r2.test/${params.key}`,
+      headers: { "Content-Type": params.contentType },
+      fields: {} as Record<string, never>,
+    }),
+  ),
   createMultipartUpload: vi.fn(async (params: { key: string }) => ({
     uploadId: "upload-1",
     key: params.key,
   })),
   signPart: vi.fn(async () => "https://r2.test/part"),
   listParts: vi.fn(async () => []),
-  completeMultipartUpload: vi.fn(async () => ({ location: "https://r2.test/done" })),
+  completeMultipartUpload: vi.fn(async () => ({
+    location: "https://r2.test/done",
+  })),
   abortMultipartUpload: vi.fn(async () => {}),
   uploadObject: vi.fn(async () => {}),
   deleteObject: vi.fn(async () => {}),
@@ -103,6 +118,8 @@ const imageFile = (name = "photo.jpg") =>
   new File([new Uint8Array([1, 2, 3, 4])], name, { type: "image/jpeg" })
 
 beforeEach(() => {
+  mockReadImageDisplaySize.mockReset()
+  mockReadImageDisplaySize.mockResolvedValue(null)
   ;(globalThis as unknown as { XMLHttpRequest: unknown }).XMLHttpRequest =
     FakeXHR as unknown as typeof XMLHttpRequest
 })
@@ -191,6 +208,22 @@ describe("createUploadStore — single-PUT image flow", () => {
     expect(store.allComplete()).toBe(true)
     expect(store.hasErrors()).toBe(false)
     expect(store.activeCount()).toBe(0)
+  })
+
+  it("stores jpeg originals as .jpg even when the filename says .jpeg", async () => {
+    const r2 = makeR2()
+    const store = createUploadStore({
+      r2Service: r2,
+      processMedia: vi.fn(async () => {
+        throw new Error("unused")
+      }),
+    })
+
+    await store.addFiles([imageFile("IMG_1234.JPEG")], "blip1", "user1")
+
+    expect(store.files()[0].originalKey).toBe(
+      "media/user1/blip1/blip1-1-original.jpg",
+    )
   })
 })
 
@@ -285,9 +318,9 @@ describe("createUploadStore — video flow", () => {
 
     store.removeFile(store.files()[0].id)
 
-    const deleted = (r2.deleteObject as ReturnType<typeof vi.fn>).mock.calls.map(
-      ([key]) => key,
-    )
+    const deleted = (
+      r2.deleteObject as ReturnType<typeof vi.fn>
+    ).mock.calls.map(([key]) => key)
     expect(deleted).toContain("media/user1/blip1/blip1-1-original.mp4")
     expect(deleted).toContain("media/user1/blip1/blip1-1-thumb.webp")
   })
@@ -319,6 +352,29 @@ describe("createUploadStore — processing failure", () => {
     expect(file.processingStatus).toBe("failed")
     expect(file.error).toContain("sharp exploded")
     expect(store.hasErrors()).toBe(false)
+  })
+
+  it("keeps client-measured display size when variant generation fails", async () => {
+    mockReadImageDisplaySize.mockResolvedValue({ width: 800, height: 1200 })
+    const r2 = makeR2()
+    const processMedia = vi.fn(async () => {
+      throw new Error("sharp exploded")
+    })
+    const successes: UploadSuccess[] = []
+
+    const store = createUploadStore({
+      r2Service: r2,
+      processMedia,
+      onUploadSuccess: s => successes.push(s),
+    })
+
+    await store.addFiles([imageFile()], "blip1", "user1")
+    await store.startQueue()
+    await vi.waitFor(() => expect(successes).toHaveLength(1))
+
+    expect(successes[0].processingStatus).toBe("failed")
+    expect(successes[0].width).toBe(800)
+    expect(successes[0].height).toBe(1200)
   })
 })
 
@@ -365,9 +421,9 @@ describe("createUploadStore — removeFile", () => {
     const id = store.files()[0].id
     store.removeFile(id)
 
-    const deleted = (r2.deleteObject as ReturnType<typeof vi.fn>).mock.calls.map(
-      ([key]) => key,
-    )
+    const deleted = (
+      r2.deleteObject as ReturnType<typeof vi.fn>
+    ).mock.calls.map(([key]) => key)
     expect(deleted).toContain("media/user1/blip1/blip1-1-original.jpg")
     expect(deleted).toContain("media/user1/blip1/blip1-1-micro.webp")
     expect(deleted).toContain("media/user1/blip1/blip1-1-small.webp")

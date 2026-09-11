@@ -3,7 +3,9 @@ import {
   MediaVariant,
   mimeTypeToExtension,
   originalKey,
+  originalKeyCandidates,
   originalUrl,
+  originalUrlCandidates,
   pickVariant,
   variantCandidateUrls,
   variantFallbackChain,
@@ -38,6 +40,16 @@ describe("object key derivation", () => {
   it("derives the original key with the source extension", () => {
     expect(originalKey(base, "image/jpeg")).toBe(`${base}-original.jpg`)
     expect(originalKey(base, "video/quicktime")).toBe(`${base}-original.mov`)
+  })
+
+  it("also considers a .jpeg original when cleaning up JPEGs", () => {
+    expect(originalKeyCandidates(base, "image/jpeg")).toEqual([
+      `${base}-original.jpg`,
+      `${base}-original.jpeg`,
+    ])
+    expect(originalKeyCandidates(base, "image/png")).toEqual([
+      `${base}-original.png`,
+    ])
   })
 
   it("derives webp variant keys", () => {
@@ -89,9 +101,15 @@ describe("pickVariant", () => {
   it("returns the fallback when no positive dimension is provided", () => {
     expect(pickVariant()).toBe(MediaVariant.Medium)
     expect(pickVariant({ width: 0, height: 0 })).toBe(MediaVariant.Medium)
-    expect(pickVariant({ fallback: MediaVariant.Large })).toBe(MediaVariant.Large)
+    expect(pickVariant({ fallback: MediaVariant.Large })).toBe(
+      MediaVariant.Large,
+    )
     expect(
-      pickVariant({ width: null, height: undefined, fallback: MediaVariant.Small }),
+      pickVariant({
+        width: null,
+        height: undefined,
+        fallback: MediaVariant.Small,
+      }),
     ).toBe(MediaVariant.Small)
   })
 })
@@ -116,6 +134,7 @@ describe("variantCandidateUrls", () => {
       `https://cdn.test/${base}-medium.webp`,
       `https://cdn.test/${base}-large.webp`,
       `https://cdn.test/${base}-original.jpg`,
+      `https://cdn.test/${base}-original.jpeg`,
     ])
   })
 
@@ -127,6 +146,16 @@ describe("variantCandidateUrls", () => {
       `https://cdn.test/${base}-small.webp`,
       `https://cdn.test/${base}-medium.webp`,
       `https://cdn.test/${base}-large.webp`,
+    ])
+  })
+
+  it("also tries a .jpeg original for image/jpeg", () => {
+    expect(originalUrlCandidates(base, "image/jpeg")).toEqual([
+      `https://cdn.test/${base}-original.jpg`,
+      `https://cdn.test/${base}-original.jpeg`,
+    ])
+    expect(originalUrlCandidates(base, "image/png")).toEqual([
+      `https://cdn.test/${base}-original.png`,
     ])
   })
 

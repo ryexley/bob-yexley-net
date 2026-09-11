@@ -27,6 +27,7 @@ import {
   extractThumbnail as defaultExtractThumbnail,
   type ExtractedThumbnail,
 } from "./thumbnail-extract"
+import { readImageDisplaySize } from "./image-display-size"
 import type { MediaResult, ProcessMediaResponse, UploadPart } from "./types"
 
 /**
@@ -548,6 +549,9 @@ export function createUploadStore(
           ? URL.createObjectURL(file)
           : undefined
 
+      const displaySize =
+        mediaType === "image" ? await readImageDisplaySize(file) : null
+
       byId.set(fileId, {
         id: fileId,
         key: baseKey,
@@ -562,6 +566,9 @@ export function createUploadStore(
         progress: 0,
         previewUrl,
         processingStatus: "pending",
+        ...(displaySize
+          ? { width: displaySize.width, height: displaySize.height }
+          : {}),
       })
       added.push({ key: baseKey, mediaType, mimeType: contentType })
 

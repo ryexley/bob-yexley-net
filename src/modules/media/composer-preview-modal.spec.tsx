@@ -4,9 +4,7 @@ import type { BlipMedia } from "./media-store"
 import type { Attachment } from "./media-store"
 import { ComposerPreviewModal } from "./composer-preview-modal"
 
-const committedImage = (
-  over: Partial<BlipMedia> = {},
-): Attachment => ({
+const committedImage = (over: Partial<BlipMedia> = {}): Attachment => ({
   key: "media/u/b/photo",
   status: "saved",
   mediaType: "image",
@@ -74,6 +72,11 @@ describe("ComposerPreviewModal", () => {
     fireEvent.error(img)
     expect(img.getAttribute("src")).toBe(
       "https://cdn.test/media/u/b/photo-original.jpg",
+    )
+
+    fireEvent.error(img)
+    expect(img.getAttribute("src")).toBe(
+      "https://cdn.test/media/u/b/photo-original.jpeg",
     )
   })
 

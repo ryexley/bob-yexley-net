@@ -2,7 +2,12 @@ import { Show, createMemo, createSignal } from "solid-js"
 import { Dialog, DialogCloseButton } from "@/components/dialog"
 import { ImagePlaceholder } from "@/components/icon"
 import type { Attachment } from "./media-store"
-import { MediaVariant, originalUrl, variantUrl } from "./media-utils"
+import {
+  MediaVariant,
+  originalUrl,
+  originalUrlCandidates,
+  variantUrl,
+} from "./media-utils"
 
 export type ComposerPreviewModalProps = {
   attachment: Attachment | null
@@ -27,7 +32,9 @@ const imageCandidates = (attachment: Attachment): string[] => {
         variantUrl(record.storage_key, MediaVariant.Medium),
       )
     }
-    candidates.push(originalUrl(record.storage_key, record.mime_type))
+    candidates.push(
+      ...originalUrlCandidates(record.storage_key, record.mime_type),
+    )
   }
 
   if (attachment.previewUrl) {
@@ -101,9 +108,7 @@ export function ComposerPreviewModal(props: ComposerPreviewModalProps) {
                       class="composer-preview-media"
                       src={currentSrc()}
                       alt=""
-                      onError={() =>
-                        setCandidateIndex(index => index + 1)
-                      }
+                      onError={() => setCandidateIndex(index => index + 1)}
                     />
                   </Show>
                 }>

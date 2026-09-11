@@ -500,6 +500,7 @@ describe("mediaStore — removeAttachment", () => {
         r2.deleteObject as ReturnType<typeof vi.fn>
       ).mock.calls.map(([key]) => key)
       expect(deletedKeys).toContain(`${storageKey}-original.jpg`)
+      expect(deletedKeys).toContain(`${storageKey}-original.jpeg`)
       expect(deletedKeys).toContain(`${storageKey}-micro.webp`)
       expect(deletedKeys).toContain(`${storageKey}-small.webp`)
       expect(deletedKeys).toContain(`${storageKey}-medium.webp`)

@@ -68,6 +68,18 @@ export function originalKey(key: string, mimeType: string): string {
   return `${key}-original.${mimeTypeToExtension(mimeType)}`
 }
 
+/**
+ * JPEG originals have historically been stored as both `-original.jpg` and
+ * `-original.jpeg`. Cleanup and the reader have to consider both.
+ */
+export function originalKeyCandidates(key: string, mimeType: string): string[] {
+  const canonical = originalKey(key, mimeType)
+  if (mimeTypeToExtension(mimeType) !== "jpg") {
+    return [canonical]
+  }
+  return [...new Set([canonical, `${key}-original.jpeg`])]
+}
+
 /** R2 object key for a generated WebP variant: `{key}-{variant}.webp`. */
 export function variantKey(key: string, variant: MediaVariant): string {
   return `${key}-${variant}.webp`
@@ -81,6 +93,12 @@ export function variantUrl(key: string, variant: MediaVariant): string {
 /** Public URL for the preserved original, with source extension (spec §13.4). */
 export function originalUrl(key: string, mimeType: string): string {
   return `${storageBaseUrl()}/${originalKey(key, mimeType)}`
+}
+
+export function originalUrlCandidates(key: string, mimeType: string): string[] {
+  return originalKeyCandidates(key, mimeType).map(
+    objectKey => `${storageBaseUrl()}/${objectKey}`,
+  )
 }
 
 /**
@@ -159,11 +177,13 @@ export function variantCandidateUrls(
   primary: MediaVariant,
   mimeType?: string | null,
 ): string[] {
-  const urls = variantFallbackChain(primary).map(variant => variantUrl(key, variant))
+  const urls = variantFallbackChain(primary).map(variant =>
+    variantUrl(key, variant),
+  )
   if (mimeType) {
     const ext = mimeTypeToExtension(mimeType)
     if (BROWSER_DISPLAYABLE_ORIGINAL_EXTS.has(ext)) {
-      urls.push(originalUrl(key, mimeType))
+      urls.push(...originalUrlCandidates(key, mimeType))
     }
   }
   return [...new Set(urls)]

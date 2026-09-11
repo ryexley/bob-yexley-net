@@ -20,6 +20,7 @@ import {
 } from "@/util/image"
 import {
   MediaVariant,
+  originalUrlCandidates,
   pickVariant,
   variantCandidateUrls,
 } from "@/modules/media/media-utils"
@@ -58,6 +59,9 @@ interface PersonalCloudImageProps {
   variant?: MediaVariant
   height?: number | string
   width?: number | string
+  /** Source pixel size — used for aspect-ratio when render width/height are omitted. */
+  intrinsicWidth?: number | null
+  intrinsicHeight?: number | null
   alt?: string
   class?: string
   imageClass?: string
@@ -76,6 +80,8 @@ export const PersonalCloudImage: Component<PersonalCloudImageProps> = props => {
     "variant",
     "height",
     "width",
+    "intrinsicWidth",
+    "intrinsicHeight",
     "alt",
     "class",
     "imageClass",
@@ -96,6 +102,10 @@ export const PersonalCloudImage: Component<PersonalCloudImageProps> = props => {
     untrack(() => local.eager ?? false),
   )
   const [candidateIndex, setCandidateIndex] = createSignal(0)
+  const [measuredSize, setMeasuredSize] = createSignal<{
+    width: number
+    height: number
+  } | null>(null)
 
   const placeholderBackground = createMemo(() =>
     generateRandomRadialGradients(),
@@ -139,13 +149,14 @@ export const PersonalCloudImage: Component<PersonalCloudImageProps> = props => {
     return target > 0 && target <= COMPACT_PLACEHOLDER_MAX_PX
   })
 
-  const variant = createMemo<MediaVariant>(() =>
-    local.variant ??
-    pickVariant({
-      width: pxWidth(),
-      height: pxHeight(),
-      fallback: deviceVariant(),
-    }),
+  const variant = createMemo<MediaVariant>(
+    () =>
+      local.variant ??
+      pickVariant({
+        width: pxWidth(),
+        height: pxHeight(),
+        fallback: deviceVariant(),
+      }),
   )
 
   const candidates = createMemo<string[]>(() => {
@@ -155,6 +166,11 @@ export const PersonalCloudImage: Component<PersonalCloudImageProps> = props => {
     const key = local.imageKey
     if (!key) {
       return []
+    }
+    // Processing never produced WebPs — skip the 404 storm and go straight to
+    // the original (including the historical `.jpeg` alias for JPEGs).
+    if (getProcessingStatus() === "failed") {
+      return local.mimeType ? originalUrlCandidates(key, local.mimeType) : []
     }
     return variantCandidateUrls(key, variant(), local.mimeType)
   })
@@ -168,9 +184,26 @@ export const PersonalCloudImage: Component<PersonalCloudImageProps> = props => {
     return index < list.length ? list[index] : undefined
   })
 
-  const dimensions = createMemo(() =>
-    getDimensions({ width: local.width, height: local.height }),
-  )
+  const sourceSize = createMemo(() => {
+    const intrinsicWidth = Number(local.intrinsicWidth)
+    const intrinsicHeight = Number(local.intrinsicHeight)
+    if (intrinsicWidth > 0 && intrinsicHeight > 0) {
+      return { width: intrinsicWidth, height: intrinsicHeight }
+    }
+    return measuredSize()
+  })
+
+  const dimensions = createMemo(() => {
+    const size = sourceSize()
+    if (size && local.width == null && local.height == null) {
+      return {
+        width: "100%",
+        height: "auto",
+        aspectRatio: `${size.width} / ${size.height}`,
+      }
+    }
+    return getDimensions({ width: local.width, height: local.height })
+  })
   const containerStyle = createMemo(() => ({
     height: resolveContainerDimension(dimensions().height),
     width: resolveContainerDimension(dimensions().width),
@@ -197,10 +230,14 @@ export const PersonalCloudImage: Component<PersonalCloudImageProps> = props => {
     void getProcessingStatus()
     setCandidateIndex(0)
     setImageLoaded(false)
+    setMeasuredSize(null)
   })
 
   onMount(() => {
-    if (typeof window !== "undefined" && typeof window.matchMedia === "function") {
+    if (
+      typeof window !== "undefined" &&
+      typeof window.matchMedia === "function"
+    ) {
       setDeviceVariant(
         window.matchMedia("(min-width: 768px)").matches
           ? MediaVariant.Large
@@ -243,6 +280,12 @@ export const PersonalCloudImage: Component<PersonalCloudImageProps> = props => {
   })
 
   const handleImageLoaded = () => {
+    if (image && image.naturalWidth > 0 && image.naturalHeight > 0) {
+      setMeasuredSize({
+        width: image.naturalWidth,
+        height: image.naturalHeight,
+      })
+    }
     setImageStatus(
       tr("shared.components.image.imageStatusLoaded", {
         alt: getAlt(),
@@ -294,9 +337,7 @@ export const PersonalCloudImage: Component<PersonalCloudImageProps> = props => {
           fallback={
             <>
               <Show when={!isCompactPlaceholder()}>
-                <ImagePlaceholder
-                  class="relative h-1/2 w-1/2 max-h-40 overflow-hidden opacity-[0.025]"
-                />
+                <ImagePlaceholder class="relative h-1/2 w-1/2 max-h-40 overflow-hidden opacity-[0.025]" />
               </Show>
               <Show when={!isCompactPlaceholder()}>
                 <div
@@ -327,7 +368,8 @@ export const PersonalCloudImage: Component<PersonalCloudImageProps> = props => {
           }}
           class={cx(
             "personal-cloud-image-img absolute inset-0 block h-full w-full",
-            getFadeIn() && "opacity-0 transition-opacity duration-500 ease-in-out",
+            getFadeIn() &&
+              "opacity-0 transition-opacity duration-500 ease-in-out",
             { "opacity-100": imageLoaded() || !getFadeIn() },
             local.imageClass,
           )}

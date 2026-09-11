@@ -78,9 +78,13 @@ export function isClickInsideObjectFitContain(
   }
 
   const naturalWidth =
-    element instanceof HTMLVideoElement ? element.videoWidth : element.naturalWidth
+    element instanceof HTMLVideoElement
+      ? element.videoWidth
+      : element.naturalWidth
   const naturalHeight =
-    element instanceof HTMLVideoElement ? element.videoHeight : element.naturalHeight
+    element instanceof HTMLVideoElement
+      ? element.videoHeight
+      : element.naturalHeight
 
   // Dimensions unknown while loading — treat as a media hit so we do not dismiss early.
   if (!naturalWidth || !naturalHeight) {
@@ -149,10 +153,10 @@ function LightboxSlide(props: {
   onZoomInteractionLock: (locked: boolean) => void
 }) {
   const isVisible = () => props.trackPosition === props.trackIndex
-  const isActive = () =>
-    props.slideIndex === props.activeIndex && isVisible()
+  const isActive = () => props.slideIndex === props.activeIndex && isVisible()
   const pinchZoomEnabled = () => !props.isDesktop && isActive()
-  const thumbUrl = () => variantUrl(props.record.storage_key, MediaVariant.Thumb)
+  const thumbUrl = () =>
+    variantUrl(props.record.storage_key, MediaVariant.Thumb)
 
   const [showControls, setShowControls] = createSignal(false)
 
@@ -179,7 +183,9 @@ function LightboxSlide(props: {
       aria-hidden={!isActive()}>
       <div
         class={cx("lightbox-media", {
-          "is-zoomable": props.record.media_type === "image" || props.record.media_type === "gif",
+          "is-zoomable":
+            props.record.media_type === "image" ||
+            props.record.media_type === "gif",
         })}
         style={{ "aspect-ratio": aspectRatio(props.record) }}>
         <Show when={props.record.media_type === "image"}>
@@ -190,9 +196,16 @@ function LightboxSlide(props: {
               imageKey={props.record.storage_key}
               mimeType={props.record.mime_type}
               processingStatus={
-                props.record.processing_status as "pending" | "complete" | "failed"
+                props.record.processing_status as
+                  | "pending"
+                  | "complete"
+                  | "failed"
               }
-              variant={props.isDesktop ? MediaVariant.Large : MediaVariant.Medium}
+              variant={
+                props.isDesktop ? MediaVariant.Large : MediaVariant.Medium
+              }
+              intrinsicWidth={props.record.width}
+              intrinsicHeight={props.record.height}
               objectFit="contain"
               eager={isActive()}
               fadeIn={false}
@@ -206,7 +219,10 @@ function LightboxSlide(props: {
             onInteractionLock={props.onZoomInteractionLock}>
             <img
               class="lightbox-gif"
-              src={originalUrl(props.record.storage_key, props.record.mime_type)}
+              src={originalUrl(
+                props.record.storage_key,
+                props.record.mime_type,
+              )}
               alt=""
             />
           </LightboxPinchZoom>
@@ -229,7 +245,10 @@ function LightboxSlide(props: {
                 onCleanup(() => props.unregisterVideo(props.slideKey, el))
               }}
               class={cx("lightbox-video", !isVisible() && "is-offscreen")}
-              src={originalUrl(props.record.storage_key, props.record.mime_type)}
+              src={originalUrl(
+                props.record.storage_key,
+                props.record.mime_type,
+              )}
               width={props.record.width ?? undefined}
               height={props.record.height ?? undefined}
               controls={showControls() && isVisible()}
@@ -321,7 +340,10 @@ function LightboxContent(props: LightboxContentProps) {
   })
 
   onMount(() => {
-    if (typeof window === "undefined" || typeof window.matchMedia !== "function") {
+    if (
+      typeof window === "undefined" ||
+      typeof window.matchMedia !== "function"
+    ) {
       // oxlint-disable-next-line solid/reactivity
       queueMicrotask(() => playVideoForTrack(trackIndex()))
       return
@@ -430,7 +452,11 @@ function LightboxContent(props: LightboxContentProps) {
   }
 
   const handleTrackTransitionEnd = (event: TransitionEvent) => {
-    if (event.propertyName !== "transform" || isDragging() || !canWrapNavigate()) {
+    if (
+      event.propertyName !== "transform" ||
+      isDragging() ||
+      !canWrapNavigate()
+    ) {
       return
     }
 
@@ -532,7 +558,10 @@ function LightboxContent(props: LightboxContentProps) {
     setIsDragging(false)
   }
 
-  const resolveGestureAxis = (deltaX: number, deltaY: number): "none" | "x" | "y" => {
+  const resolveGestureAxis = (
+    deltaX: number,
+    deltaY: number,
+  ): "none" | "x" | "y" => {
     if (gestureAxis !== "none") {
       return gestureAxis
     }
@@ -556,7 +585,10 @@ function LightboxContent(props: LightboxContentProps) {
     setDragOffsetY(0)
     setIsDragging(true)
 
-    if (event.currentTarget instanceof HTMLElement && "setPointerCapture" in event.currentTarget) {
+    if (
+      event.currentTarget instanceof HTMLElement &&
+      "setPointerCapture" in event.currentTarget
+    ) {
       event.currentTarget.setPointerCapture(event.pointerId)
     }
   }
@@ -625,7 +657,10 @@ function LightboxContent(props: LightboxContentProps) {
 
   return (
     <div
-      class={cx("lightbox", { "is-desktop": isDesktop(), "is-mobile": !isDesktop() })}
+      class={cx("lightbox", {
+        "is-desktop": isDesktop(),
+        "is-mobile": !isDesktop(),
+      })}
       role="group"
       aria-label={props.labels.region}
       aria-roledescription="carousel"

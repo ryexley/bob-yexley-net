@@ -68,6 +68,14 @@ function extensionFromName(name?: string | null): string | null {
   return /^[a-z0-9]{1,5}$/.test(ext) ? ext : null
 }
 
+/** Map equivalent extensions onto the mime-derived originals (`jpeg` → `jpg`). */
+function canonicalizeExtension(ext: string): string {
+  if (ext === "jpeg" || ext === "jpe" || ext === "jfif") {
+    return "jpg"
+  }
+  return ext
+}
+
 /**
  * Resolve the file extension for the stored original.
  * Filename extension wins; falls back to the mime map; clipboard pastes with no
@@ -79,7 +87,7 @@ export function extensionForFile(
 ): string {
   const fromName = extensionFromName(file.name)
   if (fromName) {
-    return fromName
+    return canonicalizeExtension(fromName)
   }
 
   const mime = (file.type ?? "").toLowerCase()
@@ -166,9 +174,12 @@ export async function readExifTimestamp(
   input: ExifInput,
 ): Promise<Date | null> {
   try {
-    const tags = (await exifr.parse(input as Parameters<typeof exifr.parse>[0], {
-      pick: ["DateTimeOriginal", "CreateDate", "DateTimeDigitized"],
-    })) as
+    const tags = (await exifr.parse(
+      input as Parameters<typeof exifr.parse>[0],
+      {
+        pick: ["DateTimeOriginal", "CreateDate", "DateTimeDigitized"],
+      },
+    )) as
       | {
           DateTimeOriginal?: unknown
           CreateDate?: unknown
@@ -326,7 +337,10 @@ export function createFilenameAllocator() {
           continue
         }
 
-        fallbackSeq.set(blipId, Math.max(fallbackSeq.get(blipId) ?? 0, sequence))
+        fallbackSeq.set(
+          blipId,
+          Math.max(fallbackSeq.get(blipId) ?? 0, sequence),
+        )
       }
     },
   }

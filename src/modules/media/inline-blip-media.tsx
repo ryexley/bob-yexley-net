@@ -83,6 +83,8 @@ export function InlineBlipMedia(props: InlineBlipMediaProps) {
           storageKey={storageKey()}
           mimeType={mimeType()}
           processingStatus={processingStatus()}
+          width={props.record?.width}
+          height={props.record?.height}
           interactive={interactive()}
           onOpen={open}
         />
@@ -130,6 +132,8 @@ function InlineImage(props: {
   storageKey: string
   mimeType: string
   processingStatus: "pending" | "complete" | "failed"
+  width?: number | null
+  height?: number | null
   interactive: boolean
   onOpen: () => void
 }) {
@@ -139,6 +143,8 @@ function InlineImage(props: {
       imageKey={props.storageKey}
       mimeType={props.mimeType}
       processingStatus={props.processingStatus}
+      intrinsicWidth={props.width}
+      intrinsicHeight={props.height}
       objectFit="contain"
       alt=""
       class={props.interactive ? undefined : "frame"}
