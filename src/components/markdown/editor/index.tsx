@@ -16,6 +16,7 @@ import {
   defaultValueCtx,
   editorViewCtx,
   prosePluginsCtx,
+  commandsCtx,
 } from "@milkdown/core"
 import { commonmark } from "@milkdown/preset-commonmark"
 import { listener, listenerCtx } from "@milkdown/plugin-listener"
@@ -29,13 +30,14 @@ import { TIME } from "@/util/enums"
 import { Stack } from "@/components/stack"
 import { highlight } from "./plugins/highlight"
 import { audioEmbed } from "./plugins/audio-embed"
-import { placeholder } from "./plugins/placeholder"
+import { mediaEmbed } from "./plugins/media-embed"
 import {
-  applyFormat,
-  getActiveFormats,
-  getDisabledFormats,
-  getLinkSelectionState,
-} from "./commands"
+  insertMediaEmbedCommand,
+  type MediaEmbedInsert,
+} from "./plugins/media-embed-editor-behavior"
+import { placeholder } from "./plugins/placeholder"
+import { applyFormat, getEditorToolbarSnapshot } from "./commands"
+import type { EmbedSelection } from "./plugins/media-embed-layout"
 import Toolbar from "./toolbar"
 import { StatusBar } from "./status-bar"
 import "@milkdown/theme-nord/style.css"
@@ -50,6 +52,7 @@ interface MarkdownEditorProps {
   placeholder?: string
   onChange?: (markdown: string) => void
   onEditorReady?: () => void
+  onEditorApi?: (api: MarkdownEditorApi | null) => void
   onContentMetricsChange?: (metrics: MarkdownEditorContentMetrics) => void
   showToolbar?: boolean
   showStatusBar?: boolean
@@ -68,6 +71,10 @@ interface MarkdownEditorProps {
   aboveControlsProps?: Record<string, unknown>
   /** Bottom chrome. Stable component required; rendered with `Dynamic` so status updates do not remount it. */
   EditorControls?: Component<MarkdownEditorControlsProps>
+}
+
+export type MarkdownEditorApi = {
+  insertMediaEmbeds: (items: MediaEmbedInsert[]) => void
 }
 
 export type MarkdownEditorControlsProps = {
@@ -134,7 +141,9 @@ const getLegacyToolbarVisibleStorageKeys = (
 }
 
 export const readToolbarVisiblePreference = (
-  storage: Pick<Storage, "getItem" | "setItem" | "removeItem" | "length" | "key"> | undefined,
+  storage:
+    | Pick<Storage, "getItem" | "setItem" | "removeItem" | "length" | "key">
+    | undefined,
   fallback: boolean,
 ) => {
   if (!storage) {
@@ -167,7 +176,9 @@ export const readToolbarVisiblePreference = (
 }
 
 export const writeToolbarVisiblePreference = (
-  storage: Pick<Storage, "setItem" | "removeItem" | "length" | "key"> | undefined,
+  storage:
+    | Pick<Storage, "setItem" | "removeItem" | "length" | "key">
+    | undefined,
   value: boolean,
 ) => {
   if (!storage) {
@@ -190,6 +201,7 @@ export function MarkdownEditor(props: MarkdownEditorProps) {
     "placeholder",
     "onChange",
     "onEditorReady",
+    "onEditorApi",
     "onContentMetricsChange",
     "showToolbar",
     "showStatusBar",
@@ -214,6 +226,7 @@ export function MarkdownEditor(props: MarkdownEditorProps) {
   const editorCallbacks = untrack(() => ({
     onChange: local.onChange,
     onEditorReady: local.onEditorReady,
+    onEditorApi: local.onEditorApi,
     onContentMetricsChange: local.onContentMetricsChange,
   }))
   let focusRetryTimeout: ReturnType<typeof setTimeout> | undefined
@@ -238,6 +251,10 @@ export function MarkdownEditor(props: MarkdownEditorProps) {
     number | undefined
   >(undefined)
   const [linkEditorRequestNonce, setLinkEditorRequestNonce] = createSignal(0)
+  const [toolbarMode, setToolbarMode] = createSignal<"text" | "media">("text")
+  const [mediaToolbarType, setMediaToolbarType] = createSignal<
+    string | undefined
+  >(undefined)
   const [toolbarVisible, setToolbarVisible] = createSignal(
     withWindow(
       () => readToolbarVisiblePreference(localStorage, local.showToolbar),
@@ -254,20 +271,22 @@ export function MarkdownEditor(props: MarkdownEditorProps) {
     syncToolbarState()
   }
 
-  const syncToolbarState = () => {
+  const syncToolbarState = (selection?: EmbedSelection | null) => {
     if (!editorInstance) {
       return
     }
 
-    setActiveFormats(getActiveFormats(editorInstance))
-    setDisabledFormats(getDisabledFormats(editorInstance))
-    const linkSelectionState = getLinkSelectionState(editorInstance)
-    setSelectedLinkText(linkSelectionState.selectedLinkText)
-    setSelectionRangeFrom(linkSelectionState.selectionRangeFrom)
-    setSelectionRangeTo(linkSelectionState.selectionRangeTo)
-    setSelectedLinkHref(linkSelectionState.selectedLinkHref)
-    setSelectedLinkRangeFrom(linkSelectionState.selectedLinkRangeFrom)
-    setSelectedLinkRangeTo(linkSelectionState.selectedLinkRangeTo)
+    const snapshot = getEditorToolbarSnapshot(editorInstance, selection)
+    setActiveFormats(snapshot.activeFormats)
+    setDisabledFormats(snapshot.disabledFormats)
+    setToolbarMode(snapshot.mode)
+    setMediaToolbarType(snapshot.mediaType)
+    setSelectedLinkText(snapshot.linkSelectionState.selectedLinkText)
+    setSelectionRangeFrom(snapshot.linkSelectionState.selectionRangeFrom)
+    setSelectionRangeTo(snapshot.linkSelectionState.selectionRangeTo)
+    setSelectedLinkHref(snapshot.linkSelectionState.selectedLinkHref)
+    setSelectedLinkRangeFrom(snapshot.linkSelectionState.selectedLinkRangeFrom)
+    setSelectedLinkRangeTo(snapshot.linkSelectionState.selectedLinkRangeTo)
   }
 
   const clearFocusRetryTimeout = () => {
@@ -280,6 +299,7 @@ export function MarkdownEditor(props: MarkdownEditorProps) {
   createEffect(() => {
     editorCallbacks.onChange = local.onChange
     editorCallbacks.onEditorReady = local.onEditorReady
+    editorCallbacks.onEditorApi = local.onEditorApi
     editorCallbacks.onContentMetricsChange = local.onContentMetricsChange
   })
 
@@ -335,8 +355,8 @@ export function MarkdownEditor(props: MarkdownEditorProps) {
           editorCallbacks.onChange?.(markdown)
           emitContentMetrics(markdown)
         })
-        ctx.get(listenerCtx).selectionUpdated(() => {
-          syncToolbarState()
+        ctx.get(listenerCtx).selectionUpdated((_ctx, selection) => {
+          syncToolbarState(selection)
         })
         ctx.get(listenerCtx).updated(() => {
           syncToolbarState()
@@ -345,6 +365,7 @@ export function MarkdownEditor(props: MarkdownEditorProps) {
       .use(commonmark)
       .use(highlight)
       .use(audioEmbed)
+      .use(mediaEmbed)
       .use(placeholder(local.placeholder))
       .use(emoji)
       .use(listener)
@@ -356,6 +377,16 @@ export function MarkdownEditor(props: MarkdownEditorProps) {
         }
 
         editorInstance = e
+        editorCallbacks.onEditorApi?.({
+          insertMediaEmbeds: items => {
+            if (!editorInstance || items.length === 0) {
+              return
+            }
+            editorInstance.action(ctx => {
+              ctx.get(commandsCtx).call(insertMediaEmbedCommand.key, items)
+            })
+          },
+        })
         e.action(ctx => {
           const editorDom = ctx.get(editorViewCtx).dom
           const handleKeyDown = (event: KeyboardEvent) => {
@@ -373,6 +404,10 @@ export function MarkdownEditor(props: MarkdownEditorProps) {
 
             if (key === "k") {
               event.preventDefault()
+              if (toolbarMode() === "media") {
+                return
+              }
+
               if (!toolbarVisible()) {
                 setToolbarVisible(true)
               }
@@ -429,6 +464,7 @@ export function MarkdownEditor(props: MarkdownEditorProps) {
     emitContentMetrics.cancel()
     editorKeydownCleanup?.()
     editorKeydownCleanup = undefined
+    editorCallbacks.onEditorApi?.(null)
     const currentEditor = editorInstance
     editorInstance = undefined
     if (currentEditor) {
@@ -481,6 +517,25 @@ export function MarkdownEditor(props: MarkdownEditorProps) {
     })
   }
 
+  const EditorToolbar = () => (
+    <Toolbar
+      visible={toolbarVisible()}
+      mode={toolbarMode()}
+      mediaType={mediaToolbarType()}
+      activeFormats={activeFormats()}
+      disabledFormats={disabledFormats()}
+      selectedLinkText={selectedLinkText()}
+      selectionRangeFrom={selectionRangeFrom()}
+      selectionRangeTo={selectionRangeTo()}
+      selectedLinkHref={selectedLinkHref()}
+      selectedLinkRangeFrom={selectedLinkRangeFrom()}
+      selectedLinkRangeTo={selectedLinkRangeTo()}
+      linkEditorRequestNonce={linkEditorRequestNonce()}
+      onRequestEditorFocus={focusEditor}
+      onFormatApply={handleApplyFormat}
+    />
+  )
+
   return (
     <div class={cx("markdown-editor", local.class)}>
       <Show when={local.Header}>
@@ -497,20 +552,7 @@ export function MarkdownEditor(props: MarkdownEditorProps) {
             when={local.MetadataPanel}
             fallback={
               <>
-                <Toolbar
-                  visible={toolbarVisible()}
-                  activeFormats={activeFormats()}
-                  disabledFormats={disabledFormats()}
-                  selectedLinkText={selectedLinkText()}
-                  selectionRangeFrom={selectionRangeFrom()}
-                  selectionRangeTo={selectionRangeTo()}
-                  selectedLinkHref={selectedLinkHref()}
-                  selectedLinkRangeFrom={selectedLinkRangeFrom()}
-                  selectedLinkRangeTo={selectedLinkRangeTo()}
-                  linkEditorRequestNonce={linkEditorRequestNonce()}
-                  onRequestEditorFocus={focusEditor}
-                  onFormatApply={handleApplyFormat}
-                />
+                <EditorToolbar />
                 <div
                   ref={editorRef}
                   data-placeholder={local.placeholder}
@@ -521,20 +563,7 @@ export function MarkdownEditor(props: MarkdownEditorProps) {
               <div class="editor-body-carousel">
                 <div class="editor-body-track">
                   <div class="editor-body-pane editor-body-pane-editor">
-                    <Toolbar
-                      visible={toolbarVisible()}
-                      activeFormats={activeFormats()}
-                      disabledFormats={disabledFormats()}
-                      selectedLinkText={selectedLinkText()}
-                      selectionRangeFrom={selectionRangeFrom()}
-                      selectionRangeTo={selectionRangeTo()}
-                      selectedLinkHref={selectedLinkHref()}
-                      selectedLinkRangeFrom={selectedLinkRangeFrom()}
-                      selectedLinkRangeTo={selectedLinkRangeTo()}
-                      linkEditorRequestNonce={linkEditorRequestNonce()}
-                      onRequestEditorFocus={focusEditor}
-                      onFormatApply={handleApplyFormat}
-                    />
+                    <EditorToolbar />
                     <div
                       ref={editorRef}
                       data-placeholder={local.placeholder}

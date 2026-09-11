@@ -4,26 +4,28 @@ import { parseBlipMarkdown } from "./marked-blips"
 describe("parseBlipMarkdown", () => {
   it("renders ==highlight== as marked highlight text", () => {
     expect(parseBlipMarkdown("Before ==highlighted== after")).toContain(
-      "<mark class=\"highlight\">highlighted</mark>",
+      '<mark class="highlight">highlighted</mark>',
     )
   })
 
   it("renders nested inline markdown inside highlight text", () => {
     expect(parseBlipMarkdown("==**important**==")).toContain(
-      "<mark class=\"highlight\"><strong>important</strong></mark>",
+      '<mark class="highlight"><strong>important</strong></mark>',
     )
   })
 
   it("renders audio embed shorthand as a mount point", () => {
     const html = parseBlipMarkdown(
-      "{audio:{ src: \"/audio/ep-1.mp3\", title: \"Episode 1\" }}",
+      '{audio:{ src: "/audio/ep-1.mp3", title: "Episode 1" }}',
     )
 
     expect(html).toContain("blip-audio-player")
     expect(html).toContain("data-audio-player-props=")
-    expect(decodeURIComponent(html.match(/data-audio-player-props="([^"]+)"/)?.[1] ?? "")).toContain(
-      "\"title\":\"Episode 1\"",
-    )
+    expect(
+      decodeURIComponent(
+        html.match(/data-audio-player-props="([^"]+)"/)?.[1] ?? "",
+      ),
+    ).toContain('"title":"Episode 1"')
   })
 
   it("renders multi-line paragraph-split audio embed shorthand", () => {
@@ -39,14 +41,16 @@ title: "Episode 1"
 }`)
 
     expect(html).toContain("blip-audio-player")
-    expect(decodeURIComponent(html.match(/data-audio-player-props="([^"]+)"/)?.[1] ?? "")).toContain(
-      "\"title\":\"Episode 1\"",
-    )
+    expect(
+      decodeURIComponent(
+        html.match(/data-audio-player-props="([^"]+)"/)?.[1] ?? "",
+      ),
+    ).toContain('"title":"Episode 1"')
   })
 
   it("renders audio embeds when followed by more markdown content", () => {
     const audio =
-      "{audio:{src:\"https://example.com/ep-1.mp3\",title:\"Death and Judgment\"}}"
+      '{audio:{src:"https://example.com/ep-1.mp3",title:"Death and Judgment"}}'
     const html = parseBlipMarkdown(`## Session 1
 
 ${audio}
@@ -61,7 +65,7 @@ ${audio}
   })
 
   it("leaves invalid audio embed syntax as markdown text", () => {
-    expect(parseBlipMarkdown("{audio:{ title: \"Missing src\" }}")).toContain(
+    expect(parseBlipMarkdown('{audio:{ title: "Missing src" }}')).toContain(
       "Missing src",
     )
   })
@@ -132,5 +136,55 @@ ${audio}
     expect(html).toContain("<code")
     expect(html).toContain("Romans 8:28")
     expect(html).not.toContain('class="scripture-reference"')
+  })
+
+  it("renders media embeds as a mount point, not raw shorthand", () => {
+    const html = parseBlipMarkdown(
+      '{media:{ key: "media/u/b/sc-1", type: "image", mime: "image/png" }}',
+    )
+
+    expect(html).toContain("media-embed-mount")
+    expect(html).toContain("data-media-embed-props=")
+    expect(html).not.toMatch(/<p>\{media:/)
+    expect(
+      decodeURIComponent(
+        html.match(/data-media-embed-props="([^"]+)"/)?.[1] ?? "",
+      ),
+    ).toContain('"key":"media/u/b/sc-1"')
+  })
+
+  it("carries size and alignment on the media embed mount", () => {
+    const html = parseBlipMarkdown(
+      '{media:{ key: "media/u/b/sc-1", type: "image", size: "25", align: "right" }}',
+    )
+    const props = decodeURIComponent(
+      html.match(/data-media-embed-props="([^"]+)"/)?.[1] ?? "",
+    )
+    expect(props).toContain('"size":"25"')
+    expect(props).toContain('"align":"right"')
+  })
+
+  it("carries lightbox on the media embed mount", () => {
+    const html = parseBlipMarkdown(
+      '{media:{ key: "media/u/b/sc-1", type: "image", lightbox: true }}',
+    )
+    const props = decodeURIComponent(
+      html.match(/data-media-embed-props="([^"]+)"/)?.[1] ?? "",
+    )
+    expect(props).toContain('"lightbox":true')
+  })
+
+  it("renders media embeds when followed by more markdown content", () => {
+    const html = parseBlipMarkdown(`A screenshot:
+
+{media:{key:"media/u/b/sc-1",type:"gif"}}
+
+---
+
+More text.`)
+
+    expect(html).toContain("media-embed-mount")
+    expect(html).toContain("<hr>")
+    expect(html).not.toMatch(/<p>\{media:/)
   })
 })

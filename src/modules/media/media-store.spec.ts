@@ -2,7 +2,12 @@ import { createRoot, createSignal } from "solid-js"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import type { SupabaseClient } from "@supabase/supabase-js"
 import { mediaStore } from "./media-store"
-import type { UploadFile, UploadStore, UploadStoreOptions, UploadSuccess } from "./upload-store"
+import type {
+  UploadFile,
+  UploadStore,
+  UploadStoreOptions,
+  UploadSuccess,
+} from "./upload-store"
 import type { R2Service } from "./r2-service"
 
 const runInRoot = async (callback: () => Promise<void>) =>
@@ -39,7 +44,10 @@ const createSupabaseMock = (config: SupabaseMockConfig = {}) => {
     const state = {
       table,
       op: "select" as "select" | "insert" | "update" | "delete",
-      payload: null as Record<string, unknown> | Record<string, unknown>[] | null,
+      payload: null as
+        | Record<string, unknown>
+        | Record<string, unknown>[]
+        | null,
       id: undefined as unknown,
       filters: [] as Array<[string, unknown]>,
     }
@@ -86,11 +94,13 @@ const createSupabaseMock = (config: SupabaseMockConfig = {}) => {
     const builder = {
       select: vi.fn(() => builder),
       order: vi.fn(() => builder),
-      insert: vi.fn((payload: Record<string, unknown> | Record<string, unknown>[]) => {
-        state.op = "insert"
-        state.payload = payload
-        return builder
-      }),
+      insert: vi.fn(
+        (payload: Record<string, unknown> | Record<string, unknown>[]) => {
+          state.op = "insert"
+          state.payload = payload
+          return builder
+        },
+      ),
       update: vi.fn((payload: Record<string, unknown>) => {
         state.op = "update"
         state.payload = payload
@@ -161,7 +171,9 @@ const makeFakeUpload = (blipId: string, userId: string) => {
           file.status === "uploading" ||
           file.status === "processing",
       ).length,
-    addFiles: vi.fn(async () => {}),
+    addFiles: vi.fn(
+      async () => [] as { key: string; mediaType: "image"; mimeType: string }[],
+    ),
     startQueue: vi.fn(async () => {}),
     removeFile,
     retryFile: vi.fn(),
@@ -283,6 +295,45 @@ describe("mediaStore — onUploadSuccess persistence", () => {
     })
   })
 
+  it("persists clipboard inline placement on the blip_media row", async () => {
+    await runInRoot(async () => {
+      const blipId = uniqueBlip()
+      const userId = "user1"
+      const storageKey = `media/user1/${blipId}/sc-1`
+      const mock = createSupabaseMock()
+      const up = makeFakeUpload(blipId, userId)
+      up.fake.addFiles = vi.fn(async () => [
+        { key: storageKey, mediaType: "image" as const, mimeType: "image/png" },
+      ])
+
+      const media = mediaStore(mock.client, {
+        blipId,
+        userId,
+        ensureBlipPersisted: async () => true,
+        createUploadStore: up.factory,
+        r2Service: makeR2(),
+      })
+
+      const added = await media.attach(
+        [new File(["x"], "shot.png", { type: "image/png" })],
+        { source: "clipboard", placement: "inline" },
+      )
+
+      expect(added).toEqual([
+        { key: storageKey, mediaType: "image", mimeType: "image/png" },
+      ])
+      expect(up.fake.startQueue).toHaveBeenCalled()
+
+      up.fireSuccess(makeSuccess(blipId, userId, { storageKey }))
+      await vi.waitFor(() => expect(media.records()).toHaveLength(1))
+
+      expect(mock.inserted[0]).toMatchObject({
+        storage_key: storageKey,
+        placement: "inline",
+      })
+    })
+  })
+
   it("calls ensureBlipPersisted once and assigns incrementing display_order", async () => {
     await runInRoot(async () => {
       const blipId = uniqueBlip()
@@ -299,13 +350,19 @@ describe("mediaStore — onUploadSuccess persistence", () => {
         r2Service: makeR2(),
       })
 
-      up.fireSuccess(makeSuccess(blipId, userId, { storageKey: `media/${blipId}/a` }))
-      up.fireSuccess(makeSuccess(blipId, userId, { storageKey: `media/${blipId}/b` }))
+      up.fireSuccess(
+        makeSuccess(blipId, userId, { storageKey: `media/${blipId}/a` }),
+      )
+      up.fireSuccess(
+        makeSuccess(blipId, userId, { storageKey: `media/${blipId}/b` }),
+      )
 
       await vi.waitFor(() => expect(media.records()).toHaveLength(2))
 
       expect(ensureBlipPersisted).toHaveBeenCalledTimes(1)
-      expect(media.records().map(record => record.display_order)).toEqual([0, 1])
+      expect(media.records().map(record => record.display_order)).toEqual([
+        0, 1,
+      ])
     })
   })
 
@@ -400,7 +457,9 @@ describe("mediaStore — onUploadSuccess persistence", () => {
       })
 
       up.setFiles([up.uploadFile({ key: `media/${blipId}/x` })])
-      up.fireSuccess(makeSuccess(blipId, userId, { storageKey: `media/${blipId}/x` }))
+      up.fireSuccess(
+        makeSuccess(blipId, userId, { storageKey: `media/${blipId}/x` }),
+      )
 
       await vi.waitFor(() => expect(media.persistError()).not.toBeNull())
 
@@ -437,9 +496,9 @@ describe("mediaStore — removeAttachment", () => {
       await media.removeAttachment(storageKey)
 
       expect(mock.deletedIds).toHaveLength(1)
-      const deletedKeys = (r2.deleteObject as ReturnType<typeof vi.fn>).mock.calls.map(
-        ([key]) => key,
-      )
+      const deletedKeys = (
+        r2.deleteObject as ReturnType<typeof vi.fn>
+      ).mock.calls.map(([key]) => key)
       expect(deletedKeys).toContain(`${storageKey}-original.jpg`)
       expect(deletedKeys).toContain(`${storageKey}-micro.webp`)
       expect(deletedKeys).toContain(`${storageKey}-small.webp`)
@@ -480,9 +539,9 @@ describe("mediaStore — removeAttachment", () => {
 
       await media.removeAttachment(storageKey)
 
-      const deletedKeys = (r2.deleteObject as ReturnType<typeof vi.fn>).mock.calls.map(
-        ([key]) => key,
-      )
+      const deletedKeys = (
+        r2.deleteObject as ReturnType<typeof vi.fn>
+      ).mock.calls.map(([key]) => key)
       expect(deletedKeys).toEqual([
         `${storageKey}-original.mp4`,
         `${storageKey}-thumb.webp`,
@@ -556,7 +615,12 @@ describe("mediaStore — retry", () => {
       })
 
       up.setFiles([
-        up.uploadFile({ id: "err-1", key: storageKey, status: "error", error: "boom" }),
+        up.uploadFile({
+          id: "err-1",
+          key: storageKey,
+          status: "error",
+          error: "boom",
+        }),
       ])
 
       media.retry(storageKey)
@@ -614,9 +678,9 @@ describe("mediaStore — reorder", () => {
       await media.reorder([keyB, keyA])
 
       // Only the rows whose display_order changed are updated.
-      expect(mock.updates.map(update => update.updates.display_order).sort()).toEqual([
-        0, 1,
-      ])
+      expect(
+        mock.updates.map(update => update.updates.display_order).sort(),
+      ).toEqual([0, 1])
     })
   })
 })

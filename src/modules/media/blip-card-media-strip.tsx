@@ -4,6 +4,7 @@ import { PersonalCloudImage } from "@/components/personal-cloud-image"
 import { clsx as cx } from "@/util"
 import { generateRandomRadialGradients } from "@/util/image"
 import type { BlipMediaRow } from "./data/queries"
+import { galleryMedia } from "./placement"
 import { MediaVariant, originalUrl, variantUrl } from "./media-utils"
 
 /** Max real thumbnails before the overflow tile takes the 4th slot (spec §6). */
@@ -96,8 +97,9 @@ export type BlipCardMediaStripProps = {
  * muted `<video>` first frame) when a generated thumb is absent.
  */
 export function BlipCardMediaStrip(props: BlipCardMediaStripProps) {
-  const visible = () => props.media.slice(0, MAX_VISIBLE)
-  const overflowCount = () => Math.max(0, props.media.length - MAX_VISIBLE)
+  const media = () => galleryMedia(props.media)
+  const visible = () => media().slice(0, MAX_VISIBLE)
+  const overflowCount = () => Math.max(0, media().length - MAX_VISIBLE)
   const overflowBackground = createMemo(() =>
     generateRandomRadialGradients({
       sizeMin: 0.375,
@@ -108,11 +110,11 @@ export function BlipCardMediaStrip(props: BlipCardMediaStripProps) {
   )
 
   return (
-    <Show when={props.media.length > 0}>
+    <Show when={media().length > 0}>
       <div
         class={cx("blip-card-media-strip", props.class)}
-        data-count={props.media.length}
-        aria-label={props.labels.region?.(props.media.length)}>
+        data-count={media().length}
+        aria-label={props.labels.region?.(media().length)}>
         <For each={visible()}>
           {record => (
             <span
@@ -123,7 +125,10 @@ export function BlipCardMediaStrip(props: BlipCardMediaStripProps) {
                   imageKey={record.storage_key}
                   mimeType={record.mime_type}
                   processingStatus={
-                    record.processing_status as "pending" | "complete" | "failed"
+                    record.processing_status as
+                      | "pending"
+                      | "complete"
+                      | "failed"
                   }
                   variant={MediaVariant.Small}
                   objectFit="cover"

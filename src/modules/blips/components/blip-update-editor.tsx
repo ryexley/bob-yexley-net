@@ -10,8 +10,13 @@ import {
 import { revalidate } from "@solidjs/router"
 import {
   MarkdownEditor,
+  type MarkdownEditorApi,
   type MarkdownEditorControlsProps,
 } from "@/components/markdown/editor"
+import {
+  composerMediaEmbedRuntime,
+  setMediaEmbedRuntime,
+} from "@/components/markdown/editor/plugins/media-embed-runtime"
 import { Icon, LoadingSpinner } from "@/components/icon"
 import { IconButton } from "@/components/icon-button"
 import { useConfirm } from "@/components/confirm-dialog"
@@ -34,11 +39,15 @@ import { BLIP_TYPES, blipId, blipStore, type Blip } from "@/modules/blips/data"
 import { PortaledInlineTransition } from "@/modules/blips/components/portaled-inline-transition"
 import {
   type Attachment,
+  applyPasteMediaPlacement,
   ComposerPreviewModal,
+  inspectClipboardMediaPaste,
   MediaButton,
+  type MediaPlacement,
   type MediaStore,
   mediaStore,
   ComposerMediaChrome,
+  PasteMediaPlacementPrompt,
   validateMediaFiles,
 } from "@/modules/media"
 import { getBlipMediaFor } from "@/modules/media/data/queries"
@@ -181,6 +190,8 @@ export function BlipUpdateEditor(props: BlipUpdateEditorProps) {
   const [previewAttachment, setPreviewAttachment] =
     createSignal<Attachment | null>(null)
   const [mediaError, setMediaError] = createSignal<string | null>(null)
+  const [pasteFiles, setPasteFiles] = createSignal<File[] | null>(null)
+  const [editorApi, setEditorApi] = createSignal<MarkdownEditorApi | null>(null)
   // Plain ref mirror of `media()` so the lifecycle effect can tear down the
   // previous instance without reactively depending on the signal it sets.
   let mediaInstance: MediaStore | null = null
@@ -507,38 +518,42 @@ export function BlipUpdateEditor(props: BlipUpdateEditorProps) {
   // intentional point-in-time snapshots (invoked from the serialized persist
   // chain, not a tracked scope).
   // eslint-disable-next-line solid/reactivity
-  const makeEnsureBlipPersisted = (id: string) => async (): Promise<boolean> => {
-    if (currentUpdateId() === id && hasPersistedCurrentUpdate()) {
+  const makeEnsureBlipPersisted =
+    (id: string) => async (): Promise<boolean> => {
+      if (currentUpdateId() === id && hasPersistedCurrentUpdate()) {
+        return true
+      }
+
+      const userId = user()?.id
+      const rootBlipId = local.rootBlipId
+      if (!userId || !rootBlipId) {
+        return false
+      }
+
+      const published = resolveMediaTriggeredUpdatePersistPublished(
+        hasPersistedCurrentUpdate(),
+        isPublished(),
+      )
+
+      const result = await store.upsert(
+        {
+          id,
+          user_id: userId,
+          parent_id: rootBlipId,
+          blip_type: BLIP_TYPES.UPDATE,
+          content: content(),
+          published,
+          moderation_status: "approved",
+        } as Partial<Blip>,
+        { skipLocalCache: true },
+      )
+
+      if (result.error) {
+        return false
+      }
+
       return true
     }
-
-    const userId = user()?.id
-    const rootBlipId = local.rootBlipId
-    if (!userId || !rootBlipId) {
-      return false
-    }
-
-    const published = resolveMediaTriggeredUpdatePersistPublished(
-      hasPersistedCurrentUpdate(),
-      isPublished(),
-    )
-
-    const result = await store.upsert({
-      id,
-      user_id: userId,
-      parent_id: rootBlipId,
-      blip_type: BLIP_TYPES.UPDATE,
-      content: content(),
-      published,
-      moderation_status: "approved",
-    } as Partial<Blip>, { skipLocalCache: true })
-
-    if (result.error) {
-      return false
-    }
-
-    return true
-  }
 
   // One `mediaStore` instance per edited update. Recreated when `currentUpdateId`
   // changes; the previous instance is `reset()` (tears down uploads, drops this
@@ -589,6 +604,18 @@ export function BlipUpdateEditor(props: BlipUpdateEditorProps) {
   onCleanup(() => {
     mediaInstance?.reset()
     mediaInstance = null
+    setMediaEmbedRuntime(null)
+  })
+
+  createEffect(() => {
+    const instance = media()
+    if (!instance) {
+      setMediaEmbedRuntime(null)
+      return
+    }
+    setMediaEmbedRuntime(composerMediaEmbedRuntime(instance))
+    void instance.attachments()
+    onCleanup(() => setMediaEmbedRuntime(null))
   })
 
   const handleMediaFiles = (files: File[]) => {
@@ -611,27 +638,43 @@ export function BlipUpdateEditor(props: BlipUpdateEditorProps) {
 
   const handleClipboardPaste = (event: ClipboardEvent) => {
     const instance = media()
-    if (!instance || !event.clipboardData) {
+    if (!instance) {
       return
     }
 
-    const files = Array.from(event.clipboardData.files ?? [])
-    const images = files.filter(file => file.type.startsWith("image/"))
-    if (images.length === 0) {
-      // No image payload — let ProseMirror handle text/HTML paste normally.
+    const inspected = inspectClipboardMediaPaste(event.clipboardData)
+    if (!inspected) {
       return
     }
 
     event.preventDefault()
-    const { accepted, rejected } = validateMediaFiles(images)
     setMediaError(
-      rejected.length > 0
-        ? trEditor("media.invalidFiles", { count: rejected.length })
+      inspected.rejected.length > 0
+        ? trEditor("media.invalidFiles", { count: inspected.rejected.length })
         : null,
     )
-    if (accepted.length > 0) {
-      void instance.attach(accepted, { source: "clipboard" })
+    if (inspected.accepted.length > 0) {
+      setPasteFiles(inspected.accepted)
     }
+  }
+
+  const closePastePrompt = () => {
+    setPasteFiles(null)
+  }
+
+  const handlePastePlacement = (placement: MediaPlacement) => {
+    const files = pasteFiles()
+    setPasteFiles(null)
+    const instance = media()
+    if (!files || !instance) {
+      return
+    }
+    void applyPasteMediaPlacement({
+      placement,
+      files,
+      attach: (next, options) => instance.attach(next, options),
+      insertMediaEmbeds: items => editorApi()?.insertMediaEmbeds(items),
+    })
   }
 
   const handleComposerDrop = (event: DragEvent) => {
@@ -1063,8 +1106,7 @@ export function BlipUpdateEditor(props: BlipUpdateEditorProps) {
               </div>
             </div>
           ) : undefined
-        }
-      >
+        }>
         <form
           class="blip-editor-form blip-update-editor-form"
           onPaste={handleClipboardPaste}
@@ -1082,6 +1124,7 @@ export function BlipUpdateEditor(props: BlipUpdateEditorProps) {
             initialValue={content()}
             onChange={handleContentChange}
             onEditorReady={handleEditorReady}
+            onEditorApi={setEditorApi}
             AboveControls={ComposerMediaChrome}
             aboveControlsProps={{
               media,
@@ -1112,6 +1155,17 @@ export function BlipUpdateEditor(props: BlipUpdateEditorProps) {
             attachment={previewAttachment()}
             onClose={() => setPreviewAttachment(null)}
             closeLabel={trEditor("media.closePreview")}
+          />
+          <PasteMediaPlacementPrompt
+            open={pasteFiles() != null}
+            isMobile={isMobileViewport()}
+            title={trEditor("media.placement.title")}
+            description={trEditor("media.placement.description")}
+            inlineLabel={trEditor("media.placement.inline")}
+            galleryLabel={trEditor("media.placement.gallery")}
+            cancelLabel={trEditor("media.placement.cancel")}
+            onChoose={handlePastePlacement}
+            onCancel={closePastePrompt}
           />
         </form>
       </EditorShell>

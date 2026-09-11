@@ -39,7 +39,12 @@ afterEach(() => {
 
 describe("BlipCardMediaStrip", () => {
   it("renders nothing when there is no media", () => {
-    render(() => <BlipCardMediaStrip media={[]} labels={labels} />)
+    render(() => (
+      <BlipCardMediaStrip
+        media={[]}
+        labels={labels}
+      />
+    ))
     expect(document.querySelector(".blip-card-media-strip")).toBeNull()
   })
 
@@ -54,7 +59,9 @@ describe("BlipCardMediaStrip", () => {
     const img = document.querySelector(
       ".blip-card-media-strip .personal-cloud-image-img",
     )
-    expect(img?.getAttribute("src")).toBe("https://cdn.test/media/u/b/a-small.webp")
+    expect(img?.getAttribute("src")).toBe(
+      "https://cdn.test/media/u/b/a-small.webp",
+    )
   })
 
   it("renders a gif as the static thumbnail frame", () => {
@@ -72,7 +79,9 @@ describe("BlipCardMediaStrip", () => {
     ))
 
     const gif = document.querySelector(".blip-card-media-strip .gif")
-    expect(gif?.getAttribute("src")).toBe("https://cdn.test/media/u/b/loop-thumb.webp")
+    expect(gif?.getAttribute("src")).toBe(
+      "https://cdn.test/media/u/b/loop-thumb.webp",
+    )
   })
 
   it("falls back to the animated original gif when the static frame is missing", () => {
@@ -89,9 +98,13 @@ describe("BlipCardMediaStrip", () => {
       />
     ))
 
-    const gif = document.querySelector(".blip-card-media-strip .gif") as HTMLImageElement
+    const gif = document.querySelector(
+      ".blip-card-media-strip .gif",
+    ) as HTMLImageElement
     fireEvent.error(gif)
-    expect(gif.getAttribute("src")).toBe("https://cdn.test/media/u/b/loop-original.gif")
+    expect(gif.getAttribute("src")).toBe(
+      "https://cdn.test/media/u/b/loop-original.gif",
+    )
   })
 
   it("renders a video as a static poster image with a play overlay", () => {
@@ -111,8 +124,12 @@ describe("BlipCardMediaStrip", () => {
     expect(document.querySelector(".blip-card-media-strip .play")).toBeTruthy()
     // No <video> element on the feed — a lightweight poster <img> instead.
     expect(document.querySelector(".blip-card-media-strip video")).toBeNull()
-    const poster = document.querySelector(".blip-card-media-strip .video .poster")
-    expect(poster?.getAttribute("src")).toBe("https://cdn.test/media/u/b/clip-thumb.webp")
+    const poster = document.querySelector(
+      ".blip-card-media-strip .video .poster",
+    )
+    expect(poster?.getAttribute("src")).toBe(
+      "https://cdn.test/media/u/b/clip-thumb.webp",
+    )
   })
 
   it("falls back to a muted video first frame when the poster is missing", () => {
@@ -135,17 +152,30 @@ describe("BlipCardMediaStrip", () => {
     fireEvent.error(poster)
 
     const video = document.querySelector(".blip-card-media-strip .video video")
-    expect(video?.getAttribute("src")).toBe("https://cdn.test/media/u/b/clip-original.mp4")
+    expect(video?.getAttribute("src")).toBe(
+      "https://cdn.test/media/u/b/clip-original.mp4",
+    )
     expect(document.querySelector(".blip-card-media-strip .play")).toBeTruthy()
   })
 
   it("caps at three thumbnails and shows a +n overflow tile", () => {
     const set = Array.from({ length: 5 }, (_, index) =>
-      media({ id: `m${index}`, storage_key: `media/u/b/m${index}`, display_order: index }),
+      media({
+        id: `m${index}`,
+        storage_key: `media/u/b/m${index}`,
+        display_order: index,
+      }),
     )
-    render(() => <BlipCardMediaStrip media={set} labels={labels} />)
+    render(() => (
+      <BlipCardMediaStrip
+        media={set}
+        labels={labels}
+      />
+    ))
 
-    expect(document.querySelectorAll(".blip-card-media-strip .item")).toHaveLength(3)
+    expect(
+      document.querySelectorAll(".blip-card-media-strip .item"),
+    ).toHaveLength(3)
     const overflow = document.querySelector(".blip-card-media-strip .overflow")
     expect(overflow?.textContent).toBe("+2")
   })
@@ -156,20 +186,55 @@ describe("BlipCardMediaStrip", () => {
       media({ id: "b", storage_key: "media/u/b/b" }),
       media({ id: "c", storage_key: "media/u/b/c" }),
     ]
-    render(() => <BlipCardMediaStrip media={set} labels={labels} />)
+    render(() => (
+      <BlipCardMediaStrip
+        media={set}
+        labels={labels}
+      />
+    ))
 
-    expect(document.querySelectorAll(".blip-card-media-strip .item")).toHaveLength(3)
-    expect(document.querySelector(".blip-card-media-strip .overflow")).toBeNull()
+    expect(
+      document.querySelectorAll(".blip-card-media-strip .item"),
+    ).toHaveLength(3)
+    expect(
+      document.querySelector(".blip-card-media-strip .overflow"),
+    ).toBeNull()
   })
 
   it("is non-interactive — no buttons or links in the strip", () => {
     const set = Array.from({ length: 4 }, (_, index) =>
       media({ id: `m${index}`, storage_key: `media/u/b/m${index}` }),
     )
-    render(() => <BlipCardMediaStrip media={set} labels={labels} />)
+    render(() => (
+      <BlipCardMediaStrip
+        media={set}
+        labels={labels}
+      />
+    ))
 
     const strip = document.querySelector(".blip-card-media-strip")
     expect(strip?.querySelectorAll("button, a")).toHaveLength(0)
     expect(strip?.getAttribute("aria-label")).toBe("4 attachments")
+  })
+
+  it("omits inline-placement rows from the strip", () => {
+    render(() => (
+      <BlipCardMediaStrip
+        media={[
+          media({ id: "g", storage_key: "media/u/b/g", placement: "gallery" }),
+          media({ id: "i", storage_key: "media/u/b/i", placement: "inline" }),
+        ]}
+        labels={labels}
+      />
+    ))
+
+    expect(
+      document.querySelectorAll(".blip-card-media-strip .item"),
+    ).toHaveLength(1)
+    expect(
+      document
+        .querySelector(".blip-card-media-strip .personal-cloud-image-img")
+        ?.getAttribute("src"),
+    ).toBe("https://cdn.test/media/u/b/g-small.webp")
   })
 })

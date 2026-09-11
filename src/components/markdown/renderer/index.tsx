@@ -3,10 +3,16 @@ import { render } from "solid-js/web"
 import { AudioPlayer } from "@/components/audio-player"
 import { clsx as cx } from "@/util"
 import { ScriptureReference } from "@/modules/blips/components/scripture-reference"
+import { InlineBlipMedia } from "@/modules/media/inline-blip-media"
+import type { BlipMediaRow } from "@/modules/media/data/queries"
 import {
   mountMarkdownAudioPlayers,
   unmountMarkdownAudioPlayers,
 } from "./mount-audio-players"
+import {
+  mountMarkdownMediaEmbeds,
+  unmountMarkdownMediaEmbeds,
+} from "./mount-media-embeds"
 import {
   mountMarkdownScriptureReferences,
   unmountMarkdownScriptureReferences,
@@ -17,10 +23,17 @@ import "./styles.css"
 type MarkdownRendererProps = {
   content: string
   class?: string
+  media?: BlipMediaRow[]
+  onOpenMedia?: (record: BlipMediaRow) => void
 }
 
 export function MarkdownRenderer(props: MarkdownRendererProps) {
-  const [local] = splitProps(props, ["content", "class"])
+  const [local] = splitProps(props, [
+    "content",
+    "class",
+    "media",
+    "onOpenMedia",
+  ])
   let containerRef: HTMLDivElement | undefined
 
   const html = createMemo(() => {
@@ -29,6 +42,8 @@ export function MarkdownRenderer(props: MarkdownRendererProps) {
 
   createEffect(() => {
     html()
+    const media = local.media
+    const onOpenMedia = local.onOpenMedia
 
     if (!containerRef) {
       return
@@ -41,6 +56,19 @@ export function MarkdownRenderer(props: MarkdownRendererProps) {
 
       mountMarkdownAudioPlayers(containerRef, (playerProps, target) =>
         render(() => <AudioPlayer {...playerProps} />, target),
+      )
+
+      mountMarkdownMediaEmbeds(containerRef, (embed, target) =>
+        render(
+          () => (
+            <InlineBlipMedia
+              embed={embed}
+              record={media?.find(row => row.storage_key === embed.key)}
+              onOpen={onOpenMedia}
+            />
+          ),
+          target,
+        ),
       )
 
       mountMarkdownScriptureReferences(containerRef, (referenceProps, target) =>
@@ -63,6 +91,7 @@ export function MarkdownRenderer(props: MarkdownRendererProps) {
     onCleanup(() => {
       if (containerRef) {
         unmountMarkdownAudioPlayers(containerRef)
+        unmountMarkdownMediaEmbeds(containerRef)
         unmountMarkdownScriptureReferences(containerRef)
       }
     })
@@ -71,6 +100,7 @@ export function MarkdownRenderer(props: MarkdownRendererProps) {
   onCleanup(() => {
     if (containerRef) {
       unmountMarkdownAudioPlayers(containerRef)
+      unmountMarkdownMediaEmbeds(containerRef)
       unmountMarkdownScriptureReferences(containerRef)
     }
   })

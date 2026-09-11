@@ -1,9 +1,13 @@
-import {
-  editorStateCtx,
-  type Editor,
-  schemaCtx,
-} from "@milkdown/core"
+import { editorStateCtx, type Editor, schemaCtx } from "@milkdown/core"
 import { formattingOptions } from "./formatting-config"
+import {
+  getSelectedMediaEmbed,
+  mediaLayoutOptions,
+  withSelectionOverride,
+  type EmbedSelection,
+} from "./plugins/media-embed-layout"
+
+const allFormatOptions = [...formattingOptions, ...mediaLayoutOptions]
 
 type LinkSelectionState = {
   selectedText: string
@@ -70,7 +74,10 @@ const getWordAtCursor = ($from: any): Partial<LinkSelectionState> => {
     right += 1
   }
 
-  while (right > left && trailingPunctuationPattern.test(segment.text[right - 1])) {
+  while (
+    right > left &&
+    trailingPunctuationPattern.test(segment.text[right - 1])
+  ) {
     right -= 1
   }
 
@@ -87,7 +94,7 @@ const getWordAtCursor = ($from: any): Partial<LinkSelectionState> => {
 }
 
 export function applyFormat(editor: Editor, formatKey: string, payload?: any) {
-  const option = formattingOptions.find(opt => opt.key === formatKey)
+  const option = allFormatOptions.find(opt => opt.key === formatKey)
   if (!option) {
     return
   }
@@ -97,156 +104,162 @@ export function applyFormat(editor: Editor, formatKey: string, payload?: any) {
   })
 }
 
-export function getActiveFormats(editor: Editor): string[] {
+export function getEditorToolbarSnapshot(
+  editor: Editor,
+  selection?: EmbedSelection | null,
+) {
   const activeFormats: string[] = []
-
-  editor.action(ctx => {
-    for (const option of formattingOptions) {
-      if (option.isActive?.(ctx)) {
-        activeFormats.push(option.key)
-      }
-    }
-  })
-
-  return activeFormats
-}
-
-export function getDisabledFormats(editor: Editor): string[] {
   const disabledFormats: string[] = []
-
-  editor.action(ctx => {
-    for (const option of formattingOptions) {
-      if (option.isDisabled?.(ctx)) {
-        disabledFormats.push(option.key)
-      }
-    }
-  })
-
-  return disabledFormats
-}
-
-export function getLinkSelectionState(editor: Editor): LinkSelectionState {
-  const selectionState: LinkSelectionState = {
+  let mediaType: string | undefined
+  const linkSelectionState: LinkSelectionState = {
     selectedText: "",
     selectedLinkText: "",
     selectedLinkHref: "",
   }
 
   editor.action(ctx => {
-    const state = ctx.get(editorStateCtx)
-    const schema = ctx.get(schemaCtx)
-    const linkMark = schema.marks.link
-    const { from, to, empty, $from } = state.selection
-    if (!empty) {
-      selectionState.selectedText = state.doc.textBetween(from, to, " ")
-      selectionState.selectedLinkText = selectionState.selectedText
-      selectionState.selectionRangeFrom = from
-      selectionState.selectionRangeTo = to
-      selectionState.selectedLinkRangeFrom = from
-      selectionState.selectedLinkRangeTo = to
-    } else {
-      const cursorWord = getWordAtCursor($from)
-      selectionState.selectedText = cursorWord.selectedText ?? ""
-      selectionState.selectedLinkText = selectionState.selectedText
-      selectionState.selectionRangeFrom = cursorWord.selectionRangeFrom
-      selectionState.selectionRangeTo = cursorWord.selectionRangeTo
+    const resolved = withSelectionOverride(ctx, selection)
+    const selected = getSelectedMediaEmbed(resolved)
+    mediaType = selected
+      ? String(selected.node.attrs.mediaType ?? "image")
+      : undefined
+
+    for (const option of allFormatOptions) {
+      if (option.isActive?.(resolved)) {
+        activeFormats.push(option.key)
+      }
+      if (option.isDisabled?.(resolved)) {
+        disabledFormats.push(option.key)
+      }
     }
 
-    if (!linkMark) {
-      return
-    }
-
-    if (empty) {
-      const marks = state.storedMarks ?? $from.marks()
-      const activeMark = marks.find(mark => mark.type === linkMark)
-      selectionState.selectedLinkHref = activeMark?.attrs?.href ?? ""
-
-      if (!selectionState.selectedLinkHref) {
-        return
-      }
-
-      const parent = $from.parent
-      const index = $from.index()
-      const textNodes = parent.content.content
-      const getLinkHref = (node: (typeof textNodes)[number]) => {
-        const mark = node.marks.find(item => item.type === linkMark)
-        return mark?.attrs?.href ?? ""
-      }
-
-      const currentNode = textNodes[index]
-      if (!currentNode || currentNode.isText !== true) {
-        return
-      }
-
-      const currentHref = getLinkHref(currentNode)
-      if (!currentHref || currentHref !== selectionState.selectedLinkHref) {
-        return
-      }
-
-      let startIndex = index
-      let endIndex = index
-
-      while (startIndex > 0) {
-        const previousNode = textNodes[startIndex - 1]
-        if (!previousNode || previousNode.isText !== true) {
-          break
-        }
-
-        if (getLinkHref(previousNode) !== currentHref) {
-          break
-        }
-
-        startIndex -= 1
-      }
-
-      while (endIndex < textNodes.length - 1) {
-        const nextNode = textNodes[endIndex + 1]
-        if (!nextNode || nextNode.isText !== true) {
-          break
-        }
-
-        if (getLinkHref(nextNode) !== currentHref) {
-          break
-        }
-
-        endIndex += 1
-      }
-
-      selectionState.selectedLinkText = textNodes
-        .slice(startIndex, endIndex + 1)
-        .map(node => node.text ?? "")
-        .join("")
-
-      const parentStart = $from.start()
-      let startOffset = 0
-      for (let i = 0; i < startIndex; i += 1) {
-        startOffset += parent.child(i).nodeSize
-      }
-
-      let endOffset = startOffset
-      for (let i = startIndex; i <= endIndex; i += 1) {
-        endOffset += parent.child(i).nodeSize
-      }
-
-      selectionState.selectedLinkRangeFrom = parentStart + startOffset
-      selectionState.selectedLinkRangeTo = parentStart + endOffset
-      return
-    }
-
-    state.doc.nodesBetween(from, to, node => {
-      if (selectionState.selectedLinkHref) {
-        return false
-      }
-
-      const mark = node.marks.find(item => item.type === linkMark)
-      if (mark) {
-        selectionState.selectedLinkHref = mark.attrs?.href ?? ""
-        return false
-      }
-
-      return
-    })
+    readLinkSelectionState(resolved, linkSelectionState)
   })
 
-  return selectionState
+  return {
+    mode: (mediaType ? "media" : "text") as "text" | "media",
+    mediaType,
+    activeFormats,
+    disabledFormats,
+    linkSelectionState,
+  }
+}
+
+function readLinkSelectionState(
+  ctx: { get: (token: unknown) => unknown },
+  selectionState: LinkSelectionState,
+) {
+  const state = ctx.get(editorStateCtx) as any
+  const schema = ctx.get(schemaCtx) as any
+  const linkMark = schema.marks.link
+  const { from, to, empty, $from } = state.selection
+  if (!empty) {
+    selectionState.selectedText = state.doc.textBetween(from, to, " ")
+    selectionState.selectedLinkText = selectionState.selectedText
+    selectionState.selectionRangeFrom = from
+    selectionState.selectionRangeTo = to
+    selectionState.selectedLinkRangeFrom = from
+    selectionState.selectedLinkRangeTo = to
+  } else {
+    const cursorWord = getWordAtCursor($from)
+    selectionState.selectedText = cursorWord.selectedText ?? ""
+    selectionState.selectedLinkText = selectionState.selectedText
+    selectionState.selectionRangeFrom = cursorWord.selectionRangeFrom
+    selectionState.selectionRangeTo = cursorWord.selectionRangeTo
+  }
+
+  if (!linkMark) {
+    return
+  }
+
+  if (empty) {
+    const marks = state.storedMarks ?? $from.marks()
+    const activeMark = marks.find(mark => mark.type === linkMark)
+    selectionState.selectedLinkHref = activeMark?.attrs?.href ?? ""
+
+    if (!selectionState.selectedLinkHref) {
+      return
+    }
+
+    const parent = $from.parent
+    const index = $from.index()
+    const textNodes = parent.content.content
+    const getLinkHref = (node: (typeof textNodes)[number]) => {
+      const mark = node.marks.find(item => item.type === linkMark)
+      return mark?.attrs?.href ?? ""
+    }
+
+    const currentNode = textNodes[index]
+    if (!currentNode || currentNode.isText !== true) {
+      return
+    }
+
+    const currentHref = getLinkHref(currentNode)
+    if (!currentHref || currentHref !== selectionState.selectedLinkHref) {
+      return
+    }
+
+    let startIndex = index
+    let endIndex = index
+
+    while (startIndex > 0) {
+      const previousNode = textNodes[startIndex - 1]
+      if (!previousNode || previousNode.isText !== true) {
+        break
+      }
+
+      if (getLinkHref(previousNode) !== currentHref) {
+        break
+      }
+
+      startIndex -= 1
+    }
+
+    while (endIndex < textNodes.length - 1) {
+      const nextNode = textNodes[endIndex + 1]
+      if (!nextNode || nextNode.isText !== true) {
+        break
+      }
+
+      if (getLinkHref(nextNode) !== currentHref) {
+        break
+      }
+
+      endIndex += 1
+    }
+
+    selectionState.selectedLinkText = textNodes
+      .slice(startIndex, endIndex + 1)
+      .map(node => node.text ?? "")
+      .join("")
+
+    const parentStart = $from.start()
+    let startOffset = 0
+    for (let i = 0; i < startIndex; i += 1) {
+      startOffset += parent.child(i).nodeSize
+    }
+
+    let endOffset = startOffset
+    for (let i = startIndex; i <= endIndex; i += 1) {
+      endOffset += parent.child(i).nodeSize
+    }
+
+    selectionState.selectedLinkRangeFrom = parentStart + startOffset
+    selectionState.selectedLinkRangeTo = parentStart + endOffset
+    return
+  }
+
+  state.doc.nodesBetween(from, to, node => {
+    if (selectionState.selectedLinkHref) {
+      return false
+    }
+
+    const mark = node.marks.find(item => item.type === linkMark)
+    if (mark) {
+      selectionState.selectedLinkHref = mark.attrs?.href ?? ""
+      return false
+    }
+
+    return
+  })
 }

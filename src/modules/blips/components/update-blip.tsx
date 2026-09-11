@@ -27,10 +27,7 @@ import { REACTION_ERROR_I18N_KEY } from "@/modules/blips/data/errors"
 import { reactionStore } from "@/modules/blips/data/reactions-store"
 import { blipStore } from "@/modules/blips/data/store"
 import { BlipCommentThread } from "@/modules/blips/components/blip-comment-thread"
-import {
-  BlipMediaGallery,
-  type BlipMediaGalleryLabels,
-} from "@/modules/media"
+import { BlipMediaGallery, type BlipMediaGalleryLabels } from "@/modules/media"
 import type { BlipMediaRow } from "@/modules/media/data/queries"
 import { useBlipComposer } from "@/modules/blips/context/blip-composer-context"
 import {
@@ -65,7 +62,9 @@ export function UpdateBlip(props: {
   const [isReactionBusy, setIsReactionBusy] = createSignal(false)
   const [reactionStateOverride, setReactionStateOverride] =
     createSignal<ReactionStateOverride | null>(null)
-  const reactionSignature = createMemo(() => getReactionSignature(props.blip.reactions ?? []))
+  const reactionSignature = createMemo(() =>
+    getReactionSignature(props.blip.reactions ?? []),
+  )
   const displayBlip = createMemo(() => {
     const override = reactionStateOverride()
     if (!override) {
@@ -112,8 +111,8 @@ export function UpdateBlip(props: {
     const previousReactions = currentBlip.reactions ?? []
     const previousCount = currentBlip.my_reaction_count ?? 0
     const hasActiveReaction =
-      previousReactions.find(reaction => reaction.emoji === emoji)?.reacted_by_current_user ??
-      false
+      previousReactions.find(reaction => reaction.emoji === emoji)
+        ?.reacted_by_current_user ?? false
     const optimisticOverride = buildOptimisticReactionState({
       reactions: previousReactions,
       myReactionCount: previousCount,
@@ -139,7 +138,9 @@ export function UpdateBlip(props: {
     setIsReactionBusy(false)
 
     if (result.error || !result.data) {
-      applyVisibleReactionState(createReactionStateOverride(previousReactions, previousCount))
+      applyVisibleReactionState(
+        createReactionStateOverride(previousReactions, previousCount),
+      )
       const errorKey =
         REACTION_ERROR_I18N_KEY[result.error ?? "UNKNOWN"] ??
         REACTION_ERROR_I18N_KEY.UNKNOWN
@@ -154,8 +155,7 @@ export function UpdateBlip(props: {
   }
 
   return (
-    <li
-      class="update-blip-stack">
+    <li class="update-blip-stack">
       <article
         class="update-blip"
         data-recent-realtime={props.isRecentRealtime === true ? "" : undefined}
@@ -173,12 +173,14 @@ export function UpdateBlip(props: {
           <Show when={isScheduled()}>
             <span class="visibility-badge">{tr("labels.scheduled")}</span>
           </Show>
-          <span class="timestamp">
-            {timestampLabel()}
-          </span>
+          <span class="timestamp">{timestampLabel()}</span>
         </header>
         <div class="content">
-          <Markdown content={props.blip.content ?? ""} />
+          <Markdown
+            content={props.blip.content ?? ""}
+            media={props.media}
+            onOpenMedia={props.onOpenMediaItem}
+          />
         </div>
         <Show when={props.mediaLabels}>
           {labels => (

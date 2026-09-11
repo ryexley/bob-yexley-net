@@ -49,9 +49,10 @@ import { UpdateBlip } from "@/modules/blips/components/update-blip"
 import { BlipMediaGallery, Lightbox } from "@/modules/media"
 import {
   flattenBlipPageMedia,
+  findMediaIndex,
   getBlipMediaFor,
+  withLightboxGuest,
   groupMediaByBlipId,
-  indexMediaById,
 } from "@/modules/media/data/queries"
 import type { BlipMediaRow } from "@/modules/media/data/queries"
 import { useBlipComposer } from "@/modules/blips/context/blip-composer-context"
@@ -164,7 +165,9 @@ export function BlipView() {
   )
   const blipQuery = createMemo(() => blipGraphQuery()?.blip ?? null)
   const initialUpdates = createMemo(() => blipGraphQuery()?.updates ?? [])
-  const initialRootComments = createMemo(() => blipGraphQuery()?.blip.comments ?? [])
+  const initialRootComments = createMemo(
+    () => blipGraphQuery()?.blip.comments ?? [],
+  )
   const initialUpdateComments = createMemo(() =>
     (blipGraphQuery()?.updates ?? []).flatMap(update => update.comments ?? []),
   )
@@ -175,8 +178,10 @@ export function BlipView() {
   const [recentRealtimeUpdateStates, setRecentRealtimeUpdateStates] =
     createSignal<Record<string, { shimmering: boolean }>>({})
   const [hydratedRootTags, setHydratedRootTags] = createSignal<string[]>([])
-  const [hasSeededInitialUpdates, setHasSeededInitialUpdates] = createSignal(false)
-  const [hasSeededInitialComments, setHasSeededInitialComments] = createSignal(false)
+  const [hasSeededInitialUpdates, setHasSeededInitialUpdates] =
+    createSignal(false)
+  const [hasSeededInitialComments, setHasSeededInitialComments] =
+    createSignal(false)
   const [isReactionBusy, setIsReactionBusy] = createSignal(false)
   const [topLevelSortDirection, setTopLevelSortDirection] =
     createSignal<TopLevelSortDirection>("desc")
@@ -265,7 +270,9 @@ export function BlipView() {
     return hydratedRootTags()
   })
   const visibleUpdates = createMemo(() => {
-    const allUpdates = updates().filter(update => isUpdateActivityVisible(update))
+    const allUpdates = updates().filter(update =>
+      isUpdateActivityVisible(update),
+    )
     if (isAuthenticated()) {
       return allUpdates
     }
@@ -292,7 +299,10 @@ export function BlipView() {
   })
   const initialCommentsByParentId = createMemo(() => {
     const next = new Map<string, Blip[]>()
-    for (const comment of [...initialRootComments(), ...initialUpdateComments()]) {
+    for (const comment of [
+      ...initialRootComments(),
+      ...initialUpdateComments(),
+    ]) {
       if (!comment.parent_id) {
         continue
       }
@@ -366,7 +376,9 @@ export function BlipView() {
     const ids = mediaBlipIds()
     return ids.length > 0 ? getBlipMediaFor(ids) : Promise.resolve([])
   })
-  const mediaByBlip = createMemo(() => groupMediaByBlipId(blipMediaQuery() ?? []))
+  const mediaByBlip = createMemo(() =>
+    groupMediaByBlipId(blipMediaQuery() ?? []),
+  )
   const rootMedia = createMemo(() => mediaByBlip()[blip()?.id ?? ""] ?? [])
   const galleryLabels = {
     region: tr("media.region"),
@@ -386,20 +398,35 @@ export function BlipView() {
   const pageMedia = createMemo(() =>
     flattenBlipPageMedia(rootMedia(), mediaByBlip(), updateIdsInPageOrder()),
   )
-  const mediaIndexById = createMemo(() => indexMediaById(pageMedia()))
   const [lightboxIndex, setLightboxIndex] = createSignal<number | null>(null)
+  const [lightboxGuest, setLightboxGuest] = createSignal<BlipMediaRow | null>(
+    null,
+  )
+  const lightboxMedia = createMemo(() =>
+    withLightboxGuest(pageMedia(), lightboxGuest()),
+  )
+  const closeLightbox = () => {
+    setLightboxIndex(null)
+    setLightboxGuest(null)
+  }
   const openPageMediaItem = (record: BlipMediaRow) => {
-    const index = mediaIndexById().get(record.id)
-    if (index !== undefined) {
+    const list = pageMedia()
+    const index = findMediaIndex(list, record)
+    if (index >= 0) {
+      setLightboxGuest(null)
       setLightboxIndex(index)
+      return
     }
+    setLightboxGuest(record)
+    setLightboxIndex(list.length)
   }
   const pageMediaOpenItemLabel = (record: BlipMediaRow) => {
-    const index = mediaIndexById().get(record.id)
-    if (index === undefined) {
+    const items = lightboxMedia()
+    const index = findMediaIndex(items, record)
+    if (index < 0) {
       return ""
     }
-    return galleryLabels.openItem(index + 1, pageMedia().length)
+    return galleryLabels.openItem(index + 1, items.length)
   }
 
   // Reader media comes from a cached server query; refresh it when the author
@@ -414,7 +441,7 @@ export function BlipView() {
 
   createEffect(() => {
     void params.id
-    setLightboxIndex(null)
+    closeLightbox()
   })
   const visibleCommentIds = createMemo(() => {
     const nextIds = new Set<string>()
@@ -451,7 +478,9 @@ export function BlipView() {
 
     return [rootId, ...visibleUpdateIds(), ...visibleCommentIds()].join("|")
   })
-  const reactionSignature = createMemo(() => getReactionSignature(blip()?.reactions ?? []))
+  const reactionSignature = createMemo(() =>
+    getReactionSignature(blip()?.reactions ?? []),
+  )
   const displayBlip = createMemo(() => {
     const base = blip()
     const override = reactionStateOverride()
@@ -550,7 +579,10 @@ export function BlipView() {
   })
 
   createEffect(() => {
-    const loadedComments = [...initialRootComments(), ...initialUpdateComments()]
+    const loadedComments = [
+      ...initialRootComments(),
+      ...initialUpdateComments(),
+    ]
     const targetParentIds = [
       blipQuery()?.id,
       ...initialUpdates().map(update => update.id),
@@ -726,7 +758,11 @@ export function BlipView() {
       ...visibleUpdateIds(),
       ...visibleCommentIds(),
     ])
-    void store.syncReactionViewer(reactionBlipIds, nextViewer, lastReactionViewer)
+    void store.syncReactionViewer(
+      reactionBlipIds,
+      nextViewer,
+      lastReactionViewer,
+    )
     lastReactionViewer = nextViewer
   })
 
@@ -795,8 +831,8 @@ export function BlipView() {
     const previousReactions = currentBlip.reactions ?? []
     const previousCount = currentBlip.my_reaction_count ?? 0
     const hasActiveReaction =
-      previousReactions.find(reaction => reaction.emoji === emoji)?.reacted_by_current_user ??
-      false
+      previousReactions.find(reaction => reaction.emoji === emoji)
+        ?.reacted_by_current_user ?? false
     const optimisticOverride = buildOptimisticReactionState({
       reactions: previousReactions,
       myReactionCount: previousCount,
@@ -822,7 +858,9 @@ export function BlipView() {
     setIsReactionBusy(false)
 
     if (result.error || !result.data) {
-      applyVisibleReactionState(createReactionStateOverride(previousReactions, previousCount))
+      applyVisibleReactionState(
+        createReactionStateOverride(previousReactions, previousCount),
+      )
       const errorKey =
         REACTION_ERROR_I18N_KEY[result.error ?? "UNKNOWN"] ??
         REACTION_ERROR_I18N_KEY.UNKNOWN
@@ -898,7 +936,9 @@ export function BlipView() {
                     <article class="blip-detail-card">
                       <header
                         class="blip-detail-header"
-                        classList={{ scheduled: rootTimestampDisplay()?.scheduled }}>
+                        classList={{
+                          scheduled: rootTimestampDisplay()?.scheduled,
+                        }}>
                         <Tooltip
                           content={() => rootTimestampDisplay()?.tooltip ?? ""}
                           touchMode="popover">
@@ -914,7 +954,11 @@ export function BlipView() {
                         </Tooltip>
                       </header>
                       <div class="blip-detail-content">
-                        <Markdown content={data().content ?? ""} />
+                        <Markdown
+                          content={data().content ?? ""}
+                          media={rootMedia()}
+                          onOpenMedia={openPageMediaItem}
+                        />
                       </div>
                       <BlipMediaGallery
                         media={rootMedia()}
@@ -971,7 +1015,10 @@ export function BlipView() {
                                   reactions_count: next.reactionsCount,
                                 }
                                 setReactionStateOverride(nextState)
-                                store.updateCachedReactionState(data().id, nextState)
+                                store.updateCachedReactionState(
+                                  data().id,
+                                  nextState,
+                                )
                               }}
                             />
                             <Show when={data().allow_comments !== false}>
@@ -991,154 +1038,162 @@ export function BlipView() {
                         }
                       />
                       <div class="thread-stack">
-                      <div class="blip-detail-meta-row">
-                        <div class="blip-detail-meta-row-start">
-                          <Show when={showActivityMetaRow()}>
-                            <div class="blip-detail-updates-group">
-                              <Show when={visibleUpdates().length > 0}>
-                                <div class="blip-updates-chip">
-                                  <span class="blip-updates-chip-label">
-                                    {tr("updates.label")}
-                                  </span>
-                                  <span class="blip-updates-chip-count">
-                                    {visibleUpdates().length}
-                                  </span>
-                                </div>
-                              </Show>
-                              <RequiresAdmin>
-                                <Button
-                                  variant="ghost"
-                                  size="xs"
-                                  label={tr("updates.editor.newLabel")}
-                                  iconRight="chat_add_on"
-                                  class={cx("blip-detail-add-update", {
-                                    active: showComposer(),
-                                  })}
-                                  aria-label={
-                                    showComposer()
-                                      ? tr("actions.hideUpdateComposer")
-                                      : tr("actions.postUpdate")
-                                  }
-                                  onClick={() => {
-                                    if (showComposer()) {
-                                      requestCloseActive()
-                                      return
+                        <div class="blip-detail-meta-row">
+                          <div class="blip-detail-meta-row-start">
+                            <Show when={showActivityMetaRow()}>
+                              <div class="blip-detail-updates-group">
+                                <Show when={visibleUpdates().length > 0}>
+                                  <div class="blip-updates-chip">
+                                    <span class="blip-updates-chip-label">
+                                      {tr("updates.label")}
+                                    </span>
+                                    <span class="blip-updates-chip-count">
+                                      {visibleUpdates().length}
+                                    </span>
+                                  </div>
+                                </Show>
+                                <RequiresAdmin>
+                                  <Button
+                                    variant="ghost"
+                                    size="xs"
+                                    label={tr("updates.editor.newLabel")}
+                                    iconRight="chat_add_on"
+                                    class={cx("blip-detail-add-update", {
+                                      active: showComposer(),
+                                    })}
+                                    aria-label={
+                                      showComposer()
+                                        ? tr("actions.hideUpdateComposer")
+                                        : tr("actions.postUpdate")
                                     }
+                                    onClick={() => {
+                                      if (showComposer()) {
+                                        requestCloseActive()
+                                        return
+                                      }
 
-                                    const rootBlipId = blip()?.id
-                                    if (!rootBlipId) {
-                                      return
-                                    }
+                                      const rootBlipId = blip()?.id
+                                      if (!rootBlipId) {
+                                        return
+                                      }
 
-                                    openNewUpdate(rootBlipId)
-                                  }}
+                                      openNewUpdate(rootBlipId)
+                                    }}
+                                  />
+                                </RequiresAdmin>
+                              </div>
+                            </Show>
+                          </div>
+                          <div class="blip-detail-meta-row-end">
+                            <Show
+                              when={data().allow_comments === false}
+                              fallback={
+                                <Show when={visibleCommentCount() > 0}>
+                                  <div class="blip-comments-chip">
+                                    <span class="blip-comments-chip-label">
+                                      {commentThreadTr("title")}
+                                    </span>
+                                    <span class="blip-comments-chip-count">
+                                      {visibleCommentCount()}
+                                    </span>
+                                  </div>
+                                </Show>
+                              }>
+                              <Tooltip
+                                content={commentThreadTr("disabled")}
+                                triggerAs="span"
+                                triggerClass="blip-comments-chip blip-comments-chip-disabled">
+                                <span class="blip-comments-chip-label">
+                                  {tr("actions.commentsDisabled")}
+                                </span>
+                                <span class="blip-comments-chip-lock">
+                                  <Icon name="lock" />
+                                </span>
+                              </Tooltip>
+                            </Show>
+                            <Show when={hasTopLevelActivity()}>
+                              <Tooltip
+                                content={topLevelSortTooltip()}
+                                triggerAs="button"
+                                triggerClass={cx(
+                                  "icon-button xs blip-detail-sort-toggle",
+                                  {
+                                    active: topLevelSortDirection() === "asc",
+                                  },
+                                )}
+                                triggerProps={{
+                                  type: "button",
+                                  "aria-label": topLevelSortTooltip(),
+                                  "data-direction": topLevelSortDirection(),
+                                  onClick: () =>
+                                    setTopLevelSortDirection(direction =>
+                                      direction === "desc" ? "asc" : "desc",
+                                    ),
+                                }}>
+                                <Icon
+                                  name="list_arrow"
+                                  class="blip-detail-sort-toggle-icon"
                                 />
-                              </RequiresAdmin>
-                            </div>
-                          </Show>
+                              </Tooltip>
+                            </Show>
+                          </div>
                         </div>
-                        <div class="blip-detail-meta-row-end">
-                          <Show
-                            when={data().allow_comments === false}
-                            fallback={
-                              <Show when={visibleCommentCount() > 0}>
-                                <div class="blip-comments-chip">
-                                  <span class="blip-comments-chip-label">
-                                    {commentThreadTr("title")}
-                                  </span>
-                                  <span class="blip-comments-chip-count">
-                                    {visibleCommentCount()}
-                                  </span>
-                                </div>
-                              </Show>
-                            }>
-                            <Tooltip
-                              content={commentThreadTr("disabled")}
-                              triggerAs="span"
-                              triggerClass="blip-comments-chip blip-comments-chip-disabled">
-                              <span class="blip-comments-chip-label">
-                                {tr("actions.commentsDisabled")}
-                              </span>
-                              <span class="blip-comments-chip-lock">
-                                <Icon name="lock" />
-                              </span>
-                            </Tooltip>
-                          </Show>
-                          <Show when={hasTopLevelActivity()}>
-                            <Tooltip
-                              content={topLevelSortTooltip()}
-                              triggerAs="button"
-                              triggerClass={cx(
-                                "icon-button xs blip-detail-sort-toggle",
-                                {
-                                  active: topLevelSortDirection() === "asc",
-                                },
-                              )}
-                              triggerProps={{
-                                type: "button",
-                                "aria-label": topLevelSortTooltip(),
-                                "data-direction": topLevelSortDirection(),
-                                onClick: () =>
-                                  setTopLevelSortDirection(direction =>
-                                    direction === "desc" ? "asc" : "desc",
-                                  ),
-                              }}>
-                              <Icon
-                                name="list_arrow"
-                                class="blip-detail-sort-toggle-icon"
-                              />
-                            </Tooltip>
-                          </Show>
-                        </div>
-                      </div>
-                      <div
-                        ref={element => {
-                          updateInlineMountElement = element
-                          registerUpdateInlineMount(params.id, element)
-                        }}
-                      />
-                      <Show when={hasTopLevelActivity()}>
-                        <section class="blip-activity-section">
-                          <ul class="blip-detail-activity-list">
-                            <For each={topLevelActivity()}>
-                              {activity =>
-                                activity.kind === "comment" ? (
-                                  <BlipCommentListItem
-                                    comment={activity.blip}
-                                    parentBlip={blip() ?? data()}
-                                  />
-                                ) : (
-                                  <UpdateBlip
-                                    blip={activity.blip}
-                                    comments={getCommentsForParent(activity.blip.id)}
-                                    media={mediaByBlip()[activity.blip.id] ?? []}
-                                    mediaLabels={galleryLabels}
-                                    onOpenMediaItem={openPageMediaItem}
-                                    getMediaOpenItemLabel={pageMediaOpenItemLabel}
-                                    onEdit={handleEditUpdate}
-                                    isRecentRealtime={
-                                      recentRealtimeUpdateStates()[activity.blip.id] !==
-                                      undefined
-                                    }
-                                    isShimmering={
-                                      recentRealtimeUpdateStates()[activity.blip.id]
-                                        ?.shimmering === true
-                                    }
-                                  />
-                                )
-                              }
-                            </For>
-                          </ul>
-                        </section>
-                      </Show>
+                        <div
+                          ref={element => {
+                            updateInlineMountElement = element
+                            registerUpdateInlineMount(params.id, element)
+                          }}
+                        />
+                        <Show when={hasTopLevelActivity()}>
+                          <section class="blip-activity-section">
+                            <ul class="blip-detail-activity-list">
+                              <For each={topLevelActivity()}>
+                                {activity =>
+                                  activity.kind === "comment" ? (
+                                    <BlipCommentListItem
+                                      comment={activity.blip}
+                                      parentBlip={blip() ?? data()}
+                                    />
+                                  ) : (
+                                    <UpdateBlip
+                                      blip={activity.blip}
+                                      comments={getCommentsForParent(
+                                        activity.blip.id,
+                                      )}
+                                      media={
+                                        mediaByBlip()[activity.blip.id] ?? []
+                                      }
+                                      mediaLabels={galleryLabels}
+                                      onOpenMediaItem={openPageMediaItem}
+                                      getMediaOpenItemLabel={
+                                        pageMediaOpenItemLabel
+                                      }
+                                      onEdit={handleEditUpdate}
+                                      isRecentRealtime={
+                                        recentRealtimeUpdateStates()[
+                                          activity.blip.id
+                                        ] !== undefined
+                                      }
+                                      isShimmering={
+                                        recentRealtimeUpdateStates()[
+                                          activity.blip.id
+                                        ]?.shimmering === true
+                                      }
+                                    />
+                                  )
+                                }
+                              </For>
+                            </ul>
+                          </section>
+                        </Show>
                       </div>
                     </div>
                   </div>
-                  <Show when={pageMedia().length > 0}>
+                  <Show when={lightboxMedia().length > 0}>
                     <Lightbox
-                      media={pageMedia()}
+                      media={lightboxMedia()}
                       index={lightboxIndex()}
-                      onClose={() => setLightboxIndex(null)}
+                      onClose={closeLightbox}
                       labels={galleryLabels}
                     />
                   </Show>

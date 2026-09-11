@@ -1,12 +1,33 @@
-import { For, Show, createEffect, createMemo, createSignal, untrack } from "solid-js"
+import {
+  For,
+  Show,
+  createEffect,
+  createMemo,
+  createSignal,
+  untrack,
+} from "solid-js"
 import { ToggleGroup } from "@kobalte/core"
 import { Icon } from "@/components/icon"
+import { ptr } from "@/i18n"
 import { clsx as cx } from "@/util"
 import { formattingOptions } from "./formatting-config"
+import { mediaLayoutOptionsForType } from "./plugins/media-embed-layout"
 import "./toolbar.css"
+
+const layoutTr = ptr("blips.components.blipEditor.media.layout")
+
+const toolbarOptionsForMode = (mode: "text" | "media", mediaType?: string) =>
+  mode === "media"
+    ? [
+        ...formattingOptions.filter(option => option.group === 0),
+        ...mediaLayoutOptionsForType(mediaType),
+      ]
+    : formattingOptions
 
 interface ToolbarProps {
   visible?: boolean
+  mode?: "text" | "media"
+  mediaType?: string
   activeFormats: string[]
   disabledFormats: string[]
   selectedLinkText: string
@@ -24,6 +45,10 @@ export default function Toolbar(props: ToolbarProps) {
   const [showLinkEditor, setShowLinkEditor] = createSignal(false)
   const [linkHref, setLinkHref] = createSignal("")
   const [linkText, setLinkText] = createSignal("")
+  const toolbarMode = createMemo(() => props.mode ?? "text")
+  const options = createMemo(() =>
+    toolbarOptionsForMode(toolbarMode(), props.mediaType),
+  )
   const linkIsActive = createMemo(() => props.activeFormats.includes("link"))
   const pressedFormats = createMemo(() => {
     const formats = [...props.activeFormats]
@@ -33,7 +58,9 @@ export default function Toolbar(props: ToolbarProps) {
 
     return formats
   })
-  let previousLinkEditorRequestNonce = untrack(() => props.linkEditorRequestNonce)
+  let previousLinkEditorRequestNonce = untrack(
+    () => props.linkEditorRequestNonce,
+  )
   let previousLinkEditorOpen = untrack(() => showLinkEditor())
   let linkHrefInputRef: HTMLInputElement | undefined
 
@@ -96,12 +123,22 @@ export default function Toolbar(props: ToolbarProps) {
   }
 
   createEffect(() => {
+    if (toolbarMode() === "media") {
+      closeLinkEditor()
+    }
+  })
+
+  createEffect(() => {
     const requestNonce = props.linkEditorRequestNonce
     if (requestNonce === previousLinkEditorRequestNonce) {
       return
     }
 
     previousLinkEditorRequestNonce = requestNonce
+    if (toolbarMode() === "media") {
+      return
+    }
+
     if (showLinkEditor()) {
       closeLinkEditor()
       return
@@ -130,22 +167,27 @@ export default function Toolbar(props: ToolbarProps) {
   return (
     <div
       role="toolbar"
-      aria-label="Markdown formatting toolbar"
+      aria-label={
+        toolbarMode() === "media"
+          ? layoutTr("toolbar")
+          : "Markdown formatting toolbar"
+      }
       aria-orientation="horizontal"
       class={cx("toolbar", {
         visible: props.visible,
-        "with-link-editor": showLinkEditor(),
+        "with-link-editor": showLinkEditor() && toolbarMode() === "text",
       })}>
       <ToggleGroup.Root
         multiple
         value={pressedFormats()}
         class="toolbar-content thin-scrollbar"
         aria-orientation="horizontal">
-        <For each={formattingOptions}>
+        <For each={options()}>
           {(option, index) => (
             <>
               <ToggleGroup.Item
                 value={option.key}
+                aria-label={option.ariaLabel}
                 disabled={props.disabledFormats.includes(option.key)}
                 onClick={() =>
                   option.key === "link"
@@ -160,13 +202,18 @@ export default function Toolbar(props: ToolbarProps) {
                 }
                 // Preserve editor focus/selection so commands apply correctly.
                 onMouseDown={e => e.preventDefault()}
-                class="toolbar-button">
-                <Icon name={option.icon} />
+                class={cx("toolbar-button", {
+                  "has-label": Boolean(option.label),
+                })}>
+                <Show
+                  when={option.label}
+                  fallback={<Icon name={option.icon ?? ""} />}>
+                  <span class="toolbar-button-label">{option.label}</span>
+                </Show>
               </ToggleGroup.Item>
 
-              {/* Add divider if next item is in a different group */}
-              {index() < formattingOptions.length - 1 &&
-                option.group !== formattingOptions[index() + 1].group && (
+              {index() < options().length - 1 &&
+                option.group !== options()[index() + 1].group && (
                   <div class="toolbar-divider" />
                 )}
             </>

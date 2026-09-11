@@ -1,11 +1,13 @@
 import { describe, expect, it, vi } from "vitest"
 import type { SupabaseClient } from "@supabase/supabase-js"
 import {
+  findMediaIndex,
   flattenBlipPageMedia,
   groupMediaByBlipId,
   indexMediaById,
   selectBlipMedia,
   selectUpdateBlipIdsByRoot,
+  withLightboxGuest,
   type BlipMediaRow,
 } from "./queries"
 
@@ -27,7 +29,10 @@ const row = (over: Partial<BlipMediaRow> = {}): BlipMediaRow =>
     ...over,
   }) as BlipMediaRow
 
-const createSupabaseMock = (rows: BlipMediaRow[], error: { message: string } | null = null) => {
+const createSupabaseMock = (
+  rows: BlipMediaRow[],
+  error: { message: string } | null = null,
+) => {
   const calls: { in?: [string, unknown[]]; order?: [string, unknown] } = {}
   const builder = {
     select: vi.fn(() => builder),
@@ -78,10 +83,17 @@ describe("selectBlipMedia", () => {
   })
 
   it("dedupes ids and queries blip_media ordered by display_order", async () => {
-    const rows = [row({ id: "a", display_order: 0 }), row({ id: "b", display_order: 1 })]
+    const rows = [
+      row({ id: "a", display_order: 0 }),
+      row({ id: "b", display_order: 1 }),
+    ]
     const mock = createSupabaseMock(rows)
 
-    const result = await selectBlipMedia(mock.client, ["blip-1", "blip-1", "blip-2"])
+    const result = await selectBlipMedia(mock.client, [
+      "blip-1",
+      "blip-1",
+      "blip-2",
+    ])
 
     expect(result).toEqual(rows)
     expect(mock.from).toHaveBeenCalledWith("blip_media")
@@ -91,7 +103,9 @@ describe("selectBlipMedia", () => {
 
   it("throws when the query errors", async () => {
     const mock = createSupabaseMock([], { message: "boom" })
-    await expect(selectBlipMedia(mock.client, ["blip-1"])).rejects.toMatchObject({
+    await expect(
+      selectBlipMedia(mock.client, ["blip-1"]),
+    ).rejects.toMatchObject({
       message: "boom",
     })
   })
@@ -183,7 +197,10 @@ describe("flattenBlipPageMedia", () => {
       row({ id: "u1-1", blip_id: "update-1" }),
     ])
 
-    const flat = flattenBlipPageMedia(root, byBlip, ["update-empty", "update-1"])
+    const flat = flattenBlipPageMedia(root, byBlip, [
+      "update-empty",
+      "update-1",
+    ])
 
     expect(flat.map(r => r.id)).toEqual(["r1", "u1-1"])
   })
@@ -191,16 +208,45 @@ describe("flattenBlipPageMedia", () => {
 
 describe("indexMediaById", () => {
   it("maps row ids to flattened indices", () => {
-    const media = [
-      row({ id: "a" }),
-      row({ id: "b" }),
-      row({ id: "c" }),
-    ]
+    const media = [row({ id: "a" }), row({ id: "b" }), row({ id: "c" })]
     const index = indexMediaById(media)
 
     expect(index.get("a")).toBe(0)
     expect(index.get("b")).toBe(1)
     expect(index.get("c")).toBe(2)
     expect(index.get("missing")).toBeUndefined()
+  })
+})
+
+describe("findMediaIndex", () => {
+  it("matches by id first, then by storage key", () => {
+    const media = [
+      row({ id: "a", storage_key: "media/u/b/a" }),
+      row({ id: "b", storage_key: "media/u/b/b" }),
+    ]
+
+    expect(findMediaIndex(media, { id: "b", storage_key: "media/u/b/b" })).toBe(
+      1,
+    )
+    expect(
+      findMediaIndex(media, {
+        id: "inline:media/u/b/a",
+        storage_key: "media/u/b/a",
+      }),
+    ).toBe(0)
+    expect(
+      findMediaIndex(media, { id: "missing", storage_key: "media/u/b/none" }),
+    ).toBe(-1)
+  })
+})
+
+describe("withLightboxGuest", () => {
+  it("appends a guest that is not already in the list", () => {
+    const media = [row({ id: "a", storage_key: "media/u/b/a" })]
+    const guest = row({ id: "inline:x", storage_key: "media/u/b/x" })
+
+    expect(withLightboxGuest(media, guest)).toEqual([...media, guest])
+    expect(withLightboxGuest(media, media[0])).toBe(media)
+    expect(withLightboxGuest(media, null)).toBe(media)
   })
 })

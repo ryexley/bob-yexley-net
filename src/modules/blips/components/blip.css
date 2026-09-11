@@ -58,6 +58,10 @@
         padding-bottom: 0.75rem;
       }
 
+      .media-embed .media {
+        max-height: 6rem;
+      }
+
       &.has-below::after,
       &.preview::after {
         background: linear-gradient(
@@ -359,7 +363,8 @@
 
     .icon {
       filter: drop-shadow(
-        0 0 0.1875rem color-mix(in srgb, var(--colors-cool-blue) 55%, transparent)
+        0 0 0.1875rem
+          color-mix(in srgb, var(--colors-cool-blue) 55%, transparent)
       );
       font-size: 0.875rem;
       margin-inline-start: 0.0625rem;

@@ -1,0 +1,61 @@
+.paste-media-placement-overlay {
+  z-index: 1300;
+}
+
+.paste-media-placement-dialog {
+  z-index: 1301;
+  width: min(22rem, calc(100vw - 2rem));
+
+  .actions {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.75rem;
+    width: 100%;
+  }
+
+  .choices {
+    display: flex;
+    gap: 0.5rem;
+  }
+}
+
+.paste-media-placement-drawer-content {
+  z-index: 1301;
+}
+
+.paste-media-placement-sheet {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 0.5rem 1rem 1.25rem;
+
+  .handle {
+    align-self: center;
+    background: var(--colors-mono-05);
+    border-radius: 999px;
+    height: 0.25rem;
+    width: 2.5rem;
+  }
+
+  .title {
+    font-size: 1.05rem;
+    font-weight: 600;
+    margin: 0;
+  }
+
+  .description {
+    color: var(--colors-mono-10);
+    font-size: 0.875rem;
+    margin: 0;
+  }
+
+  .choices {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+
+    .button {
+      width: 100%;
+    }
+  }
+}

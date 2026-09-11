@@ -1,6 +1,7 @@
 import { createMemo, Show, type Accessor } from "solid-js"
 import { ptr } from "@/i18n"
 import type { Attachment, MediaStore } from "./media-store"
+import { MEDIA_PLACEMENT } from "./placement"
 import { ComposerMediaStrip } from "./thumbnail-strip"
 
 const tr = ptr("blips.components.blipEditor")
@@ -19,7 +20,11 @@ export type ComposerMediaChromeProps = {
  * preview `<img>` nodes when it lived inside `EditorControls`).
  */
 export function ComposerMediaChrome(props: ComposerMediaChromeProps) {
-  const attachments = createMemo(() => props.media()?.attachments() ?? [])
+  const attachments = createMemo(() =>
+    (props.media()?.attachments() ?? []).filter(
+      item => item.placement !== MEDIA_PLACEMENT.Inline,
+    ),
+  )
 
   return (
     <div class="blip-editor-media-chrome">

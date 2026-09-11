@@ -1,6 +1,9 @@
 import { fireEvent, render } from "@solidjs/testing-library"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { BlipMediaGallery, type BlipMediaGalleryLabels } from "./blip-media-gallery"
+import {
+  BlipMediaGallery,
+  type BlipMediaGalleryLabels,
+} from "./blip-media-gallery"
 import type { BlipMediaRow } from "./data/queries"
 
 const labels: BlipMediaGalleryLabels = {
@@ -40,7 +43,12 @@ afterEach(() => {
 
 describe("BlipMediaGallery", () => {
   it("renders nothing when there is no media", () => {
-    render(() => <BlipMediaGallery media={[]} labels={labels} />)
+    render(() => (
+      <BlipMediaGallery
+        media={[]}
+        labels={labels}
+      />
+    ))
     expect(document.querySelector(".blip-media-gallery")).toBeNull()
   })
 
@@ -49,25 +57,37 @@ describe("BlipMediaGallery", () => {
       media({ id: "a", storage_key: "media/u/b/a", display_order: 0 }),
       media({ id: "b", storage_key: "media/u/b/b", display_order: 1 }),
     ]
-    render(() => <BlipMediaGallery media={set} labels={labels} />)
+    render(() => (
+      <BlipMediaGallery
+        media={set}
+        labels={labels}
+      />
+    ))
 
     const items = document.querySelectorAll(".blip-media-gallery-item")
     expect(items).toHaveLength(2)
     const firstImg = items[0].querySelector("img.personal-cloud-image-img")
-    expect(firstImg?.getAttribute("src")).toBe("https://cdn.test/media/u/b/a-micro.webp")
+    expect(firstImg?.getAttribute("src")).toBe(
+      "https://cdn.test/media/u/b/a-micro.webp",
+    )
     // Lightbox is closed until a thumbnail is tapped.
     expect(document.querySelector(".lightbox")).toBeNull()
   })
 
   it("uses the same compact teaser tile for a single item", () => {
     render(() => (
-      <BlipMediaGallery media={[media({ storage_key: "media/u/b/solo" })]} labels={labels} />
+      <BlipMediaGallery
+        media={[media({ storage_key: "media/u/b/solo" })]}
+        labels={labels}
+      />
     ))
 
     const img = document.querySelector(
       ".blip-media-gallery-item img.personal-cloud-image-img",
     )
-    expect(img?.getAttribute("src")).toBe("https://cdn.test/media/u/b/solo-micro.webp")
+    expect(img?.getAttribute("src")).toBe(
+      "https://cdn.test/media/u/b/solo-micro.webp",
+    )
     expect(document.querySelector(".blip-media-gallery.is-single")).toBeNull()
     const item = document.querySelector(".blip-media-gallery-item")
     expect(item?.classList.contains("blip-media-gallery-item")).toBe(true)
@@ -79,17 +99,26 @@ describe("BlipMediaGallery", () => {
       media({ id: "b", storage_key: "media/u/b/b", display_order: 1 }),
       media({ id: "c", storage_key: "media/u/b/c", display_order: 2 }),
     ]
-    render(() => <BlipMediaGallery media={set} labels={labels} />)
+    render(() => (
+      <BlipMediaGallery
+        media={set}
+        labels={labels}
+      />
+    ))
 
     const items = document.querySelectorAll(".blip-media-gallery-item")
     fireEvent.click(items[2])
 
     expect(document.querySelector(".lightbox")).toBeTruthy()
-    expect(document.querySelector(".lightbox-counter")?.textContent).toBe("3 / 3")
+    expect(document.querySelector(".lightbox-counter")?.textContent).toBe(
+      "3 / 3",
+    )
     const lightboxImg = document.querySelector(
       '.lightbox-slide:not([aria-hidden="true"]) img.personal-cloud-image-img',
     )
-    expect(lightboxImg?.getAttribute("src")).toBe("https://cdn.test/media/u/b/c-large.webp")
+    expect(lightboxImg?.getAttribute("src")).toBe(
+      "https://cdn.test/media/u/b/c-large.webp",
+    )
   })
 
   it("delegates opens to the parent when onOpenItem is set", () => {
@@ -129,10 +158,16 @@ describe("BlipMediaGallery", () => {
       />
     ))
 
-    expect(document.querySelector(".blip-media-gallery-video .play")).toBeTruthy()
-    expect(document.querySelector("video.blip-media-gallery-video-el")).toBeNull()
+    expect(
+      document.querySelector(".blip-media-gallery-video .play"),
+    ).toBeTruthy()
+    expect(
+      document.querySelector("video.blip-media-gallery-video-el"),
+    ).toBeNull()
     const poster = document.querySelector(".blip-media-gallery-video-poster")
-    expect(poster?.getAttribute("src")).toBe("https://cdn.test/media/u/b/clip-thumb.webp")
+    expect(poster?.getAttribute("src")).toBe(
+      "https://cdn.test/media/u/b/clip-thumb.webp",
+    )
   })
 
   it("falls back to video metadata when the thumb poster is missing", () => {
@@ -158,6 +193,29 @@ describe("BlipMediaGallery", () => {
     expect(video?.getAttribute("src")).toBe(
       "https://cdn.test/media/u/b/legacy-original.mp4",
     )
-    expect(document.querySelector(".blip-media-gallery-video .play")).toBeTruthy()
+    expect(
+      document.querySelector(".blip-media-gallery-video .play"),
+    ).toBeTruthy()
+  })
+
+  it("omits inline-placement rows from the gallery", () => {
+    render(() => (
+      <BlipMediaGallery
+        media={[
+          media({ id: "g", storage_key: "media/u/b/g", placement: "gallery" }),
+          media({ id: "i", storage_key: "media/u/b/i", placement: "inline" }),
+        ]}
+        labels={labels}
+      />
+    ))
+
+    expect(document.querySelectorAll(".blip-media-gallery-item")).toHaveLength(
+      1,
+    )
+    expect(
+      document
+        .querySelector("img.personal-cloud-image-img")
+        ?.getAttribute("src"),
+    ).toBe("https://cdn.test/media/u/b/g-micro.webp")
   })
 })

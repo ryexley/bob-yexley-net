@@ -21,7 +21,13 @@
  *   a scoped `blip_media` channel is deferred to the reader UI (spec §13.5).
  */
 import type { SupabaseClient } from "@supabase/supabase-js"
-import { Accessor, createEffect, createMemo, createSignal, untrack } from "solid-js"
+import {
+  Accessor,
+  createEffect,
+  createMemo,
+  createSignal,
+  untrack,
+} from "solid-js"
 import { createStore, reconcile } from "solid-js/store"
 import { supaStore, type OperationResult } from "@/lib/data/supa-store"
 import type { Tables } from "@/types/database.types"
@@ -35,12 +41,18 @@ import {
 import type { MediaType } from "./filename"
 import { r2Service as defaultR2Service, type R2Service } from "./r2-service"
 import {
+  MEDIA_PLACEMENT,
+  parseMediaPlacement,
+  type MediaPlacement,
+} from "./placement"
+import {
   MediaVariant,
   originalKey,
   originalUrl,
   variantKey,
   variantUrl,
 } from "./media-utils"
+import type { AttachedUpload } from "./upload-store"
 
 export type BlipMedia = Tables<"blip_media">
 
@@ -67,6 +79,8 @@ export type Attachment = {
   progress?: number
   /** `image | video | gif` — drives preview rendering for both in-flight and committed items. */
   mediaType?: MediaType
+  mimeType?: string
+  placement?: MediaPlacement
   /** Present once the row is committed. */
   record?: BlipMedia
 }
@@ -127,12 +141,15 @@ export function mediaStore(
   let blipEnsured = false
   // storage_keys whose insert failed — kept visible so the author can retry/remove.
   const failedKeys = new Set<string>()
+  const placementByKey = new Map<string, MediaPlacement>()
 
   const records = createMemo<BlipMedia[]>(() =>
     store
       .entities()
       .filter(record => record.blip_id === blipId)
-      .sort((left, right) => (left.display_order ?? 0) - (right.display_order ?? 0)),
+      .sort(
+        (left, right) => (left.display_order ?? 0) - (right.display_order ?? 0),
+      ),
   )
 
   const attachmentUrlsForRecord = (
@@ -177,13 +194,21 @@ export function mediaStore(
         ...attachmentUrlsForRecord(record),
         status: "saved",
         mediaType: record.media_type as MediaType,
+        mimeType: record.mime_type,
+        placement: parseMediaPlacement(record.placement),
         record,
       })
     }
 
     for (const file of inFlight) {
       const existing = byKey.get(file.key)
+      const placement =
+        existing?.placement ??
+        placementByKey.get(file.key) ??
+        MEDIA_PLACEMENT.Gallery
       if (existing) {
+        existing.placement = placement
+        existing.mimeType = existing.mimeType ?? file.mimeType
         const live = attachmentUrlsForUpload(file)
         if (file.mediaType === "video" || file.mediaType === "gif") {
           if (live.posterUrl) {
@@ -203,6 +228,8 @@ export function mediaStore(
         status: file.status,
         progress: file.progress,
         mediaType: file.mediaType,
+        mimeType: file.mimeType,
+        placement,
       })
     }
 
@@ -259,6 +286,8 @@ export function mediaStore(
         height: success.height ?? null,
         duration_s: success.durationS ?? null,
         display_order: nextOrder,
+        placement:
+          placementByKey.get(success.storageKey) ?? MEDIA_PLACEMENT.Gallery,
       } as Partial<BlipMedia>)
     } catch (error) {
       failedKeys.add(success.storageKey)
@@ -335,7 +364,9 @@ export function mediaStore(
   const hasErrors = upload.hasErrors
   const activeCount = upload.activeCount
 
-  const [attachmentState, setAttachmentState] = createStore<{ items: Attachment[] }>({
+  const [attachmentState, setAttachmentState] = createStore<{
+    items: Attachment[]
+  }>({
     items: [],
   })
 
@@ -345,6 +376,8 @@ export function mediaStore(
   })
 
   const attachments: Accessor<Attachment[]> = () => attachmentState.items
+  const galleryAttachments: Accessor<Attachment[]> = () =>
+    attachments().filter(item => item.placement !== MEDIA_PLACEMENT.Inline)
 
   const hasMedia: Accessor<boolean> = () => attachments().length > 0
   // Failed *processing* (images) does not block publish — only in-flight/errored
@@ -354,18 +387,30 @@ export function mediaStore(
 
   const attach = async (
     files: File[],
-    attachOptions: { source?: "picker" | "clipboard" } = {},
-  ): Promise<void> => {
+    attachOptions: {
+      source?: "picker" | "clipboard"
+      placement?: MediaPlacement
+    } = {},
+  ): Promise<AttachedUpload[]> => {
     setPersistError(null)
     seedUploadKeysFromRecords(records())
-    await upload.addFiles(files, blipId, userId, attachOptions)
-    await upload.startQueue()
+    const added = await upload.addFiles(files, blipId, userId, attachOptions)
+    const placement = parseMediaPlacement(attachOptions.placement)
+    for (const item of added) {
+      placementByKey.set(item.key, placement)
+    }
+    // Start the queue without blocking so inline embeds can insert immediately.
+    void upload.startQueue()
+    return added
   }
 
   const deleteRecordObjects = (record: BlipMedia): void => {
     const keys = [originalKey(record.storage_key, record.mime_type)]
     // Variants only exist for images whose processing completed (spec §4.2).
-    if (record.media_type === "image" && record.processing_status === "complete") {
+    if (
+      record.media_type === "image" &&
+      record.processing_status === "complete"
+    ) {
       keys.push(
         variantKey(record.storage_key, MediaVariant.Micro),
         variantKey(record.storage_key, MediaVariant.Small),
@@ -388,6 +433,7 @@ export function mediaStore(
 
   const removeAttachment = async (key: string): Promise<void> => {
     failedKeys.delete(key)
+    placementByKey.delete(key)
 
     const record = records().find(item => item.storage_key === key)
     if (record) {
@@ -484,6 +530,7 @@ export function mediaStore(
       store.entities().filter(record => record.blip_id !== blipId),
     )
     failedKeys.clear()
+    placementByKey.clear()
     blipEnsured = false
     setPersistError(null)
   }
@@ -495,6 +542,7 @@ export function mediaStore(
     hasErrors,
     activeCount,
     attachments,
+    galleryAttachments,
     hasMedia,
     canPublish,
     persistError,

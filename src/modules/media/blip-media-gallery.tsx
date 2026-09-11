@@ -3,6 +3,7 @@ import { Icon } from "@/components/icon"
 import { PersonalCloudImage } from "@/components/personal-cloud-image"
 import { clsx as cx } from "@/util"
 import type { BlipMediaRow } from "./data/queries"
+import { galleryMedia } from "./placement"
 import { Lightbox, type LightboxLabels } from "./lightbox"
 import { MediaVariant, originalUrl, variantUrl } from "./media-utils"
 
@@ -77,6 +78,7 @@ export type BlipMediaGalleryProps = {
 export function BlipMediaGallery(props: BlipMediaGalleryProps) {
   const [openIndex, setOpenIndex] = createSignal<number | null>(null)
   const usesPageLightbox = () => typeof props.onOpenItem === "function"
+  const media = () => galleryMedia(props.media)
 
   const openItem = (record: BlipMediaRow, localIndex: number) => {
     if (usesPageLightbox()) {
@@ -90,15 +92,15 @@ export function BlipMediaGallery(props: BlipMediaGalleryProps) {
     if (props.getOpenItemLabel) {
       return props.getOpenItemLabel(record)
     }
-    return props.labels.openItem(localIndex + 1, props.media.length)
+    return props.labels.openItem(localIndex + 1, media().length)
   }
 
   return (
-    <Show when={props.media.length > 0}>
+    <Show when={media().length > 0}>
       <div
         class={cx("blip-media-gallery", props.class)}
-        data-count={props.media.length}>
-        <For each={props.media}>
+        data-count={media().length}>
+        <For each={media()}>
           {(record, index) => (
             <button
               type="button"
@@ -110,7 +112,10 @@ export function BlipMediaGallery(props: BlipMediaGalleryProps) {
                   imageKey={record.storage_key}
                   mimeType={record.mime_type}
                   processingStatus={
-                    record.processing_status as "pending" | "complete" | "failed"
+                    record.processing_status as
+                      | "pending"
+                      | "complete"
+                      | "failed"
                   }
                   variant={MediaVariant.Micro}
                   width={GALLERY_THUMB_PX}
@@ -138,7 +143,7 @@ export function BlipMediaGallery(props: BlipMediaGalleryProps) {
 
       <Show when={!usesPageLightbox()}>
         <Lightbox
-          media={props.media}
+          media={media()}
           index={openIndex()}
           onClose={() => setOpenIndex(null)}
           labels={props.labels}

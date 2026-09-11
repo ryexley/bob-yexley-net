@@ -47,6 +47,41 @@ const isAcceptedType = (file: File): boolean => {
   return ext != null && ACCEPTED_EXTENSIONS.has(ext)
 }
 
+/** Clipboard/OS paste items that can become blip media (images, GIFs, video). */
+export const isClipboardMediaFile = (file: File): boolean => {
+  const mime = (file.type ?? "").toLowerCase().split(";")[0].trim()
+  return mime.startsWith("image/") || mime.startsWith("video/")
+}
+
+/**
+ * Files from a paste `DataTransfer`. Prefers `files`; some browsers only expose
+ * a screenshot on `items`.
+ */
+export const clipboardMediaFiles = (
+  data: DataTransfer | null | undefined,
+): File[] => {
+  if (!data) {
+    return []
+  }
+
+  const fromFiles = Array.from(data.files ?? []).filter(isClipboardMediaFile)
+  if (fromFiles.length > 0) {
+    return fromFiles
+  }
+
+  const fromItems: File[] = []
+  for (const item of Array.from(data.items ?? [])) {
+    if (item.kind !== "file") {
+      continue
+    }
+    const file = item.getAsFile()
+    if (file && isClipboardMediaFile(file)) {
+      fromItems.push(file)
+    }
+  }
+  return fromItems
+}
+
 /** Partition files into those that pass `uploadStore`'s restrictions and those that don't. */
 export function validateMediaFiles(files: File[]): MediaValidationResult {
   const accepted: File[] = []

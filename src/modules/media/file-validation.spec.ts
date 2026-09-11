@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest"
 import { MAX_FILE_SIZE_BYTES } from "./upload-store"
-import { validateMediaFiles } from "./file-validation"
+import {
+  clipboardMediaFiles,
+  isClipboardMediaFile,
+  validateMediaFiles,
+} from "./file-validation"
 
 const fileOfSize = (name: string, type: string, size: number): File => {
   const file = new File(["x"], name, { type })
@@ -53,5 +57,50 @@ describe("validateMediaFiles", () => {
 
     expect(result.accepted).toEqual([ok])
     expect(result.rejected.map(entry => entry.reason)).toEqual(["type", "size"])
+  })
+})
+
+describe("clipboardMediaFiles", () => {
+  it("accepts images, gifs, and videos from the files list", () => {
+    const png = fileOfSize("shot.png", "image/png", 10)
+    const gif = fileOfSize("loop.gif", "image/gif", 10)
+    const mp4 = fileOfSize("clip.mp4", "video/mp4", 10)
+    const txt = fileOfSize("note.txt", "text/plain", 10)
+
+    expect(isClipboardMediaFile(png)).toBe(true)
+    expect(isClipboardMediaFile(gif)).toBe(true)
+    expect(isClipboardMediaFile(mp4)).toBe(true)
+    expect(isClipboardMediaFile(txt)).toBe(false)
+
+    const data = {
+      files: [png, gif, mp4, txt],
+      items: [],
+    } as unknown as DataTransfer
+
+    expect(clipboardMediaFiles(data)).toEqual([png, gif, mp4])
+  })
+
+  it("falls back to items when files is empty", () => {
+    const png = fileOfSize("shot.png", "image/png", 10)
+    const data = {
+      files: [],
+      items: [
+        {
+          kind: "file",
+          getAsFile: () => png,
+        },
+        {
+          kind: "string",
+          getAsFile: () => null,
+        },
+      ],
+    } as unknown as DataTransfer
+
+    expect(clipboardMediaFiles(data)).toEqual([png])
+  })
+
+  it("returns [] when there is no clipboard data", () => {
+    expect(clipboardMediaFiles(null)).toEqual([])
+    expect(clipboardMediaFiles(undefined)).toEqual([])
   })
 })

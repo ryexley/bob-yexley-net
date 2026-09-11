@@ -152,6 +152,13 @@ export type UploadStoreOptions = {
   ) => Promise<ExtractedThumbnail | null>
 }
 
+/** Immediate result of `addFiles` — keys are known before the R2 upload starts. */
+export type AttachedUpload = {
+  key: string
+  mediaType: MediaType
+  mimeType: string
+}
+
 export type UploadStore = {
   files: Accessor<UploadFile[]>
   allComplete: Accessor<boolean>
@@ -162,7 +169,7 @@ export type UploadStore = {
     blipId: string,
     userId: string,
     options?: { source?: "picker" | "clipboard" },
-  ) => Promise<void>
+  ) => Promise<AttachedUpload[]>
   startQueue: () => Promise<void>
   removeFile: (id: string) => void
   retryFile: (id: string) => void
@@ -254,7 +261,10 @@ export function createUploadStore(
     emit()
   }
 
-  const applyThumbPreview = (fileId: string, thumb: ExtractedThumbnail): void => {
+  const applyThumbPreview = (
+    fileId: string,
+    thumb: ExtractedThumbnail,
+  ): void => {
     if (!byId.has(fileId)) {
       return
     }
@@ -337,7 +347,11 @@ export function createUploadStore(
     abortMultipartUpload: (
       _file: MediaUppyFile,
       opts: { key: string; uploadId: string },
-    ) => r2Service.abortMultipartUpload({ key: opts.key, uploadId: opts.uploadId }),
+    ) =>
+      r2Service.abortMultipartUpload({
+        key: opts.key,
+        uploadId: opts.uploadId,
+      }),
   })
 
   const revokePreview = (entry?: UploadFile): void => {
@@ -498,6 +512,7 @@ export function createUploadStore(
     addOptions = {},
   ) => {
     const isClipboard = addOptions.source === "clipboard"
+    const added: AttachedUpload[] = []
 
     for (const file of incoming) {
       const data = await file.arrayBuffer()
@@ -548,6 +563,7 @@ export function createUploadStore(
         previewUrl,
         processingStatus: "pending",
       })
+      added.push({ key: baseKey, mediaType, mimeType: contentType })
 
       // Decode the first frame in parallel with the upload (video/GIF only); the
       // result is awaited and uploaded as `-thumb.webp` in `finalizeNonImage`.
@@ -570,6 +586,7 @@ export function createUploadStore(
     }
 
     emit()
+    return added
   }
 
   const startQueue: UploadStore["startQueue"] = async () => {

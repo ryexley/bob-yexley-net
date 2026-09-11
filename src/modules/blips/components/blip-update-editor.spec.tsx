@@ -3,8 +3,14 @@ import { createSignal } from "solid-js"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { BlipUpdateEditor } from "@/modules/blips/components/blip-update-editor"
 
-const { state, confirmMock, dialogState, upsertMock, blipIdMock, inlineTransitionState } =
-  vi.hoisted(() => ({
+const {
+  state,
+  confirmMock,
+  dialogState,
+  upsertMock,
+  blipIdMock,
+  inlineTransitionState,
+} = vi.hoisted(() => ({
   state: {
     entities: [] as any[],
     viewportWidth: 375,
@@ -80,7 +86,8 @@ vi.mock("@/modules/blips/data", () => ({
   blipId: blipIdMock,
   blipStore: () => ({
     entities: () => state.entities,
-    getById: (id: string) => state.entities.find(blip => blip.id === id) ?? null,
+    getById: (id: string) =>
+      state.entities.find(blip => blip.id === id) ?? null,
     upsert: upsertMock,
     remove: vi.fn(async () => ({ error: null })),
   }),
@@ -127,6 +134,9 @@ vi.mock("@/modules/media", () => ({
     fetchByBlip: vi.fn(async () => ({ data: [], error: null })),
   }),
   validateMediaFiles: (files: File[]) => ({ accepted: files, rejected: [] }),
+  clipboardMediaFiles: () => [],
+  inspectClipboardMediaPaste: () => null,
+  applyPasteMediaPlacement: vi.fn(async () => undefined),
   MediaButton: (props: any) => (
     <button
       type="button"
@@ -137,6 +147,7 @@ vi.mock("@/modules/media", () => ({
   ThumbnailStrip: () => <div data-testid="mock-update-thumbnail-strip" />,
   ComposerMediaChrome: () => <div data-testid="mock-update-media-chrome" />,
   ComposerPreviewModal: () => null,
+  PasteMediaPlacementPrompt: () => null,
 }))
 
 vi.mock("@/i18n", () => ({
@@ -148,16 +159,22 @@ vi.mock("@/i18n", () => ({
       "blips.views.detail.updates.actions.close": "Close",
       "blips.views.detail.updates.actions.delete": "Delete",
       "blips.views.detail.updates.confirmDelete.title": "Delete update?",
-      "blips.views.detail.updates.confirmDelete.persistedPrompt": "Delete persisted update?",
-      "blips.views.detail.updates.confirmDelete.unsavedPrompt": "Delete unsaved update?",
+      "blips.views.detail.updates.confirmDelete.persistedPrompt":
+        "Delete persisted update?",
+      "blips.views.detail.updates.confirmDelete.unsavedPrompt":
+        "Delete unsaved update?",
       "blips.views.detail.updates.confirmDelete.actions.confirm": "Delete",
-      "blips.views.detail.updates.confirmDelete.actions.confirming": "Deleting...",
+      "blips.views.detail.updates.confirmDelete.actions.confirming":
+        "Deleting...",
       "blips.views.detail.updates.confirmDelete.actions.cancel": "Cancel",
       "blips.views.detail.updates.confirmCloseDraft.title": "Discard draft?",
-      "blips.views.detail.updates.confirmCloseDraft.prompt": "Close without saving?",
+      "blips.views.detail.updates.confirmCloseDraft.prompt":
+        "Close without saving?",
       "blips.views.detail.updates.confirmCloseDraft.actions.close": "Close",
-      "blips.views.detail.updates.confirmCloseDraft.actions.closing": "Closing...",
-      "blips.views.detail.updates.confirmCloseDraft.actions.cancel": "Keep editing",
+      "blips.views.detail.updates.confirmCloseDraft.actions.closing":
+        "Closing...",
+      "blips.views.detail.updates.confirmCloseDraft.actions.cancel":
+        "Keep editing",
       "blips.components.blipEditor.actions.close": "Close",
       "blips.components.blipEditor.actions.delete": "Delete",
       "blips.components.blipEditor.actions.publish": "Publish",
@@ -196,17 +213,18 @@ describe("BlipUpdateEditor", () => {
     await waitFor(() => {
       expect(screen.getByTestId("mock-update-dialog")).toBeTruthy()
     })
-    expect(screen.getByTestId("mock-dialog-title").textContent).toBe("New update")
+    expect(screen.getByTestId("mock-dialog-title").textContent).toBe(
+      "New update",
+    )
     expect(dialogState.lastProps.forceMount).toBeUndefined()
   })
 
   it("keeps the inline shell on desktop", async () => {
     state.viewportWidth = 1024
-    render(() => (
+    render(() =>
       (() => {
-        const [desktopMount, setDesktopMount] = createSignal<HTMLDivElement | null>(
-          null,
-        )
+        const [desktopMount, setDesktopMount] =
+          createSignal<HTMLDivElement | null>(null)
 
         return (
           <>
@@ -222,8 +240,8 @@ describe("BlipUpdateEditor", () => {
             />
           </>
         )
-      })()
-    ))
+      })(),
+    )
 
     await waitFor(() => {
       expect(screen.getByTestId("mock-update-markdown-editor")).toBeTruthy()
@@ -247,9 +265,9 @@ describe("BlipUpdateEditor", () => {
     await waitFor(() => {
       expect(
         Number(
-          screen.getByTestId("mock-update-markdown-editor").getAttribute(
-            "data-focus-nonce",
-          ),
+          screen
+            .getByTestId("mock-update-markdown-editor")
+            .getAttribute("data-focus-nonce"),
         ),
       ).toBeGreaterThan(1)
     })
@@ -259,9 +277,9 @@ describe("BlipUpdateEditor", () => {
     await waitFor(() => {
       expect(
         Number(
-          screen.getByTestId("mock-update-markdown-editor").getAttribute(
-            "data-focus-nonce",
-          ),
+          screen
+            .getByTestId("mock-update-markdown-editor")
+            .getAttribute("data-focus-nonce"),
         ),
       ).toBeGreaterThan(2)
     })
@@ -361,17 +379,18 @@ describe("BlipUpdateEditor", () => {
       expect(editor.getAttribute("data-initial-value")).toBe("")
       expect(editor.getAttribute("data-instance-key")).not.toBe(firstSessionKey)
     })
-    expect(screen.getByTestId("mock-dialog-title").textContent).toBe("New update")
+    expect(screen.getByTestId("mock-dialog-title").textContent).toBe(
+      "New update",
+    )
   })
 
   it("wires desktop inline transition exit cleanup", async () => {
     state.viewportWidth = 1024
 
-    render(() => (
+    render(() =>
       (() => {
-        const [desktopMount, setDesktopMount] = createSignal<HTMLDivElement | null>(
-          null,
-        )
+        const [desktopMount, setDesktopMount] =
+          createSignal<HTMLDivElement | null>(null)
 
         return (
           <>
@@ -387,11 +406,13 @@ describe("BlipUpdateEditor", () => {
             />
           </>
         )
-      })()
-    ))
+      })(),
+    )
 
     await waitFor(() => {
-      expect(inlineTransitionState.lastProps?.onAfterExit).toBeTypeOf("function")
+      expect(inlineTransitionState.lastProps?.onAfterExit).toBeTypeOf(
+        "function",
+      )
     })
     expect(screen.queryByTestId("mock-update-dialog")).toBeNull()
   })
@@ -402,7 +423,9 @@ describe("BlipUpdateEditor", () => {
     blipIdMock.mockImplementation(() => `update-${nextUpdateId++}`)
 
     const [open, setOpen] = createSignal(true)
-    const [desktopMount, setDesktopMount] = createSignal<HTMLDivElement | null>(null)
+    const [desktopMount, setDesktopMount] = createSignal<HTMLDivElement | null>(
+      null,
+    )
 
     render(() => (
       <>

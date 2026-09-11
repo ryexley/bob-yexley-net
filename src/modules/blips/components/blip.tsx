@@ -31,7 +31,7 @@ import {
 } from "@/modules/blips/data/reaction-optimistic"
 import { REACTION_ERROR_I18N_KEY } from "@/modules/blips/data/errors"
 import { reactionStore } from "@/modules/blips/data/reactions-store"
-import { BlipCardMediaStrip } from "@/modules/media"
+import { BlipCardMediaStrip, galleryMedia } from "@/modules/media"
 import type { BlipMediaRow } from "@/modules/media/data/queries"
 import {
   formatBlipScheduledTimestamp,
@@ -89,7 +89,9 @@ export function Blip(props: {
   const [isReactionBusy, setIsReactionBusy] = createSignal(false)
   const [reactionStateOverride, setReactionStateOverride] =
     createSignal<ReactionStateOverride | null>(null)
-  const reactionSignature = createMemo(() => getReactionSignature(local.blip.reactions ?? []))
+  const reactionSignature = createMemo(() =>
+    getReactionSignature(local.blip.reactions ?? []),
+  )
   const displayBlip = createMemo(() => {
     const override = reactionStateOverride()
     if (!override) {
@@ -121,8 +123,8 @@ export function Blip(props: {
   const hasUpdates = () => (local.blip.updates_count ?? 0) > 0
   const hasComments = () => (local.blip.comments_count ?? 0) > 0
   const media = () => local.media ?? []
-  const hasMedia = () => media().length > 0
-  const showMediaRow = () => hasMedia() || canOpenDetails()
+  const hasGalleryMedia = () => galleryMedia(media()).length > 0
+  const showMediaRow = () => hasGalleryMedia() || canOpenDetails()
   const mediaStripLabels = {
     region: (count: number) => tr("media.region", { count }),
     overflow: (count: number) => tr("media.overflow", { count }),
@@ -132,7 +134,9 @@ export function Blip(props: {
       ? BLIP_CARD_COMPACT_TAG_LIMIT
       : BLIP_CARD_VISIBLE_TAG_LIMIT,
   )
-  const cardTags = createMemo(() => splitBlipCardTags(local.tags, cardTagLimit()))
+  const cardTags = createMemo(() =>
+    splitBlipCardTags(local.tags, cardTagLimit()),
+  )
 
   createEffect(() => {
     void local.blip.id
@@ -203,8 +207,8 @@ export function Blip(props: {
     const previousReactions = currentBlip.reactions ?? []
     const previousCount = currentBlip.my_reaction_count ?? 0
     const hasActiveReaction =
-      previousReactions.find(reaction => reaction.emoji === emoji)?.reacted_by_current_user ??
-      false
+      previousReactions.find(reaction => reaction.emoji === emoji)
+        ?.reacted_by_current_user ?? false
     const optimisticOverride = buildOptimisticReactionState({
       reactions: previousReactions,
       myReactionCount: previousCount,
@@ -230,7 +234,9 @@ export function Blip(props: {
     setIsReactionBusy(false)
 
     if (result.error || !result.data) {
-      applyVisibleReactionState(createReactionStateOverride(previousReactions, previousCount))
+      applyVisibleReactionState(
+        createReactionStateOverride(previousReactions, previousCount),
+      )
       const errorKey =
         REACTION_ERROR_I18N_KEY[result.error ?? "UNKNOWN"] ??
         REACTION_ERROR_I18N_KEY.UNKNOWN
@@ -267,7 +273,9 @@ export function Blip(props: {
             role={canOpenDetails() ? "button" : undefined}
             tabIndex={canOpenDetails() ? 0 : undefined}>
             <header>
-              <Tooltip content={timestampTooltip()} touchMode="popover">
+              <Tooltip
+                content={timestampTooltip()}
+                touchMode="popover">
                 <span class="timestamp">
                   <span class="timestamp-label">{timestampLabel()}</span>
                   <Show when={isScheduled()}>
@@ -285,7 +293,10 @@ export function Blip(props: {
                 preview: isClipped(),
                 "has-below": showMediaRow(),
               })}>
-              <Markdown content={local.blip.content} />
+              <Markdown
+                content={local.blip.content}
+                media={media()}
+              />
             </div>
             <Show when={showMediaRow()}>
               <div class="blip-media-row">
@@ -401,13 +412,13 @@ export function Blip(props: {
             <BlipReactionSummary
               reactions={displayBlip().reactions}
               busy={isReactionBusy()}
-                onToggleReaction={
-                  isAuthenticated()
-                    ? emoji => {
-                        void handleToggleReaction(emoji)
-                      }
-                    : undefined
-                }
+              onToggleReaction={
+                isAuthenticated()
+                  ? emoji => {
+                      void handleToggleReaction(emoji)
+                    }
+                  : undefined
+              }
             />
           </div>
           <BlipActions

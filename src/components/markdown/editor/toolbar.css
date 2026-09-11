@@ -50,10 +50,19 @@
 
   &[data-pressed] {
     background-color: var(--colors-mono-02);
+    color: var(--colors-info);
 
     .icon {
       color: var(--colors-info);
     }
+  }
+
+  &.has-label {
+    font-size: 0.75rem;
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+    padding: 0.25rem 0.5rem;
+    width: auto;
   }
 
   &:disabled {
@@ -93,6 +102,12 @@
 
     .icon {
       font-size: 1.25rem;
+    }
+
+    &.has-label {
+      min-width: 2.5rem;
+      padding: 0 0.5rem;
+      width: auto;
     }
   }
 

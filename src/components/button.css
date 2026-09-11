@@ -34,6 +34,8 @@
   &.secondary {
     background-color: var(--color-gray-200);
     color: var(--color-gray-900);
+    /* Dark label on a light fill — the default glow is for light-on-dark. */
+    text-shadow: none;
 
     &:hover {
       background-color: var(--color-gray-300);

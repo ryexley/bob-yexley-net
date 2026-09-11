@@ -103,7 +103,8 @@ export async function selectUpdateBlipIdsByRoot(
   for (const [rootId, updates] of Object.entries(byRoot)) {
     updates.sort(
       (left, right) =>
-        new Date(right.publishAt).getTime() - new Date(left.publishAt).getTime(),
+        new Date(right.publishAt).getTime() -
+        new Date(left.publishAt).getTime(),
     )
     result[rootId] = updates.map(update => update.id)
   }
@@ -134,6 +135,32 @@ export function flattenBlipPageMedia(
 /** Map committed media row ids to their index in a flattened page list. */
 export function indexMediaById(media: BlipMediaRow[]): Map<string, number> {
   return new Map(media.map((row, index) => [row.id, index]))
+}
+
+/** Resolve a lightbox index by row id, then by storage key. */
+export function findMediaIndex(
+  media: BlipMediaRow[],
+  record: Pick<BlipMediaRow, "id" | "storage_key">,
+): number {
+  const byId = media.findIndex(row => row.id === record.id)
+  if (byId >= 0) {
+    return byId
+  }
+  if (!record.storage_key) {
+    return -1
+  }
+  return media.findIndex(row => row.storage_key === record.storage_key)
+}
+
+/** Append a synthetic inline row when it is not already in the page list. */
+export function withLightboxGuest(
+  media: BlipMediaRow[],
+  guest: BlipMediaRow | null | undefined,
+): BlipMediaRow[] {
+  if (!guest || findMediaIndex(media, guest) >= 0) {
+    return media
+  }
+  return [...media, guest]
 }
 
 /** Committed media for a single blip (detail page entry point). */

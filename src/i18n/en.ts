@@ -182,7 +182,8 @@ export const en = {
               "Please provide your email, name, and a 6-digit PIN.",
           },
           codes: {
-            validationLoginRequired: "Please provide your email and a 6-digit PIN.",
+            validationLoginRequired:
+              "Please provide your email and a 6-digit PIN.",
             validationSignupRequired:
               "Please provide your email, name, and a 6-digit PIN.",
             invalidEmailOrPin: "Invalid email or PIN. Please try again.",
@@ -248,7 +249,8 @@ export const en = {
           },
           trusted: {
             label: "Trusted",
-            tooltip: "Trusted active users can publish comments without going through moderation.",
+            tooltip:
+              "Trusted active users can publish comments without going through moderation.",
             tooltipAriaLabel: "What trusted means",
           },
           pin: {
@@ -434,13 +436,17 @@ export const en = {
           readMore: "Read more",
           addReaction: "Add reaction",
           updatesTooltip: "{count, plural, one {# update} other {# updates}}",
-          commentsTooltip: "{count, plural, one {# comment} other {# comments}}",
+          commentsTooltip:
+            "{count, plural, one {# comment} other {# comments}}",
           commentsDisabled: "Comments disabled",
         },
         media: {
-          region:
-            "{count, plural, one {# attachment} other {# attachments}}",
+          region: "{count, plural, one {# attachment} other {# attachments}}",
           overflow: "+{count}",
+          pauseGif: "Pause animation",
+          playGif: "Play animation",
+          openLightbox: "View full image",
+          openVideo: "View full video",
         },
         tags: {
           overflow: "+{count}",
@@ -519,6 +525,26 @@ export const en = {
           closePreview: "Close preview",
           invalidFiles:
             "{count, plural, one {# file couldn't be added — unsupported type or over 150MB.} other {# files couldn't be added — unsupported type or over 150MB.}}",
+          placement: {
+            title: "Place pasted media",
+            description:
+              "Inline inserts it in the post at the cursor. Gallery adds it to the attachment strip below the editor.",
+            inline: "Inline in post",
+            gallery: "Gallery strip",
+            cancel: "Cancel",
+          },
+          layout: {
+            toolbar: "Image layout",
+            sizeGroup: "Image size",
+            alignGroup: "Image alignment",
+            size25: "25% of column width",
+            size50: "50% of column width",
+            size100: "Full column width",
+            alignLeft: "Align left",
+            alignCenter: "Align center",
+            alignRight: "Align right",
+            lightbox: "Open full image on click",
+          },
         },
         confirmDelete: {
           title: "Delete draft blip?",
@@ -598,7 +624,8 @@ export const en = {
       },
       scripturePassagePanel: {
         error: "Passage unavailable",
-        copyright: "Scripture from the {esvLink}. © Crossway. Used by permission.",
+        copyright:
+          "Scripture from the {esvLink}. © Crossway. Used by permission.",
         esvLinkLabel: "ESV® Bible",
       },
     },
@@ -608,7 +635,8 @@ export const en = {
         authRequired: "Please log in to react.",
         visitorLocked:
           "Something's not working right now. Text or call or contact me somehow, and we'll get it sorted out.",
-        limitReached: "You can add up to 3 reactions per blip. Remove one to add another.",
+        limitReached:
+          "You can add up to 3 reactions per blip. Remove one to add another.",
         invalidEmoji: "That reaction is not available.",
         unknown: "Unable to update reactions right now.",
       },
@@ -810,7 +838,8 @@ export const en = {
           },
           passagePreview: {
             label: "Passage preview",
-            error: "Unable to fetch this passage. Check the chapter and verses.",
+            error:
+              "Unable to fetch this passage. Check the chapter and verses.",
           },
         },
         values: {
@@ -818,7 +847,8 @@ export const en = {
         },
         confirmDelete: {
           title: "Remove reference?",
-          prompt: 'Remove "{reference}" from scripture references? This cannot be undone.',
+          prompt:
+            'Remove "{reference}" from scripture references? This cannot be undone.',
           actions: {
             confirm: "Remove",
             confirming: "Removing...",
@@ -889,7 +919,8 @@ export const en = {
         },
         confirmDelete: {
           title: "Remove reference?",
-          prompt: 'Remove "{reference}" from scripture references? This cannot be undone.',
+          prompt:
+            'Remove "{reference}" from scripture references? This cannot be undone.',
           actions: {
             confirm: "Remove",
             confirming: "Removing...",

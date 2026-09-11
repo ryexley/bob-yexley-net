@@ -20,7 +20,9 @@ import { toggleHighlightCommand } from "./plugins/highlight"
 
 export interface FormattingOption {
   key: string
-  icon: string
+  icon?: string
+  label?: string
+  ariaLabel?: string
   handler: (ctx: any, payload?: any) => void
   isActive?: (ctx: any) => boolean
   isDisabled?: (ctx: any) => boolean
@@ -55,7 +57,10 @@ const hasAncestorNode = (ctx: any, nodeName: string) => {
   const maxDepth = Math.min($from.depth, $to.depth)
 
   for (let depth = maxDepth; depth >= 0; depth -= 1) {
-    if ($from.node(depth).type === nodeType && $to.node(depth).type === nodeType) {
+    if (
+      $from.node(depth).type === nodeType &&
+      $to.node(depth).type === nodeType
+    ) {
       return true
     }
   }
@@ -138,11 +143,7 @@ export const formattingOptions: FormattingOption[] = [
 
       const tr = state.doc.rangeHasMark(targetFrom, targetTo, highlightMark)
         ? state.tr.removeMark(targetFrom, targetTo, highlightMark)
-        : state.tr.addMark(
-            targetFrom,
-            targetTo,
-            highlightMark.create(),
-          )
+        : state.tr.addMark(targetFrom, targetTo, highlightMark.create())
 
       view.dispatch(tr.scrollIntoView())
       view.focus()
@@ -309,7 +310,9 @@ export const formattingOptions: FormattingOption[] = [
             tr = tr.insertText(providedText, targetFrom, targetTo)
           }
 
-          const end = targetFrom + (hasTextOverride ? providedText.length : targetTo - targetFrom)
+          const end =
+            targetFrom +
+            (hasTextOverride ? providedText.length : targetTo - targetFrom)
           tr = tr.addMark(targetFrom, end, linkMark.create({ href: linkHref }))
           tr = tr.setSelection(TextSelection.create(tr.doc, end))
         }

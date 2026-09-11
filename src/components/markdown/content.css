@@ -237,6 +237,159 @@
     max-width: 100%;
   }
 
+  .media-embed-mount {
+    max-width: 100%;
+    width: 100%;
+  }
+
+  .media-embed {
+    margin-top: 0.5rem;
+    margin-bottom: 1rem;
+    margin-left: 0;
+    margin-right: auto;
+    max-width: 100%;
+    overflow: visible;
+    width: 100%;
+
+    &[data-media-size="25"] {
+      width: 25%;
+    }
+
+    &[data-media-size="50"] {
+      width: 50%;
+    }
+
+    &[data-media-size="100"] {
+      width: 100%;
+    }
+
+    &[data-media-align="center"] {
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    &[data-media-align="right"] {
+      margin-left: auto;
+      margin-right: 0;
+    }
+
+    .frame {
+      cursor: default;
+      position: relative;
+      display: block;
+      max-width: 100%;
+      width: 100%;
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      isolation: isolate;
+      line-height: 0;
+    }
+
+    .media {
+      border-radius: inherit;
+      display: block;
+      height: auto;
+      margin: 0;
+      max-width: 100%;
+      padding: 0;
+      vertical-align: top;
+      width: 100%;
+    }
+
+    .overlay {
+      align-items: center;
+      background: rgb(0 0 0 / 0.45);
+      border-radius: var(--radius-sm);
+      color: var(--colors-mono-11);
+      display: flex;
+      font-size: 0.75rem;
+      font-variant-numeric: tabular-nums;
+      inset: 0;
+      justify-content: center;
+      pointer-events: none;
+      position: absolute;
+    }
+
+    .overlay.is-error {
+      background: color-mix(in srgb, var(--colors-danger) 55%, transparent);
+    }
+
+    .playback {
+      align-items: center;
+      background: rgb(0 0 0 / 0.45);
+      border: 0;
+      border-radius: var(--radius-sm);
+      color: var(--colors-mono-11);
+      cursor: pointer;
+      display: flex;
+      inset: 0;
+      justify-content: center;
+      opacity: 0;
+      padding: 0;
+      position: absolute;
+      transition: opacity 150ms ease;
+    }
+
+    .frame:hover .playback,
+    .frame.is-paused .playback,
+    .playback:focus-visible {
+      opacity: 1;
+    }
+
+    .freeze {
+      pointer-events: none;
+    }
+
+    &.is-selected .frame::after,
+    &.ProseMirror-selectednode .frame::after {
+      border: 0.125rem solid var(--colors-cool-blue);
+      border-radius: inherit;
+      content: "";
+      inset: 0;
+      pointer-events: none;
+      position: absolute;
+      z-index: 1;
+    }
+
+    &[data-interactive] .frame {
+      cursor: pointer;
+    }
+
+    &[data-interactive][data-media-type="image"] .frame {
+      cursor: zoom-in;
+    }
+
+    &[data-media-type="video"] .media {
+      background: var(--colors-mono-03);
+    }
+
+    .play {
+      align-items: center;
+      background: rgb(0 0 0 / 0.55);
+      border-radius: 999px;
+      color: var(--colors-mono-11);
+      display: flex;
+      height: 2rem;
+      justify-content: center;
+      left: 50%;
+      pointer-events: none;
+      position: absolute;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: 2rem;
+    }
+
+    button.frame {
+      background: none;
+      border: 0;
+      cursor: pointer;
+      display: block;
+      max-width: 100%;
+      padding: 0;
+      width: 100%;
+    }
+  }
+
   .task-list-item {
     list-style-type: none;
 
