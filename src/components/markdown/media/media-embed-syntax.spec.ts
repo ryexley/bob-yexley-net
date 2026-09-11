@@ -89,6 +89,15 @@ After`
     )
     expect(normalized).not.toContain("{\nmedia:")
   })
+
+  it("drops leading blank lines before a media-only embed", () => {
+    const embed = canonicalizeMediaEmbed({
+      key: "media/u/b/a",
+      type: "gif",
+      mime: "image/gif",
+    })
+    expect(normalizeMediaEmbedsInMarkdown(`\n\n${embed}`)).toBe(embed)
+  })
 })
 
 describe("coerceMediaEmbedProps", () => {

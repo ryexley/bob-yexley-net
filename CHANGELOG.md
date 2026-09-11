@@ -5,6 +5,14 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.45.5] - 2026-09-11
+
+### Fixed
+
+- Card teaser GIFs keep their aspect ratio instead of stretching to a 6rem strip
+- Pasting an inline image into an empty blip no longer leaves a dead blank
+  line above it that phones cannot Backspace away
+
 ## [0.45.4] - 2026-09-11
 
 ### Fixed

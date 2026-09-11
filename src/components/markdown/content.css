@@ -428,3 +428,7 @@
     }
   }
 }
+
+.rendered-markdown > p:empty {
+  display: none;
+}

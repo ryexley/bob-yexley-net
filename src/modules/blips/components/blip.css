@@ -62,6 +62,26 @@
         max-height: 6rem;
       }
 
+      /* GIFs keep their aspect ratio in the clipped card — width:100% plus
+         max-height squashes the frame. Shrink to the 6rem cap instead. */
+      .media-embed[data-media-type="gif"] {
+        width: auto;
+        max-width: 100%;
+      }
+
+      .media-embed[data-media-type="gif"] .frame {
+        width: auto;
+        max-width: 100%;
+      }
+
+      .media-embed[data-media-type="gif"] .media {
+        height: auto;
+        max-height: 6rem;
+        max-width: 100%;
+        object-fit: contain;
+        width: auto;
+      }
+
       &.has-below::after,
       &.preview::after {
         background: linear-gradient(

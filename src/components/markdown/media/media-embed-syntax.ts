@@ -253,7 +253,7 @@ export function normalizeMediaEmbedsInMarkdown(content: string): string {
     lastEnd = region.end
   }
   normalized += content.slice(lastEnd)
-  return normalized
+  return normalized.replace(/^(?:\r?\n)+(?=\{\s*media\s*:)/, "")
 }
 
 export function parseMediaEmbedObjectLiteral(
