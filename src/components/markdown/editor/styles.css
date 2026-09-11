@@ -6,6 +6,8 @@
   max-width: 100%;
   min-height: 5rem;
   overflow: hidden;
+  /* Containing block for the paste catcher overlay. */
+  position: relative;
   width: 100%;
 
   .editor-container {

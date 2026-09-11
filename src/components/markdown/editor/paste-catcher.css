@@ -1,0 +1,85 @@
+/*
+ * Stays mounted while closed so `open()` can focus the region synchronously
+ * inside the tap that requested it — iOS drops focus() calls made later. The
+ * closed state is therefore transparent rather than `visibility: hidden`,
+ * because a hidden element cannot take focus and Solid has not yet flipped the
+ * `open` class at the moment focus() runs.
+ */
+.paste-catcher {
+  position: absolute;
+  inset: 0;
+  z-index: 45;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  align-items: stretch;
+  justify-content: center;
+  padding: 1rem;
+  background-color: var(--colors-mono-02);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 150ms ease-in-out;
+
+  &.open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .prompt {
+    display: flex;
+    gap: 0.4rem;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    color: var(--colors-mono-10);
+    font-size: 0.92rem;
+    text-align: center;
+  }
+
+  .region {
+    box-sizing: border-box;
+    min-height: 4.5rem;
+    padding: 0.75rem;
+    border: 0.125rem dashed var(--colors-mono-06);
+    border-radius: 0.5rem;
+    background-color: var(--colors-mono-01);
+    color: var(--colors-text-primary);
+    font-size: 1rem;
+    line-height: 1.4;
+    text-align: center;
+    overflow: hidden;
+    /* The whole point is the iOS edit menu, so neither may be suppressed. */
+    -webkit-user-select: text;
+    user-select: text;
+    -webkit-touch-callout: default;
+
+    &:focus,
+    &:focus-visible {
+      border-color: var(--colors-info);
+      outline: none;
+    }
+
+    &:empty::before {
+      content: attr(data-hint);
+      color: var(--colors-mono-07);
+      pointer-events: none;
+    }
+
+    img,
+    video {
+      max-width: 100%;
+      height: auto;
+    }
+  }
+
+  .cancel {
+    align-self: center;
+    padding: 0.25rem 0.75rem;
+    border: none;
+    background: transparent;
+    color: var(--colors-mono-10);
+    font-size: 0.85rem;
+    text-decoration: underline;
+  }
+}

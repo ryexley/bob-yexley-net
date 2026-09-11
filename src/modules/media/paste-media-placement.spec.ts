@@ -7,10 +7,11 @@ import {
 
 const png = () => new File(["x"], "shot.png", { type: "image/png" })
 
-const clipboard = (files: File[]): DataTransfer =>
+const clipboard = (files: File[], html = ""): DataTransfer =>
   ({
     files,
     items: [],
+    getData: (type: string) => (type === "text/html" ? html : ""),
   }) as unknown as DataTransfer
 
 describe("inspectClipboardMediaPaste", () => {
@@ -53,6 +54,41 @@ describe("consumeClipboardMediaPaste", () => {
       clipboardData: clipboard([
         new File(["x"], "note.txt", { type: "text/plain" }),
       ]),
+      preventDefault: vi.fn(),
+      stopPropagation: vi.fn(),
+    } as unknown as ClipboardEvent
+
+    expect(consumeClipboardMediaPaste(event, vi.fn())).toBe(false)
+    expect(event.preventDefault).not.toHaveBeenCalled()
+  })
+
+  it("claims a paste whose only payload is an image in the markup", async () => {
+    const blob = new Blob(["x"], { type: "image/jpeg" })
+    const fetchSpy = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValue({ blob: async () => blob } as unknown as Response)
+    const event = {
+      clipboardData: clipboard([], `<img src="blob:https://site/a">`),
+      preventDefault: vi.fn(),
+      stopPropagation: vi.fn(),
+      stopImmediatePropagation: vi.fn(),
+    } as unknown as ClipboardEvent
+    const onMedia = vi.fn()
+
+    // iOS hands a copied photo over this way and no other.
+    expect(consumeClipboardMediaPaste(event, onMedia)).toBe(true)
+    expect(event.preventDefault).toHaveBeenCalled()
+    await vi.waitFor(() => expect(onMedia).toHaveBeenCalled())
+    expect(onMedia.mock.calls[0][0].accepted[0].type).toBe("image/jpeg")
+    fetchSpy.mockRestore()
+  })
+
+  it("leaves prose that merely contains images as a text paste", () => {
+    const event = {
+      clipboardData: clipboard(
+        [],
+        `<p>read this</p><img src="blob:https://site/a">`,
+      ),
       preventDefault: vi.fn(),
       stopPropagation: vi.fn(),
     } as unknown as ClipboardEvent

@@ -2,12 +2,16 @@ import type { AttachedUpload } from "./upload-store"
 import {
   clipboardLooksLikeMedia,
   clipboardMediaFiles,
-  filesFromHtmlDataUrls,
   validateMediaFiles,
   type MediaValidationResult,
 } from "./file-validation"
 import { MEDIA_PLACEMENT, type MediaPlacement } from "./placement"
 import { snapshotFromClipboardItems } from "./clipboard-snapshot"
+import {
+  harvestMediaFromHtml,
+  htmlIsMediaOnly,
+  readClipboardHtml,
+} from "./clipboard-media-harvest"
 
 /**
  * Inspect a paste event for media files. `null` means leave the paste alone
@@ -30,17 +34,21 @@ function markPasteHandled(event: ClipboardEvent) {
   event.stopImmediatePropagation?.()
 }
 
+/**
+ * `html` must be read synchronously from the paste event before this is awaited
+ * — `clipboardData` is dead once the handler returns.
+ */
 export async function readClipboardMediaFiles(
   data: DataTransfer | null | undefined,
+  html?: string,
 ): Promise<File[]> {
   const sync = clipboardMediaFiles(data)
   if (sync.length > 0) {
     return sync
   }
 
-  const html =
-    typeof data?.getData === "function" ? data.getData("text/html") : ""
-  const fromHtml = filesFromHtmlDataUrls(html)
+  const markup = html ?? readClipboardHtml(data)
+  const fromHtml = await harvestMediaFromHtml(markup)
   if (fromHtml.length > 0) {
     return fromHtml
   }
@@ -73,12 +81,15 @@ export function consumeClipboardMediaPaste(
     return true
   }
 
-  if (!clipboardLooksLikeMedia(event.clipboardData)) {
+  // Read the markup now: iOS puts a pasted photo here as `<img src="blob:…">`
+  // and nowhere else, and `clipboardData` is unreadable after this returns.
+  const html = readClipboardHtml(event.clipboardData)
+  if (!clipboardLooksLikeMedia(event.clipboardData) && !htmlIsMediaOnly(html)) {
     return false
   }
 
   markPasteHandled(event)
-  void readClipboardMediaFiles(event.clipboardData).then(files => {
+  void readClipboardMediaFiles(event.clipboardData, html).then(files => {
     if (files.length === 0) {
       return
     }

@@ -23,6 +23,7 @@ import { listener, listenerCtx } from "@milkdown/plugin-listener"
 import { emoji } from "@milkdown/plugin-emoji"
 import { history } from "@milkdown/prose/history"
 import { TextSelection } from "@milkdown/prose/state"
+import { ptr } from "@/i18n"
 import { clsx as cx } from "@/util"
 import { withWindow } from "@/util/browser"
 import { debounce } from "@/util/debounce"
@@ -38,7 +39,11 @@ import {
 import { placeholder } from "./plugins/placeholder"
 import { applyFormat, getEditorToolbarSnapshot } from "./commands"
 import { insertClipboardText } from "./insert-clipboard-text"
-import { readClipboardSnapshot } from "@/modules/media/clipboard-snapshot"
+import {
+  clipboardReadIsAvailable,
+  readClipboardSnapshot,
+} from "@/modules/media/clipboard-snapshot"
+import { PasteCatcher, type PasteCatcherHandle } from "./paste-catcher"
 import type { EmbedSelection } from "./plugins/media-embed-layout"
 import Toolbar from "./toolbar"
 import { StatusBar } from "./status-bar"
@@ -120,6 +125,8 @@ const propDefaults = {
   showToolbar: true,
   showStatusBar: true,
 }
+
+const pasteTr = ptr("shared.components.markdownEditor.paste")
 
 export const TOOLBAR_VISIBLE_STORAGE_KEY = "markdown-editor:toolbar-visible"
 
@@ -226,6 +233,7 @@ export function MarkdownEditor(props: MarkdownEditorProps) {
 
   let editorRef: HTMLDivElement | undefined
   let editorInstance: Editor | undefined
+  let pasteCatcher: PasteCatcherHandle | undefined
   let editorKeydownCleanup: (() => void) | undefined
   const editorCallbacks = untrack(() => ({
     onChange: local.onChange,
@@ -267,31 +275,41 @@ export function MarkdownEditor(props: MarkdownEditorProps) {
     ),
   )
 
-  const handleToolbarPaste = async () => {
-    // Call read() from the click itself. pointerdown is too early: Safari
-    // treats the rest of that tap as dismissing its Paste callout.
-    // Keep the editor focused (toolbar preventDefault). Safari only exposes
-    // GIFs on the native paste event; if the button steals focus, the chip
-    // tap pastes into nothing.
-    const snapshot = await readClipboardSnapshot()
-    if (!editorInstance) {
+  const insertPastedText = (text: string) => {
+    if (!editorInstance || !text) {
       return
     }
-    if (snapshot.denied) {
+    editorInstance.action(ctx => {
+      insertClipboardText(ctx.get(editorViewCtx), text)
+    })
+    syncToolbarState()
+  }
+
+  const handleToolbarPaste = async () => {
+    // Call read() from the click itself; Safari treats a later call as gestureless.
+    const snapshot = await readClipboardSnapshot()
+    if (!editorInstance || snapshot.denied) {
       return
     }
     if (snapshot.files.length > 0) {
       editorCallbacks.onClipboardMedia?.(snapshot.files)
       return
     }
-    if (!snapshot.text) {
-      return
-    }
-    editorInstance.action(ctx => {
-      insertClipboardText(ctx.get(editorViewCtx), snapshot.text)
-    })
-    syncToolbarState()
+    insertPastedText(snapshot.text)
   }
+
+  /**
+   * Touch platforms go through the catcher. On iOS the async clipboard API
+   * either does not exist (no secure context) or hides behind a callout that
+   * cancels on any stray tap, and it never carries Photos images anyway.
+   */
+  const preferPasteCatcher = () =>
+    withWindow(
+      window =>
+        !clipboardReadIsAvailable() ||
+        window.matchMedia?.("(pointer: coarse)").matches === true,
+      () => false,
+    )
 
   const handleApplyFormat = (format: string, payload?: any) => {
     if (!editorInstance) {
@@ -299,6 +317,12 @@ export function MarkdownEditor(props: MarkdownEditorProps) {
     }
 
     if (format === "paste") {
+      if (preferPasteCatcher()) {
+        // Synchronous: the catcher needs this tap's gesture to take focus.
+        pasteCatcher?.open()
+        return
+      }
+
       void handleToolbarPaste()
       return
     }
@@ -655,6 +679,17 @@ export function MarkdownEditor(props: MarkdownEditorProps) {
           />
         ) : null}
       </Stack>
+      <PasteCatcher
+        title={pasteTr("title")}
+        hint={pasteTr("hint")}
+        cancelLabel={pasteTr("cancel")}
+        onHandle={handle => {
+          pasteCatcher = handle
+        }}
+        onFiles={files => editorCallbacks.onClipboardMedia?.(files)}
+        onText={insertPastedText}
+        onDismiss={focusEditor}
+      />
     </div>
   )
 }

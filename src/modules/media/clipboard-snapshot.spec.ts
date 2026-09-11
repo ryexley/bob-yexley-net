@@ -1,7 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest"
 import {
   clipboardReadIsAvailable,
-  clipboardSnapshotIsPasteable,
   readClipboardSnapshot,
   snapshotFromClipboardItems,
 } from "./clipboard-snapshot"
@@ -12,23 +11,6 @@ afterEach(() => {
   Object.defineProperty(navigator, "clipboard", {
     configurable: true,
     value: originalClipboard,
-  })
-})
-
-describe("clipboardSnapshotIsPasteable", () => {
-  it("treats media or non-empty text as pasteable", () => {
-    expect(
-      clipboardSnapshotIsPasteable({
-        files: [new File(["x"], "shot.png", { type: "image/png" })],
-        text: "",
-      }),
-    ).toBe(true)
-    expect(clipboardSnapshotIsPasteable({ files: [], text: " hello " })).toBe(
-      true,
-    )
-    expect(clipboardSnapshotIsPasteable({ files: [], text: "  \n" })).toBe(
-      false,
-    )
   })
 })
 

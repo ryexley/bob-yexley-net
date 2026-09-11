@@ -17,7 +17,9 @@ import {
   toggleLinkCommand,
 } from "@milkdown/preset-commonmark"
 import { toggleHighlightCommand } from "./plugins/highlight"
-import { clipboardReadIsAvailable } from "@/modules/media/clipboard-snapshot"
+import { ptr } from "@/i18n"
+
+const pasteTr = ptr("shared.components.markdownEditor.paste")
 
 export interface FormattingOption {
   key: string
@@ -93,11 +95,13 @@ export const formattingOptions: FormattingOption[] = [
   {
     key: "paste",
     icon: "content_paste",
-    ariaLabel: "Paste",
+    ariaLabel: pasteTr("ariaLabel"),
     handler: () => {
-      // Handled by MarkdownEditor so it can read the clipboard in the tap gesture.
+      // MarkdownEditor owns this: the clipboard read, or the paste catcher it
+      // falls back to, both have to happen inside the tap's user gesture.
     },
-    isDisabled: () => !clipboardReadIsAvailable(),
+    // Never disabled. Whether the clipboard holds anything is unknowable on iOS
+    // without a gesture, and the catcher path does not need the clipboard API.
     group: 0,
   },
   {

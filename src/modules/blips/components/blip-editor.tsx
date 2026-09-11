@@ -20,6 +20,7 @@ import {
   type MarkdownEditorContentMetrics,
   getMarkdownEditorContentMetrics,
 } from "@/components/markdown/editor"
+import { isPasteCatcherEvent } from "@/components/markdown/editor/paste-catcher"
 import {
   composerMediaEmbedRuntime,
   setMediaEmbedRuntime,
@@ -1174,7 +1175,8 @@ export function BlipEditor(props: BlipEditorProps) {
 
   function handleClipboardPaste(event: ClipboardEvent) {
     const instance = media()
-    if (!instance) {
+    // The catcher harvests its own paste, and needs the default insert to run.
+    if (!instance || isPasteCatcherEvent(event)) {
       return false
     }
 

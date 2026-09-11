@@ -26,6 +26,14 @@ export const en = {
       unsplashImage: {
         attribution: "Photo by {photographer} at Unsplash",
       },
+      markdownEditor: {
+        paste: {
+          ariaLabel: "Paste",
+          title: "Paste from your clipboard",
+          hint: "Touch and hold here, then tap Paste",
+          cancel: "Cancel",
+        },
+      },
       globalLoadingIndicator: {
         ariaLabel: "Loading",
       },

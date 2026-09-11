@@ -5,6 +5,21 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.46.0] - 2026-09-11
+
+### Fixed
+
+- Pasted photos, GIFs, and video now attach on iOS. Safari never puts them on
+  the paste event's file list — it exposes them only as a `blob:` URL inside the
+  pasted markup — so that markup is now read and fetched back into a file
+- Toolbar Paste on phones opens a focused paste target to touch and hold,
+  rather than depending on the async clipboard API. That API is unavailable
+  outside a secure context (which left the button permanently disabled on the
+  local dev server) and, where it does exist, hides behind a callout that any
+  stray tap cancels
+- Toolbar Paste is no longer ever disabled: whether the clipboard holds
+  anything is unknowable on iOS without a user gesture
+
 ## [0.45.9] - 2026-09-11
 
 ### Fixed

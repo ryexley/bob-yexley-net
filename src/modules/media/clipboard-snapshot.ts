@@ -1,7 +1,5 @@
-import {
-  filesFromHtmlDataUrls,
-  normalizeClipboardMediaFile,
-} from "./file-validation"
+import { normalizeClipboardMediaFile } from "./file-validation"
+import { harvestMediaFromHtml } from "./clipboard-media-harvest"
 
 export type ClipboardSnapshot = {
   files: File[]
@@ -19,12 +17,6 @@ export function clipboardReadIsAvailable(): boolean {
     typeof clipboard?.read === "function" ||
     typeof clipboard?.readText === "function"
   )
-}
-
-export function clipboardSnapshotIsPasteable(
-  snapshot: ClipboardSnapshot,
-): boolean {
-  return snapshot.files.length > 0 || snapshot.text.trim().length > 0
 }
 
 // WebKit's async clipboard API only documents image/png for images. GIFs
@@ -93,7 +85,7 @@ export async function snapshotFromClipboardItems(
     if (listed.includes("text/html")) {
       try {
         const html = await (await item.getType("text/html")).text()
-        const fromHtml = filesFromHtmlDataUrls(html)
+        const fromHtml = await harvestMediaFromHtml(html)
         if (fromHtml.length > 0) {
           files.push(...fromHtml)
           continue

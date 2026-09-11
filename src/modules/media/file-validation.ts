@@ -99,44 +99,6 @@ export const normalizeClipboardMediaFile = (
   return new File([file], name, { type: mime, lastModified: file.lastModified })
 }
 
-const DATA_URL_IMAGE =
-  /src=["'](data:(image\/[a-zA-Z0-9.+-]+);base64,[A-Za-z0-9+/]+=*)["']/gi
-
-/** Images inlined as data URLs in clipboard HTML (Safari often omits image/*). */
-export const filesFromHtmlDataUrls = (html: string): File[] => {
-  if (!html) {
-    return []
-  }
-  const files: File[] = []
-  for (const match of html.matchAll(DATA_URL_IMAGE)) {
-    const dataUrl = match[1]
-    const mime = match[2]
-    if (!dataUrl || !mime) {
-      continue
-    }
-    const comma = dataUrl.indexOf(",")
-    if (comma < 0) {
-      continue
-    }
-    try {
-      const binary = atob(dataUrl.slice(comma + 1))
-      const bytes = new Uint8Array(binary.length)
-      for (let index = 0; index < binary.length; index += 1) {
-        bytes[index] = binary.charCodeAt(index)
-      }
-      files.push(
-        normalizeClipboardMediaFile(
-          new File([bytes], "image", { type: mime }),
-          mime,
-        ),
-      )
-    } catch {
-      // Ignore malformed data URLs.
-    }
-  }
-  return files
-}
-
 const clipboardFilename = (mime: string): string => {
   if (mime === "image/jpeg") {
     return "image.jpg"
