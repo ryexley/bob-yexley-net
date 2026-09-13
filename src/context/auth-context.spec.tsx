@@ -2,6 +2,7 @@ import { render, screen, waitFor } from "@solidjs/testing-library"
 import { createEffect, createSignal } from "solid-js"
 import { describe, expect, it, vi, beforeEach } from "vitest"
 import { AuthProvider, useAuth } from "@/context/auth-context"
+import { TIME } from "@/util/enums"
 
 const initialProfileState = vi.hoisted(() => ({
   value: null as any,
@@ -34,16 +35,31 @@ const sessionProfile = {
 }
 
 const authMockState = vi.hoisted(() => {
-  let handler: ((event: string, session: { user: { id: string; email: string } } | null) => void)
+  let handler:
+    | ((
+        event: string,
+        session: { user: { id: string; email: string } } | null,
+      ) => void)
     | null = null
 
   return {
-    openCurrentSession: vi.fn(async () => ({ data: null, error: null })),
+    openCurrentSession: vi.fn(async () => ({
+      data: null,
+      error: null as string | null,
+    })),
+    isServerSessionValid: vi.fn(async () => ({
+      data: true as boolean | null,
+      error: null as string | null,
+    })),
+    logout: vi.fn(async () => {}),
     getUserProfile: vi.fn(async () => ({ data: sessionProfile, error: null })),
     setHandler(next: typeof handler) {
       handler = next
     },
-    emit(event: string, session: { user: { id: string; email: string } } | null) {
+    emit(
+      event: string,
+      session: { user: { id: string; email: string } } | null,
+    ) {
       handler?.(event, session)
     },
   }
@@ -70,8 +86,8 @@ vi.mock("@/lib/vendor/supabase/browser", () => ({
       error: null,
     })),
     isSessionExpired: vi.fn(() => false),
-    isServerSessionValid: vi.fn(async () => ({ data: true, error: null })),
-    logout: vi.fn(async () => {}),
+    isServerSessionValid: authMockState.isServerSessionValid,
+    logout: authMockState.logout,
     getUserProfile: authMockState.getUserProfile,
     peekUserProfile: vi.fn(() => null),
     openCurrentSession: authMockState.openCurrentSession,
@@ -120,10 +136,16 @@ function AuthStatusProbe() {
       <div data-testid="auth-state">
         {auth.isAuthenticated() ? "authenticated" : "anonymous"}
       </div>
-      <div data-testid="display-name">{auth.userProfile()?.displayName ?? ""}</div>
-      <div data-testid="auth-loading">{auth.loading() ? "loading" : "ready"}</div>
+      <div data-testid="display-name">
+        {auth.userProfile()?.displayName ?? ""}
+      </div>
+      <div data-testid="auth-loading">
+        {auth.loading() ? "loading" : "ready"}
+      </div>
       <div data-testid="auth-busy">{auth.busy() ? "busy" : "idle"}</div>
-      <div data-testid="auth-flicker">{reenteredLoading() ? "flickered" : "stable"}</div>
+      <div data-testid="auth-flicker">
+        {reenteredLoading() ? "flickered" : "stable"}
+      </div>
       <div data-testid="auth-busy-pulses">{busyPulses()}</div>
     </>
   )
@@ -143,6 +165,18 @@ describe("AuthProvider", () => {
     initialProfileState.value = null
     authMockState.openCurrentSession.mockClear()
     authMockState.getUserProfile.mockClear()
+    authMockState.logout.mockClear()
+    authMockState.isServerSessionValid.mockClear()
+    // Re-seed a healthy session so a test that breaks one of these describes
+    // only its own failure.
+    authMockState.openCurrentSession.mockImplementation(async () => ({
+      data: null,
+      error: null,
+    }))
+    authMockState.isServerSessionValid.mockImplementation(async () => ({
+      data: true,
+      error: null,
+    }))
   })
 
   it("hydrates an existing initial browser session", async () => {
@@ -183,7 +217,9 @@ describe("AuthProvider", () => {
       expect(screen.getByTestId("auth-busy").textContent).toBe("idle")
     })
 
-    const pulsesBeforeRefresh = Number(screen.getByTestId("auth-busy-pulses").textContent)
+    const pulsesBeforeRefresh = Number(
+      screen.getByTestId("auth-busy-pulses").textContent,
+    )
     authMockState.openCurrentSession.mockClear()
     authMockState.getUserProfile.mockClear()
 
@@ -199,9 +235,87 @@ describe("AuthProvider", () => {
     expect(screen.getByTestId("display-name").textContent).toBe("Bob")
     expect(screen.getByTestId("auth-loading").textContent).toBe("ready")
     expect(screen.getByTestId("auth-flicker").textContent).toBe("stable")
-    expect(Number(screen.getByTestId("auth-busy-pulses").textContent)).toBeGreaterThan(
-      pulsesBeforeRefresh,
-    )
+    expect(
+      Number(screen.getByTestId("auth-busy-pulses").textContent),
+    ).toBeGreaterThan(pulsesBeforeRefresh)
     expect(screen.getByTestId("auth-busy").textContent).toBe("idle")
+  })
+
+  describe("resuming a backgrounded tab", () => {
+    const mountAndSignIn = async () => {
+      render(() => (
+        <AuthProvider>
+          <AuthStatusProbe />
+        </AuthProvider>
+      ))
+
+      authMockState.emit("INITIAL_SESSION", {
+        user: { id: "user-1", email: "bob@example.com" },
+      })
+
+      await waitFor(() => {
+        expect(screen.getByTestId("auth-state").textContent).toBe(
+          "authenticated",
+        )
+      })
+    }
+
+    /** The phone coming back out of a pocket, past the one second debounce. */
+    const resumeTab = async () => {
+      vi.useFakeTimers()
+      try {
+        window.dispatchEvent(new Event("focus"))
+        await vi.advanceTimersByTimeAsync(TIME.ONE_SECOND)
+      } finally {
+        vi.useRealTimers()
+      }
+    }
+
+    /**
+     * Regression for repeated sign-outs while posting live updates from a
+     * stadium. Every resume revalidates against Postgres, and on a congested
+     * network those calls fail — which used to be read as a rejected session
+     * and trigger a real logout, revoking the session row and clearing the
+     * Supabase cookies.
+     */
+    it("stays signed in when the revalidation cannot reach the server", async () => {
+      await mountAndSignIn()
+
+      authMockState.openCurrentSession.mockClear()
+      authMockState.openCurrentSession.mockImplementation(async () => ({
+        data: null,
+        error: "TypeError: Failed to fetch",
+      }))
+
+      await resumeTab()
+
+      await waitFor(() => {
+        expect(authMockState.openCurrentSession).toHaveBeenCalled()
+      })
+
+      expect(authMockState.logout).not.toHaveBeenCalled()
+      expect(screen.getByTestId("auth-state").textContent).toBe("authenticated")
+      expect(screen.getByTestId("display-name").textContent).toBe("Bob")
+    })
+
+    it("signs out when the server reports the session is no longer valid", async () => {
+      // The counterpart to the test above: a session revoked from another
+      // device still has to end, or the tolerance added for flaky networks
+      // would keep a dead session alive.
+      await mountAndSignIn()
+
+      authMockState.isServerSessionValid.mockImplementation(async () => ({
+        data: false,
+        error: null,
+      }))
+
+      await resumeTab()
+
+      await waitFor(() => {
+        expect(screen.getByTestId("auth-state").textContent).toBe("anonymous")
+      })
+
+      expect(authMockState.logout).toHaveBeenCalled()
+    })
   })
 })

@@ -107,6 +107,7 @@ export function AuthProvider(props: { children: any }) {
     bootstrapAuthSession({
       getUser: supabase.getUser,
       isSessionExpired: () => supabase.isSessionExpired(),
+      markSessionStartIfMissing: () => supabase.markSessionStartIfMissing(),
       openCurrentSession: () => supabase.openCurrentSession(),
       isServerSessionValid: () => supabase.isServerSessionValid(),
       logout: () => supabase.logout(),

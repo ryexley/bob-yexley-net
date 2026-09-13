@@ -5,6 +5,20 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.47.1] - 2026-09-12
+
+### Fixed
+
+- Staying signed in no longer depends on having a good connection. The session
+  was revalidated on every tab focus, and a request that failed to arrive was
+  read as the server rejecting the session — so an evening of posting live
+  updates from a stadium signed the author out half a dozen times. Only a
+  definite answer from the server ends a session now
+- Losing `localStorage` no longer signs you out. A missing session-start
+  timestamp read as "expired" even while the auth cookie was perfectly valid.
+  The real seven-day limit is enforced against the session row in Postgres,
+  which cannot be evicted
+
 ## [0.47.0] - 2026-09-12
 
 ### Added
