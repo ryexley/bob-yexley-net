@@ -7,27 +7,33 @@ import {
   getDesktopSizePreset,
 } from "@/modules/blips/components/blip-editor"
 
-const { state, toggleToolbar, focusBridgeSpies, storeSpies } = vi.hoisted(() => ({
-  state: {
-    drafts: [] as Blip[],
-    entities: [] as Blip[],
-    lastMarkdownEditorProps: null as any,
-    viewportWidth: 1440,
-  },
-  toggleToolbar: vi.fn(),
-  focusBridgeSpies: {
-    scheduleFocusAfterOpen: vi.fn(),
-    clearTextInputSession: vi.fn(),
-  },
-  storeSpies: {
-    upsert: vi.fn(
-      async (_?: unknown, __?: { cacheOnly?: boolean }) => ({ error: null }),
-    ),
-    publish: vi.fn(async () => ({ error: null })),
-    unpublish: vi.fn(async () => ({ error: null })),
-    remove: vi.fn(async () => ({ error: null })),
-  },
-}))
+const { state, toggleToolbar, focusBridgeSpies, storeSpies, mediaState } =
+  vi.hoisted(() => ({
+    state: {
+      drafts: [] as Blip[],
+      entities: [] as Blip[],
+      lastMarkdownEditorProps: null as any,
+      viewportWidth: 1440,
+    },
+    toggleToolbar: vi.fn(),
+    focusBridgeSpies: {
+      scheduleFocusAfterOpen: vi.fn(),
+      clearTextInputSession: vi.fn(),
+    },
+    storeSpies: {
+      upsert: vi.fn(async (_?: unknown, __?: { cacheOnly?: boolean }) => ({
+        error: null,
+      })),
+      publish: vi.fn(async () => ({ error: null })),
+      unpublish: vi.fn(async () => ({ error: null })),
+      remove: vi.fn(async () => ({ error: null })),
+    },
+    // Lets a test drive the media lifecycle the toolbar reacts to.
+    mediaState: {
+      options: null as any,
+      attachments: [] as unknown[],
+    },
+  }))
 
 vi.mock("@/context/services-context", () => ({
   useSupabase: () => ({
@@ -52,12 +58,40 @@ vi.mock("@/components/confirm-dialog", () => ({
   useConfirm: () => vi.fn(),
 }))
 
+// Only `mediaStore` is swapped — the rest of the module (MediaButton, the
+// composer chrome) stays real. The stub captures the editor's callbacks so a
+// test can play out an upload without a Supabase client or network.
+vi.mock("@/modules/media", async importOriginal => {
+  const actual = await importOriginal<typeof import("@/modules/media")>()
+
+  return {
+    ...actual,
+    mediaStore: (_client: unknown, options: any) => {
+      mediaState.options = options
+
+      return {
+        attachments: () => mediaState.attachments,
+        records: () => [],
+        hasMedia: () => mediaState.attachments.length > 0,
+        canPublish: () => true,
+        persistError: () => null,
+        removeAttachment: vi.fn(async () => undefined),
+        retry: vi.fn(),
+        attach: vi.fn(),
+        reset: vi.fn(),
+        fetchByBlip: vi.fn(async () => ({ data: [], error: null })),
+      }
+    },
+  }
+})
+
 vi.mock("@/modules/blips/data", () => ({
   blipId: () => "draft-1",
   blipStore: () => ({
     drafts: () => state.drafts,
     entities: () => state.entities,
-    getById: (id: string) => state.entities.find(blip => blip.id === id) ?? null,
+    getById: (id: string) =>
+      state.entities.find(blip => blip.id === id) ?? null,
     upsert: storeSpies.upsert,
     publish: storeSpies.publish,
     unpublish: storeSpies.unpublish,
@@ -66,7 +100,13 @@ vi.mock("@/modules/blips/data", () => ({
   tagStore: () => ({
     listTags: vi.fn(async () => ({ error: null, data: [] })),
     getBlipTagValues: vi.fn(async () => ({ error: null, data: [] })),
-    replaceBlipTags: vi.fn(async () => ({ error: null, data: [] })),
+    // Echoes the persisted values like the real store: the editor rebaselines
+    // its dirty check from this response, so returning a fixed `[]` would leave
+    // the blip permanently dirty once media-type tags are synced.
+    replaceBlipTags: vi.fn(async (_blipId: string, values: string[]) => ({
+      error: null,
+      data: values,
+    })),
   }),
 }))
 
@@ -75,18 +115,12 @@ vi.mock("@/modules/blips/components/blip-tags", () => ({
 }))
 
 vi.mock("@/components/switch", () => ({
-  Switch: (props: any) => (
-    <div data-testid="mock-switch">
-      {props.label}
-    </div>
-  ),
+  Switch: (props: any) => <div data-testid="mock-switch">{props.label}</div>,
 }))
 
 vi.mock("@/components/date-time-picker", () => ({
   DateTimePicker: (props: any) => (
-    <div data-testid="mock-date-time-picker">
-      {props.label}
-    </div>
+    <div data-testid="mock-date-time-picker">{props.label}</div>
   ),
 }))
 
@@ -101,7 +135,8 @@ vi.mock("@/modules/blips/components/editor-focus-bridge", () => ({
 }))
 
 vi.mock("@/components/markdown/editor", async importOriginal => {
-  const actual = await importOriginal<typeof import("@/components/markdown/editor")>()
+  const actual =
+    await importOriginal<typeof import("@/components/markdown/editor")>()
 
   return {
     ...actual,
@@ -202,6 +237,8 @@ describe("BlipEditor", () => {
     storeSpies.unpublish.mockResolvedValue({ error: null })
     storeSpies.remove.mockReset()
     storeSpies.remove.mockResolvedValue({ error: null })
+    mediaState.options = null
+    mediaState.attachments = []
     window.scrollTo = vi.fn()
     Object.defineProperty(window, "matchMedia", {
       writable: true,
@@ -235,7 +272,9 @@ describe("BlipEditor", () => {
     expect(screen.queryByTestId("mock-blip-tags")).toBeNull()
     expect(screen.getByRole("button", { name: "Save" })).toBeTruthy()
     expect(screen.getByRole("button", { name: "Publish" })).toBeTruthy()
-    expect(screen.getByRole("button", { name: "Show blip metadata" })).toBeTruthy()
+    expect(
+      screen.getByRole("button", { name: "Show blip metadata" }),
+    ).toBeTruthy()
 
     const toggleButton = document.querySelector(
       ".blip-editor-toolbar-toggle",
@@ -249,7 +288,9 @@ describe("BlipEditor", () => {
     ) as HTMLButtonElement | null
     expect(closeButton).toBeTruthy()
 
-    await fireEvent.click(screen.getByRole("button", { name: "Show blip metadata" }))
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Show blip metadata" }),
+    )
     expect(screen.getByTestId("mock-blip-tags")).toBeTruthy()
     expect(screen.getByTestId("mock-switch")).toBeTruthy()
     expect(screen.getByTestId("mock-date-time-picker")).toBeTruthy()
@@ -335,7 +376,9 @@ describe("BlipEditor", () => {
       "blipEditor.metadataOpen",
     )
 
-    await fireEvent.click(screen.getByRole("button", { name: "Return to editor" }))
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Return to editor" }),
+    )
 
     expect(focusBridgeSpies.scheduleFocusAfterOpen).toHaveBeenCalled()
   })
@@ -366,15 +409,17 @@ describe("BlipEditor", () => {
 
   it("waits for root draft cloud sync before closing", async () => {
     let resolveDbUpsert!: (value: { error: null }) => void
-    storeSpies.upsert.mockImplementation((_: unknown, options?: { cacheOnly?: boolean }) => {
-      if (options?.cacheOnly) {
-        return Promise.resolve({ error: null })
-      }
+    storeSpies.upsert.mockImplementation(
+      (_: unknown, options?: { cacheOnly?: boolean }) => {
+        if (options?.cacheOnly) {
+          return Promise.resolve({ error: null })
+        }
 
-      return new Promise(resolve => {
-        resolveDbUpsert = resolve as (value: { error: null }) => void
-      })
-    })
+        return new Promise(resolve => {
+          resolveDbUpsert = resolve as (value: { error: null }) => void
+        })
+      },
+    )
 
     const onPanelOpenChange = vi.fn()
     render(() => (
@@ -402,13 +447,15 @@ describe("BlipEditor", () => {
   })
 
   it("keeps the root editor open when close-time cloud sync fails", async () => {
-    storeSpies.upsert.mockImplementation((_: unknown, options?: { cacheOnly?: boolean }) => {
-      if (options?.cacheOnly) {
-        return Promise.resolve({ error: null })
-      }
+    storeSpies.upsert.mockImplementation(
+      (_: unknown, options?: { cacheOnly?: boolean }) => {
+        if (options?.cacheOnly) {
+          return Promise.resolve({ error: null })
+        }
 
-      return Promise.resolve({ error: "sync failed" })
-    })
+        return Promise.resolve({ error: "sync failed" })
+      },
+    )
 
     const onPanelOpenChange = vi.fn()
     render(() => (
@@ -482,12 +529,16 @@ describe("BlipEditor", () => {
       expect(screen.getByTestId("mock-markdown-editor")).toBeTruthy()
     })
 
-    const dialog = document.querySelector(".blip-editor-dialog") as HTMLElement | null
+    const dialog = document.querySelector(
+      ".blip-editor-dialog",
+    ) as HTMLElement | null
     expect(dialog).toBeTruthy()
-    expect(dialog?.style.getPropertyValue("--blip-editor-shell-width")).toBe("480px")
-    expect(dialog?.style.getPropertyValue("--blip-editor-shell-max-height")).toBe(
-      "416px",
+    expect(dialog?.style.getPropertyValue("--blip-editor-shell-width")).toBe(
+      "480px",
     )
+    expect(
+      dialog?.style.getPropertyValue("--blip-editor-shell-max-height"),
+    ).toBe("416px")
 
     state.lastMarkdownEditorProps.onContentMetricsChange({
       characterCount: 1300,
@@ -499,9 +550,9 @@ describe("BlipEditor", () => {
       expect(dialog?.style.getPropertyValue("--blip-editor-shell-width")).toBe(
         "736px",
       )
-      expect(dialog?.style.getPropertyValue("--blip-editor-shell-max-height")).toBe(
-        "608px",
-      )
+      expect(
+        dialog?.style.getPropertyValue("--blip-editor-shell-max-height"),
+      ).toBe("608px")
     })
 
     state.lastMarkdownEditorProps.onContentMetricsChange({
@@ -514,9 +565,9 @@ describe("BlipEditor", () => {
       expect(dialog?.style.getPropertyValue("--blip-editor-shell-width")).toBe(
         "768px",
       )
-      expect(dialog?.style.getPropertyValue("--blip-editor-shell-max-height")).toBe(
-        "704px",
-      )
+      expect(
+        dialog?.style.getPropertyValue("--blip-editor-shell-max-height"),
+      ).toBe("704px")
     })
   })
 
@@ -541,16 +592,139 @@ describe("BlipEditor", () => {
       expect(screen.getByTestId("mock-markdown-editor")).toBeTruthy()
     })
 
-    const dialog = document.querySelector(".blip-editor-dialog") as HTMLElement | null
+    const dialog = document.querySelector(
+      ".blip-editor-dialog",
+    ) as HTMLElement | null
     expect(dialog).toBeTruthy()
 
     await waitFor(() => {
       expect(dialog?.style.getPropertyValue("--blip-editor-shell-width")).toBe(
         "768px",
       )
-      expect(dialog?.style.getPropertyValue("--blip-editor-shell-max-height")).toBe(
-        "704px",
+      expect(
+        dialog?.style.getPropertyValue("--blip-editor-shell-max-height"),
+      ).toBe("704px")
+    })
+  })
+
+  /**
+   * Attaching media writes a `blip_media` row directly and leaves `content`,
+   * tags and timestamps untouched, so nothing in the ordinary dirty check
+   * notices it. Before `mediaDirty` existed the save button stayed inert after
+   * adding a photo, with no way to close out the edit.
+   */
+  describe("media attachments as pending changes", () => {
+    const renderEditor = () =>
+      render(() => (
+        <BlipEditor
+          open
+          onPanelOpenChange={() => undefined}
+          close={() => undefined}
+        />
+      ))
+
+    const save = () =>
+      screen.getByRole("button", { name: "Save" }) as HTMLButtonElement
+    const publish = () =>
+      screen.getByRole("button", { name: "Publish" }) as HTMLButtonElement
+
+    const completeMediaUpload = async () => {
+      mediaState.attachments = [
+        {
+          key: "media/user-1/draft-1/photo",
+          mediaType: "image",
+          status: "saved",
+        },
+      ]
+      await mediaState.options.onMediaPersisted()
+    }
+
+    it("leaves save inert on an untouched blip", async () => {
+      renderEditor()
+
+      await waitFor(() => expect(mediaState.options).not.toBeNull())
+      expect(save().disabled).toBe(true)
+    })
+
+    it("enables save once an attachment has landed", async () => {
+      renderEditor()
+      await waitFor(() => expect(mediaState.options).not.toBeNull())
+
+      await completeMediaUpload()
+
+      await waitFor(() => expect(save().disabled).toBe(false))
+    })
+
+    it("holds publish back until the media edit is saved", async () => {
+      renderEditor()
+      await waitFor(() => expect(mediaState.options).not.toBeNull())
+
+      await completeMediaUpload()
+      await waitFor(() => expect(save().disabled).toBe(false))
+
+      // Unlike the update editor, the root editor folds `mediaDirty` into
+      // `hasPendingChanges`, which also disables publish. Attaching a photo
+      // therefore requires a save before the blip can go out.
+      expect(publish().disabled).toBe(true)
+    })
+
+    it("settles save back down after the blip is saved", async () => {
+      renderEditor()
+      await waitFor(() => expect(mediaState.options).not.toBeNull())
+
+      await completeMediaUpload()
+      await waitFor(() => expect(save().disabled).toBe(false))
+
+      await fireEvent.click(save())
+
+      await waitFor(() => expect(save().disabled).toBe(true))
+      expect(storeSpies.upsert).toHaveBeenCalled()
+    })
+
+    it("treats removing an attachment as an edit worth saving", async () => {
+      renderEditor()
+      await waitFor(() => expect(mediaState.options).not.toBeNull())
+
+      await completeMediaUpload()
+      await waitFor(() => expect(save().disabled).toBe(false))
+      await fireEvent.click(save())
+      await waitFor(() => expect(save().disabled).toBe(true))
+
+      mediaState.attachments = []
+      await state.lastMarkdownEditorProps.aboveControlsProps?.onRemoveAttachment?.(
+        "media/user-1/draft-1/photo",
       )
+
+      await waitFor(() => expect(save().disabled).toBe(false))
+    })
+
+    /**
+     * Isolates `mediaDirty` from the tag sync. Attaching the first photo also
+     * adds a media-type tag, and a changed tag set marks the blip dirty on its
+     * own — so the first attachment cannot prove `mediaDirty` works. A second
+     * photo leaves the tag set identical, making `mediaDirty` the only thing
+     * that can enable save.
+     */
+    it("enables save for a second photo, which changes no tags", async () => {
+      renderEditor()
+      await waitFor(() => expect(mediaState.options).not.toBeNull())
+
+      await completeMediaUpload()
+      await waitFor(() => expect(save().disabled).toBe(false))
+      await fireEvent.click(save())
+      await waitFor(() => expect(save().disabled).toBe(true))
+
+      mediaState.attachments = [
+        ...mediaState.attachments,
+        {
+          key: "media/user-1/draft-1/photo-2",
+          mediaType: "image",
+          status: "saved",
+        },
+      ]
+      await mediaState.options.onMediaPersisted()
+
+      await waitFor(() => expect(save().disabled).toBe(false))
     })
   })
 })

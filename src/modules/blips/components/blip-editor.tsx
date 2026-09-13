@@ -199,6 +199,11 @@ export function BlipEditor(props: BlipEditorProps) {
   const [content, setContent] = createSignal<string>("")
   const [lastCachedContent, setLastCachedContent] = createSignal<string>("")
   const [lastDbSavedContent, setLastDbSavedContent] = createSignal<string>("")
+  // Attaching or removing media is an edit to the blip, but it leaves no trace
+  // in `content`/tags/timestamps — `mediaStore` writes `blip_media` rows on its
+  // own. Without this the save button stayed inert after adding a photo.
+  // Cleared wherever the save baseline is (re)established.
+  const [mediaDirty, setMediaDirty] = createSignal(false)
   const [hasPersistedCurrentBlip, setHasPersistedCurrentBlip] =
     createSignal<boolean>(false)
   const [saveStatus, setSaveStatus] = createSignal<SaveStatus>("idle")
@@ -406,6 +411,7 @@ export function BlipEditor(props: BlipEditorProps) {
     setContent("")
     setLastCachedContent("")
     setLastDbSavedContent("")
+    setMediaDirty(false)
     setHasPersistedCurrentBlip(false)
     setContentMetrics(getMarkdownEditorContentMetrics(""))
     setAllowComments(true)
@@ -430,6 +436,7 @@ export function BlipEditor(props: BlipEditorProps) {
     setContent(selectedContent)
     setLastCachedContent(selectedContent)
     setLastDbSavedContent(assumePersisted ? selectedContent : "")
+    setMediaDirty(false)
     setHasPersistedCurrentBlip(assumePersisted)
     setContentMetrics(getMarkdownEditorContentMetrics(selectedContent))
     setAllowComments(selectedAllowComments)
@@ -622,6 +629,7 @@ export function BlipEditor(props: BlipEditorProps) {
 
     await instance.removeAttachment(key)
     await syncMediaTypeTags(instance)
+    setMediaDirty(true)
   }
 
   // Save to cache only (localStorage + signal)
@@ -695,6 +703,7 @@ export function BlipEditor(props: BlipEditorProps) {
       }
 
       await waitForMinimumSavingIndicator(saveStartedAt)
+      setMediaDirty(false)
       setLastDbSavedContent(markdown)
       setLastCachedContent(markdown)
       setLastDbSavedAllowComments(nextAllowComments)
@@ -834,6 +843,7 @@ export function BlipEditor(props: BlipEditorProps) {
         return false
       }
 
+      setMediaDirty(false)
       setLastDbSavedContent(closingContent)
       setLastCachedContent(closingContent)
       setLastDbSavedAllowComments(closingAllowComments)
@@ -985,6 +995,7 @@ export function BlipEditor(props: BlipEditorProps) {
           setContent("")
           setLastCachedContent("")
           setLastDbSavedContent("")
+          setMediaDirty(false)
           setHasPersistedCurrentBlip(false)
           setContentMetrics(getMarkdownEditorContentMetrics(""))
           setAllowComments(true)
@@ -1096,6 +1107,7 @@ export function BlipEditor(props: BlipEditorProps) {
         onMediaPersisted: () => {
           revalidate(getBlipMediaFor.key)
           void syncMediaTypeTags(instance)
+          setMediaDirty(true)
         },
       })
       mediaInstance = instance
@@ -1362,6 +1374,7 @@ export function BlipEditor(props: BlipEditorProps) {
   }
 
   const hasPendingChanges = () =>
+    mediaDirty() ||
     content() !== lastDbSavedContent() ||
     allowComments() !== lastDbSavedAllowComments() ||
     !areTimestampsEqual(publishAt(), lastDbSavedPublishAt()) ||

@@ -1,7 +1,7 @@
 {
   "name": "bob.yexley.net",
   "description": "my personal web site",
-  "version": "0.46.1",
+  "version": "0.47.0",
   "type": "module",
   "scripts": {
     "refresh": "rm -rf node_modules && rm -f pnpm-lock.yaml && pnpm install",
@@ -86,11 +86,12 @@
     "@types/heic-convert": "^2.1.1",
     "@types/node": "^26.0.0",
     "@types/ua-parser-js": "^0.7.39",
+    "@vitest/coverage-v8": "^4.1.11",
     "concurrently": "^9.1.2",
     "jsdom": "^29.0.1",
-    "oxlint-plugin-solidjs": "^0.1.1",
     "oxfmt": "^0.66.0",
     "oxlint": "^1.81.0",
+    "oxlint-plugin-solidjs": "^0.1.1",
     "supabase": "^2.116.0",
     "tailwindcss": "^4.1.10",
     "tailwindcss-animate": "^1.0.7",

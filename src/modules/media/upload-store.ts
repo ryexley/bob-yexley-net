@@ -15,6 +15,7 @@ import AwsS3 from "@uppy/aws-s3"
 import type { Accessor } from "solid-js"
 import { createSignal } from "solid-js"
 import { api } from "@/urls"
+import { TIME } from "@/util/enums"
 import { r2Service as defaultR2Service, type R2Service } from "./r2-service"
 import {
   createFilenameAllocator,
@@ -199,6 +200,41 @@ const buildBaseKey = (userId: string, blipId: string, name: string): string =>
 const buildOriginalKey = (baseKey: string, ext: string): string =>
   `${baseKey}-original.${ext}`
 
+/**
+ * Upper bound on server-side variant generation, deliberately longer than the
+ * route's own `maxDuration: 60` (see `vite.config.ts`) so a real server timeout
+ * arrives as a 504 and reports itself, and this only fires when the response is
+ * genuinely lost — a dropped connection or Safari backgrounding the tab, both
+ * routine on a phone. `fetch` has no default timeout, so without a bound those
+ * leave the file stuck in `processing` forever: `allComplete` never goes true so
+ * publish stays blocked, and `onUploadSuccess` never fires so no `blip_media`
+ * row is written.
+ */
+const PROCESS_TIMEOUT_MS = TIME.ONE_MINUTE + TIME.THIRTY_SECONDS
+
+/** Upper bound on the client-side first-frame decode for video/GIF thumbnails. */
+const THUMBNAIL_TIMEOUT_MS = TIME.THIRTY_SECONDS
+
+/**
+ * Rejects if `promise` has not settled within `ms`. The underlying work is not
+ * cancelled — callers use this to bound their own state machine, not the request.
+ */
+async function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<never>((_resolve, reject) => {
+        timer = setTimeout(() => {
+          reject(new Error(`Timed out after ${Math.round(ms / 1000)}s`))
+        }, ms)
+      }),
+    ])
+  } finally {
+    clearTimeout(timer)
+  }
+}
+
 /** Default `/api/media/process` caller, parsing the shared `MediaResult` envelope. */
 async function defaultProcessMedia(
   originalKey: string,
@@ -208,6 +244,7 @@ async function defaultProcessMedia(
     credentials: "same-origin",
     headers: { "content-type": "application/json" },
     body: JSON.stringify({ key: originalKey }),
+    signal: AbortSignal.timeout(PROCESS_TIMEOUT_MS),
   })
 
   let payload: MediaResult<ProcessMediaResponse> | null = null
@@ -386,6 +423,57 @@ export function createUploadStore(
   }
 
   /**
+   * Finalize an image after its original lands: generate WebP variants server
+   * side, record the keys, then mark complete and emit.
+   *
+   * Always settles the file, whatever `processMedia` does. `allComplete` gates
+   * publish on every file reaching `complete`, and `finishSuccess` is what writes
+   * the `blip_media` row — so a request that hangs used to strand the file in
+   * `processing` forever, which reads as a finished progress bar, a live
+   * thumbnail, a permanently disabled save button, and no media on the saved
+   * record. Variants are not load-bearing (the original is already in R2 and
+   * renders on its own), so a failure or timeout completes the file with
+   * `processing_status: "failed"` instead of an upload error, matching the
+   * non-blocking contract in spec §4.2/§5.3.
+   */
+  const finalizeImage = async (
+    fileId: string,
+    originalKey: string,
+  ): Promise<void> => {
+    if (!byId.has(fileId)) {
+      return
+    }
+    patch(fileId, { status: "processing", progress: 100 })
+
+    try {
+      const result = await withTimeout(
+        processMedia(originalKey),
+        PROCESS_TIMEOUT_MS,
+      )
+      patch(fileId, {
+        status: "complete",
+        processingStatus: "complete",
+        width: result.original.width,
+        height: result.original.height,
+        variants: result.variants,
+      })
+    } catch (error) {
+      console.error("Media variant generation failed:", error)
+      patch(fileId, {
+        status: "complete",
+        processingStatus: "failed",
+        error:
+          error instanceof Error ? error.message : "Media processing failed",
+      })
+    }
+
+    const finalized = byId.get(fileId)
+    if (finalized) {
+      finishSuccess(finalized)
+    }
+  }
+
+  /**
    * Finalize a video/GIF after its original lands: await the (parallel) first
    * frame extraction, upload the static `-thumb.webp` (best-effort — a missing
    * thumb degrades to the pre-thumb render behavior), record the extracted
@@ -399,7 +487,17 @@ export function createUploadStore(
     }
     patch(fileId, { status: "processing", progress: 100 })
 
-    const thumb = await (thumbPromises.get(fileId) ?? Promise.resolve(null))
+    // Bounded for the same reason as `finalizeImage`: a decode that never
+    // settles (iOS Safari can sit on a `<video>` that never reaches a frame)
+    // would strand the file in `processing` and block publish. A missing thumb
+    // only degrades the render.
+    const thumb = await withTimeout(
+      thumbPromises.get(fileId) ?? Promise.resolve(null),
+      THUMBNAIL_TIMEOUT_MS,
+    ).catch((error: unknown) => {
+      console.error("Thumbnail extraction timed out:", error)
+      return null
+    })
     thumbPromises.delete(fileId)
 
     const entry = byId.get(fileId)
@@ -469,30 +567,7 @@ export function createUploadStore(
     }
 
     // Images: trigger server-side WebP variant generation, then surface the keys.
-    patch(file.id, { status: "processing", progress: 100 })
-    void processMedia(entry.originalKey)
-      .then(result => {
-        patch(file.id, {
-          status: "complete",
-          processingStatus: "complete",
-          width: result.original.width,
-          height: result.original.height,
-          variants: result.variants,
-        })
-        finishSuccess(byId.get(file.id)!)
-      })
-      .catch((error: unknown) => {
-        // The original uploaded fine and is usable; only variant generation
-        // failed. Don't flip the file to an upload error (which would block
-        // publish) — record the failure and let the caller decide.
-        patch(file.id, {
-          status: "complete",
-          processingStatus: "failed",
-          error:
-            error instanceof Error ? error.message : "Media processing failed",
-        })
-        finishSuccess(byId.get(file.id)!)
-      })
+    void finalizeImage(file.id, entry.originalKey)
   })
 
   uppy.on("file-removed", file => {

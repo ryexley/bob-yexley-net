@@ -469,6 +469,123 @@ describe("mediaStore — onUploadSuccess persistence", () => {
       expect(up.fake.files()).toHaveLength(1)
     })
   })
+
+  /**
+   * Regression: `20260910160000_blip_media_placement.sql` shipped unapplied, so
+   * every insert came back `42703 column "placement" does not exist` for two
+   * days. The upload itself always succeeded, so the only evidence was
+   * `persistError` — which has to carry the database's own message to be worth
+   * anything, and must not be swallowed into a generic string.
+   */
+  it("surfaces the database's message when the insert is rejected", async () => {
+    await runInRoot(async () => {
+      const blipId = uniqueBlip()
+      const userId = "user1"
+      const storageKey = `media/user1/${blipId}/photo`
+      const mock = createSupabaseMock({
+        onInsert: () => ({
+          data: null,
+          error: { message: 'column "placement" does not exist' },
+        }),
+      })
+      const up = makeFakeUpload(blipId, userId)
+
+      const media = mediaStore(mock.client, {
+        blipId,
+        userId,
+        ensureBlipPersisted: async () => true,
+        createUploadStore: up.factory,
+        r2Service: makeR2(),
+      })
+
+      up.setFiles([up.uploadFile({ key: storageKey })])
+      up.fireSuccess(makeSuccess(blipId, userId, { storageKey }))
+
+      await vi.waitFor(() =>
+        expect(media.persistError()).toBe('column "placement" does not exist'),
+      )
+
+      expect(media.records()).toHaveLength(0)
+      // The object is in R2 and the upload entry is retained, so the author can
+      // retry once the schema catches up rather than re-picking the file.
+      expect(up.clearCompleted).not.toHaveBeenCalled()
+      expect(up.fake.files()).toHaveLength(1)
+    })
+  })
+
+  it("surfaces a thrown insert rather than hanging the attachment", async () => {
+    await runInRoot(async () => {
+      const blipId = uniqueBlip()
+      const userId = "user1"
+      const storageKey = `media/user1/${blipId}/photo`
+      const mock = createSupabaseMock({
+        onInsert: () => {
+          throw new Error("network died mid-insert")
+        },
+      })
+      const up = makeFakeUpload(blipId, userId)
+
+      const media = mediaStore(mock.client, {
+        blipId,
+        userId,
+        ensureBlipPersisted: async () => true,
+        createUploadStore: up.factory,
+        r2Service: makeR2(),
+      })
+
+      up.setFiles([up.uploadFile({ key: storageKey })])
+      up.fireSuccess(makeSuccess(blipId, userId, { storageKey }))
+
+      await vi.waitFor(() =>
+        expect(media.persistError()).toBe("network died mid-insert"),
+      )
+      expect(media.records()).toHaveLength(0)
+    })
+  })
+
+  /**
+   * Canary for schema drift. `toMatchObject` elsewhere cannot see a column being
+   * added or dropped, and a column this code writes but the database lacks fails
+   * every insert (see the 42703 regression above). If this list changes, there
+   * must be a matching migration applied to every environment.
+   */
+  it("writes exactly the blip_media columns the schema provides", async () => {
+    await runInRoot(async () => {
+      const blipId = uniqueBlip()
+      const userId = "user1"
+      const storageKey = `media/user1/${blipId}/photo`
+      const mock = createSupabaseMock()
+      const up = makeFakeUpload(blipId, userId)
+
+      const media = mediaStore(mock.client, {
+        blipId,
+        userId,
+        ensureBlipPersisted: async () => true,
+        createUploadStore: up.factory,
+        r2Service: makeR2(),
+      })
+
+      up.setFiles([up.uploadFile({ key: storageKey })])
+      up.fireSuccess(makeSuccess(blipId, userId, { storageKey }))
+
+      await vi.waitFor(() => expect(media.records()).toHaveLength(1))
+
+      expect(Object.keys(mock.inserted[0]!).sort()).toEqual([
+        "blip_id",
+        "display_order",
+        "duration_s",
+        "file_size",
+        "height",
+        "media_type",
+        "mime_type",
+        "placement",
+        "processing_status",
+        "storage_key",
+        "user_id",
+        "width",
+      ])
+    })
+  })
 })
 
 describe("mediaStore — removeAttachment", () => {
@@ -725,6 +842,73 @@ describe("mediaStore — attachments view", () => {
       const second = media.attachments()[0]
 
       expect(second).toBe(first)
+    })
+  })
+})
+
+describe("mediaStore — reset", () => {
+  it("tears down the upload session and drops this blip's cached rows", async () => {
+    await runInRoot(async () => {
+      const blipId = uniqueBlip()
+      const otherBlipId = uniqueBlip()
+      const userId = "user1"
+      const storageKey = `media/${userId}/${blipId}/photo`
+      const mock = createSupabaseMock()
+      const up = makeFakeUpload(blipId, userId)
+
+      const media = mediaStore(mock.client, {
+        blipId,
+        userId,
+        ensureBlipPersisted: async () => true,
+        createUploadStore: up.factory,
+        r2Service: makeR2(),
+      })
+
+      up.setFiles([up.uploadFile({ key: storageKey })])
+      up.fireSuccess(makeSuccess(blipId, userId, { storageKey }))
+      await vi.waitFor(() => expect(media.records()).toHaveLength(1))
+
+      media.reset()
+
+      // Closing the editor must release the Uppy instance and its object URLs.
+      expect(up.destroy).toHaveBeenCalled()
+      expect(media.attachments()).toHaveLength(0)
+      expect(media.persistError()).toBeNull()
+      // Rows for other blips stay in the shared cache.
+      expect(
+        media.records().some(record => record.blip_id === otherBlipId),
+      ).toBe(false)
+    })
+  })
+
+  it("clears a persist error so a reopened editor starts clean", async () => {
+    await runInRoot(async () => {
+      const blipId = uniqueBlip()
+      const userId = "user1"
+      const storageKey = `media/${userId}/${blipId}/photo`
+      const mock = createSupabaseMock({
+        onInsert: () => ({
+          data: null,
+          error: { message: 'column "placement" does not exist' },
+        }),
+      })
+      const up = makeFakeUpload(blipId, userId)
+
+      const media = mediaStore(mock.client, {
+        blipId,
+        userId,
+        ensureBlipPersisted: async () => true,
+        createUploadStore: up.factory,
+        r2Service: makeR2(),
+      })
+
+      up.setFiles([up.uploadFile({ key: storageKey })])
+      up.fireSuccess(makeSuccess(blipId, userId, { storageKey }))
+      await vi.waitFor(() => expect(media.persistError()).not.toBeNull())
+
+      media.reset()
+
+      expect(media.persistError()).toBeNull()
     })
   })
 })

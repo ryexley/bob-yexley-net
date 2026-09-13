@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 import { MAX_FILE_SIZE_BYTES } from "./upload-store"
 import {
+  clipboardLooksLikeMedia,
   clipboardMediaFiles,
   isClipboardMediaFile,
   validateMediaFiles,
@@ -131,5 +132,93 @@ describe("clipboardMediaFiles", () => {
   it("returns [] when there is no clipboard data", () => {
     expect(clipboardMediaFiles(null)).toEqual([])
     expect(clipboardMediaFiles(undefined)).toEqual([])
+  })
+})
+
+/**
+ * The cheap synchronous test that decides whether a paste is worth intercepting.
+ * iOS Safari is the reason it looks past `clipboardData.files`: a copied photo
+ * frequently shows up only as a type hint or a `file` item, and if this returns
+ * false the paste falls through to ProseMirror and the photo is lost.
+ */
+describe("clipboardLooksLikeMedia", () => {
+  const clipboard = (init: {
+    files?: File[]
+    types?: string[]
+    items?: Array<{ kind: string; type: string; file?: File | null }>
+  }): DataTransfer =>
+    ({
+      files: init.files ?? [],
+      types: init.types ?? [],
+      // Real `DataTransferItem`s always expose `getAsFile`; it returning null is
+      // exactly the iOS case where an item is advertised but not retrievable.
+      items: (init.items ?? []).map(item => ({
+        ...item,
+        getAsFile: () => item.file ?? null,
+      })),
+      getData: () => "",
+    }) as unknown as DataTransfer
+
+  it("is false with no clipboard at all", () => {
+    expect(clipboardLooksLikeMedia(null)).toBe(false)
+    expect(clipboardLooksLikeMedia(undefined)).toBe(false)
+  })
+
+  it("is true when a media file is directly readable", () => {
+    expect(
+      clipboardLooksLikeMedia(
+        clipboard({ files: [new File(["x"], "p.png", { type: "image/png" })] }),
+      ),
+    ).toBe(true)
+  })
+
+  it("is true for the bare `Files` type hint", () => {
+    // Safari often advertises only this, with no readable file until later.
+    expect(clipboardLooksLikeMedia(clipboard({ types: ["Files"] }))).toBe(true)
+  })
+
+  it("is true for a media mime among the types", () => {
+    expect(clipboardLooksLikeMedia(clipboard({ types: ["image/heic"] }))).toBe(
+      true,
+    )
+    expect(
+      clipboardLooksLikeMedia(clipboard({ types: ["video/quicktime"] })),
+    ).toBe(true)
+  })
+
+  it("is true for a file item even when its type is blank", () => {
+    expect(
+      clipboardLooksLikeMedia(
+        clipboard({ items: [{ kind: "file", type: "" }] }),
+      ),
+    ).toBe(true)
+  })
+
+  it("is true for a media-typed item that is not a file", () => {
+    expect(
+      clipboardLooksLikeMedia(
+        clipboard({ items: [{ kind: "string", type: "image/png" }] }),
+      ),
+    ).toBe(true)
+  })
+
+  it("is false for a plain text paste", () => {
+    expect(
+      clipboardLooksLikeMedia(
+        clipboard({
+          types: ["text/plain", "text/html"],
+          items: [{ kind: "string", type: "text/plain" }],
+        }),
+      ),
+    ).toBe(false)
+  })
+
+  it("tolerates a clipboard with neither types nor items", () => {
+    expect(
+      clipboardLooksLikeMedia({
+        files: [],
+        getData: () => "",
+      } as unknown as DataTransfer),
+    ).toBe(false)
   })
 })

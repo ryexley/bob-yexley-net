@@ -5,6 +5,28 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.47.0] - 2026-09-12
+
+### Added
+
+- Attaching or removing media now counts as a change to the blip, so Save
+  becomes available. A photo writes its own row and leaves the text untouched,
+  so nothing used to mark the blip edited and there was no way to close out the
+  action
+- Attaching media reports itself through the save indicator once the row
+  reaches the database, since nothing else acknowledged a media-only edit
+
+### Fixed
+
+- Media attached to an update is reachable again. The first attachment creates
+  a stub update row to satisfy the foreign key, but that row was never recorded
+  as persisted, so Publish and Delete stayed disabled and the update could
+  never go out
+- An upload whose variant generation never answers now fails instead of
+  hanging. `fetch` has no timeout, so a dropped connection or a backgrounded
+  tab left the file in `processing` forever: Publish stayed blocked and no
+  media row was ever written
+
 ## [0.46.1] - 2026-09-12
 
 ### Fixed

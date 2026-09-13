@@ -3,6 +3,7 @@ import {
   applyPasteMediaPlacement,
   consumeClipboardMediaPaste,
   inspectClipboardMediaPaste,
+  readClipboardMediaFiles,
 } from "./paste-media-placement"
 
 const png = () => new File(["x"], "shot.png", { type: "image/png" })
@@ -95,6 +96,126 @@ describe("consumeClipboardMediaPaste", () => {
 
     expect(consumeClipboardMediaPaste(event, vi.fn())).toBe(false)
     expect(event.preventDefault).not.toHaveBeenCalled()
+  })
+
+  it("claims the paste but reports nothing when the harvest comes up empty", async () => {
+    // iOS marks the clipboard as holding an image, but the blob URL is already
+    // dead by the time it is fetched. The paste is still swallowed (the default
+    // insert would drop a broken image into the document), and the prompt must
+    // not open for zero files.
+    const fetchSpy = vi
+      .spyOn(globalThis, "fetch")
+      .mockRejectedValue(new Error("blob revoked"))
+    const event = {
+      clipboardData: clipboard([], `<img src="blob:https://site/gone">`),
+      preventDefault: vi.fn(),
+      stopPropagation: vi.fn(),
+      stopImmediatePropagation: vi.fn(),
+    } as unknown as ClipboardEvent
+    const onMedia = vi.fn()
+
+    expect(consumeClipboardMediaPaste(event, onMedia)).toBe(true)
+    expect(event.preventDefault).toHaveBeenCalled()
+
+    await vi.waitFor(() => expect(fetchSpy).toHaveBeenCalled())
+    expect(onMedia).not.toHaveBeenCalled()
+    fetchSpy.mockRestore()
+  })
+})
+
+/**
+ * The last-resort read for iOS Safari, where a pasted photo reaches neither
+ * `clipboardData.files` nor the markup. Async `navigator.clipboard.read()` is
+ * the only remaining source, and it is also the one most likely to be blocked
+ * or unavailable — so each outcome has to degrade to an empty list rather than
+ * throwing out of the paste handler.
+ */
+describe("readClipboardMediaFiles", () => {
+  const withClipboard = (value: unknown) => {
+    const original = Object.getOwnPropertyDescriptor(
+      globalThis.navigator,
+      "clipboard",
+    )
+    Object.defineProperty(globalThis.navigator, "clipboard", {
+      value,
+      configurable: true,
+    })
+    return () => {
+      if (original) {
+        Object.defineProperty(globalThis.navigator, "clipboard", original)
+      } else {
+        delete (globalThis.navigator as unknown as Record<string, unknown>)
+          .clipboard
+      }
+    }
+  }
+
+  it("returns the synchronous files without any async read", async () => {
+    const file = png()
+    const restore = withClipboard({ read: vi.fn() })
+
+    await expect(readClipboardMediaFiles(clipboard([file]))).resolves.toEqual([
+      file,
+    ])
+    expect(globalThis.navigator.clipboard.read).not.toHaveBeenCalled()
+    restore()
+  })
+
+  it("harvests the markup before reaching for the async clipboard", async () => {
+    const blob = new Blob(["x"], { type: "image/jpeg" })
+    const fetchSpy = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValue({ blob: async () => blob } as unknown as Response)
+    const read = vi.fn()
+    const restore = withClipboard({ read })
+
+    const files = await readClipboardMediaFiles(
+      clipboard([]),
+      `<img src="blob:https://site/a">`,
+    )
+
+    expect(files).toHaveLength(1)
+    expect(files[0].type).toBe("image/jpeg")
+    expect(read).not.toHaveBeenCalled()
+    restore()
+    fetchSpy.mockRestore()
+  })
+
+  it("falls back to the async clipboard when nothing else carries the photo", async () => {
+    const blob = new Blob(["x"], { type: "image/png" })
+    const restore = withClipboard({
+      read: vi.fn(async () => [
+        {
+          types: ["image/png"],
+          getType: async () => blob,
+        },
+      ]),
+    })
+
+    const files = await readClipboardMediaFiles(clipboard([]))
+
+    expect(files).toHaveLength(1)
+    expect(files[0].type).toBe("image/png")
+    restore()
+  })
+
+  it("returns nothing when the browser exposes no async clipboard read", async () => {
+    const restore = withClipboard({})
+
+    await expect(readClipboardMediaFiles(clipboard([]))).resolves.toEqual([])
+    restore()
+  })
+
+  it("returns nothing when the async read is denied", async () => {
+    // Safari rejects this unless the read happens inside a user gesture.
+    const restore = withClipboard({
+      read: vi.fn(async () => {
+        throw new Error("NotAllowedError")
+      }),
+    })
+
+    await expect(readClipboardMediaFiles(clipboard([]))).resolves.toEqual([])
+    restore()
   })
 })
 

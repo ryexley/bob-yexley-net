@@ -65,3 +65,55 @@ describe("MediaButton", () => {
     expect(onFiles).not.toHaveBeenCalled()
   })
 })
+
+describe("MediaButton — editor focus", () => {
+  it("blurs itself on pointer release so the editor keeps the caret", () => {
+    const { getByLabelText } = render(() => (
+      <MediaButton
+        onFiles={vi.fn()}
+        label="Add media"
+      />
+    ))
+
+    const trigger = getByLabelText("Add media") as HTMLButtonElement
+    const blur = vi.spyOn(trigger, "blur")
+
+    fireEvent.pointerUp(trigger)
+
+    // The control pill sits over the editor; keeping focus here would collapse
+    // the text selection the author is inserting media into.
+    expect(blur).toHaveBeenCalled()
+  })
+
+  it("honours the caller's mousedown handler", () => {
+    const onMouseDown = vi.fn()
+    const { getByLabelText } = render(() => (
+      <MediaButton
+        onFiles={vi.fn()}
+        label="Add media"
+        onMouseDown={onMouseDown}
+      />
+    ))
+
+    fireEvent.mouseDown(getByLabelText("Add media"))
+
+    expect(onMouseDown).toHaveBeenCalled()
+  })
+
+  it("does not open the picker while disabled", () => {
+    const clickSpy = vi
+      .spyOn(HTMLInputElement.prototype, "click")
+      .mockImplementation(() => {})
+    const { getByLabelText } = render(() => (
+      <MediaButton
+        onFiles={vi.fn()}
+        label="Add media"
+        disabled
+      />
+    ))
+
+    fireEvent.click(getByLabelText("Add media"))
+
+    expect(clickSpy).not.toHaveBeenCalled()
+  })
+})

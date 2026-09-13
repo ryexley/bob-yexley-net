@@ -10,6 +10,7 @@ const {
   upsertMock,
   blipIdMock,
   inlineTransitionState,
+  mediaState,
 } = vi.hoisted(() => ({
   state: {
     entities: [] as any[],
@@ -26,6 +27,14 @@ const {
   blipIdMock: vi.fn(() => "update-1"),
   inlineTransitionState: {
     lastProps: null as any,
+  },
+  // Lets a test drive the media lifecycle the editor reacts to: the FK stub
+  // callback, the persisted callback, and the two accessors `canSave` reads.
+  mediaState: {
+    options: null as any,
+    setHasMedia: (_value: boolean) => {},
+    setCanPublish: (_value: boolean) => {},
+    removeAttachment: vi.fn(async () => undefined),
   },
 }))
 
@@ -105,6 +114,30 @@ vi.mock("@/components/markdown/editor", () => ({
         data-testid="mock-update-change"
         onClick={() => props.onChange?.("Draft update")}
       />
+      {/*
+        The real toolbar lives behind `EditorControls`, which this stub does not
+        render. These stand in for it using the same enablement expressions, so
+        the editor's `statusContext` is asserted as the DOM the author sees.
+      */}
+      <button
+        type="button"
+        data-testid="mock-update-save"
+        disabled={!props.statusContext?.canSave}
+        onClick={() => props.statusContext?.handleSave?.()}
+      />
+      <button
+        type="button"
+        data-testid="mock-update-publish"
+        disabled={!props.statusContext?.canTogglePublish}
+      />
+      <button
+        type="button"
+        data-testid="mock-update-remove-attachment"
+        onClick={() => props.aboveControlsProps?.onRemoveAttachment?.("key-1")}
+      />
+      <div data-testid="mock-update-status">
+        {props.showStatus ? props.statusIcon : null}
+      </div>
     </div>
   ),
 }))
@@ -122,33 +155,46 @@ vi.mock("@/modules/blips/components/portaled-inline-transition", () => ({
 // The media write-path is exercised in `src/modules/media/*`; here it's stubbed
 // so these tests stay focused on update-editor behavior (and the real mediaStore
 // never runs against the mocked Supabase client).
-vi.mock("@/modules/media", () => ({
-  mediaStore: () => ({
-    attachments: () => [],
-    hasMedia: () => false,
-    canPublish: () => true,
-    removeAttachment: vi.fn(),
-    retry: vi.fn(),
-    attach: vi.fn(),
-    reset: vi.fn(),
-    fetchByBlip: vi.fn(async () => ({ data: [], error: null })),
-  }),
-  validateMediaFiles: (files: File[]) => ({ accepted: files, rejected: [] }),
-  clipboardMediaFiles: () => [],
-  inspectClipboardMediaPaste: () => null,
-  applyPasteMediaPlacement: vi.fn(async () => undefined),
-  MediaButton: (props: any) => (
-    <button
-      type="button"
-      data-testid="mock-update-media-button"
-      aria-label={props.label}
-    />
-  ),
-  ThumbnailStrip: () => <div data-testid="mock-update-thumbnail-strip" />,
-  ComposerMediaChrome: () => <div data-testid="mock-update-media-chrome" />,
-  ComposerPreviewModal: () => null,
-  PasteMediaPlacementPrompt: () => null,
-}))
+vi.mock("@/modules/media", async () => {
+  const { createSignal } = await import("solid-js")
+
+  return {
+    mediaStore: (_client: unknown, options: any) => {
+      const [hasMedia, setHasMedia] = createSignal(false)
+      const [canPublish, setCanPublish] = createSignal(true)
+
+      mediaState.options = options
+      mediaState.setHasMedia = setHasMedia
+      mediaState.setCanPublish = setCanPublish
+
+      return {
+        attachments: () => [],
+        hasMedia,
+        canPublish,
+        removeAttachment: mediaState.removeAttachment,
+        retry: vi.fn(),
+        attach: vi.fn(),
+        reset: vi.fn(),
+        fetchByBlip: vi.fn(async () => ({ data: [], error: null })),
+      }
+    },
+    validateMediaFiles: (files: File[]) => ({ accepted: files, rejected: [] }),
+    clipboardMediaFiles: () => [],
+    inspectClipboardMediaPaste: () => null,
+    applyPasteMediaPlacement: vi.fn(async () => undefined),
+    MediaButton: (props: any) => (
+      <button
+        type="button"
+        data-testid="mock-update-media-button"
+        aria-label={props.label}
+      />
+    ),
+    ThumbnailStrip: () => <div data-testid="mock-update-thumbnail-strip" />,
+    ComposerMediaChrome: () => <div data-testid="mock-update-media-chrome" />,
+    ComposerPreviewModal: () => null,
+    PasteMediaPlacementPrompt: () => null,
+  }
+})
 
 vi.mock("@/i18n", () => ({
   ptr: (prefix: string) => {
@@ -199,6 +245,8 @@ describe("BlipUpdateEditor", () => {
     blipIdMock.mockImplementation(() => "update-1")
     dialogState.lastProps = null
     inlineTransitionState.lastProps = null
+    mediaState.options = null
+    mediaState.removeAttachment.mockClear()
   })
 
   it("uses the shared dialog wrapper on mobile", async () => {
@@ -493,5 +541,166 @@ describe("BlipUpdateEditor", () => {
     expect(screen.getByTestId("mock-dialog-title").textContent).toBe(
       "Editing update",
     )
+  })
+
+  /**
+   * Regression suite for the media-only update. Attaching a photo writes a
+   * `blip_media` row directly, leaving no trace in `content`, so every signal
+   * the toolbar reads has to be driven from the media callbacks. Two separate
+   * bugs shipped here: `makeEnsureBlipPersisted` never recorded the FK stub it
+   * created (so publish and delete stayed dead), and save was gated on the
+   * absence of that stub (so the first attach suppressed save permanently).
+   */
+  describe("media-only updates", () => {
+    const renderEditor = () =>
+      render(() => (
+        <BlipUpdateEditor
+          open
+          rootBlipId="root-1"
+          onRequestClose={() => undefined}
+        />
+      ))
+
+    /** Mirrors a picked file uploading, processing, and its row landing. */
+    const completeMediaUpload = async () => {
+      await mediaState.options.ensureBlipPersisted()
+      mediaState.setHasMedia(true)
+      mediaState.setCanPublish(true)
+      mediaState.options.onMediaPersisted()
+    }
+
+    const save = () =>
+      screen.getByTestId("mock-update-save") as HTMLButtonElement
+    const publish = () =>
+      screen.getByTestId("mock-update-publish") as HTMLButtonElement
+
+    it("offers no save on an untouched update", async () => {
+      renderEditor()
+
+      await waitFor(() => expect(mediaState.options).not.toBeNull())
+      expect(save().disabled).toBe(true)
+    })
+
+    it("enables save once an attachment has landed", async () => {
+      renderEditor()
+      await waitFor(() => expect(mediaState.options).not.toBeNull())
+
+      await completeMediaUpload()
+
+      await waitFor(() => expect(save().disabled).toBe(false))
+    })
+
+    it("keeps save disabled while the upload is still in flight", async () => {
+      renderEditor()
+      await waitFor(() => expect(mediaState.options).not.toBeNull())
+
+      // A file is attached but variants are still generating: `canPublish` is
+      // false, so save must not be offered mid-upload.
+      mediaState.setHasMedia(true)
+      mediaState.setCanPublish(false)
+      mediaState.options.onMediaPersisted()
+
+      await waitFor(() => expect(mediaState.options).not.toBeNull())
+      expect(save().disabled).toBe(true)
+    })
+
+    it("persists the FK stub as an unpublished database-only row", async () => {
+      renderEditor()
+      await waitFor(() => expect(mediaState.options).not.toBeNull())
+
+      await mediaState.options.ensureBlipPersisted()
+
+      expect(upsertMock).toHaveBeenCalledTimes(1)
+      // The stub only exists to satisfy the `blip_media.blip_id` foreign key;
+      // publishing it would leak an empty update into the timeline.
+      expect(upsertMock.mock.calls[0]?.[0]).toMatchObject({
+        id: "update-1",
+        parent_id: "root-1",
+        blip_type: "update",
+        published: false,
+      })
+    })
+
+    it("creates the FK stub only once across several attachments", async () => {
+      renderEditor()
+      await waitFor(() => expect(mediaState.options).not.toBeNull())
+
+      await mediaState.options.ensureBlipPersisted()
+      await mediaState.options.ensureBlipPersisted()
+      await mediaState.options.ensureBlipPersisted()
+
+      // Idempotence depends on the stub being recorded after it is written —
+      // the exact step that was missing.
+      expect(upsertMock).toHaveBeenCalledTimes(1)
+    })
+
+    it("makes the update publishable as soon as the stub exists", async () => {
+      renderEditor()
+      await waitFor(() => expect(mediaState.options).not.toBeNull())
+
+      expect(publish().disabled).toBe(true)
+
+      await completeMediaUpload()
+
+      // `canTogglePublish` is `hasPersistedCurrentUpdate() && !hasPendingChanges()`,
+      // and the update editor's pending-changes test is text-only. So a
+      // media-only update can be published straight away — it never could while
+      // the stub went unrecorded, which is what made attached media unreachable.
+      await waitFor(() => expect(publish().disabled).toBe(false))
+    })
+
+    it("clears the media edit once saved so save settles back down", async () => {
+      renderEditor()
+      await waitFor(() => expect(mediaState.options).not.toBeNull())
+
+      await completeMediaUpload()
+      await waitFor(() => expect(save().disabled).toBe(false))
+
+      await fireEvent.click(save())
+
+      await waitFor(() => expect(save().disabled).toBe(true))
+      expect(upsertMock.mock.calls.at(-1)?.[0]).toMatchObject({
+        id: "update-1",
+        published: true,
+      })
+    })
+
+    it("treats removing an attachment as an edit worth saving", async () => {
+      renderEditor()
+      await waitFor(() => expect(mediaState.options).not.toBeNull())
+
+      await completeMediaUpload()
+      await waitFor(() => expect(save().disabled).toBe(false))
+      await fireEvent.click(save())
+      await waitFor(() => expect(save().disabled).toBe(true))
+
+      await fireEvent.click(screen.getByTestId("mock-update-remove-attachment"))
+
+      expect(mediaState.removeAttachment).toHaveBeenCalledWith("key-1")
+      await waitFor(() => expect(save().disabled).toBe(false))
+    })
+
+    it("reports the attachment through the save status indicator", async () => {
+      renderEditor()
+      await waitFor(() => expect(mediaState.options).not.toBeNull())
+
+      expect(
+        screen
+          .getByTestId("mock-update-status")
+          .querySelector(".status-saved-icon"),
+      ).toBeNull()
+
+      await completeMediaUpload()
+
+      // Nothing else acknowledges a media-only attachment, so the save
+      // indicator is reused to confirm the row reached the database.
+      await waitFor(() =>
+        expect(
+          screen
+            .getByTestId("mock-update-status")
+            .querySelector(".status-saved-icon"),
+        ).toBeTruthy(),
+      )
+    })
   })
 })

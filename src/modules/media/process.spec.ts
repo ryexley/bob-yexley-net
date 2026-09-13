@@ -38,7 +38,11 @@ describe("processImage", () => {
 
     const result = await processImage(source)
 
-    expect(result.original).toEqual({ width: 3000, height: 2000, format: "jpeg" })
+    expect(result.original).toEqual({
+      width: 3000,
+      height: 2000,
+      format: "jpeg",
+    })
     expect(result.variants.map(v => v.variant)).toEqual(MEDIA_VARIANT_NAMES)
 
     for (const variant of result.variants) {
@@ -69,7 +73,9 @@ describe("processImage", () => {
   })
 
   it("rejects bytes that are not a decodable image", async () => {
-    await expect(processImage(Buffer.from("definitely not an image"))).rejects.toThrow()
+    await expect(
+      processImage(Buffer.from("definitely not an image")),
+    ).rejects.toThrow()
   })
 
   it("decodes an HEVC-based HEIC into WebP variants (sharp can't decode it alone)", async () => {
@@ -104,13 +110,15 @@ describe("processImage", () => {
   // read via `sharp(buffer).metadata()` throws a security-limit error. The fix
   // routes raw HEIC through heic-convert BEFORE sharp ever sees it. Guard against
   // anyone reintroducing a sharp() call on the original bytes.
-  it("processes a real iPhone HEIC that sharp's libheif rejects outright", async () => {
+  it("processes a real iPhone HEIC through the heic-convert path", async () => {
     const heic = readFileSync(IPHONE_GAINMAP_FIXTURE)
 
-    // Premise: sharp can't even read this file's header directly.
-    await expect(sharp(heic).metadata()).rejects.toThrow(/iref|security limit/i)
+    // Asserted on our own routing decision rather than on sharp throwing. The
+    // original premise (`sharp(heic).metadata()` rejecting) asserted third-party
+    // behavior and broke when a newer libheif started reading this header — the
+    // guarantee we actually depend on is that these bytes never reach sharp raw.
+    expect(needsHeicDecode(heic)).toBe(true)
 
-    // But the full pipeline succeeds via the heic-convert fallback.
     const result = await processImage(heic)
 
     expect(result.original.format).toBe("heif")
@@ -122,7 +130,10 @@ describe("processImage", () => {
       expect(meta.format).toBe("webp")
       expect(meta.width).toBe(variant.width)
     }
-  })
+    // Decoding a 12MP HEIC in pure JS then generating five variants exceeds the
+    // 5s default. The old premise assertion failed before reaching this work,
+    // which is why the cost was never visible.
+  }, 60_000)
 })
 
 describe("needsHeicDecode", () => {
@@ -132,7 +143,12 @@ describe("needsHeicDecode", () => {
 
   it("does not flag a JPEG", async () => {
     const jpeg = await sharp({
-      create: { width: 8, height: 8, channels: 3, background: { r: 1, g: 2, b: 3 } },
+      create: {
+        width: 8,
+        height: 8,
+        channels: 3,
+        background: { r: 1, g: 2, b: 3 },
+      },
     })
       .jpeg()
       .toBuffer()
@@ -141,7 +157,12 @@ describe("needsHeicDecode", () => {
 
   it("does not flag AVIF (sharp handles it directly)", async () => {
     const avif = await sharp({
-      create: { width: 8, height: 8, channels: 3, background: { r: 1, g: 2, b: 3 } },
+      create: {
+        width: 8,
+        height: 8,
+        channels: 3,
+        background: { r: 1, g: 2, b: 3 },
+      },
     })
       .avif()
       .toBuffer()

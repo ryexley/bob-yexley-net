@@ -91,18 +91,27 @@ export const resolveMediaTriggeredUpdatePersistPublished = (
   return isPublished
 }
 
+/**
+ * Attaching or removing media is an edit to the update, so it enables save —
+ * gated on `hasReadyMedia` so save is not offered mid-upload.
+ *
+ * `hasMediaChanges` is what distinguishes "media was just attached" from "this
+ * update already had media when it opened". It replaces an earlier
+ * `!hasPersistedCurrentUpdate` test, which could not tell the two apart: the
+ * first attach persists an FK stub row, and that alone suppressed save forever.
+ */
 export const resolveUpdateCanSave = ({
   open,
   hasSaveContext,
   hasPendingTextChanges,
   hasReadyMedia,
-  hasPersistedCurrentUpdate,
+  hasMediaChanges,
 }: {
   open: boolean
   hasSaveContext: boolean
   hasPendingTextChanges: boolean
   hasReadyMedia: boolean
-  hasPersistedCurrentUpdate: boolean
+  hasMediaChanges: boolean
 }): boolean => {
   if (!open || !hasSaveContext) {
     return false
@@ -112,7 +121,7 @@ export const resolveUpdateCanSave = ({
     return true
   }
 
-  return hasReadyMedia && !hasPersistedCurrentUpdate
+  return hasReadyMedia && hasMediaChanges
 }
 
 export const resolveUpdateHasComposeDraft = ({
@@ -184,6 +193,10 @@ export function BlipUpdateEditor(props: BlipUpdateEditorProps) {
   const [lastSavedContent, setLastSavedContent] = createSignal("")
   const [isDirty, setIsDirty] = createSignal(false)
   const [isPublished, setIsPublished] = createSignal(true)
+  // Attaching or removing media is an edit to the update, but it leaves no
+  // trace in `content` — `mediaStore` writes `blip_media` rows on its own.
+  // Cleared wherever the save baseline is (re)established.
+  const [mediaDirty, setMediaDirty] = createSignal(false)
   const [hasPersistedCurrentUpdate, setHasPersistedCurrentUpdate] =
     createSignal(false)
   const [saveStatus, setSaveStatus] = createSignal<SaveStatus>("idle")
@@ -298,6 +311,7 @@ export function BlipUpdateEditor(props: BlipUpdateEditorProps) {
     setContent(draft.content)
     setLastSavedContent(draft.lastSavedContent)
     setIsDirty(false)
+    setMediaDirty(false)
     setHasPersistedCurrentUpdate(draft.hasPersistedCurrentUpdate)
     setIsPublished(draft.isPublished)
     setSaveStatus("idle")
@@ -335,6 +349,7 @@ export function BlipUpdateEditor(props: BlipUpdateEditorProps) {
       }
 
       setIsDirty(false)
+      setMediaDirty(false)
       setLastSavedContent(markdown)
       setHasPersistedCurrentUpdate(true)
       setIsPublished(persistedUpdate.published)
@@ -557,6 +572,14 @@ export function BlipUpdateEditor(props: BlipUpdateEditorProps) {
         return false
       }
 
+      // The row now exists, so record it — this is what makes the early return
+      // above idempotent, and what lets the publish and delete actions address
+      // the update. Without it the stub is invisible to the rest of the editor:
+      // attaching media persists an unpublished update that can never be
+      // published, because `canTogglePublish` requires this flag.
+      if (currentUpdateId() === id) {
+        setHasPersistedCurrentUpdate(true)
+      }
       return true
     }
 
@@ -593,6 +616,12 @@ export function BlipUpdateEditor(props: BlipUpdateEditorProps) {
         ensureBlipPersisted: makeEnsureBlipPersisted(id),
         onMediaPersisted: () => {
           revalidate(getBlipMediaFor.key)
+          // Media rows are written straight to the DB by `mediaStore`, outside
+          // the text save flow, so nothing else confirms an attachment landed.
+          // Reuse the save indicator to report it.
+          setSaveStatus("saved-db")
+          showStatusWithFade()
+          setMediaDirty(true)
         },
       })
       mediaInstance = instance
@@ -779,7 +808,7 @@ export function BlipUpdateEditor(props: BlipUpdateEditorProps) {
       hasSaveContext: Boolean(saveContext()),
       hasPendingTextChanges: hasPendingChanges(),
       hasReadyMedia: hasReadyMedia(),
-      hasPersistedCurrentUpdate: hasPersistedCurrentUpdate(),
+      hasMediaChanges: mediaDirty(),
     }),
   )
 
@@ -1171,6 +1200,10 @@ export function BlipUpdateEditor(props: BlipUpdateEditorProps) {
               media,
               mediaError,
               onPreview: setPreviewAttachment,
+              onRemoveAttachment: async (key: string) => {
+                await media()?.removeAttachment(key)
+                setMediaDirty(true)
+              },
             }}
             EditorControls={EditorControls}
             statusIcon={getStatusIcon()}

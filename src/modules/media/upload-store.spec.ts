@@ -19,6 +19,7 @@ import {
 } from "./upload-store"
 import type { ProcessMediaResponse } from "./types"
 import type { R2Service } from "./r2-service"
+import { TIME } from "@/util/enums"
 
 /**
  * Minimal fake XMLHttpRequest so the real `@uppy/aws-s3` transport
@@ -378,6 +379,50 @@ describe("createUploadStore — processing failure", () => {
   })
 })
 
+describe("createUploadStore — processing that never settles", () => {
+  /**
+   * A `/api/media/process` request that hangs rather than failing used to strand
+   * the file in `processing`: `allComplete` stayed false so publish was blocked
+   * with no way to recover, and `onUploadSuccess` never fired so no `blip_media`
+   * row was written. The composer showed a finished progress bar, a thumbnail,
+   * and a permanently disabled save button.
+   */
+  it("completes the file and emits once the request times out", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    try {
+      const r2 = makeR2()
+      const processMedia = vi.fn(
+        () => new Promise<ProcessMediaResponse>(() => {}),
+      )
+      const successes: UploadSuccess[] = []
+
+      const store = createUploadStore({
+        r2Service: r2,
+        processMedia,
+        onUploadSuccess: s => successes.push(s),
+      })
+
+      await store.addFiles([imageFile()], "blip1", "user1")
+      await store.startQueue()
+      await vi.waitFor(() => expect(store.files()[0].status).toBe("processing"))
+      expect(store.allComplete()).toBe(false)
+
+      await vi.advanceTimersByTimeAsync(TIME.ONE_MINUTE + TIME.THIRTY_SECONDS)
+      await vi.waitFor(() => expect(successes).toHaveLength(1))
+
+      const file = store.files()[0]
+      expect(file.status).toBe("complete")
+      expect(file.processingStatus).toBe("failed")
+      expect(file.error).toContain("Timed out")
+      // The gates the composer's save button depends on.
+      expect(store.allComplete()).toBe(true)
+      expect(store.hasErrors()).toBe(false)
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+})
+
 describe("createUploadStore — restrictions", () => {
   it("rejects files over the max size without adding an entry", async () => {
     const r2 = makeR2()
@@ -430,5 +475,251 @@ describe("createUploadStore — removeFile", () => {
     expect(deleted).toContain("media/user1/blip1/blip1-1-medium.webp")
     expect(deleted).toContain("media/user1/blip1/blip1-1-large.webp")
     expect(store.files()).toHaveLength(0)
+  })
+})
+
+/**
+ * The failure path the author actually hits on a phone. An errored file has to
+ * stay visible and keep publish blocked: `allComplete` is an `every()`, so a
+ * silently dropped entry would report the queue as finished and let an
+ * incomplete blip go out.
+ */
+describe("createUploadStore — upload failure", () => {
+  const okProcess = vi.fn(async (originalKey: string) => {
+    const baseKey = originalKey.replace(/-original\.[^.]+$/, "")
+    return {
+      storageKey: baseKey,
+      original: { width: 10, height: 10, format: "jpeg" },
+      variants: variantsFor(baseKey),
+    } satisfies ProcessMediaResponse
+  })
+
+  it("marks the file errored, blocks publish, and emits no success", async () => {
+    const r2 = makeR2()
+    r2.getUploadParameters = vi.fn(async () => {
+      throw new Error("signing refused")
+    })
+    const successes: UploadSuccess[] = []
+
+    const store = createUploadStore({
+      r2Service: r2,
+      processMedia: okProcess,
+      onUploadSuccess: s => successes.push(s),
+    })
+
+    await store.addFiles([imageFile()], "blip1", "user1")
+    await store.startQueue()
+
+    await vi.waitFor(() => expect(store.files()[0].status).toBe("error"))
+
+    expect(store.files()).toHaveLength(1)
+    expect(store.hasErrors()).toBe(true)
+    expect(store.allComplete()).toBe(false)
+    // No `blip_media` row must be written for an object that never landed.
+    expect(successes).toHaveLength(0)
+  })
+
+  it("completes the upload when the file is retried", async () => {
+    const r2 = makeR2()
+    let attempts = 0
+    const realSign = r2.getUploadParameters
+    r2.getUploadParameters = vi.fn(
+      async (params: { key: string; contentType: string }) => {
+        attempts += 1
+        if (attempts === 1) {
+          throw new Error("signing refused")
+        }
+        return (realSign as unknown as (p: typeof params) => Promise<unknown>)(
+          params,
+        )
+      },
+    ) as R2Service["getUploadParameters"]
+    const successes: UploadSuccess[] = []
+
+    const store = createUploadStore({
+      r2Service: r2,
+      processMedia: okProcess,
+      onUploadSuccess: s => successes.push(s),
+    })
+
+    await store.addFiles([imageFile()], "blip1", "user1")
+    await store.startQueue()
+    await vi.waitFor(() => expect(store.files()[0].status).toBe("error"))
+
+    store.retryFile(store.files()[0].id)
+
+    await vi.waitFor(() => expect(successes).toHaveLength(1))
+    expect(store.files()[0].status).toBe("complete")
+    expect(store.hasErrors()).toBe(false)
+    expect(store.allComplete()).toBe(true)
+  })
+
+  it("ignores a retry for a file that is no longer queued", () => {
+    const store = createUploadStore({ r2Service: makeR2() })
+
+    expect(() => store.retryFile("missing-id")).not.toThrow()
+    expect(store.files()).toHaveLength(0)
+  })
+})
+
+/**
+ * Keys are derived from the blip id plus a counter, so a name already committed
+ * for this blip would be reallocated on reopen and the new upload would
+ * overwrite the stored object. `mediaStore` seeds the committed keys to prevent
+ * that.
+ */
+describe("createUploadStore — seedExistingStorageKeys", () => {
+  it("skips names already committed for the blip", async () => {
+    const store = createUploadStore({ r2Service: makeR2() })
+
+    store.seedExistingStorageKeys("blip1", ["media/user1/blip1/blip1-1"])
+    await store.addFiles([imageFile()], "blip1", "user1")
+
+    expect(store.files()[0].key).toBe("media/user1/blip1/blip1-2")
+  })
+
+  it("allocates from the first slot when nothing is committed yet", async () => {
+    const store = createUploadStore({ r2Service: makeR2() })
+
+    await store.addFiles([imageFile()], "blip1", "user1")
+
+    expect(store.files()[0].key).toBe("media/user1/blip1/blip1-1")
+  })
+
+  it("keeps names distinct across a batch", async () => {
+    const store = createUploadStore({ r2Service: makeR2() })
+
+    await store.addFiles(
+      [imageFile("a.jpg"), imageFile("b.jpg"), imageFile("c.jpg")],
+      "blip1",
+      "user1",
+    )
+
+    expect(store.files().map(file => file.key)).toEqual([
+      "media/user1/blip1/blip1-1",
+      "media/user1/blip1/blip1-2",
+      "media/user1/blip1/blip1-3",
+    ])
+  })
+})
+
+describe("createUploadStore — clearCompleted and destroy", () => {
+  const okProcess = vi.fn(async (originalKey: string) => {
+    const baseKey = originalKey.replace(/-original\.[^.]+$/, "")
+    return {
+      storageKey: baseKey,
+      original: { width: 10, height: 10, format: "jpeg" },
+      variants: variantsFor(baseKey),
+    } satisfies ProcessMediaResponse
+  })
+
+  it("drops completed entries but keeps an errored one", async () => {
+    const r2 = makeR2()
+    // Fail only the second allocated key so the queue ends up mixed.
+    const realSign = r2.getUploadParameters
+    r2.getUploadParameters = vi.fn(
+      async (params: { key: string; contentType: string }) => {
+        if (params.key.includes("blip1-2-original")) {
+          throw new Error("signing refused")
+        }
+        return (realSign as unknown as (p: typeof params) => Promise<unknown>)(
+          params,
+        )
+      },
+    ) as R2Service["getUploadParameters"]
+    const successes: UploadSuccess[] = []
+
+    const store = createUploadStore({
+      r2Service: r2,
+      processMedia: okProcess,
+      onUploadSuccess: s => successes.push(s),
+    })
+
+    await store.addFiles(
+      [imageFile("a.jpg"), imageFile("b.jpg")],
+      "blip1",
+      "user1",
+    )
+    await store.startQueue()
+
+    await vi.waitFor(() => expect(successes).toHaveLength(1))
+    await vi.waitFor(() => expect(store.hasErrors()).toBe(true))
+
+    store.clearCompleted()
+
+    // Only the failure survives, so publish stays blocked and the author can
+    // still see and retry it.
+    expect(store.files()).toHaveLength(1)
+    expect(store.files()[0].status).toBe("error")
+    expect(store.hasErrors()).toBe(true)
+  })
+
+  it("empties the queue on destroy", async () => {
+    const store = createUploadStore({ r2Service: makeR2() })
+
+    await store.addFiles([imageFile()], "blip1", "user1")
+    expect(store.files()).toHaveLength(1)
+
+    store.destroy()
+
+    expect(store.files()).toHaveLength(0)
+  })
+})
+
+/**
+ * Large videos take the multipart path. The threshold decision is a pure
+ * function (tested above), but the wiring that turns it into the S3 plugin's
+ * `shouldUseMultipart` is separate — and picking the wrong transport fails the
+ * upload outright rather than degrading.
+ */
+describe("createUploadStore — multipart routing", () => {
+  const bigVideo = () => {
+    const file = new File([new Uint8Array([0, 1, 2])], "movie.mp4", {
+      type: "video/mp4",
+    })
+    Object.defineProperty(file, "size", { value: MULTIPART_THRESHOLD_BYTES })
+    return file
+  }
+
+  it("starts a multipart upload for a file at the threshold", async () => {
+    const r2 = makeR2()
+    const store = createUploadStore({ r2Service: r2 })
+
+    await store.addFiles([bigVideo()], "blip1", "user1")
+    void store.startQueue()
+
+    await vi.waitFor(() =>
+      expect(r2.createMultipartUpload).toHaveBeenCalledWith({
+        key: "media/user1/blip1/blip1-1-original.mp4",
+        contentType: "video/mp4",
+      }),
+    )
+    // Never both: a multipart object cannot be finished with a single PUT.
+    expect(r2.getUploadParameters).not.toHaveBeenCalled()
+
+    store.destroy()
+  })
+
+  it("uses a single PUT for an ordinary photo", async () => {
+    const r2 = makeR2()
+    const store = createUploadStore({
+      r2Service: r2,
+      processMedia: vi.fn(async (originalKey: string) => {
+        const baseKey = originalKey.replace(/-original\.[^.]+$/, "")
+        return {
+          storageKey: baseKey,
+          original: { width: 10, height: 10, format: "jpeg" },
+          variants: variantsFor(baseKey),
+        } satisfies ProcessMediaResponse
+      }),
+    })
+
+    await store.addFiles([imageFile()], "blip1", "user1")
+    await store.startQueue()
+
+    await vi.waitFor(() => expect(r2.getUploadParameters).toHaveBeenCalled())
+    expect(r2.createMultipartUpload).not.toHaveBeenCalled()
+
+    store.destroy()
   })
 })

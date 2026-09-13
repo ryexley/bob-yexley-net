@@ -250,3 +250,140 @@ describe("withLightboxGuest", () => {
     expect(withLightboxGuest(media, null)).toBe(media)
   })
 })
+
+describe("selectUpdateBlipIdsByRoot — edge cases", () => {
+  it("throws when the query errors", async () => {
+    const supabase = {
+      from: () => ({
+        select: () => ({
+          in: () => ({
+            eq: async () => ({ data: null, error: new Error("rls denied") }),
+          }),
+        }),
+      }),
+    } as unknown as SupabaseClient
+
+    await expect(
+      selectUpdateBlipIdsByRoot(supabase, ["root-1"]),
+    ).rejects.toThrow("rls denied")
+  })
+
+  it("skips rows with no parent, which cannot be grouped under a root", async () => {
+    const supabase = {
+      from: () => ({
+        select: () => ({
+          in: () => ({
+            eq: async () => ({
+              data: [
+                {
+                  id: "u-1",
+                  parent_id: null,
+                  publish_at: null,
+                  created_at: "2026-01-01",
+                },
+                {
+                  id: "u-2",
+                  parent_id: "root-1",
+                  publish_at: null,
+                  created_at: "2026-01-02",
+                },
+              ],
+              error: null,
+            }),
+          }),
+        }),
+      }),
+    } as unknown as SupabaseClient
+
+    await expect(
+      selectUpdateBlipIdsByRoot(supabase, ["root-1"]),
+    ).resolves.toEqual({ "root-1": ["u-2"] })
+  })
+
+  it("falls back to created_at when an update has no publish_at", async () => {
+    const supabase = {
+      from: () => ({
+        select: () => ({
+          in: () => ({
+            eq: async () => ({
+              data: [
+                {
+                  id: "older",
+                  parent_id: "root-1",
+                  publish_at: null,
+                  created_at: "2026-01-01T00:00:00.000Z",
+                },
+                {
+                  id: "newer",
+                  parent_id: "root-1",
+                  publish_at: "2026-02-01T00:00:00.000Z",
+                  created_at: "2026-01-01T00:00:00.000Z",
+                },
+              ],
+              error: null,
+            }),
+          }),
+        }),
+      }),
+    } as unknown as SupabaseClient
+
+    // Newest first, matching the detail page's update ordering.
+    await expect(
+      selectUpdateBlipIdsByRoot(supabase, ["root-1"]),
+    ).resolves.toEqual({ "root-1": ["newer", "older"] })
+  })
+})
+
+describe("findMediaIndex — misses", () => {
+  it("returns -1 when neither the id nor the storage key is present", () => {
+    expect(
+      findMediaIndex([row({ id: "a", storage_key: "key-a" })], {
+        id: "b",
+        storage_key: "key-b",
+      }),
+    ).toBe(-1)
+  })
+
+  it("returns -1 for a record with no storage key to fall back on", () => {
+    expect(
+      findMediaIndex([row({ id: "a", storage_key: "key-a" })], {
+        id: "b",
+        storage_key: "",
+      }),
+    ).toBe(-1)
+  })
+})
+
+describe("withLightboxGuest — no-ops", () => {
+  it("returns the list untouched for a missing guest", () => {
+    const media = [row({ id: "a" })]
+
+    expect(withLightboxGuest(media, null)).toBe(media)
+    expect(withLightboxGuest(media, undefined)).toBe(media)
+  })
+
+  it("does not duplicate a guest already present by id", () => {
+    const media = [row({ id: "a" })]
+
+    expect(withLightboxGuest(media, row({ id: "a" }))).toBe(media)
+  })
+
+  it("does not duplicate a guest already present by storage key", () => {
+    // An inline embed resolves to a different row id than the committed row,
+    // so the key is what proves it is the same object.
+    const media = [row({ id: "a", storage_key: "media/u/b/photo" })]
+
+    expect(
+      withLightboxGuest(
+        media,
+        row({ id: "other", storage_key: "media/u/b/photo" }),
+      ),
+    ).toBe(media)
+  })
+})
+
+describe("indexMediaById — empty", () => {
+  it("maps nothing for an empty page", () => {
+    expect(indexMediaById([]).size).toBe(0)
+  })
+})

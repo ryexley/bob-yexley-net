@@ -33,3 +33,6 @@ supabase/.env.keys
 # System Files
 .DS_Store
 Thumbs.db
+
+# Test coverage reports
+coverage/
