@@ -63,6 +63,7 @@ const wait = (ms: number) =>
 
 export function PasteCatcher(props: PasteCatcherProps) {
   const [open, setOpen] = createSignal(false)
+  let rootRef: HTMLDivElement | undefined
   let regionRef: HTMLDivElement | undefined
   let settling = false
 
@@ -83,10 +84,12 @@ export function PasteCatcher(props: PasteCatcherProps) {
       open: () => {
         clearRegion()
         setOpen(true)
-        // Solid batches the signal write until this handler returns, so the
-        // class flip has not happened yet. The closed state is only
-        // transparent, never `visibility: hidden`, which keeps this focusable
-        // while the requesting tap's user gesture is still in scope.
+        // Solid batches the signal write until this handler returns, but iOS
+        // only starts an editing session on a visible element and only during
+        // the gesture. Apply the same class the signal is about to apply, so
+        // the region is expanded before focus() runs; the signal then keeps it
+        // in sync and removes it on close.
+        rootRef?.classList.add("open")
         regionRef?.focus()
       },
       close,
@@ -163,33 +166,36 @@ export function PasteCatcher(props: PasteCatcherProps) {
 
   return (
     <div
+      ref={rootRef}
       class={cx("paste-catcher", { open: open() })}
       aria-hidden={!open()}>
-      <p class="prompt">
-        <Icon name="content_paste" />
-        <span>{props.title}</span>
-      </p>
-      <div
-        ref={regionRef}
-        data-paste-catcher=""
-        class="region"
-        contentEditable
-        role="textbox"
-        tabIndex={-1}
-        aria-label={props.title}
-        data-hint={props.hint}
-        autocapitalize="none"
-        autocorrect="off"
-        spellcheck={false}
-        onPaste={handlePaste}
-        onKeyDown={handleKeyDown}
-      />
-      <button
-        type="button"
-        class="cancel"
-        onClick={dismiss}>
-        {props.cancelLabel}
-      </button>
+      <div class="sheet">
+        <p class="prompt">
+          <Icon name="content_paste" />
+          <span>{props.title}</span>
+          <button
+            type="button"
+            class="cancel"
+            onClick={dismiss}>
+            {props.cancelLabel}
+          </button>
+        </p>
+        <div
+          ref={regionRef}
+          data-paste-catcher=""
+          class="region"
+          contentEditable
+          role="textbox"
+          tabIndex={-1}
+          aria-label={props.title}
+          data-hint={props.hint}
+          autocapitalize="none"
+          autocorrect="off"
+          spellcheck={false}
+          onPaste={handlePaste}
+          onKeyDown={handleKeyDown}
+        />
+      </div>
     </div>
   )
 }

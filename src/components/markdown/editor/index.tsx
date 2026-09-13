@@ -648,6 +648,17 @@ export function MarkdownEditor(props: MarkdownEditorProps) {
             )}
           </Show>
         </div>
+        <PasteCatcher
+          title={pasteTr("title")}
+          hint={pasteTr("hint")}
+          cancelLabel={pasteTr("cancel")}
+          onHandle={handle => {
+            pasteCatcher = handle
+          }}
+          onFiles={files => editorCallbacks.onClipboardMedia?.(files)}
+          onText={insertPastedText}
+          onDismiss={focusEditor}
+        />
         <Show when={local.AboveControls != null}>
           <Dynamic
             component={local.AboveControls!}
@@ -679,17 +690,6 @@ export function MarkdownEditor(props: MarkdownEditorProps) {
           />
         ) : null}
       </Stack>
-      <PasteCatcher
-        title={pasteTr("title")}
-        hint={pasteTr("hint")}
-        cancelLabel={pasteTr("cancel")}
-        onHandle={handle => {
-          pasteCatcher = handle
-        }}
-        onFiles={files => editorCallbacks.onClipboardMedia?.(files)}
-        onText={insertPastedText}
-        onDismiss={focusEditor}
-      />
     </div>
   )
 }

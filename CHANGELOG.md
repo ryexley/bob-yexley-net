@@ -5,6 +5,15 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.46.1] - 2026-09-12
+
+### Fixed
+
+- The paste target collapses in flow instead of overlaying the editor, so it
+  cannot sit on top of the media button or the attachment strip. It no longer
+  makes `.markdown-editor` a containing block either, which had moved where
+  every absolutely positioned descendant of every editor anchors
+
 ## [0.46.0] - 2026-09-11
 
 ### Fixed
