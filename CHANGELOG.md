@@ -5,6 +5,20 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.47.3] - 2026-09-12
+
+### Added
+
+- A page-level error message with a retry, so a page whose data fails to load
+  can be recovered in place instead of by reloading the browser
+
+### Fixed
+
+- A page still waiting on its data no longer takes the header and the dock down
+  with it. The Suspense boundary wrapped the whole application, every provider
+  included; it now wraps only the page, and shows a loading state rather than
+  an empty screen
+
 ## [0.47.2] - 2026-09-12
 
 ### Fixed

@@ -37,6 +37,13 @@ export const en = {
       globalLoadingIndicator: {
         ariaLabel: "Loading",
       },
+      routeBoundary: {
+        loading: "Loading ...",
+        errorTitle: "Something went wrong",
+        errorBody: "This page could not finish loading.",
+        retry: "Try again",
+        retrying: "Retrying ...",
+      },
       notification: {
         region: {
           ariaLabel: "Notifications ({hotkey})",

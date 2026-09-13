@@ -1,9 +1,10 @@
 import { MetaProvider } from "@solidjs/meta"
 import { Router } from "@solidjs/router"
 import { FileRoutes } from "@solidjs/start/router"
-import { onMount, Suspense } from "solid-js"
+import { ErrorBoundary, onMount, Suspense } from "solid-js"
 import { ConfirmationProvider } from "@/components/confirm-dialog"
 import { GlobalLoadingIndicator } from "@/components/global-loading-indicator"
+import { RouteError, RouteFallback } from "@/components/route-boundary"
 import { NotificationProvider } from "@/components/notification"
 import { AuthProvider } from "@/context/auth-context"
 import { ServicesProvider } from "@/context/services-context"
@@ -25,26 +26,49 @@ export default function App() {
     <MetaProvider>
       <Router
         root={props => (
-          <Suspense fallback={null}>
-            <ServicesProvider>
-              <AuthProvider>
-                <IntlProvider
-                  locale="en"
-                  messages={messages}>
-                  <ViewportProvider>
-                    <NotificationProvider>
-                      <ConfirmationProvider>
-                        <VisitorAuthProvider>
-                          <GlobalLoadingIndicator />
-                          <MainLayout>{props.children}</MainLayout>
-                        </VisitorAuthProvider>
-                      </ConfirmationProvider>
-                    </NotificationProvider>
-                  </ViewportProvider>
-                </IntlProvider>
-              </AuthProvider>
-            </ServicesProvider>
-          </Suspense>
+          <ServicesProvider>
+            <AuthProvider>
+              <IntlProvider
+                locale="en"
+                messages={messages}>
+                <ViewportProvider>
+                  <NotificationProvider>
+                    <ConfirmationProvider>
+                      <VisitorAuthProvider>
+                        <GlobalLoadingIndicator />
+                        <MainLayout>
+                          {/*
+                            These boundaries wrap only the route, deliberately
+                            leaving the providers and the site chrome outside
+                            them. They used to sit around the whole tree, so a
+                            page whose data was still resolving took the header
+                            and the dock down with it and left a blank screen.
+
+                            ErrorBoundary goes outside Suspense so it also
+                            catches a rejection thrown while resolving. Without
+                            one, a failed query threw during render with nothing
+                            to catch it, and a manual refresh was the only way
+                            back.
+                          */}
+                          <ErrorBoundary
+                            fallback={(error, reset) => (
+                              <RouteError
+                                error={error}
+                                onReset={reset}
+                              />
+                            )}>
+                            <Suspense fallback={<RouteFallback />}>
+                              {props.children}
+                            </Suspense>
+                          </ErrorBoundary>
+                        </MainLayout>
+                      </VisitorAuthProvider>
+                    </ConfirmationProvider>
+                  </NotificationProvider>
+                </ViewportProvider>
+              </IntlProvider>
+            </AuthProvider>
+          </ServicesProvider>
         )}>
         <FileRoutes />
       </Router>
