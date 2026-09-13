@@ -163,13 +163,21 @@ export function BlipView() {
   const blipGraphQuery = createAsync(() =>
     getBlipGraph(params.id, commentVisibilityViewerKey()),
   )
-  const blipQuery = createMemo(() => blipGraphQuery()?.blip ?? null)
-  const initialUpdates = createMemo(() => blipGraphQuery()?.updates ?? [])
+  // `.latest` rather than calling the accessor. Both read identically until the
+  // query first resolves — on the server and on a cold load they still suspend,
+  // which async SSR for this route depends on — but afterwards `.latest` keeps
+  // serving the last good value instead of suspending again on every refetch.
+  // The accessor form took the whole page down: the only Suspense boundary in
+  // the app is the root one in `app.tsx`, and its fallback is `null`.
+  const blipQuery = createMemo(() => blipGraphQuery.latest?.blip ?? null)
+  const initialUpdates = createMemo(() => blipGraphQuery.latest?.updates ?? [])
   const initialRootComments = createMemo(
-    () => blipGraphQuery()?.blip.comments ?? [],
+    () => blipGraphQuery.latest?.blip.comments ?? [],
   )
   const initialUpdateComments = createMemo(() =>
-    (blipGraphQuery()?.updates ?? []).flatMap(update => update.comments ?? []),
+    (blipGraphQuery.latest?.updates ?? []).flatMap(
+      update => update.comments ?? [],
+    ),
   )
   const blip = createMemo(() => {
     const fromStore = store.getById(params.id)
@@ -376,8 +384,14 @@ export function BlipView() {
     const ids = mediaBlipIds()
     return ids.length > 0 ? getBlipMediaFor(ids) : Promise.resolve([])
   })
+  // Read via `.latest` for the reason above, and most of all here: publishing an
+  // update adds it to the store, which grows `mediaBlipIds` and refetches. That
+  // is an ordinary signal change with no `startTransition` around it to hold the
+  // rendered page, so suspending here blanked the entire screen right after a
+  // save and stayed blank for as long as the request took — or forever, if it
+  // never came back.
   const mediaByBlip = createMemo(() =>
-    groupMediaByBlipId(blipMediaQuery() ?? []),
+    groupMediaByBlipId(blipMediaQuery.latest ?? []),
   )
   const rootMedia = createMemo(() => mediaByBlip()[blip()?.id ?? ""] ?? [])
   const galleryLabels = {

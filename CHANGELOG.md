@@ -5,6 +5,16 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.47.2] - 2026-09-12
+
+### Fixed
+
+- Publishing an update no longer blanks the screen. Saving puts the update on
+  the page, which refetches the page's media, and reading a query mid-refetch
+  suspends — with the app's only Suspense boundary at the root, that emptied
+  everything until the request came back, or for good if it never did. The page
+  keeps the media it already has while the new set loads
+
 ## [0.47.1] - 2026-09-12
 
 ### Fixed
