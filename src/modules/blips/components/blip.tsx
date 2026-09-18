@@ -123,7 +123,8 @@ export function Blip(props: {
   const hasUpdates = () => (local.blip.updates_count ?? 0) > 0
   const hasComments = () => (local.blip.comments_count ?? 0) > 0
   const media = () => local.media ?? []
-  const hasGalleryMedia = () => galleryMedia(media()).length > 0
+  const hasGalleryMedia = () =>
+    galleryMedia(media(), local.blip.content ?? "").length > 0
   const showMediaRow = () => hasGalleryMedia() || canOpenDetails()
   const mediaStripLabels = {
     region: (count: number) => tr("media.region", { count }),
@@ -302,6 +303,7 @@ export function Blip(props: {
               <div class="blip-media-row">
                 <BlipCardMediaStrip
                   media={media()}
+                  content={local.blip.content ?? ""}
                   labels={mediaStripLabels}
                 />
                 <Show when={canOpenDetails()}>

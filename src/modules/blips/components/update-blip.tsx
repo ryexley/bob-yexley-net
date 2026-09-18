@@ -186,6 +186,7 @@ export function UpdateBlip(props: {
           {labels => (
             <BlipMediaGallery
               media={props.media ?? []}
+              content={props.blip.content ?? ""}
               labels={labels()}
               class="update-blip-media"
               onOpenItem={props.onOpenMediaItem}

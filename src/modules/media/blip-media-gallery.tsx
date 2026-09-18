@@ -55,6 +55,7 @@ export type BlipMediaGalleryLabels = LightboxLabels & {
 
 export type BlipMediaGalleryProps = {
   media: BlipMediaRow[]
+  content?: string
   labels: BlipMediaGalleryLabels
   class?: string
   /**
@@ -78,7 +79,7 @@ export type BlipMediaGalleryProps = {
 export function BlipMediaGallery(props: BlipMediaGalleryProps) {
   const [openIndex, setOpenIndex] = createSignal<number | null>(null)
   const usesPageLightbox = () => typeof props.onOpenItem === "function"
-  const media = () => galleryMedia(props.media)
+  const media = () => galleryMedia(props.media, props.content)
 
   const openItem = (record: BlipMediaRow, localIndex: number) => {
     if (usesPageLightbox()) {

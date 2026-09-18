@@ -976,6 +976,7 @@ export function BlipView() {
                       </div>
                       <BlipMediaGallery
                         media={rootMedia()}
+                        content={data().content ?? ""}
                         labels={galleryLabels}
                         class="blip-detail-media"
                         onOpenItem={openPageMediaItem}

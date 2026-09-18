@@ -218,4 +218,21 @@ describe("BlipMediaGallery", () => {
         ?.getAttribute("src"),
     ).toBe("https://cdn.test/media/u/b/g-micro.webp")
   })
+
+  it("omits a document-embedded row even when its saved placement is stale", () => {
+    render(() => (
+      <BlipMediaGallery
+        media={[
+          media({
+            storage_key: "media/u/b/inline",
+            placement: "gallery",
+          }),
+        ]}
+        content={'{media:{key:"media/u/b/inline",type:"image"}}'}
+        labels={labels}
+      />
+    ))
+
+    expect(document.querySelector(".blip-media-gallery")).toBeNull()
+  })
 })

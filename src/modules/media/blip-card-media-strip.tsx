@@ -78,6 +78,7 @@ export type BlipCardMediaStripLabels = {
 
 export type BlipCardMediaStripProps = {
   media: BlipMediaRow[]
+  content?: string
   labels: BlipCardMediaStripLabels
   class?: string
 }
@@ -97,7 +98,7 @@ export type BlipCardMediaStripProps = {
  * muted `<video>` first frame) when a generated thumb is absent.
  */
 export function BlipCardMediaStrip(props: BlipCardMediaStripProps) {
-  const media = () => galleryMedia(props.media)
+  const media = () => galleryMedia(props.media, props.content)
   const visible = () => media().slice(0, MAX_VISIBLE)
   const overflowCount = () => Math.max(0, media().length - MAX_VISIBLE)
   const overflowBackground = createMemo(() =>
