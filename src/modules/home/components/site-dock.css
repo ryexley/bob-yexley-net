@@ -6,7 +6,8 @@
   border: 1px solid color-mix(in srgb, var(--colors-mono-11) 22%, transparent);
   border-radius: var(--radius-pill);
   bottom: calc(var(--site-dock-inset) + env(safe-area-inset-bottom, 0px));
-  box-shadow: 0 0.125rem 0.5rem color-mix(in srgb, var(--colors-mono-00) 20%, transparent);
+  box-shadow: 0 0.125rem 0.5rem
+    color-mix(in srgb, var(--colors-mono-00) 20%, transparent);
   box-sizing: border-box;
   display: flex;
   gap: var(--site-dock-gap);
@@ -56,12 +57,9 @@
     .icon,
     .site-dock-blip-icon,
     .site-dock-menu-icon {
+      color: currentColor;
       font-size: 1.5rem;
       pointer-events: none;
-    }
-
-    .site-dock-blip-icon {
-      color: currentColor;
     }
 
     &:link,
