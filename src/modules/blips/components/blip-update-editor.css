@@ -1,5 +1,7 @@
 .blip-update-editor-layer {
   display: flex;
+  max-width: 100%;
+  min-width: 0;
   position: relative;
   width: 100%;
 }
@@ -20,12 +22,12 @@
     display: flex;
     gap: 0;
     max-height: none;
-    max-width: none;
+    max-width: 100%;
     min-width: 0;
     outline: none;
     overflow: visible;
     padding: 0;
-    width: auto;
+    width: 100%;
 
     &:focus,
     &:focus-visible {
@@ -45,6 +47,7 @@
 .blip-update-editor-dialog-frame {
   display: flex;
   height: 100%;
+  min-width: 0;
   width: 100%;
 }
 
@@ -61,11 +64,13 @@
 
   width: 100%;
   min-height: 0;
+  min-width: 0;
 }
 
 .blip-update-editor-body {
   display: flex;
   flex: 1;
+  min-width: 0;
   overflow: hidden;
 }
 
@@ -73,6 +78,7 @@
   display: flex;
   flex: 1;
   min-height: 0;
+  min-width: 0;
   overflow: hidden;
   position: relative;
   width: 100%;
@@ -152,16 +158,22 @@
     .markdown-editor {
       display: flex;
       flex: 1;
+      flex-direction: column;
       height: 100%;
       min-height: 0;
+      min-width: 0;
+      width: 100%;
 
       > .flex {
+        align-items: stretch;
         display: flex;
         flex: 1;
         flex-direction: column;
         gap: 0.75rem !important;
         height: 100%;
         min-height: 0;
+        min-width: 0;
+        width: 100%;
       }
 
       .editor-container {

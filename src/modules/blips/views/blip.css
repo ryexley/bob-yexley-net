@@ -582,9 +582,10 @@
 /* Reader media — detail-page gallery (spec §7.7 MVP) + lightbox (spec §7). */
 .blip-media-gallery {
   display: grid;
-  grid-template-columns: repeat(auto-fill, 5rem);
   gap: 0.5rem;
+  grid-template-columns: repeat(auto-fill, 5rem);
   margin: 0.75rem 0 0;
+  width: 100%;
 
   .blip-media-gallery-item {
     position: relative;
@@ -663,6 +664,25 @@
         margin-inline-start: 0.0625rem;
         opacity: 1;
       }
+    }
+  }
+}
+
+@media (max-width: calc(48rem - 0.001rem)) {
+  .blip-media-gallery {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+
+    .blip-media-gallery-item {
+      height: auto;
+      width: 100%;
+    }
+
+    &[data-count="1"] {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    &[data-count="2"] {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
   }
 }
@@ -874,6 +894,10 @@
     max-height: 100%;
     object-fit: contain;
     background: transparent;
+
+    &[controls] {
+      touch-action: auto;
+    }
 
     &.is-offscreen {
       visibility: hidden;

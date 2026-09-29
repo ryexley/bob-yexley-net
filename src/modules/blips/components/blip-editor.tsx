@@ -59,6 +59,7 @@ import {
   applyPasteMediaPlacement,
   ComposerMediaChrome,
   ComposerPreviewModal,
+  mediaStoreIsBusy,
   consumeClipboardMediaPaste,
   MediaButton,
   type MediaPlacement,
@@ -1451,6 +1452,10 @@ export function BlipEditor(props: BlipEditorProps) {
   })
 
   const getStatusIcon = () => {
+    if (mediaStoreIsBusy(media())) {
+      return <LoadingSpinner class="blip-editor-status-spinner" />
+    }
+
     const status = saveStatus()
 
     if (status === "saving-cache" || status === "saving-db") {
@@ -1725,8 +1730,10 @@ export function BlipEditor(props: BlipEditorProps) {
                   }}
                   EditorControls={EditorControls}
                   statusIcon={getStatusIcon()}
-                  showStatus={showStatus()}
-                  statusFading={statusFading()}
+                  showStatus={showStatus() || mediaStoreIsBusy(media())}
+                  statusFading={
+                    statusFading() && !mediaStoreIsBusy(media())
+                  }
                   showStatusBar={false}
                   statusContext={{
                     isPublished: isPublished(),

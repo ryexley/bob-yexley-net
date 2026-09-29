@@ -36,6 +36,9 @@ export type LightboxProps = {
 }
 
 const AXIS_LOCK_PX = 10
+/** Native `<video controls>` chrome sits along the bottom of the element box. */
+export const VIDEO_CONTROL_CHROME_RATIO = 0.28
+export const VIDEO_CONTROL_CHROME_MIN_PX = 56
 /** Above this count, dots become an unreadable strip — switch to chevron paging. */
 export const LIGHTBOX_DOT_PAGER_MAX = 15
 
@@ -119,6 +122,60 @@ export function isClickInsideObjectFitContain(
   )
 }
 
+export function isVideoControlChromeHit(
+  clientX: number,
+  clientY: number,
+  video: HTMLVideoElement,
+): boolean {
+  const rect = video.getBoundingClientRect()
+  if (
+    clientX < rect.left ||
+    clientX > rect.right ||
+    clientY < rect.top ||
+    clientY > rect.bottom
+  ) {
+    return false
+  }
+
+  const chromeHeight = Math.max(
+    VIDEO_CONTROL_CHROME_MIN_PX,
+    rect.height * VIDEO_CONTROL_CHROME_RATIO,
+  )
+  return clientY >= rect.bottom - chromeHeight
+}
+
+const videoFromEvent = (
+  event: PointerEvent | MouseEvent,
+): HTMLVideoElement | null => {
+  const path =
+    typeof event.composedPath === "function" ? event.composedPath() : []
+  for (const node of path) {
+    if (node instanceof HTMLVideoElement) {
+      return node
+    }
+  }
+
+  const target = event.target
+  if (target instanceof HTMLVideoElement) {
+    return target
+  }
+  if (target instanceof Element) {
+    return target.closest("video")
+  }
+  return null
+}
+
+/** True when this pointer is aimed at native play/pause/scrub chrome. */
+export function eventTargetsVideoControlChrome(
+  event: PointerEvent | MouseEvent,
+): boolean {
+  const video = videoFromEvent(event)
+  if (!video?.controls) {
+    return false
+  }
+  return isVideoControlChromeHit(event.clientX, event.clientY, video)
+}
+
 /** One `play()` per navigation — skip if already playing; muted fallback only when paused. */
 const playVideoElement = (el: HTMLVideoElement) => {
   if (!el.paused) {
@@ -171,6 +228,9 @@ function LightboxSlide(props: {
       return
     }
     event.stopPropagation()
+    if (showControls()) {
+      return
+    }
     setShowControls(true)
     if (el.paused) {
       void el.play()
@@ -575,6 +635,10 @@ function LightboxContent(props: LightboxContentProps) {
 
   const handlePointerDown = (event: PointerEvent) => {
     if (isDesktop() || zoomGestureLocked()) {
+      return
+    }
+
+    if (eventTargetsVideoControlChrome(event)) {
       return
     }
 

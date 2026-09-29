@@ -92,6 +92,8 @@ export function MediaThumbnail(props: MediaThumbnailProps) {
   const isUploading = () =>
     status() === "pending" || status() === "uploading"
   const isProcessing = () => status() === "processing"
+  const isPersisting = () => status() === "complete"
+  const isBusy = () => isUploading() || isProcessing() || isPersisting()
   const isError = () => status() === "error"
   const progress = () => props.attachment.progress ?? 0
 
@@ -125,7 +127,7 @@ export function MediaThumbnail(props: MediaThumbnailProps) {
     <div
       class={cx("media-thumbnail", {
         "is-error": isError(),
-        "is-busy": isUploading() || isProcessing(),
+        "is-busy": isBusy(),
         "is-motion-media": isMotionMedia(),
       })}>
       <button
@@ -155,7 +157,12 @@ export function MediaThumbnail(props: MediaThumbnailProps) {
           </Show>
         </Show>
 
-        <Show when={props.attachment.mediaType === "video" && !showPlaceholder()}>
+        <Show
+          when={
+            props.attachment.mediaType === "video" &&
+            !showPlaceholder() &&
+            !isBusy()
+          }>
           <span class="media-thumbnail-type-badge">
             <Icon name="play_arrow" />
           </span>
@@ -185,7 +192,7 @@ export function MediaThumbnail(props: MediaThumbnailProps) {
           </span>
         </Show>
 
-        <Show when={isProcessing()}>
+        <Show when={isProcessing() || isPersisting()}>
           <span class="media-thumbnail-overlay">
             <svg
               class="media-thumbnail-progress media-thumbnail-progress--indeterminate"

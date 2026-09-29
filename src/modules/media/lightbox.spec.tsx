@@ -5,6 +5,7 @@ import {
   Lightbox,
   LIGHTBOX_DOT_PAGER_MAX,
   isClickInsideObjectFitContain,
+  isVideoControlChromeHit,
   type LightboxLabels,
 } from "./lightbox"
 import type { BlipMediaRow } from "./data/queries"
@@ -372,6 +373,110 @@ describe("Lightbox", () => {
     expect(track()?.classList.contains("is-dragging")).toBe(true)
   })
 
+  it("does not replay a video when native controls are already showing", async () => {
+    const play = vi
+      .spyOn(HTMLMediaElement.prototype, "play")
+      .mockResolvedValue(undefined)
+    mockMobileViewport()
+    render(() => (
+      <Lightbox
+        media={set}
+        index={1}
+        onClose={vi.fn()}
+        labels={labels}
+      />
+    ))
+
+    await vi.waitFor(() => expect(play).toHaveBeenCalled())
+    const video = visibleVideo()
+    expect(video).toBeTruthy()
+    fireEvent.click(video!)
+    expect(video?.hasAttribute("controls")).toBe(true)
+
+    play.mockClear()
+    Object.defineProperty(video!, "paused", {
+      configurable: true,
+      get: () => true,
+    })
+    fireEvent.click(video!)
+    expect(play).not.toHaveBeenCalled()
+    play.mockRestore()
+  })
+
+  it("does not treat a scrub/pause gesture on video chrome as a carousel swipe", async () => {
+    const play = vi
+      .spyOn(HTMLMediaElement.prototype, "play")
+      .mockResolvedValue(undefined)
+    mockMobileViewport()
+    render(() => (
+      <Lightbox
+        media={set}
+        index={1}
+        onClose={vi.fn()}
+        labels={labels}
+      />
+    ))
+
+    await vi.waitFor(() => expect(visibleVideo()).toBeTruthy())
+    const video = visibleVideo()!
+    fireEvent.click(video)
+    vi.spyOn(video, "getBoundingClientRect").mockReturnValue({
+      x: 0,
+      y: 0,
+      width: 400,
+      height: 300,
+      top: 0,
+      left: 0,
+      right: 400,
+      bottom: 300,
+      toJSON: () => ({}),
+    })
+
+    fireEvent.pointerDown(video, { clientX: 200, clientY: 280, pointerId: 1 })
+    fireEvent.pointerMove(stage(), { clientX: 80, clientY: 280, pointerId: 1 })
+    fireEvent.pointerUp(stage(), { clientX: 40, clientY: 280, pointerId: 1 })
+
+    expect(counter()).toBe("2 / 3")
+    play.mockRestore()
+  })
+
+  it("still swipes between slides from the video body", async () => {
+    const play = vi
+      .spyOn(HTMLMediaElement.prototype, "play")
+      .mockResolvedValue(undefined)
+    mockMobileViewport()
+    render(() => (
+      <Lightbox
+        media={set}
+        index={1}
+        onClose={vi.fn()}
+        labels={labels}
+      />
+    ))
+
+    await vi.waitFor(() => expect(visibleVideo()).toBeTruthy())
+    const video = visibleVideo()!
+    fireEvent.click(video)
+    vi.spyOn(video, "getBoundingClientRect").mockReturnValue({
+      x: 0,
+      y: 0,
+      width: 400,
+      height: 300,
+      top: 0,
+      left: 0,
+      right: 400,
+      bottom: 300,
+      toJSON: () => ({}),
+    })
+
+    fireEvent.pointerDown(video, { clientX: 200, clientY: 80, pointerId: 1 })
+    fireEvent.pointerMove(stage(), { clientX: 80, clientY: 80, pointerId: 1 })
+    fireEvent.pointerUp(stage(), { clientX: 40, clientY: 80, pointerId: 1 })
+
+    expect(counter()).toBe("3 / 3")
+    play.mockRestore()
+  })
+
   it("renders a pinch surface for mobile photos", () => {
     mockMobileViewport()
     render(() => (
@@ -380,6 +485,31 @@ describe("Lightbox", () => {
 
     expect(document.querySelector(".lightbox-pinch-zoom")).toBeTruthy()
     expect(document.querySelector(".lightbox-media.is-zoomable")).toBeTruthy()
+  })
+})
+
+describe("isVideoControlChromeHit", () => {
+  const videoBox = () => {
+    const video = document.createElement("video")
+    vi.spyOn(video, "getBoundingClientRect").mockReturnValue({
+      x: 0,
+      y: 0,
+      width: 400,
+      height: 300,
+      top: 0,
+      left: 0,
+      right: 400,
+      bottom: 300,
+      toJSON: () => ({}),
+    })
+    return video
+  }
+
+  it("treats the bottom control strip as chrome and the picture as swipeable", () => {
+    const video = videoBox()
+    expect(isVideoControlChromeHit(200, 280, video)).toBe(true)
+    expect(isVideoControlChromeHit(200, 80, video)).toBe(false)
+    expect(isVideoControlChromeHit(-10, 280, video)).toBe(false)
   })
 })
 

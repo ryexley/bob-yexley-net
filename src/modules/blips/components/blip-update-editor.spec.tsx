@@ -171,6 +171,7 @@ vi.mock("@/modules/media", async () => {
         attachments: () => [],
         hasMedia,
         canPublish,
+        persistError: () => null,
         removeAttachment: mediaState.removeAttachment,
         retry: vi.fn(),
         attach: vi.fn(),
@@ -178,6 +179,7 @@ vi.mock("@/modules/media", async () => {
         fetchByBlip: vi.fn(async () => ({ data: [], error: null })),
       }
     },
+    mediaStoreIsBusy: () => false,
     validateMediaFiles: (files: File[]) => ({ accepted: files, rejected: [] }),
     clipboardMediaFiles: () => [],
     inspectClipboardMediaPaste: () => null,

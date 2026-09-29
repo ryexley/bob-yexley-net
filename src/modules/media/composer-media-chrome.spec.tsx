@@ -1,6 +1,11 @@
 import { fireEvent, render } from "@solidjs/testing-library"
 import { describe, expect, it, vi } from "vitest"
-import { ComposerMediaChrome } from "./composer-media-chrome"
+import {
+  ComposerMediaChrome,
+  composerMediaProgress,
+  isBusyAttachment,
+  mediaStoreIsBusy,
+} from "./composer-media-chrome"
 import type { Attachment, MediaStore } from "./media-store"
 import { MEDIA_PLACEMENT, type MediaPlacement } from "./placement"
 
@@ -22,6 +27,7 @@ const stubStore = (
 ): MediaStore =>
   ({
     attachments: () => attachments,
+    persistError: () => null,
     removeAttachment: vi.fn(async () => undefined),
     retry: vi.fn(),
     ...overrides,
@@ -167,5 +173,104 @@ describe("ComposerMediaChrome", () => {
       expect(container.querySelector(".blip-editor-media-chrome")).toBeTruthy()
       expect(container.querySelector(".media-thumbnail-strip")).toBeNull()
     })
+  })
+
+  describe("in-flight progress", () => {
+    it("announces an uploading count while files are still transferring", () => {
+      const { container } = renderChrome({
+        store: stubStore([
+          { ...attachment("a"), status: "uploading" },
+          { ...attachment("b"), status: "pending" },
+          attachment("c"),
+        ]),
+      })
+
+      const status = container.querySelector(".progress")
+      expect(status?.getAttribute("role")).toBe("status")
+      expect(status?.textContent).toContain("Uploading 2 files...")
+      expect(
+        container.querySelector(".blip-editor-media-chrome")?.getAttribute(
+          "aria-busy",
+        ),
+      ).toBe("true")
+    })
+
+    it("announces processing after uploads finish variant/thumbnail work", () => {
+      const { container } = renderChrome({
+        store: stubStore([{ ...attachment("a"), status: "processing" }]),
+      })
+
+      expect(container.querySelector(".progress")?.textContent).toContain(
+        "Processing 1 file...",
+      )
+    })
+
+    it("announces saving while uploads are complete but not yet persisted", () => {
+      const { container } = renderChrome({
+        store: stubStore([
+          { ...attachment("a"), status: "complete" },
+          { ...attachment("b"), status: "complete" },
+        ]),
+      })
+
+      expect(container.querySelector(".progress")?.textContent).toContain(
+        "Saving 2 files...",
+      )
+    })
+
+    it("hides the saving line when persist already failed", () => {
+      const { container } = renderChrome({
+        store: stubStore([{ ...attachment("a"), status: "complete" }], {
+          persistError: () => "Failed to save media record",
+        }),
+      })
+
+      expect(container.querySelector(".progress")).toBeNull()
+    })
+
+    it("hides the progress line once every attachment is saved", () => {
+      const { container } = renderChrome({
+        store: stubStore([attachment("a"), attachment("b")]),
+      })
+
+      expect(container.querySelector(".progress")).toBeNull()
+      expect(
+        container.querySelector(".blip-editor-media-chrome")?.getAttribute(
+          "aria-busy",
+        ),
+      ).toBe("false")
+    })
+  })
+})
+
+describe("isBusyAttachment / composerMediaProgress / mediaStoreIsBusy", () => {
+  it("treats complete as busy until persist has failed", () => {
+    expect(isBusyAttachment({ ...attachment("a"), status: "complete" })).toBe(
+      true,
+    )
+    expect(
+      isBusyAttachment({ ...attachment("a"), status: "complete" }, true),
+    ).toBe(false)
+    expect(isBusyAttachment(attachment("a"))).toBe(false)
+  })
+
+  it("prefers uploading copy when a batch is mixed", () => {
+    expect(
+      composerMediaProgress([
+        { ...attachment("a"), status: "uploading" },
+        { ...attachment("b"), status: "processing" },
+        { ...attachment("c"), status: "complete" },
+      ]),
+    ).toEqual({ kind: "uploading", count: 3 })
+  })
+
+  it("reads the live store attachments for the editor status slot", () => {
+    expect(mediaStoreIsBusy(null)).toBe(false)
+    expect(
+      mediaStoreIsBusy(
+        stubStore([{ ...attachment("a"), status: "uploading" }]),
+      ),
+    ).toBe(true)
+    expect(mediaStoreIsBusy(stubStore([attachment("a")]))).toBe(false)
   })
 })

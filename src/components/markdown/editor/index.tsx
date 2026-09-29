@@ -602,7 +602,10 @@ export function MarkdownEditor(props: MarkdownEditorProps) {
       <Show when={local.Header}>
         <Dynamic component={local.Header} />
       </Show>
-      <Stack gap="0.5rem">
+      <Stack
+        gap="0.5rem"
+        align="stretch"
+        fullWidth>
         <div
           class={cx("editor-container", {
             "has-alternate-body": Boolean(local.MetadataPanel),

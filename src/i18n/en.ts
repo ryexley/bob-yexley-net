@@ -540,6 +540,14 @@ export const en = {
           closePreview: "Close preview",
           invalidFiles:
             "{count, plural, one {# file couldn't be added — unsupported type or over 150MB.} other {# files couldn't be added — unsupported type or over 150MB.}}",
+          progress: {
+            uploading:
+              "{count, plural, one {Uploading # file...} other {Uploading # files...}}",
+            processing:
+              "{count, plural, one {Processing # file...} other {Processing # files...}}",
+            saving:
+              "{count, plural, one {Saving # file...} other {Saving # files...}}",
+          },
           placement: {
             title: "Place pasted media",
             description:

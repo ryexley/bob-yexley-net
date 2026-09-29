@@ -90,6 +90,38 @@ describe("MediaThumbnail", () => {
     expect(container.querySelector(".media-thumbnail-progress")).toBeTruthy()
   })
 
+  it("hides the video play badge and keeps a spinner while a video is still attaching", () => {
+    const { container } = renderThumbnail(
+      baseAttachment({
+        mediaType: "video",
+        status: "uploading",
+        progress: 20,
+        posterUrl: "blob:thumb-webp",
+        mediaSrc: "blob:video",
+      }),
+    )
+
+    expect(container.querySelector(".media-thumbnail-type-badge")).toBeNull()
+    expect(container.querySelector(".media-thumbnail-progress")).toBeTruthy()
+    expect(container.querySelector(".media-thumbnail.is-busy")).toBeTruthy()
+  })
+
+  it("keeps an indeterminate overlay after upload until the row is saved", () => {
+    const { container } = renderThumbnail(
+      baseAttachment({
+        mediaType: "video",
+        status: "complete",
+        posterUrl: "blob:thumb-webp",
+        mediaSrc: "blob:video",
+      }),
+    )
+
+    expect(container.querySelector(".media-thumbnail-type-badge")).toBeNull()
+    expect(
+      container.querySelector(".media-thumbnail-progress--indeterminate"),
+    ).toBeTruthy()
+  })
+
   it("renders the retry overlay on error and calls onRetry without opening preview", () => {
     const { container, onRetry, onPreview } = renderThumbnail(
       baseAttachment({ status: "error" }),

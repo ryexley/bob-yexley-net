@@ -52,6 +52,7 @@ import {
   type MediaStore,
   mediaStore,
   ComposerMediaChrome,
+  mediaStoreIsBusy,
   PasteMediaPlacementPrompt,
   validateMediaFiles,
 } from "@/modules/media"
@@ -1025,6 +1026,10 @@ export function BlipUpdateEditor(props: BlipUpdateEditorProps) {
   })
 
   const getStatusIcon = () => {
+    if (mediaStoreIsBusy(media())) {
+      return <LoadingSpinner class="blip-editor-status-spinner" />
+    }
+
     const status = saveStatus()
 
     if (status === "saving-db") {
@@ -1207,8 +1212,8 @@ export function BlipUpdateEditor(props: BlipUpdateEditorProps) {
             }}
             EditorControls={EditorControls}
             statusIcon={getStatusIcon()}
-            showStatus={showStatus()}
-            statusFading={statusFading()}
+            showStatus={showStatus() || mediaStoreIsBusy(media())}
+            statusFading={statusFading() && !mediaStoreIsBusy(media())}
             showStatusBar={false}
             statusContext={{
               canDelete: canDelete(),

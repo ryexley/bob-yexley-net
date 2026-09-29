@@ -1,10 +1,13 @@
 .blip-inline-transition {
   display: grid;
   grid-template-rows: minmax(0, 1fr);
+  max-width: 100%;
+  min-width: 0;
   width: 100%;
 
   > * {
     min-height: 0;
+    min-width: 0;
   }
 }
 
