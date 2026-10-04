@@ -29,9 +29,8 @@ export function BlipsTagView() {
   const [hasMore, setHasMore] = createSignal(true)
   const hasInitialData = createMemo(() => initialBlips() !== undefined)
   const visibleBlips = createMemo(() => {
-    const storeData = blips()
-    // Use store data when available, fall back to SSR data for initial render
-    const allBlips = storeData.length > 0 ? storeData : (initialBlips() ?? [])
+    const ssrData = initialBlips()
+    const allBlips = ssrData !== undefined ? ssrData : blips()
     if (isAuthenticated()) {
       return allBlips
     }
