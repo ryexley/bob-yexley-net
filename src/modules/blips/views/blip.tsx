@@ -278,6 +278,7 @@ export function BlipView() {
   const seoImageSource = createMemo((): 
     | { kind: 'media'; row: BlipMediaRow }
     | { kind: 'audio'; cover: { coverImage: string; title?: string; width?: number; height?: number } }
+    | { kind: 'tag'; coverImage: string; tagName: string }
     | null => {
     const allMedia = seoMediaQuery.latest ?? []
     const mediaByBlip = groupMediaByBlipId(allMedia)
@@ -320,7 +321,26 @@ export function BlipView() {
       }
     }
     
-    // (4) No source found
+    // (4) First tag with cover_image (in display order)
+    const tags = blipTags()
+    if (tags && tags.length > 0) {
+      for (const tag of tags) {
+        if (typeof tag === 'object' && 'cover_image' in tag && tag.cover_image) {
+          const coverImage = tag.cover_image as string
+          const tagName = (tag as any).name || String(tag)
+          
+          // Handle absolute URLs or construct from storage key
+          if (coverImage.startsWith('http://') || coverImage.startsWith('https://')) {
+            return { kind: 'tag', coverImage, tagName }
+          } else if (coverImage.trim()) {
+            const mediaUrl = import.meta.env.VITE_MEDIA_STORAGE_URL as string
+            return { kind: 'tag', coverImage: `${mediaUrl}/${coverImage}`, tagName }
+          }
+        }
+      }
+    }
+    
+    // (5) No source found
     return null
   })
   
@@ -353,6 +373,10 @@ export function BlipView() {
     
     if (source.kind === 'audio') {
       return source.cover.coverImage
+    }
+    
+    if (source.kind === 'tag') {
+      return source.coverImage
     }
 
     return "/og-image.jpg"
@@ -402,6 +426,10 @@ export function BlipView() {
     
     if (source.kind === 'audio' && source.cover.title) {
       return source.cover.title
+    }
+    
+    if (source.kind === 'tag') {
+      return `${source.tagName} tag cover`
     }
     
     return undefined

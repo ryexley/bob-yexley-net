@@ -6,6 +6,7 @@ import {
   type BlipAuthor,
 } from "@/modules/blips/data/schema"
 import type { BlipReactionSummary } from "@/modules/blips/data/reactions-schema"
+import type { Tag, TagWithCount } from "@/modules/blips/data/tags-schema"
 
 type ViewTagRow = {
   id: string
@@ -776,3 +777,82 @@ export const getBlipGraph = query(async (
     }),
   )
 }, "blip-graph")
+
+export const getAllPublicTagsWithCounts = query(async (): Promise<TagWithCount[]> => {
+  "use server"
+
+  return withQueryMetrics(
+    "getAllPublicTagsWithCounts",
+    {},
+    async () => {
+      const { getServerClient } = await import("@/lib/vendor/supabase/server")
+      const supabase = await getServerClient()
+
+      const { data, error } = await supabase
+        .from("tags")
+        .select(`
+          id,
+          name,
+          description,
+          created_at,
+          updated_at,
+          blip_tags!inner(
+            blip_id,
+            blips!inner(
+              visibility
+            )
+          )
+        `)
+        .order("name", { ascending: true })
+
+      if (error) {
+        throw error
+      }
+
+      const tagCounts = new Map<string, number>()
+      const tagData = new Map<string, Omit<Tag, "blip_count">>()
+
+      for (const row of data ?? []) {
+        const tagId = row.id
+        if (!tagData.has(tagId)) {
+          tagData.set(tagId, {
+            id: row.id,
+            name: row.name,
+            description: row.description,
+            created_at: row.created_at,
+            updated_at: row.updated_at,
+          })
+        }
+
+        const blipTags = Array.isArray(row.blip_tags) ? row.blip_tags : []
+        const publicBlipIds = new Set<string>()
+
+        for (const bt of blipTags) {
+          const blips = (bt as any).blips
+          if (blips && (blips as any).visibility === "public") {
+            publicBlipIds.add((bt as any).blip_id)
+          }
+        }
+
+        tagCounts.set(tagId, publicBlipIds.size)
+      }
+
+      const result: TagWithCount[] = []
+      for (const [tagId, tag] of tagData) {
+        const count = tagCounts.get(tagId) ?? 0
+        if (count > 0) {
+          result.push({
+            ...tag,
+            blip_count: count,
+          })
+        }
+      }
+
+      return result.sort((a, b) => a.name.localeCompare(b.name))
+    },
+    result => ({
+      tagCount: result.length,
+      totalBlips: result.reduce((sum, tag) => sum + tag.blip_count, 0),
+    }),
+  )
+}, "all-public-tags-with-counts")

@@ -21,6 +21,7 @@ export async function GET({ request }: APIEvent) {
     const urls = [
       { loc: `${SITE_URL}/`, lastmod: null, priority: "1.0" },
       { loc: `${SITE_URL}/blips`, lastmod: null, priority: "0.9" },
+      { loc: `${SITE_URL}/blips/tags`, lastmod: null, priority: "0.8" },
       { loc: `${SITE_URL}/resume/`, lastmod: null, priority: "0.8" },
     ]
 
