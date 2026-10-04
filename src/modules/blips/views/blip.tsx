@@ -58,6 +58,7 @@ import {
   groupMediaByBlipId,
 } from "@/modules/media/data/queries"
 import type { BlipMediaRow } from "@/modules/media/data/queries"
+import { MediaVariant, variantUrl, originalUrl } from "@/modules/media/media-utils"
 import { useBlipComposer } from "@/modules/blips/context/blip-composer-context"
 import {
   formatBlipScheduledTimestamp,
@@ -226,31 +227,40 @@ export function BlipView() {
       return "/og-image.jpg"
     }
 
-    const SITE_URL = "https://bob.yexley.net"
-    const R2_PUBLIC_URL = "https://pub-62faed66fb664280b5fe7b4a0b0abc05.r2.dev"
-    const MIN_OG_WIDTH = 1200
-
     const firstMedia = media[0]
     const storageKey = firstMedia.storage_key
     const mimeType = firstMedia.mime_type
+    const processingStatus = firstMedia.processing_status
 
     if (mimeType.startsWith("image/")) {
-      if (mimeType === "image/webp") {
-        const ext = "webp"
-        return `${R2_PUBLIC_URL}/${storageKey}-large.${ext}`
+      if (processingStatus === "complete") {
+        return variantUrl(storageKey, MediaVariant.Large)
       }
-
-      const ext = mimeType.split("/")[1] || "jpg"
-      const width = firstMedia.width ?? 0
-
-      if (width >= MIN_OG_WIDTH) {
-        return `${R2_PUBLIC_URL}/${storageKey}-original.${ext}`
-      }
-
-      return `${R2_PUBLIC_URL}/${storageKey}-large.${ext}`
+      return originalUrl(storageKey, mimeType)
     }
 
-    return `${SITE_URL}/og-image.jpg`
+    if (mimeType.startsWith("video/") || mimeType === "image/gif") {
+      return variantUrl(storageKey, MediaVariant.Thumb)
+    }
+
+    return "/og-image.jpg"
+  })
+
+  const ogImageDimensions = createMemo(() => {
+    const media = rootMedia()
+    if (media.length === 0) {
+      return { width: 1200, height: 630 }
+    }
+
+    const firstMedia = media[0]
+    const width = firstMedia.width
+    const height = firstMedia.height
+
+    if (width != null && height != null && width > 0 && height > 0) {
+      return { width, height }
+    }
+
+    return null
   })
   const ogImageAlt = createMemo(() => {
     const media = rootMedia()
@@ -929,8 +939,8 @@ export function BlipView() {
           type="article"
           image={ogImageUrl()}
           imageAlt={ogImageAlt()}
-          imageWidth={1200}
-          imageHeight={630}
+          imageWidth={ogImageDimensions()?.width}
+          imageHeight={ogImageDimensions()?.height}
           publishedTime={publishedTime()}
           modifiedTime={modifiedTime()}
         />

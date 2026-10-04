@@ -80,6 +80,7 @@
   "devDependencies": {
     "@corvu/tailwind": "^0.1.7",
     "@kobalte/tailwindcss": "^0.9.0",
+    "@playwright/test": "^1.63.0",
     "@solidjs/testing-library": "^0.8.10",
     "@tailwindcss/vite": "^4.1.10",
     "@testing-library/user-event": "^14.6.1",
@@ -92,6 +93,7 @@
     "oxfmt": "^0.66.0",
     "oxlint": "^1.81.0",
     "oxlint-plugin-solidjs": "^0.1.1",
+    "playwright": "^1.63.0",
     "supabase": "^2.116.0",
     "tailwindcss": "^4.1.10",
     "tailwindcss-animate": "^1.0.7",

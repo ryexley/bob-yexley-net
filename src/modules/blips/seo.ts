@@ -79,7 +79,7 @@ export function deriveBlipDescription(content: string, maxLength = 155): string 
 
 export const SITE_TITLE = "bob.yexley.net"
 export const HOMEPAGE_TITLE = "Bob Yexley · Software engineer"
-export const HOMEPAGE_DESCRIPTION = "Software engineer, minimalist, and builder of side projects. Sharing moments, thoughts, and experiments in code and design."
+export const HOMEPAGE_DESCRIPTION = "The personal website of Bob Yexley, software engineer, with blips: short posts, notes and updates."
 export const BLIPS_TITLE = "Blips · Bob Yexley"
 export const BLIPS_DESCRIPTION = "Moments, thoughts and updates from Bob Yexley"
 
