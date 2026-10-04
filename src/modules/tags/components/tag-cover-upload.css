@@ -1,0 +1,28 @@
+.tag-cover-upload {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.tag-cover-upload-preview {
+  aspect-ratio: 1200 / 630;
+  border: 0.0625rem solid var(--colors-mono-07);
+  border-radius: var(--radius-lg);
+  object-fit: cover;
+  width: 100%;
+}
+
+.tag-cover-upload-input {
+  display: none;
+}
+
+.tag-cover-upload-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.tag-cover-upload-error {
+  color: var(--colors-error);
+  font-size: 0.75rem;
+  margin: 0;
+}

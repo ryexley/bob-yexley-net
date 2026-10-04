@@ -340,6 +340,108 @@ export const en = {
       },
     },
   },
+  tags: {
+    components: {
+      tagCoverUpload: {
+        previewAlt: "Cover image for {tagName}",
+        actions: {
+          upload: "Upload image",
+          uploading: "Uploading...",
+          remove: "Remove",
+        },
+        errors: {
+          type: "Please choose a JPEG, PNG, WebP or GIF image.",
+          size: "Images must be 10 MB or smaller.",
+          auth: "You need to be signed in to upload.",
+          upload: "Upload failed. Please try again.",
+        },
+      },
+      tagEditDrawer: {
+        title: "Edit Tag",
+        actions: {
+          close: "Close",
+          cancel: "Cancel",
+          save: "Save",
+          saving: "Saving...",
+        },
+        fields: {
+          createdAt: "Created",
+          updatedAt: "Updated",
+          name: {
+            label: "Name",
+            placeholder: "tag-name",
+            hint: "Tag name will be converted to kebab-case (lowercase with hyphens).",
+          },
+          description: {
+            label: "Description",
+            placeholder: "Optional description for this tag...",
+            hint: "A brief description of what this tag represents.",
+          },
+          coverImage: {
+            label: "Cover Image",
+            placeholder: "https://example.com/image.jpg or media/... storage key",
+            hint: "Upload an image (or paste an image URL / media storage key). Used as the og:image for blips with this tag when they have no media of their own.",
+          },
+        },
+        values: {
+          unavailable: "Unavailable",
+          blipCount: "{count, plural, one {# blip} other {# blips}}",
+        },
+        notifications: {
+          saveSuccess: "Tag updated.",
+          saveError: "Unable to update this tag right now.",
+        },
+      },
+    },
+    views: {
+      index: {
+        pageTitle: "Tags",
+        metaDescription: "Admin tag management",
+        title: "Tags",
+        subtitle: "Manage tags, their cover images, and merge duplicate tags.",
+        loading: "Loading tags...",
+        blipCount: "{count, plural, one {# blip} other {# blips}}",
+        summary: "Showing {visible} of {total} tags",
+        actions: {
+          backToAdmin: "admin",
+        },
+        sort: {
+          fieldLabel: "Sort by",
+          fields: {
+            name: "Name",
+            blipCount: "Blip count",
+          },
+          direction: {
+            asc: "Ascending",
+            desc: "Descending",
+          },
+        },
+        filters: {
+          search: {
+            placeholder: "Search by name or description",
+          },
+        },
+        mergeDialog: {
+          title: "Name conflict: merge tags?",
+          prompt:
+            'The name "{attemptedName}" is already used by tag "{existingTag}" ({blipCount, plural, one {# blip} other {# blips}}). Would you like to merge into the existing tag or change the name?',
+          actions: {
+            merge: "Merge into {targetTag}",
+            merging: "Merging...",
+            changeName: "Change the name",
+          },
+        },
+        empty: {
+          noTags: "No tags yet. Tags are created when blips are tagged.",
+          noMatches: "No tags match your search.",
+        },
+        notifications: {
+          mergeSuccess: "Tags merged successfully.",
+          mergeError: "Unable to merge tags right now.",
+        },
+      },
+    },
+  },
   blips: {
     views: {
       index: {
@@ -360,6 +462,15 @@ export const en = {
             loading: "Loading more...",
           },
         },
+      },
+      tagCloud: {
+        linkTitle: "{name} ({count, plural, one {# blip} other {# blips}})",
+        pageTitle: "All Tags",
+        metaDescription: "Browse all blip tags",
+        title: "Tags",
+        subtitle: "Browse blips by tag",
+        loading: "Loading tags...",
+        empty: "No tags with public blips yet.",
       },
       detail: {
         pageTitle: "Blip",
@@ -432,6 +543,7 @@ export const en = {
         metaDescription: "Blips tagged {tag}",
         loading: "Loading blips tagged {tag}...",
         empty: "There are no blips that use this tag.",
+        browseAllTags: "Browse all tags",
         paging: {
           actions: {
             showMore: "Show more",
@@ -1088,6 +1200,12 @@ export const en = {
             pageviews:
               "{count, plural, one {# pageview} other {# pageviews}} (30d)",
             sites: "{count, plural, one {# site} other {# sites}}",
+          },
+          tags: {
+            title: "Tags",
+            description:
+              "Manage blip tags, set cover images for og:image previews, and merge duplicate tags.",
+            total: "{count, plural, one {# tag} other {# tags}}",
           },
         },
       },

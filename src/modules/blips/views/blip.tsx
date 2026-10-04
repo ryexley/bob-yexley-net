@@ -38,6 +38,7 @@ import {
   BLIP_TYPES,
   blipStore,
   getBlipGraph,
+  getTagCovers,
   tagStore,
   type Blip,
 } from "@/modules/blips/data"
@@ -49,6 +50,7 @@ import {
 } from "@/modules/blips/data/reaction-optimistic"
 import { reactionStore } from "@/modules/blips/data/reactions-store"
 import { UpdateBlip } from "@/modules/blips/components/update-blip"
+import { resolveTagCoverUrl } from "@/modules/tags/cover"
 import { BlipMediaGallery, Lightbox } from "@/modules/media"
 import {
   flattenBlipPageMedia,
@@ -261,7 +263,9 @@ export function BlipView() {
   const seoMediaQuery = createAsync(async () => {
     // Fetch graph to get update IDs (uses cached result if available)
     const graph = await getBlipGraph(params.id)
-    if (!graph) return []
+    if (!graph) {
+      return []
+    }
     
     // Get published update IDs (only public updates for og:image)
     const publishedUpdateIds = (graph.updates ?? [])
@@ -274,10 +278,19 @@ export function BlipView() {
     return media
   })
   
+  // SSR-safe tag cover lookup for the og:image fallback. Resolves to {} on any
+  // error (including before the tags.cover_image migration is applied).
+  const seoTagCoversQuery = createAsync(async () => {
+    const graph = await getBlipGraph(params.id)
+    const tagNames = graph?.blip.tags ?? []
+    return tagNames.length > 0 ? getTagCovers(tagNames) : {}
+  })
+  
   // Choose og:image source in correct priority order
   const seoImageSource = createMemo((): 
     | { kind: 'media'; row: BlipMediaRow }
     | { kind: 'audio'; cover: { coverImage: string; title?: string; width?: number; height?: number } }
+    | { kind: 'tag'; coverImage: string; tagName: string }
     | null => {
     const allMedia = seoMediaQuery.latest ?? []
     const mediaByBlip = groupMediaByBlipId(allMedia)
@@ -320,7 +333,16 @@ export function BlipView() {
       }
     }
     
-    // (4) No source found
+    // (4) First root tag (alphabetical, the display order) with a cover image
+    const covers = seoTagCoversQuery.latest ?? {}
+    for (const tagName of rootBlip?.tags ?? []) {
+      const coverImage = resolveTagCoverUrl(covers[tagName])
+      if (coverImage) {
+        return { kind: 'tag', coverImage, tagName }
+      }
+    }
+    
+    // (5) No source found
     return null
   })
   
@@ -353,6 +375,10 @@ export function BlipView() {
     
     if (source.kind === 'audio') {
       return source.cover.coverImage
+    }
+    
+    if (source.kind === 'tag') {
+      return source.coverImage
     }
 
     return "/og-image.jpg"
@@ -404,18 +430,26 @@ export function BlipView() {
       return source.cover.title
     }
     
+    if (source.kind === 'tag') {
+      return `${source.tagName} tag cover`
+    }
+    
     return undefined
   })
   const canonicalPath = createMemo(() => `/blips/${params.id}`)
   const publishedTime = createMemo(() => {
     const currentBlip = blip()
-    if (!currentBlip) return undefined
+    if (!currentBlip) {
+      return undefined
+    }
     const timestamp = getBlipPublishTimestamp(currentBlip)
     return new Date(timestamp).toISOString()
   })
   const modifiedTime = createMemo(() => {
     const currentBlip = blip()
-    if (!currentBlip?.updated_at) return undefined
+    if (!currentBlip?.updated_at) {
+      return undefined
+    }
     return new Date(currentBlip.updated_at).toISOString()
   })
   const visibleRootTags = createMemo(() => {

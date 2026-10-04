@@ -1,0 +1,91 @@
+.tag-edit-drawer {
+  --drawer-max-width: 640px;
+}
+
+.tag-edit-drawer-summary {
+  margin-bottom: 1.5rem;
+}
+
+.tag-edit-drawer-summary-header h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0 0 0.5rem;
+}
+
+.tag-edit-drawer-summary-meta {
+  color: var(--colors-mono-09);
+  font-size: 0.875rem;
+}
+
+.tag-edit-drawer-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.tag-edit-drawer-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1rem;
+  background: var(--colors-mono-03);
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.tag-edit-drawer-detail-line {
+  margin: 0;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.tag-edit-drawer-detail-label {
+  font-weight: 500;
+  color: var(--colors-mono-09);
+}
+
+.tag-edit-drawer-fieldset {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.tag-edit-drawer-notes-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.tag-edit-drawer-notes-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.tag-edit-drawer-notes-input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--colors-mono-07);
+  border-radius: 0.5rem;
+  font-family: inherit;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  background: var(--colors-mono-02);
+  color: var(--colors-mono-11);
+  resize: vertical;
+  min-height: 6rem;
+}
+
+.tag-edit-drawer-notes-input:focus {
+  outline: 2px solid var(--colors-links);
+  outline-offset: 2px;
+}
+
+.tag-edit-drawer-notes-input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.tag-edit-drawer-field-hint {
+  font-size: 0.75rem;
+  color: var(--colors-mono-08);
+}
