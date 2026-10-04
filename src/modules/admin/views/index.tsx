@@ -9,6 +9,7 @@ import { getAnalyticsHubStats } from "@/modules/analytics/data/queries"
 import { getAdminCollections } from "@/modules/scripture-collections/data/queries"
 import { getAdminReferences } from "@/modules/scripture-references/data/queries"
 import { getAdminUsers } from "@/modules/users/data/queries"
+import { getAdminTags } from "@/modules/tags/data/queries"
 import { ANALYTICS_SITE_ID } from "@/lib/analytics/constants"
 import { ptr } from "@/i18n"
 import { pages } from "@/urls"
@@ -23,6 +24,7 @@ export function AdminHomeView() {
   const adminUsersQuery = createAsync(() => getAdminUsers())
   const adminCollectionsQuery = createAsync(() => getAdminCollections())
   const adminReferencesQuery = createAsync(() => getAdminReferences())
+  const adminTagsQuery = createAsync(() => getAdminTags())
   const analyticsHubStatsQuery = createAsync(() => {
     const to = new Date()
     const from = subDays(to, 30)
@@ -88,6 +90,7 @@ export function AdminHomeView() {
       adminUsersQuery() !== undefined &&
       adminCollectionsQuery() !== undefined &&
       adminReferencesQuery() !== undefined &&
+      adminTagsQuery() !== undefined &&
       analyticsHubStatsQuery() !== undefined &&
       auth.isSuperuser(),
   )
@@ -96,6 +99,9 @@ export function AdminHomeView() {
   )
   const referenceCount = createMemo(
     () => adminReferencesQuery()?.references.length ?? 0,
+  )
+  const tagCount = createMemo(
+    () => adminTagsQuery()?.tags.length ?? 0,
   )
   const analyticsPageviews30d = createMemo(
     () => analyticsHubStatsQuery()?.totalPageviews30d ?? 0,
@@ -192,6 +198,31 @@ export function AdminHomeView() {
                     </a>
                   </div>
                 </div>
+                <a
+                  href={pages.adminTags}
+                  class="card">
+                  <div class="card-header">
+                    <Icon
+                      name="label"
+                      class="icon"
+                    />
+                    <h2 class="card-title">{tr("cards.tags.title")}</h2>
+                  </div>
+                  <div class="copy">
+                    <p class="description">
+                      {tr("cards.tags.description")}
+                    </p>
+                  </div>
+                  <div class="bubbles">
+                    <span
+                      class="bubble"
+                      data-status="info">
+                      {tr("cards.tags.total", {
+                        count: tagCount(),
+                      })}
+                    </span>
+                  </div>
+                </a>
                 <a
                   href={pages.analytics}
                   class="card">

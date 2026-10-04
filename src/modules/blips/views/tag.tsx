@@ -120,7 +120,14 @@ export function BlipsTagView() {
         noindex={!hasBlipItems() && !hasMore()}
       />
       <main>
-        <PageSection class="signals">
+        <PageSection 
+          class="signals"
+          title={formatTagTitle(params.tag)}
+          subtitle={
+            <a href={pages.blipsTags} class="blips-all-tags-link">
+              Browse all tags
+            </a>
+          }>
           <Show
             when={hasInitialData()}
             fallback={

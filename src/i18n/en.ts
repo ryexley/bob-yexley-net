@@ -1183,6 +1183,12 @@ export const en = {
               "{count, plural, one {# pageview} other {# pageviews}} (30d)",
             sites: "{count, plural, one {# site} other {# sites}}",
           },
+          tags: {
+            title: "Tags",
+            description:
+              "Manage blip tags, set cover images for og:image previews, and merge duplicate tags.",
+            total: "{count, plural, one {# tag} other {# tags}}",
+          },
         },
       },
     },
