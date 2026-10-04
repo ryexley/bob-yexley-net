@@ -32,8 +32,6 @@ export function Seo(props: SeoProps) {
     return new URL(props.image, SITE_URL).toString()
   }
 
-  const imageUrl = absoluteImageUrl()
-
   return (
     <>
       <Title>{props.title}</Title>
@@ -47,8 +45,8 @@ export function Seo(props: SeoProps) {
       <Meta property="og:site_name" content={SITE_NAME} />
       <Meta property="og:locale" content={OG_LOCALE} />
 
-      <Show when={imageUrl}>
-        <Meta property="og:image" content={imageUrl} />
+      <Show when={absoluteImageUrl()} fallback={<Meta property="og:image" content={`${SITE_URL}/og-image.jpg`} />}>
+        <Meta property="og:image" content={absoluteImageUrl()!} />
         <Show when={props.imageWidth}>
           <Meta property="og:image:width" content={String(props.imageWidth)} />
         </Show>
@@ -63,8 +61,8 @@ export function Seo(props: SeoProps) {
       <Meta name="twitter:card" content="summary_large_image" />
       <Meta name="twitter:title" content={props.title} />
       <Meta name="twitter:description" content={props.description} />
-      <Show when={imageUrl}>
-        <Meta name="twitter:image" content={imageUrl} />
+      <Show when={absoluteImageUrl()} fallback={<Meta name="twitter:image" content={`${SITE_URL}/og-image.jpg`} />}>
+        <Meta name="twitter:image" content={absoluteImageUrl()!} />
       </Show>
 
       <Show when={props.type === "article"}>
