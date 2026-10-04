@@ -222,11 +222,52 @@ export function BlipView() {
   })
   const seoTitle = createMemo(() => formatPageTitle(blipTitle()))
   
-  // SSR-safe media fetch for og:image (uses params.id directly for SSR)
-  const seoMediaQuery = createAsync(() => getBlipMediaFor([params.id]))
+  // SSR-safe media fetch for og:image (root + published updates)
+  // Fetches graph independently to avoid race conditions with blipGraphQuery
+  const seoMediaQuery = createAsync(async () => {
+    // Fetch graph to get update IDs (uses cached result if available)
+    const graph = await getBlipGraph(params.id)
+    if (!graph) return []
+    
+    // Get published update IDs (only public updates for og:image)
+    const publishedUpdateIds = (graph.updates ?? [])
+      .filter(update => update.published)
+      .map(update => update.id)
+    
+    // Fetch media for root + published updates
+    const blipIds = [params.id, ...publishedUpdateIds]
+    const media = await getBlipMediaFor(blipIds)
+    return media
+  })
+  
+  // Media for og:image: root media first, then first update media as fallback
   const seoRootMedia = createMemo(() => {
-    const media = seoMediaQuery.latest ?? []
-    return media.filter(m => m.blip_id === params.id)
+    const allMedia = seoMediaQuery.latest ?? []
+    const mediaByBlip = groupMediaByBlipId(allMedia)
+    
+    // Root media first
+    const rootMedia = mediaByBlip[params.id] ?? []
+    if (rootMedia.length > 0) {
+      return rootMedia
+    }
+    
+    // Fallback: first media from published updates (in creation order)
+    // Re-compute published update IDs from the graph that was fetched
+    const graph = blipGraphQuery.latest
+    if (!graph) return []
+    
+    const publishedUpdateIds = (graph.updates ?? [])
+      .filter(update => update.published)
+      .map(update => update.id)
+    
+    for (const updateId of publishedUpdateIds) {
+      const updateMedia = mediaByBlip[updateId]
+      if (updateMedia?.length > 0) {
+        return updateMedia
+      }
+    }
+    
+    return []
   })
   
   const ogImageUrl = createMemo(() => {
