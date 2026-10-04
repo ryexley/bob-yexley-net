@@ -28,9 +28,28 @@
       flex-direction: column;
       gap: 0.5rem;
       min-height: 0;
+      position: relative;
 
       &.interactive {
         cursor: pointer;
+      }
+
+      .stretched-link {
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        z-index: 0;
+      }
+
+      .stretched-link::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
       }
     }
 
@@ -115,6 +134,8 @@
       gap: 0.5rem;
       margin-top: 0.25rem;
       min-height: 0;
+      position: relative;
+      z-index: 1;
 
       .read-more {
         color: var(--colors-links);
@@ -136,7 +157,9 @@
       flex-shrink: 0;
       gap: 1rem;
       justify-content: space-between;
+      position: relative;
       width: 100%;
+      z-index: 1;
 
       .tags {
         --blip-tag-font-size: 0.875rem;

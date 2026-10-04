@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://bob.yexley.net/sitemap.xml
