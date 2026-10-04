@@ -1,7 +1,8 @@
 import { createAsync, useNavigate, useParams } from "@solidjs/router"
-import { Meta, Title } from "@solidjs/meta"
 import { createEffect, createMemo, createSignal, Show } from "solid-js"
 import { getRequestEvent } from "solid-js/web"
+import { Seo } from "@/components/seo"
+import { formatTagTitle, formatTagDescription } from "@/modules/blips/seo"
 import { Button } from "@/components/button"
 import { LoadingSpinner } from "@/components/icon"
 import { Blips } from "@/modules/blips/components/blips"
@@ -12,7 +13,7 @@ import { useAuth } from "@/context/auth-context"
 import { PageSection } from "@/modules/home/components/page-section"
 import { ptr } from "@/i18n"
 import { pages } from "@/urls"
-import { windowTitle, withWindow } from "@/util/browser"
+import { withWindow } from "@/util/browser"
 import "./index.css"
 
 const BLIPS_PAGE_SIZE = 20
@@ -107,14 +108,16 @@ export function BlipsTagView() {
 
   return (
     <>
-      <Title>{windowTitle(tr("pageTitle", { tag: params.tag }))}</Title>
-      <Meta
-        name="description"
-        content={tr("metaDescription", { tag: params.tag })}
+      <Seo
+        title={formatTagTitle(params.tag)}
+        description={formatTagDescription(params.tag)}
+        path={`/blips/tag/${params.tag}`}
+        type="website"
+        image="/og-image.jpg"
+        imageWidth={1200}
+        imageHeight={630}
+        noindex={!hasBlipItems() && !hasMore()}
       />
-      <Show when={!hasBlipItems() && !hasMore()}>
-        <Meta name="robots" content="noindex" />
-      </Show>
       <main>
         <PageSection class="signals">
           <Show

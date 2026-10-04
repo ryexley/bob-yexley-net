@@ -6,7 +6,6 @@ import {
   useNavigate,
   useParams,
 } from "@solidjs/router"
-import { Meta, Title } from "@solidjs/meta"
 import {
   createEffect,
   createMemo,
@@ -18,6 +17,9 @@ import {
   untrack,
 } from "solid-js"
 import { getRequestEvent } from "solid-js/web"
+import { Seo } from "@/components/seo"
+import { JsonLd, createBlogPostingSchema } from "@/components/json-ld"
+import { deriveBlipTitle, deriveBlipDescription, formatPageTitle } from "@/modules/blips/seo"
 import { Hashtag, Icon } from "@/components/icon"
 import { Button } from "@/components/button"
 import { MarkdownRenderer as Markdown } from "@/components/markdown/renderer"
@@ -56,6 +58,7 @@ import {
   groupMediaByBlipId,
 } from "@/modules/media/data/queries"
 import type { BlipMediaRow } from "@/modules/media/data/queries"
+import { MediaVariant, variantUrl, originalUrl } from "@/modules/media/media-utils"
 import { useBlipComposer } from "@/modules/blips/context/blip-composer-context"
 import {
   formatBlipScheduledTimestamp,
@@ -74,49 +77,11 @@ import {
 import { ptr } from "@/i18n"
 import { pages } from "@/urls"
 import { clsx as cx } from "@/util"
-import { windowTitle, withWindow } from "@/util/browser"
+import { withWindow } from "@/util/browser"
 import "./blip.css"
 
 const tr = ptr("blips.views.detail")
 const commentThreadTr = ptr("blips.components.commentThread")
-const MAX_SHARE_DESCRIPTION_LENGTH = 180
-const MAX_SHARE_TITLE_LENGTH = 68
-
-const collapseWhitespace = (value: string) => value.replace(/\s+/g, " ").trim()
-
-const stripMarkdownForMeta = (value: string) =>
-  collapseWhitespace(
-    value
-      // Fenced code blocks.
-      .replace(/```[\s\S]*?```/g, " ")
-      // Inline code.
-      .replace(/`([^`]+)`/g, "$1")
-      // Images and links.
-      .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, "$1")
-      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, "$1")
-      // Headings, blockquotes, lists, emphasis.
-      .replace(/^#{1,6}\s+/gm, "")
-      .replace(/^>\s?/gm, "")
-      .replace(/^[*-+]\s+/gm, "")
-      .replace(/^\d+\.\s+/gm, "")
-      .replace(/[*_=~]+/g, "")
-      // Bare URLs.
-      .replace(/https?:\/\/\S+/g, " "),
-  )
-
-const truncateForMeta = (value: string, maxLength: number) => {
-  if (value.length <= maxLength) {
-    return value
-  }
-
-  const trimmed = value.slice(0, maxLength).trimEnd()
-  const lastSpace = trimmed.lastIndexOf(" ")
-  if (lastSpace < 40) {
-    return `${trimmed}...`
-  }
-
-  return `${trimmed.slice(0, lastSpace)}...`
-}
 
 export function BlipView() {
   const REALTIME_UPDATE_HIGHLIGHT_MS = 60_000
@@ -247,36 +212,75 @@ export function BlipView() {
     return initialUpdates()
   }
   const updates = createMemo(() => getUpdatesForRoot(blip()?.id))
-  const sharePreviewText = createMemo(() => {
+  const blipTitle = createMemo(() => {
     const content = blip()?.content ?? ""
-    const plainText = stripMarkdownForMeta(content)
-    if (!plainText) {
-      return tr("metaDescription")
-    }
-
-    return plainText
+    return content ? deriveBlipTitle(content) : "Blip"
   })
-  const shareTitle = createMemo(() => {
-    const preview = sharePreviewText()
-    if (!preview || preview === tr("metaDescription")) {
-      return tr("pageTitle")
-    }
-
-    return truncateForMeta(preview, MAX_SHARE_TITLE_LENGTH)
+  const blipDescription = createMemo(() => {
+    const content = blip()?.content ?? ""
+    return content ? deriveBlipDescription(content) : ""
   })
-  const shareDescription = createMemo(() =>
-    truncateForMeta(sharePreviewText(), MAX_SHARE_DESCRIPTION_LENGTH),
-  )
-  const ogUrl = createMemo(() => {
-    const siteUrl = (import.meta.env.VITE_SITE_URL as string | undefined)
-      ?.trim()
-      .replace(/\/+$/, "")
-    if (!siteUrl) {
-      return ""
+  const seoTitle = createMemo(() => formatPageTitle(blipTitle()))
+  const ogImageUrl = createMemo(() => {
+    const media = rootMedia()
+    if (media.length === 0) {
+      return "/og-image.jpg"
     }
 
-    const path = location.pathname || `/blips/${params.id}`
-    return `${siteUrl}${path.startsWith("/") ? path : `/${path}`}`
+    const firstMedia = media[0]
+    const storageKey = firstMedia.storage_key
+    const mimeType = firstMedia.mime_type
+    const processingStatus = firstMedia.processing_status
+
+    if (mimeType.startsWith("image/")) {
+      if (processingStatus === "complete") {
+        return variantUrl(storageKey, MediaVariant.Large)
+      }
+      return originalUrl(storageKey, mimeType)
+    }
+
+    if (mimeType.startsWith("video/") || mimeType === "image/gif") {
+      return variantUrl(storageKey, MediaVariant.Thumb)
+    }
+
+    return "/og-image.jpg"
+  })
+
+  const ogImageDimensions = createMemo(() => {
+    const media = rootMedia()
+    if (media.length === 0) {
+      return { width: 1200, height: 630 }
+    }
+
+    const firstMedia = media[0]
+    const width = firstMedia.width
+    const height = firstMedia.height
+
+    if (width != null && height != null && width > 0 && height > 0) {
+      return { width, height }
+    }
+
+    return null
+  })
+  const ogImageAlt = createMemo(() => {
+    const media = rootMedia()
+    if (media.length === 0) {
+      return undefined
+    }
+    const firstMedia = media[0]
+    return firstMedia.media_type === "image" ? blipTitle() : undefined
+  })
+  const canonicalPath = createMemo(() => `/blips/${params.id}`)
+  const publishedTime = createMemo(() => {
+    const currentBlip = blip()
+    if (!currentBlip) return undefined
+    const timestamp = getBlipPublishTimestamp(currentBlip)
+    return new Date(timestamp).toISOString()
+  })
+  const modifiedTime = createMemo(() => {
+    const currentBlip = blip()
+    if (!currentBlip?.updated_at) return undefined
+    return new Date(currentBlip.updated_at).toISOString()
   })
   const visibleRootTags = createMemo(() => {
     const rootBlip = blip()
@@ -289,6 +293,19 @@ export function BlipView() {
     }
 
     return hydratedRootTags()
+  })
+  const blipTags = createMemo(() => visibleRootTags())
+  
+  const ogUrl = createMemo(() => {
+    const siteUrl = (import.meta.env.VITE_SITE_URL as string | undefined)
+      ?.trim()
+      .replace(/\/+$/, "")
+    if (!siteUrl) {
+      return ""
+    }
+
+    const path = location.pathname || `/blips/${params.id}`
+    return `${siteUrl}${path.startsWith("/") ? path : `/${path}`}`
   })
   const visibleUpdates = createMemo(() => {
     const allUpdates = updates().filter(update =>
@@ -914,41 +931,33 @@ export function BlipView() {
 
   return (
     <>
-      <Title>{windowTitle(shareTitle())}</Title>
       <Show when={blip()}>
-        <Meta
-          name="description"
-          content={shareDescription()}
+        <Seo
+          title={seoTitle()}
+          description={blipDescription()}
+          path={canonicalPath()}
+          type="article"
+          image={ogImageUrl()}
+          imageAlt={ogImageAlt()}
+          imageWidth={ogImageDimensions()?.width}
+          imageHeight={ogImageDimensions()?.height}
+          publishedTime={publishedTime()}
+          modifiedTime={modifiedTime()}
         />
-        <Meta
-          property="og:type"
-          content="article"
-        />
-        <Meta
-          property="og:title"
-          content={shareTitle()}
-        />
-        <Meta
-          property="og:description"
-          content={shareDescription()}
-        />
-        <Show when={ogUrl()}>
-          <Meta
-            property="og:url"
-            content={ogUrl()}
-          />
-        </Show>
-        <Meta
-          name="twitter:card"
-          content="summary_large_image"
-        />
-        <Meta
-          name="twitter:title"
-          content={shareTitle()}
-        />
-        <Meta
-          name="twitter:description"
-          content={shareDescription()}
+      </Show>
+      {/* BlogPosting JSON-LD renders client-side due to SolidJS SSR limitations with
+          script tags in routes with async data dependencies. Google reads client-side 
+          JSON-LD, so this is acceptable for SEO. Homepage JSON-LD renders in SSR. */}
+      <Show when={blip()}>
+        <JsonLd
+          data={createBlogPostingSchema({
+            headline: blipTitle(),
+            datePublished: publishedTime() ?? new Date().toISOString(),
+            dateModified: modifiedTime(),
+            canonicalUrl: ogUrl(),
+            image: ogImageUrl() && ogUrl() ? new URL(ogImageUrl(), ogUrl()).toString() : undefined,
+            keywords: blipTags(),
+          })}
         />
       </Show>
       <main>

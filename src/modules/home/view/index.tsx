@@ -1,13 +1,13 @@
 import { createMemo, createSignal, For, onCleanup, onMount } from "solid-js"
-import { Meta, Title } from "@solidjs/meta"
 import { useLocation } from "@solidjs/router"
+import { Seo } from "@/components/seo"
+import { JsonLd, createWebSiteSchema } from "@/components/json-ld"
 import { Hero } from "@/modules/home/sections/hero"
 import { Signals } from "~/modules/home/sections/signals"
-// import { Footer } from "@/modules/home/sections/footer"
-import { tr } from "@/i18n"
+import { HOMEPAGE_TITLE, HOMEPAGE_DESCRIPTION, formatPageTitle } from "@/modules/blips/seo"
 import { pages } from "@/urls"
 import { cx } from "@/util"
-import { windowTitle, withWindow } from "@/util/browser"
+import { withWindow } from "@/util/browser"
 
 const homeStyles = cx()
 
@@ -41,8 +41,8 @@ export function Home() {
       setRef: (el: HTMLElement) => (homeRef = el),
       getRef: () => homeRef,
       component: Hero,
-      pageTitle: tr("home.pageSections.hero.pageTitle"),
-      metaDescription: tr("home.pageSections.hero.metaDescription"),
+      pageTitle: HOMEPAGE_TITLE,
+      metaDescription: HOMEPAGE_DESCRIPTION,
     },
     {
       id: "signals",
@@ -51,8 +51,8 @@ export function Home() {
       setRef: (el: HTMLElement) => (signalsRef = el),
       getRef: () => signalsRef,
       component: Signals,
-      pageTitle: tr("home.pageSections.signals.pageTitle"),
-      metaDescription: tr("home.pageSections.signals.metaDescription"),
+      pageTitle: formatPageTitle("Signals"),
+      metaDescription: "Recent activity and signals on bob.yexley.net",
     },
   ])
 
@@ -147,11 +147,16 @@ export function Home() {
 
   return (
     <>
-      <Title>{windowTitle(currentSection().pageTitle as string)}</Title>
-      <Meta
-        name="description"
-        content={currentSection().metaDescription as string}
+      <Seo
+        title={currentSection().pageTitle as string}
+        description={currentSection().metaDescription as string}
+        path={activeSectionPath()}
+        type="website"
+        image="/og-image.jpg"
+        imageWidth={1200}
+        imageHeight={630}
       />
+      <JsonLd data={createWebSiteSchema()} />
       <main class={homeStyles}>
         <For each={pageSections()}>
           {section => {
