@@ -1,6 +1,7 @@
 import { createAsync, useNavigate, useParams } from "@solidjs/router"
 import { Meta, Title } from "@solidjs/meta"
 import { createEffect, createMemo, createSignal, Show } from "solid-js"
+import { getRequestEvent } from "solid-js/web"
 import { Button } from "@/components/button"
 import { LoadingSpinner } from "@/components/icon"
 import { Blips } from "@/modules/blips/components/blips"
@@ -35,6 +36,16 @@ export function BlipsTagView() {
   })
   const hasBlipItems = createMemo(() => visibleBlips().length > 0)
   let showMoreButtonRef: HTMLButtonElement | undefined
+
+  // Set 404 status during SSR when tag has no blips
+  // Check synchronously during render, not in an effect (effects don't run during SSR)
+  const initialData = initialBlips()
+  if (initialData && initialData.length === 0) {
+    const event = getRequestEvent()
+    if (event && event.response) {
+      event.response.status = 404
+    }
+  }
 
   createEffect(() => {
     const data = initialBlips()
@@ -100,6 +111,9 @@ export function BlipsTagView() {
         name="description"
         content={tr("metaDescription", { tag: params.tag })}
       />
+      <Show when={!hasBlipItems() && !hasMore()}>
+        <Meta name="robots" content="noindex" />
+      </Show>
       <main>
         <PageSection class="signals">
           <Show
