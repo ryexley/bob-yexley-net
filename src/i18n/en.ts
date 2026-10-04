@@ -342,6 +342,20 @@ export const en = {
   },
   tags: {
     components: {
+      tagCoverUpload: {
+        previewAlt: "Cover image for {tagName}",
+        actions: {
+          upload: "Upload image",
+          uploading: "Uploading...",
+          remove: "Remove",
+        },
+        errors: {
+          type: "Please choose a JPEG, PNG, WebP or GIF image.",
+          size: "Images must be 10 MB or smaller.",
+          auth: "You need to be signed in to upload.",
+          upload: "Upload failed. Please try again.",
+        },
+      },
       tagEditDrawer: {
         title: "Edit Tag",
         actions: {
@@ -365,12 +379,13 @@ export const en = {
           },
           coverImage: {
             label: "Cover Image",
-            placeholder: "https://example.com/image.jpg",
-            hint: "URL of an image to use as the cover for this tag in og:image previews.",
+            placeholder: "https://example.com/image.jpg or media/... storage key",
+            hint: "Upload an image (or paste an image URL / media storage key). Used as the og:image for blips with this tag when they have no media of their own.",
           },
         },
         values: {
           unavailable: "Unavailable",
+          blipCount: "{count, plural, one {# blip} other {# blips}}",
         },
         notifications: {
           saveSuccess: "Tag updated.",
@@ -385,6 +400,7 @@ export const en = {
         title: "Tags",
         subtitle: "Manage tags, their cover images, and merge duplicate tags.",
         loading: "Loading tags...",
+        blipCount: "{count, plural, one {# blip} other {# blips}}",
         summary: "Showing {visible} of {total} tags",
         actions: {
           backToAdmin: "admin",
@@ -448,6 +464,7 @@ export const en = {
         },
       },
       tagCloud: {
+        linkTitle: "{name} ({count, plural, one {# blip} other {# blips}})",
         pageTitle: "All Tags",
         metaDescription: "Browse all blip tags",
         title: "Tags",
@@ -526,6 +543,7 @@ export const en = {
         metaDescription: "Blips tagged {tag}",
         loading: "Loading blips tagged {tag}...",
         empty: "There are no blips that use this tag.",
+        browseAllTags: "Browse all tags",
         paging: {
           actions: {
             showMore: "Show more",

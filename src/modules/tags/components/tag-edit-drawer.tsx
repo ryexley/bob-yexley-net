@@ -3,6 +3,7 @@ import { Button } from "@/components/button"
 import { FormDrawer } from "@/components/form-drawer"
 import { Input } from "@/components/input"
 import { useNotify } from "@/components/notification"
+import { TagCoverUpload } from "@/modules/tags/components/tag-cover-upload"
 import { updateAdminTagRecord } from "@/modules/tags/data/client"
 import type { AdminTagRecord } from "@/modules/tags/data/types"
 import { ptr } from "@/i18n"
@@ -27,6 +28,7 @@ export function TagEditDrawer(props: TagEditDrawerProps) {
   const [description, setDescription] = createSignal("")
   const [coverImage, setCoverImage] = createSignal("")
   const [isSaving, setIsSaving] = createSignal(false)
+  const [isUploading, setIsUploading] = createSignal(false)
   const [mountedTag, setMountedTag] = createSignal<AdminTagRecord | null>(
     untrack(() => props.tag),
   )
@@ -83,7 +85,7 @@ export function TagEditDrawer(props: TagEditDrawerProps) {
     event.preventDefault()
 
     const tag = currentTag()
-    if (!tag || isSaving() || !isDirty()) {
+    if (!tag || isSaving() || isUploading() || !isDirty()) {
       return
     }
 
@@ -91,7 +93,7 @@ export function TagEditDrawer(props: TagEditDrawerProps) {
     const result = await updateAdminTagRecord(tag.id, {
       name: name(),
       description: description() || null,
-      coverImage: coverImage() || null,
+      coverImage: coverImage().trim() || null,
     })
     setIsSaving(false)
 
@@ -125,7 +127,7 @@ export function TagEditDrawer(props: TagEditDrawerProps) {
       closeAriaLabel={tr("actions.close")}
       class="tag-edit-drawer"
       when={Boolean(currentTag())}
-      canDismiss={() => !isSaving()}
+      canDismiss={() => !isSaving() && !isUploading()}
       onClosed={() => setMountedTag(null)}
       actionsClass="form-drawer-actions tag-edit-drawer-actions"
       actions={
@@ -136,7 +138,7 @@ export function TagEditDrawer(props: TagEditDrawerProps) {
             variant="primary"
             size="sm"
             label={isSaving() ? tr("actions.saving") : tr("actions.save")}
-            disabled={isSaving() || !isDirty()}
+            disabled={isSaving() || isUploading() || !isDirty()}
           />
           <Button
             type="button"
@@ -152,7 +154,7 @@ export function TagEditDrawer(props: TagEditDrawerProps) {
         <div class="tag-edit-drawer-summary-header">
           <h3>{currentTag()?.name}</h3>
           <div class="tag-edit-drawer-summary-meta">
-            <span>{currentTag()?.blipCount ?? 0} blips</span>
+            <span>{tr("values.blipCount", { count: currentTag()?.blipCount ?? 0 })}</span>
           </div>
         </div>
       </div>
@@ -200,13 +202,21 @@ export function TagEditDrawer(props: TagEditDrawerProps) {
         </div>
 
         <div class="tag-edit-drawer-fieldset">
+          <span class="tag-edit-drawer-notes-label">{tr("fields.coverImage.label")}</span>
+          <TagCoverUpload
+            tagName={currentTag()?.name ?? "tag"}
+            value={coverImage()}
+            disabled={isSaving()}
+            onChange={value => setCoverImage(value)}
+            onUploadingChange={value => setIsUploading(value)}
+          />
           <Input
-            label={tr("fields.coverImage.label")}
-            type="url"
+            label=""
+            type="text"
             value={coverImage()}
             onInput={event => setCoverImage(event.currentTarget.value)}
             placeholder={tr("fields.coverImage.placeholder")}
-            disabled={isSaving()}
+            disabled={isSaving() || isUploading()}
           />
           <span class="tag-edit-drawer-field-hint">{tr("fields.coverImage.hint")}</span>
         </div>

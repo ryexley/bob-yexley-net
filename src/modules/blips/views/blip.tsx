@@ -38,6 +38,7 @@ import {
   BLIP_TYPES,
   blipStore,
   getBlipGraph,
+  getTagCovers,
   tagStore,
   type Blip,
 } from "@/modules/blips/data"
@@ -49,6 +50,7 @@ import {
 } from "@/modules/blips/data/reaction-optimistic"
 import { reactionStore } from "@/modules/blips/data/reactions-store"
 import { UpdateBlip } from "@/modules/blips/components/update-blip"
+import { resolveTagCoverUrl } from "@/modules/tags/cover"
 import { BlipMediaGallery, Lightbox } from "@/modules/media"
 import {
   flattenBlipPageMedia,
@@ -276,6 +278,14 @@ export function BlipView() {
     return media
   })
   
+  // SSR-safe tag cover lookup for the og:image fallback. Resolves to {} on any
+  // error (including before the tags.cover_image migration is applied).
+  const seoTagCoversQuery = createAsync(async () => {
+    const graph = await getBlipGraph(params.id)
+    const tagNames = graph?.blip.tags ?? []
+    return tagNames.length > 0 ? getTagCovers(tagNames) : {}
+  })
+  
   // Choose og:image source in correct priority order
   const seoImageSource = createMemo((): 
     | { kind: 'media'; row: BlipMediaRow }
@@ -323,22 +333,12 @@ export function BlipView() {
       }
     }
     
-    // (4) First tag with cover_image (in display order)
-    const tags = blipTags()
-    if (tags && tags.length > 0) {
-      for (const tag of tags) {
-        if (typeof tag === 'object' && 'cover_image' in tag && tag.cover_image) {
-          const coverImage = tag.cover_image as string
-          const tagName = (tag as any).name || String(tag)
-          
-          // Handle absolute URLs or construct from storage key
-          if (coverImage.startsWith('http://') || coverImage.startsWith('https://')) {
-            return { kind: 'tag', coverImage, tagName }
-          } else if (coverImage.trim()) {
-            const mediaUrl = import.meta.env.VITE_MEDIA_STORAGE_URL as string
-            return { kind: 'tag', coverImage: `${mediaUrl}/${coverImage}`, tagName }
-          }
-        }
+    // (4) First root tag (alphabetical, the display order) with a cover image
+    const covers = seoTagCoversQuery.latest ?? {}
+    for (const tagName of rootBlip?.tags ?? []) {
+      const coverImage = resolveTagCoverUrl(covers[tagName])
+      if (coverImage) {
+        return { kind: 'tag', coverImage, tagName }
       }
     }
     
