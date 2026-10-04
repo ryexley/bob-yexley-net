@@ -6,6 +6,7 @@ import {
   type BlipAuthor,
 } from "@/modules/blips/data/schema"
 import type { BlipReactionSummary } from "@/modules/blips/data/reactions-schema"
+import type { TagWithCount } from "@/modules/blips/data/tags-schema"
 
 type ViewTagRow = {
   id: string
@@ -776,3 +777,126 @@ export const getBlipGraph = query(async (
     }),
   )
 }, "blip-graph")
+
+const PUBLIC_TAG_COUNT_PAGE_SIZE = 1000
+
+/**
+ * Public tag cloud data: every tag attached to at least one publicly visible
+ * root blip, with the number of such blips, sorted by name.
+ *
+ * Counts are derived from `view_blips.tags` (the same source the
+ * `/blips/tag/:tag` pages filter on), restricted to published blips whose
+ * publish time has passed, so logged-in authors don't see their drafts
+ * inflate the public counts.
+ */
+export const getAllPublicTagsWithCounts = query(async (): Promise<TagWithCount[]> => {
+  "use server"
+
+  return withQueryMetrics(
+    "getAllPublicTagsWithCounts",
+    {},
+    async () => {
+      const { getServerClient } = await import("@/lib/vendor/supabase/server")
+      const supabase = await getServerClient()
+      const nowIso = new Date().toISOString()
+      const tagsById = new Map<string, TagWithCount>()
+
+      for (let offset = 0; ; offset += PUBLIC_TAG_COUNT_PAGE_SIZE) {
+        const { data, error } = await supabase
+          .from("view_blips")
+          .select("id, tags")
+          .eq("published", true)
+          .lte("sort_at", nowIso)
+          .order("id", { ascending: true })
+          .range(offset, offset + PUBLIC_TAG_COUNT_PAGE_SIZE - 1)
+
+        if (error) {
+          throw error
+        }
+
+        const rows = (data ?? []) as unknown as { id: string; tags: ViewTagValue[] | null }[]
+        for (const row of rows) {
+          const seen = new Set<string>()
+          for (const value of row.tags ?? []) {
+            if (!value || typeof value === "string" || !value.id || !value.name) {
+              continue
+            }
+            if (seen.has(value.id)) {
+              continue
+            }
+            seen.add(value.id)
+
+            const existing = tagsById.get(value.id)
+            if (existing) {
+              existing.blip_count += 1
+            } else {
+              tagsById.set(value.id, {
+                id: value.id,
+                name: value.name,
+                description: value.description ?? null,
+                blip_count: 1,
+              })
+            }
+          }
+        }
+
+        if (rows.length < PUBLIC_TAG_COUNT_PAGE_SIZE) {
+          break
+        }
+      }
+
+      return [...tagsById.values()].sort((a, b) => a.name.localeCompare(b.name))
+    },
+    result => ({
+      tagCount: result.length,
+      totalBlips: result.reduce((sum, tag) => sum + tag.blip_count, 0),
+    }),
+  )
+}, "all-public-tags-with-counts")
+
+/**
+ * Cover images for the given tag names, keyed by tag name. Used as an
+ * og:image fallback on blip pages.
+ *
+ * Deliberately tolerant: any error (including `42703 column does not exist`
+ * before the tag-cover migration has been applied) yields an empty map so
+ * blip pages never fail because of a missing cover.
+ */
+export const getTagCovers = query(async (
+  tagNames: string[],
+): Promise<Record<string, string>> => {
+  "use server"
+
+  const names = [...new Set((tagNames ?? []).filter(Boolean))]
+  if (names.length === 0) {
+    return {}
+  }
+
+  try {
+    const { getServerClient } = await import("@/lib/vendor/supabase/server")
+    const supabase = await getServerClient()
+    const { data, error } = await supabase
+      .from("tags")
+      .select("name, cover_image")
+      .in("name", names)
+      .not("cover_image", "is", null)
+
+    if (error) {
+      if (error.code !== "42703") {
+        console.error("[getTagCovers] failed to load tag covers:", error)
+      }
+      return {}
+    }
+
+    const covers: Record<string, string> = {}
+    for (const row of data ?? []) {
+      if (row.name && row.cover_image?.trim()) {
+        covers[row.name] = row.cover_image.trim()
+      }
+    }
+    return covers
+  } catch (error) {
+    console.error("[getTagCovers] failed to load tag covers:", error)
+    return {}
+  }
+}, "tag-covers")

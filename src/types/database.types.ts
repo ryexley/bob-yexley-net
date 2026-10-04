@@ -478,6 +478,7 @@ export type Database = {
       }
       tags: {
         Row: {
+          cover_image: string | null
           created_at: string
           description: string | null
           id: string
@@ -485,6 +486,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          cover_image?: string | null
           created_at?: string
           description?: string | null
           id?: string
@@ -492,6 +494,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          cover_image?: string | null
           created_at?: string
           description?: string | null
           id?: string
@@ -884,6 +887,10 @@ export type Database = {
       current_user_role: {
         Args: never
         Returns: Database["public"]["Enums"]["app_role"]
+      }
+      merge_tags: {
+        Args: { source_id: string; target_id: string }
+        Returns: undefined
       }
       is_admin: { Args: never; Returns: boolean }
       is_superuser: { Args: never; Returns: boolean }

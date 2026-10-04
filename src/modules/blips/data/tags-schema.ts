@@ -17,5 +17,9 @@ export const blipTagSchema = z.object({
 export type Tag = z.infer<typeof tagSchema>
 export type BlipTag = z.infer<typeof blipTagSchema>
 
+export type TagWithCount = Pick<Tag, "id" | "name" | "description"> & {
+  blip_count: number
+}
+
 export const validateTag = tagSchema.parse
 export const validateBlipTag = blipTagSchema.parse

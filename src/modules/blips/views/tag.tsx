@@ -121,6 +121,13 @@ export function BlipsTagView() {
       />
       <main>
         <PageSection class="signals">
+          <nav class="blips-all-tags-nav">
+            <a
+              href={pages.blipsTags}
+              class="blips-all-tags-link">
+              {tr("browseAllTags")}
+            </a>
+          </nav>
           <Show
             when={hasInitialData()}
             fallback={
