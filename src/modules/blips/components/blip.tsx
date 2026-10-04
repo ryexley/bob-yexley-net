@@ -267,7 +267,12 @@ export function Blip(props: {
           <div
             class={cx("main", { interactive: canOpenDetails() })}
             onPointerEnter={preloadDetails}
-            onTouchStart={preloadDetails}>
+            onFocus={preloadDetails}
+            onTouchStart={preloadDetails}
+            onClick={openDetailsIfNeeded}
+            onKeyDown={onMainKeyDown}
+            role={canOpenDetails() ? "button" : undefined}
+            tabIndex={canOpenDetails() ? 0 : undefined}>
             <Show when={typeof local.onView === "function"}>
               <A
                 href={pages.blip(local.blip.id)}
@@ -275,7 +280,6 @@ export function Blip(props: {
                 aria-label={tr("actions.viewDetails")}
                 onClick={event => {
                   event.preventDefault()
-                  local.onView!(local.blip.id)
                 }}
               />
             </Show>
