@@ -12,44 +12,39 @@ import "./tag-cloud.css"
 
 const tr = ptr("blips.views.tagCloud")
 
+// Number of evenly spaced size/weight steps defined in tag-cloud.css
+const SIZE_STEPS = 6
+const DEFAULT_SIZE_STEP = 3
+
 export function TagCloudView() {
   const tagsData = createAsync(() => getAllPublicTagsWithCounts())
   const hasData = createMemo(() => tagsData() !== undefined)
   const tags = createMemo(() => tagsData() ?? [])
 
   const getSizeClass = (tag: TagWithCount): string => {
-    const count = tag.blip_count
     const allCounts = tags().map(t => t.blip_count)
     if (allCounts.length === 0) {
-      return "tag-cloud-size-3"
+      return `tag-cloud-size-${DEFAULT_SIZE_STEP}`
     }
 
     const minCount = Math.min(...allCounts)
     const maxCount = Math.max(...allCounts)
 
     if (minCount === maxCount) {
-      return "tag-cloud-size-3"
+      return `tag-cloud-size-${DEFAULT_SIZE_STEP}`
     }
 
     const logMin = Math.log(minCount || 1)
     const logMax = Math.log(maxCount)
-    const logCount = Math.log(count)
-    
-    const normalized = (logCount - logMin) / (logMax - logMin)
+    const logCount = Math.log(tag.blip_count || 1)
 
-    if (normalized < 0.2) {
-      return "tag-cloud-size-1"
-    }
-    if (normalized < 0.4) {
-      return "tag-cloud-size-2"
-    }
-    if (normalized < 0.6) {
-      return "tag-cloud-size-3"
-    }
-    if (normalized < 0.8) {
-      return "tag-cloud-size-4"
-    }
-    return "tag-cloud-size-5"
+    const normalized = (logCount - logMin) / (logMax - logMin)
+    const step = Math.min(
+      SIZE_STEPS,
+      Math.max(1, Math.floor(normalized * SIZE_STEPS) + 1),
+    )
+
+    return `tag-cloud-size-${step}`
   }
 
   return (
