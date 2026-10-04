@@ -1,69 +1,10 @@
 import type { APIEvent } from "@solidjs/start/server"
 import { getServerClient } from "@/lib/vendor/supabase/server"
 import { marked } from "marked"
+import { deriveBlipTitle, deriveBlipDescription } from "@/modules/blips/seo"
 
 const SITE_URL = "https://bob.yexley.net"
 const FEED_ITEM_LIMIT = 50
-
-// Helper to derive title from blip content
-function deriveBlipTitle(content: string, maxLength = 60): string {
-  // Try to extract first markdown heading
-  const headingMatch = content.match(/^#{1,6}\s+(.+)$/m)
-  if (headingMatch && headingMatch[1]) {
-    return headingMatch[1].trim()
-  }
-
-  // Fall back to first sentence of plain text
-  const plainText = content
-    .replace(/```[\s\S]*?```/g, " ")
-    .replace(/`([^`]+)`/g, "$1")
-    .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, "$1")
-    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, "$1")
-    .replace(/^#{1,6}\s+/gm, "")
-    .replace(/^>\s?/gm, "")
-    .replace(/^[*-+]\s+/gm, "")
-    .replace(/^\d+\.\s+/gm, "")
-    .replace(/[*_=~]+/g, "")
-    .replace(/\s+/g, " ")
-    .trim()
-
-  const firstSentence = plainText.split(/[.!?]/)[0]?.trim() || plainText
-  if (firstSentence.length <= maxLength) {
-    return firstSentence
-  }
-
-  const truncated = firstSentence.slice(0, maxLength).trimEnd()
-  const lastSpace = truncated.lastIndexOf(" ")
-  return lastSpace > 30 ? truncated.slice(0, lastSpace) : truncated
-}
-
-// Helper to derive description from blip content
-function deriveBlipDescription(content: string, maxLength = 155): string {
-  // Remove the first heading line
-  const withoutHeading = content.replace(/^#{1,6}\s+.+$/m, "").trim()
-  
-  // Convert to plain text
-  const plainText = withoutHeading
-    .replace(/```[\s\S]*?```/g, " ")
-    .replace(/`([^`]+)`/g, "$1")
-    .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, "$1")
-    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, "$1")
-    .replace(/^#{1,6}\s+/gm, "")
-    .replace(/^>\s?/gm, "")
-    .replace(/^[*-+]\s+/gm, "")
-    .replace(/^\d+\.\s+/gm, "")
-    .replace(/[*_=~]+/g, "")
-    .replace(/\s+/g, " ")
-    .trim()
-
-  if (plainText.length <= maxLength) {
-    return plainText
-  }
-
-  const truncated = plainText.slice(0, maxLength).trimEnd()
-  const lastSpace = truncated.lastIndexOf(" ")
-  return (lastSpace > 40 ? truncated.slice(0, lastSpace) : truncated) + "..."
-}
 
 // Escape XML special characters
 function escapeXml(unsafe: string): string {
