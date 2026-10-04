@@ -37,10 +37,10 @@ export function BlipsTagView() {
   const hasBlipItems = createMemo(() => visibleBlips().length > 0)
   let showMoreButtonRef: HTMLButtonElement | undefined
 
-  // Set 404 status during SSR when tag has no blips
-  // Check synchronously during render, not in an effect (effects don't run during SSR)
+  // Set 404 status during SSR when tag definitively has no blips
+  // Only set 404 if initialBlips has resolved (not undefined) AND is empty array
   const initialData = initialBlips()
-  if (initialData && initialData.length === 0) {
+  if (initialData !== undefined && initialData.length === 0) {
     const event = getRequestEvent()
     if (event && event.response) {
       event.response.status = 404
