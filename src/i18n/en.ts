@@ -340,6 +340,92 @@ export const en = {
       },
     },
   },
+  tags: {
+    components: {
+      tagEditDrawer: {
+        title: "Edit Tag",
+        actions: {
+          close: "Close",
+          cancel: "Cancel",
+          save: "Save",
+          saving: "Saving...",
+        },
+        fields: {
+          createdAt: "Created",
+          updatedAt: "Updated",
+          name: {
+            label: "Name",
+            placeholder: "tag-name",
+            hint: "Tag name will be converted to kebab-case (lowercase with hyphens).",
+          },
+          description: {
+            label: "Description",
+            placeholder: "Optional description for this tag...",
+            hint: "A brief description of what this tag represents.",
+          },
+          coverImage: {
+            label: "Cover Image",
+            placeholder: "https://example.com/image.jpg",
+            hint: "URL of an image to use as the cover for this tag in og:image previews.",
+          },
+        },
+        values: {
+          unavailable: "Unavailable",
+        },
+        notifications: {
+          saveSuccess: "Tag updated.",
+          saveError: "Unable to update this tag right now.",
+        },
+      },
+    },
+    views: {
+      index: {
+        pageTitle: "Tags",
+        metaDescription: "Admin tag management",
+        title: "Tags",
+        subtitle: "Manage tags, their cover images, and merge duplicate tags.",
+        loading: "Loading tags...",
+        summary: "Showing {visible} of {total} tags",
+        actions: {
+          backToAdmin: "admin",
+        },
+        sort: {
+          fieldLabel: "Sort by",
+          fields: {
+            name: "Name",
+            blipCount: "Blip count",
+          },
+          direction: {
+            asc: "Ascending",
+            desc: "Descending",
+          },
+        },
+        filters: {
+          search: {
+            placeholder: "Search by name or description",
+          },
+        },
+        mergeDialog: {
+          title: "Name conflict: merge tags?",
+          prompt:
+            'The name "{attemptedName}" is already used by tag "{existingTag}" ({blipCount, plural, one {# blip} other {# blips}}). Would you like to merge into the existing tag or change the name?',
+          actions: {
+            merge: "Merge into {targetTag}",
+            merging: "Merging...",
+            changeName: "Change the name",
+          },
+        },
+        empty: {
+          noTags: "No tags yet. Tags are created when blips are tagged.",
+          noMatches: "No tags match your search.",
+        },
+        notifications: {
+          mergeSuccess: "Tags merged successfully.",
+          mergeError: "Unable to merge tags right now.",
+        },
+      },
+    },
+  },
   blips: {
     views: {
       index: {
@@ -360,6 +446,14 @@ export const en = {
             loading: "Loading more...",
           },
         },
+      },
+      tagCloud: {
+        pageTitle: "All Tags",
+        metaDescription: "Browse all blip tags",
+        title: "Tags",
+        subtitle: "Browse blips by tag",
+        loading: "Loading tags...",
+        empty: "No tags with public blips yet.",
       },
       detail: {
         pageTitle: "Blip",
