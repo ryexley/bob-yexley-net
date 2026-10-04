@@ -1,7 +1,6 @@
 import { createAsync, useNavigate } from "@solidjs/router"
 import { Meta, Title } from "@solidjs/meta"
 import { createEffect, createMemo, createSignal, For, Show } from "solid-js"
-import { Button } from "@/components/button"
 import { useConfirm } from "@/components/confirm-dialog"
 import { Icon, LoadingSpinner } from "@/components/icon"
 import { Input } from "@/components/input"
