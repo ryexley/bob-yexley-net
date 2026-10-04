@@ -1,5 +1,3 @@
-import { getEnv } from "@/util/env"
-
 /**
  * Shared media URL / object-key helpers (spec §13.4).
  *
@@ -58,9 +56,9 @@ export function mimeTypeToExtension(mimeType: string): string {
 
 /** Strip a single trailing slash so key concatenation is clean. */
 function storageBaseUrl(): string {
-  const base = getEnv().MEDIA_STORAGE_URL || ""
+  const base = import.meta.env.VITE_MEDIA_STORAGE_URL || ""
   if (!base) {
-    console.warn("MEDIA_STORAGE_URL is not configured")
+    console.warn("VITE_MEDIA_STORAGE_URL is not configured")
   }
   return base.replace(/\/+$/, "")
 }
