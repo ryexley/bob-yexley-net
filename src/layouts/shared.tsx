@@ -48,6 +48,12 @@ export const links = [
     rel: "apple-touch-icon",
     href: "/favicon-emoji.png",
   },
+  {
+    rel: "alternate",
+    type: "application/rss+xml",
+    title: "bob.yexley.net — Blips",
+    href: "/rss.xml",
+  },
 ]
 
 const DEFAULT_SOCIAL_IMAGE_PATH = "/og-image.jpg"

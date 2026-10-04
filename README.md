@@ -24,6 +24,35 @@ This project now uses the Supabase CLI for local database development and schema
 - Do not make new schema changes in the hosted Supabase dashboard.
 - Do not add new schema changes to `database/`.
 
+### Quick start for Cloud Agents / automated testing
+
+1. **Start local Supabase stack** (requires Docker):
+   ```bash
+   pnpm db:start
+   ```
+
+2. **Apply migrations and seed data:**
+   ```bash
+   pnpm db:bootstrap:fixtures
+   ```
+   This creates fixture accounts and seeds published blips with tags for testing.
+
+3. **Configure `.env.local`** with local credentials:
+   ```bash
+   pnpm db:status  # Prints local API URL and keys
+   ```
+   Copy the `API URL`, `anon key`, and `service_role key` into `.env.local`:
+   ```env
+   VITE_SUPABASE_URL=http://127.0.0.1:54321
+   VITE_SUPABASE_ANON_KEY=<anon key from db:status>
+   SUPABASE_SERVICE_ROLE_KEY=<service_role key from db:status>
+   ```
+
+4. **Run production build:**
+   ```bash
+   pnpm build && pnpm start
+   ```
+
 ## Local database commands
 
 - `pnpm db:start` starts the local Supabase stack.

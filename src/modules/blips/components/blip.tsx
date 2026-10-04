@@ -267,12 +267,18 @@ export function Blip(props: {
           <div
             class={cx("main", { interactive: canOpenDetails() })}
             onPointerEnter={preloadDetails}
-            onFocus={preloadDetails}
-            onTouchStart={preloadDetails}
-            onClick={openDetailsIfNeeded}
-            onKeyDown={onMainKeyDown}
-            role={canOpenDetails() ? "button" : undefined}
-            tabIndex={canOpenDetails() ? 0 : undefined}>
+            onTouchStart={preloadDetails}>
+            <Show when={typeof local.onView === "function"}>
+              <A
+                href={pages.blip(local.blip.id)}
+                class="stretched-link"
+                aria-label={tr("actions.viewDetails")}
+                onClick={event => {
+                  event.preventDefault()
+                  local.onView!(local.blip.id)
+                }}
+              />
+            </Show>
             <header>
               <Tooltip
                 content={timestampTooltip()}
