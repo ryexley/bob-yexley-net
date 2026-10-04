@@ -221,8 +221,20 @@ export function BlipView() {
     return content ? deriveBlipDescription(content) : ""
   })
   const seoTitle = createMemo(() => formatPageTitle(blipTitle()))
+  
+  // SSR-safe media fetch for og:image (simplified, root blip only)
+  const seoMediaQuery = createAsync(() => {
+    const rootId = blip()?.id
+    if (!rootId) return Promise.resolve([])
+    return getBlipMediaFor([rootId])
+  })
+  const seoRootMedia = createMemo(() => {
+    const media = seoMediaQuery.latest ?? []
+    return media.filter(m => m.blip_id === blip()?.id) ?? []
+  })
+  
   const ogImageUrl = createMemo(() => {
-    const media = rootMedia()
+    const media = seoRootMedia()
     if (media.length === 0) {
       return "/og-image.jpg"
     }
@@ -247,7 +259,7 @@ export function BlipView() {
   })
 
   const ogImageDimensions = createMemo(() => {
-    const media = rootMedia()
+    const media = seoRootMedia()
     if (media.length === 0) {
       return { width: 1200, height: 630 }
     }
@@ -263,7 +275,7 @@ export function BlipView() {
     return null
   })
   const ogImageAlt = createMemo(() => {
-    const media = rootMedia()
+    const media = seoRootMedia()
     if (media.length === 0) {
       return undefined
     }
