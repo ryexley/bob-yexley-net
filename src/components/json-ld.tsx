@@ -10,11 +10,12 @@ export function JsonLd(props: JsonLdProps): JSX.Element {
     return json.replace(/</g, "\\u003c")
   }
 
-  // Using a function to create the element to ensure SSR compatibility
   return (
-    <script type="application/ld+json">
-      {jsonString()}
-    </script>
+    <script 
+      type="application/ld+json"
+      // @ts-expect-error - innerHTML works in SolidJS
+      innerHTML={jsonString()}
+    />
   )
 }
 

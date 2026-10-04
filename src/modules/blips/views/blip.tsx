@@ -272,18 +272,6 @@ export function BlipView() {
     if (!currentBlip?.updated_at) return undefined
     return new Date(currentBlip.updated_at).toISOString()
   })
-  const blipTags = createMemo(() => visibleRootTags())
-  const ogUrl = createMemo(() => {
-    const siteUrl = (import.meta.env.VITE_SITE_URL as string | undefined)
-      ?.trim()
-      .replace(/\/+$/, "")
-    if (!siteUrl) {
-      return ""
-    }
-
-    const path = location.pathname || `/blips/${params.id}`
-    return `${siteUrl}${path.startsWith("/") ? path : `/${path}`}`
-  })
   const visibleRootTags = createMemo(() => {
     const rootBlip = blip()
     if (!rootBlip) {
@@ -295,6 +283,19 @@ export function BlipView() {
     }
 
     return hydratedRootTags()
+  })
+  const blipTags = createMemo(() => visibleRootTags())
+  
+  const ogUrl = createMemo(() => {
+    const siteUrl = (import.meta.env.VITE_SITE_URL as string | undefined)
+      ?.trim()
+      .replace(/\/+$/, "")
+    if (!siteUrl) {
+      return ""
+    }
+
+    const path = location.pathname || `/blips/${params.id}`
+    return `${siteUrl}${path.startsWith("/") ? path : `/${path}`}`
   })
   const visibleUpdates = createMemo(() => {
     const allUpdates = updates().filter(update =>
@@ -933,13 +934,18 @@ export function BlipView() {
           publishedTime={publishedTime()}
           modifiedTime={modifiedTime()}
         />
+      </Show>
+      {/* BlogPosting JSON-LD renders client-side due to SolidJS SSR limitations with
+          script tags in routes with async data dependencies. Google reads client-side 
+          JSON-LD, so this is acceptable for SEO. Homepage JSON-LD renders in SSR. */}
+      <Show when={blip()}>
         <JsonLd
           data={createBlogPostingSchema({
             headline: blipTitle(),
             datePublished: publishedTime() ?? new Date().toISOString(),
             dateModified: modifiedTime(),
             canonicalUrl: ogUrl(),
-            image: ogUrl() && ogImageUrl() ? new URL(ogImageUrl(), ogUrl()).toString() : undefined,
+            image: ogImageUrl() && ogUrl() ? new URL(ogImageUrl(), ogUrl()).toString() : undefined,
             keywords: blipTags(),
           })}
         />
