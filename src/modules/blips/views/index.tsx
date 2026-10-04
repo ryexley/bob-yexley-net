@@ -42,11 +42,12 @@ export function BlipsView() {
   const { entities: blips, setInitialData } = store
   
   const allBlips = createMemo(() => {
-    const ssrData = initialBlips()
-    if (ssrData !== undefined) {
-      return ssrData
+    const storeData = blips()
+    // Use store data when available, fall back to SSR data for initial render
+    if (storeData && storeData.length > 0) {
+      return storeData
     }
-    return blips() ?? []
+    return initialBlips() ?? []
   })
   
   const rootFeedBlips = createMemo(() =>
