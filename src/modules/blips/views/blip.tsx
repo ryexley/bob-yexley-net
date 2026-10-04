@@ -185,10 +185,11 @@ export function BlipView() {
     return fromStore ?? blipQuery() ?? null
   })
 
-  // Set 404 status during SSR when blip is not found
-  // Check synchronously during render, not in an effect (effects don't run during SSR)
-  const query = blipQuery()
-  if (query === null) {
+  // Set 404 status during SSR when blip is definitively not found
+  // Only set 404 if query has resolved (not undefined) AND result is null
+  // blipGraphQuery.latest returns undefined while loading, then the result or null
+  const query = blipGraphQuery.latest
+  if (query !== undefined && query === null) {
     const event = getRequestEvent()
     if (event && event.response) {
       event.response.status = 404
