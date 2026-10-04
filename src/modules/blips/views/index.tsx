@@ -1,6 +1,6 @@
 import { createAsync, useNavigate } from "@solidjs/router"
-import { Meta, Title } from "@solidjs/meta"
 import { createEffect, createMemo, createSignal, onCleanup, Show, untrack } from "solid-js"
+import { Seo } from "@/components/seo"
 import { Button } from "@/components/button"
 import { Blip as BlipIcon } from "@/components/icon"
 import { BlipCardSkeletonList } from "@/modules/blips/components/blip-card-skeleton"
@@ -8,11 +8,12 @@ import { PageSection } from "@/modules/home/components/page-section"
 import { Blips } from "@/modules/blips/components/blips"
 import { BLIP_TYPES, blipStore, getBlips } from "@/modules/blips/data"
 import { isBlipPubliclyVisible } from "@/modules/blips/util"
+import { BLIPS_TITLE, BLIPS_DESCRIPTION } from "@/modules/blips/seo"
 import { useSupabase } from "@/context/services-context"
 import { useAuth } from "@/context/auth-context"
 import { ptr } from "@/i18n"
 import { pages } from "@/urls"
-import { windowTitle, withWindow } from "@/util/browser"
+import { withWindow } from "@/util/browser"
 import "./index.css"
 
 const BLIPS_PAGE_SIZE = 20
@@ -198,10 +199,14 @@ export function BlipsView() {
 
   return (
     <>
-      <Title>{windowTitle(tr("pageTitle"))}</Title>
-      <Meta
-        name="description"
-        content={tr("metaDescription")}
+      <Seo
+        title={BLIPS_TITLE}
+        description={BLIPS_DESCRIPTION}
+        path={pages.blips}
+        type="website"
+        image="/og-image.jpg"
+        imageWidth={1200}
+        imageHeight={630}
       />
       <main>
         <PageSection class="signals blips-index">

@@ -1,6 +1,6 @@
 import { A } from "@solidjs/router"
-import { Meta, Title } from "@solidjs/meta"
 import { getRequestEvent } from "solid-js/web"
+import { Seo } from "@/components/seo"
 
 export default function NotFound() {
   const event = getRequestEvent()
@@ -10,8 +10,13 @@ export default function NotFound() {
 
   return (
     <>
-      <Title>Page not found · Bob Yexley</Title>
-      <Meta name="robots" content="noindex" />
+      <Seo
+        title="Page not found · Bob Yexley"
+        description="The page you're looking for doesn't exist."
+        path="/404"
+        type="website"
+        noindex={true}
+      />
       <main class="text-center mx-auto text-gray-700 p-4">
         <h1 class="max-6-xs text-6xl text-sky-700 font-thin uppercase my-16">
           Page Not Found
