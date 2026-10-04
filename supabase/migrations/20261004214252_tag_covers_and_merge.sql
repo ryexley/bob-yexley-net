@@ -1,78 +1,96 @@
--- Add cover_image column to tags
-ALTER TABLE public.tags ADD COLUMN cover_image TEXT;
+-- Tag cover images + admin tag merge.
+--
+-- Notes on what this migration deliberately does NOT do:
+-- * No new RLS policies on public.tags. The baseline already has
+--   "tags_select_public" (SELECT USING true, all roles) and
+--   "tags_update_valid_session" / "tags_insert_valid_session" /
+--   "tags_delete_valid_session" for authenticated users. Additional permissive
+--   policies would be redundant (permissive policies are OR'ed together), and
+--   admin edits from /a/tags go through the server-side service-role client.
+-- * view_blips is NOT recreated. The blip page resolves tag covers with a
+--   separate lookup, so the view definition, grants and security_invoker
+--   setting are left untouched.
 
-COMMENT ON COLUMN public.tags.cover_image IS 'R2 storage key or absolute URL for tag cover image used in og:image';
+alter table public.tags
+  add column if not exists cover_image text;
 
--- RLS policies for tag cover images
--- Admins can update tags (including cover_image)
-CREATE POLICY "Admins can update tags"
-  ON public.tags
-  FOR UPDATE
-  TO authenticated
-  USING (
-    EXISTS (
-      SELECT 1 FROM public.user_profiles
-      WHERE user_profiles.user_id = auth.uid()
-      AND user_profiles.role IN ('admin', 'superuser')
-    )
-  );
+comment on column public.tags.cover_image is
+  'R2 storage key (relative to the public media base URL) or absolute URL for the tag cover image, used as an og:image fallback';
 
--- Public read access to tags
-CREATE POLICY "Public read access to tags"
-  ON public.tags
-  FOR SELECT
-  TO anon, authenticated
-  USING (true);
-
--- Function to merge tags (admin-only)
-CREATE OR REPLACE FUNCTION public.merge_tags(
-  source_id UUID,
-  target_id UUID
+-- Merge source tag into target tag (admin-only).
+-- Moves every blip association from source to target (skipping blips that
+-- already carry the target tag), copies description/cover_image onto the
+-- target when the target has none, then deletes the source tag.
+create or replace function public.merge_tags(
+  source_id uuid,
+  target_id uuid
 )
-RETURNS VOID
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = public
-AS $$
-DECLARE
-  is_admin BOOLEAN;
-BEGIN
-  -- Check if current user is admin
-  SELECT EXISTS (
-    SELECT 1 FROM public.user_profiles
-    WHERE user_profiles.user_id = auth.uid()
-    AND user_profiles.role IN ('admin', 'superuser')
-  ) INTO is_admin;
+returns void
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+begin
+  if not (
+    coalesce(auth.role(), '') = 'service_role'
+    or (public.is_admin() and app_security.session_is_valid())
+  ) then
+    raise exception 'Only admins can merge tags'
+      using errcode = '42501';
+  end if;
 
-  IF NOT is_admin THEN
-    RAISE EXCEPTION 'Only admins can merge tags';
-  END IF;
+  if source_id is null or target_id is null then
+    raise exception 'Source and target tags are required'
+      using errcode = '22004';
+  end if;
 
-  -- Validate inputs
-  IF source_id = target_id THEN
-    RAISE EXCEPTION 'Source and target tags must be different';
-  END IF;
+  if source_id = target_id then
+    raise exception 'Source and target tags must be different'
+      using errcode = '22023';
+  end if;
 
-  -- Move blip_tags from source to target (handle duplicates with ON CONFLICT)
-  INSERT INTO public.blip_tags (blip_id, tag_id, created_at)
-  SELECT blip_id, target_id, created_at
-  FROM public.blip_tags
-  WHERE tag_id = source_id
-  ON CONFLICT (blip_id, tag_id) DO NOTHING;
+  -- Lock both rows so concurrent edits/merges can't interleave.
+  perform 1
+  from public.tags
+  where id in (source_id, target_id)
+  order by id
+  for update;
 
-  -- Update target tag with source data if target fields are null
-  UPDATE public.tags
-  SET
-    description = COALESCE(tags.description, (SELECT description FROM public.tags WHERE id = source_id)),
-    cover_image = COALESCE(tags.cover_image, (SELECT cover_image FROM public.tags WHERE id = source_id))
-  WHERE id = target_id;
+  if not exists (select 1 from public.tags where id = source_id) then
+    raise exception 'Source tag % does not exist', source_id
+      using errcode = 'P0002';
+  end if;
 
-  -- Delete source tag's blip_tags associations
-  DELETE FROM public.blip_tags WHERE tag_id = source_id;
+  if not exists (select 1 from public.tags where id = target_id) then
+    raise exception 'Target tag % does not exist', target_id
+      using errcode = 'P0002';
+  end if;
 
-  -- Delete source tag
-  DELETE FROM public.tags WHERE id = source_id;
-END;
+  insert into public.blip_tags (blip_id, tag_id, created_at)
+  select bt.blip_id, target_id, bt.created_at
+  from public.blip_tags bt
+  where bt.tag_id = source_id
+  on conflict (blip_id, tag_id) do nothing;
+
+  update public.tags t
+  set
+    description = coalesce(t.description, s.description),
+    cover_image = coalesce(t.cover_image, s.cover_image)
+  from public.tags s
+  where t.id = target_id
+    and s.id = source_id;
+
+  delete from public.blip_tags where tag_id = source_id;
+  delete from public.tags where id = source_id;
+end;
 $$;
 
-COMMENT ON FUNCTION public.merge_tags IS 'Merge source tag into target tag, moving all blip associations (admin-only)';
+comment on function public.merge_tags(uuid, uuid) is
+  'Merge source tag into target tag, moving all blip associations (admin-only)';
+
+-- Functions are executable by PUBLIC by default, and Supabase's default
+-- privileges also grant EXECUTE to anon/authenticated explicitly.
+revoke all on function public.merge_tags(uuid, uuid) from public;
+revoke all on function public.merge_tags(uuid, uuid) from anon;
+grant execute on function public.merge_tags(uuid, uuid) to authenticated;
+grant execute on function public.merge_tags(uuid, uuid) to service_role;
