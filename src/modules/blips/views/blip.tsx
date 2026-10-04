@@ -261,7 +261,9 @@ export function BlipView() {
   const seoMediaQuery = createAsync(async () => {
     // Fetch graph to get update IDs (uses cached result if available)
     const graph = await getBlipGraph(params.id)
-    if (!graph) return []
+    if (!graph) {
+      return []
+    }
     
     // Get published update IDs (only public updates for og:image)
     const publishedUpdateIds = (graph.updates ?? [])
@@ -437,13 +439,17 @@ export function BlipView() {
   const canonicalPath = createMemo(() => `/blips/${params.id}`)
   const publishedTime = createMemo(() => {
     const currentBlip = blip()
-    if (!currentBlip) return undefined
+    if (!currentBlip) {
+      return undefined
+    }
     const timestamp = getBlipPublishTimestamp(currentBlip)
     return new Date(timestamp).toISOString()
   })
   const modifiedTime = createMemo(() => {
     const currentBlip = blip()
-    if (!currentBlip?.updated_at) return undefined
+    if (!currentBlip?.updated_at) {
+      return undefined
+    }
     return new Date(currentBlip.updated_at).toISOString()
   })
   const visibleRootTags = createMemo(() => {

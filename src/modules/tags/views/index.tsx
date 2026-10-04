@@ -33,7 +33,6 @@ export function TagsView() {
   const [searchValue, setSearchValue] = createSignal("")
   const [sortField, setSortField] = createSignal<"name" | "blipCount">("name")
   const [sortDirection, setSortDirection] = createSignal<"asc" | "desc">("asc")
-  let nameInputRef: HTMLInputElement | undefined
 
   createEffect(() => {
     const result = adminTagsQuery()
@@ -72,7 +71,6 @@ export function TagsView() {
   )
   const hasQueryResult = createMemo(() => adminTagsQuery() !== undefined)
   const pageError = createMemo(() => adminTagsQuery()?.error ?? null)
-  const hasFiltersApplied = createMemo(() => searchValue().trim().length > 0)
   
   const filteredTags = createMemo(() => {
     const query = searchValue().trim().toLowerCase()

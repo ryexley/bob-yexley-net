@@ -37,10 +37,18 @@ export function TagCloudView() {
     
     const normalized = (logCount - logMin) / (logMax - logMin)
 
-    if (normalized < 0.2) return "size-1"
-    if (normalized < 0.4) return "size-2"
-    if (normalized < 0.6) return "size-3"
-    if (normalized < 0.8) return "size-4"
+    if (normalized < 0.2) {
+      return "size-1"
+    }
+    if (normalized < 0.4) {
+      return "size-2"
+    }
+    if (normalized < 0.6) {
+      return "size-3"
+    }
+    if (normalized < 0.8) {
+      return "size-4"
+    }
     return "size-5"
   }
 
