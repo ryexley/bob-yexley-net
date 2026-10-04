@@ -222,15 +222,11 @@ export function BlipView() {
   })
   const seoTitle = createMemo(() => formatPageTitle(blipTitle()))
   
-  // SSR-safe media fetch for og:image (simplified, root blip only)
-  const seoMediaQuery = createAsync(() => {
-    const rootId = blip()?.id
-    if (!rootId) return Promise.resolve([])
-    return getBlipMediaFor([rootId])
-  })
+  // SSR-safe media fetch for og:image (uses params.id directly for SSR)
+  const seoMediaQuery = createAsync(() => getBlipMediaFor([params.id]))
   const seoRootMedia = createMemo(() => {
     const media = seoMediaQuery.latest ?? []
-    return media.filter(m => m.blip_id === blip()?.id) ?? []
+    return media.filter(m => m.blip_id === params.id)
   })
   
   const ogImageUrl = createMemo(() => {
