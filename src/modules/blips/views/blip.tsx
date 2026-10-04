@@ -274,80 +274,68 @@ export function BlipView() {
     return media
   })
   
-  // Media for og:image: root media first, then first update media as fallback
-  const seoRootMedia = createMemo(() => {
+  // Choose og:image source in correct priority order
+  const seoImageSource = createMemo((): 
+    | { kind: 'media'; row: BlipMediaRow }
+    | { kind: 'audio'; cover: { coverImage: string; title?: string; width?: number; height?: number } }
+    | null => {
     const allMedia = seoMediaQuery.latest ?? []
     const mediaByBlip = groupMediaByBlipId(allMedia)
+    const graph = blipGraphQuery.latest
     
-    // Root media first
+    // (1) Root blip_media
     const rootMedia = mediaByBlip[params.id] ?? []
     if (rootMedia.length > 0) {
-      return rootMedia
+      return { kind: 'media', row: rootMedia[0] }
     }
     
-    // Fallback: first media from published updates (in creation order)
-    // Re-compute published update IDs from the graph that was fetched
-    const graph = blipGraphQuery.latest
-    if (!graph) return []
-    
-    const publishedUpdateIds = (graph.updates ?? [])
-      .filter(update => update.published)
-      .map(update => update.id)
-    
-    for (const updateId of publishedUpdateIds) {
-      const updateMedia = mediaByBlip[updateId]
-      if (updateMedia?.length > 0) {
-        return updateMedia
-      }
-    }
-    
-    return []
-  })
-  
-  // Audio cover for og:image fallback (after media, before default)
-  const seoAudioCover = createMemo(() => {
-    // If we have media, don't look for audio
-    if ((seoRootMedia()?.length ?? 0) > 0) {
-      return null
-    }
-    
-    // Check root blip content for audio coverImage
+    // (2) Root blip audio coverImage
     const rootBlip = blipQuery()
     if (rootBlip?.content) {
       const audioCover = extractFirstAudioCoverImage(rootBlip.content)
       if (audioCover) {
-        return audioCover
+        return { kind: 'audio', cover: audioCover }
       }
     }
     
-    // Check published updates in order
-    const graph = blipGraphQuery.latest
-    if (!graph) return null
-    
-    const publishedUpdates = (graph.updates ?? [])
-      .filter(update => update.published)
-    
-    for (const update of publishedUpdates) {
-      if (update.content) {
-        const audioCover = extractFirstAudioCoverImage(update.content)
-        if (audioCover) {
-          return audioCover
+    // (3) For each published update in page order: media, else audio coverImage
+    if (graph) {
+      const publishedUpdates = (graph.updates ?? [])
+        .filter(update => update.published)
+      
+      for (const update of publishedUpdates) {
+        // Check update's media first
+        const updateMedia = mediaByBlip[update.id] ?? []
+        if (updateMedia.length > 0) {
+          return { kind: 'media', row: updateMedia[0] }
+        }
+        
+        // Then check update's audio coverImage
+        if (update.content) {
+          const audioCover = extractFirstAudioCoverImage(update.content)
+          if (audioCover) {
+            return { kind: 'audio', cover: audioCover }
+          }
         }
       }
     }
     
+    // (4) No source found
     return null
   })
   
   const ogImageUrl = createMemo(() => {
-    const media = seoRootMedia()
+    const source = seoImageSource()
     
-    // (1) Use blip_media if available
-    if (media.length > 0) {
-      const firstMedia = media[0]
-      const storageKey = firstMedia.storage_key
-      const mimeType = firstMedia.mime_type
-      const processingStatus = firstMedia.processing_status
+    if (!source) {
+      return "/og-image.jpg"
+    }
+    
+    if (source.kind === 'media') {
+      const { row } = source
+      const storageKey = row.storage_key
+      const mimeType = row.mime_type
+      const processingStatus = row.processing_status
 
       // Videos and GIFs use Thumb variant
       if (mimeType.startsWith("video/") || mimeType === "image/gif") {
@@ -363,62 +351,57 @@ export function BlipView() {
       }
     }
     
-    // (2) Use audio coverImage if available
-    const audioCover = seoAudioCover()
-    if (audioCover) {
-      return audioCover.coverImage
+    if (source.kind === 'audio') {
+      return source.cover.coverImage
     }
 
-    // (3) Default fallback
     return "/og-image.jpg"
   })
 
   const ogImageDimensions = createMemo(() => {
-    const media = seoRootMedia()
+    const source = seoImageSource()
     
-    // Use media dimensions if available
-    if (media.length > 0) {
-      const firstMedia = media[0]
-      const width = firstMedia.width
-      const height = firstMedia.height
-
-      if (width != null && height != null && width > 0 && height > 0) {
-        return { width, height }
-      }
-      return null
-    }
-    
-    // Use audio cover dimensions if provided
-    const audioCover = seoAudioCover()
-    if (audioCover) {
-      const width = audioCover.width
-      const height = audioCover.height
-      if (width != null && height != null && width > 0 && height > 0) {
-        return { width, height }
-      }
-      return null
-    }
-    
-    // Default dimensions only for default image
-    if (ogImageUrl() === "/og-image.jpg") {
+    if (!source) {
       return { width: 1200, height: 630 }
     }
-
-    return null
-  })
-  const ogImageAlt = createMemo(() => {
-    const media = seoRootMedia()
     
-    // Use media alt
-    if (media.length > 0) {
-      const firstMedia = media[0]
-      return firstMedia.media_type === "image" ? blipTitle() : undefined
+    if (source.kind === 'media') {
+      const { row } = source
+      const width = row.width
+      const height = row.height
+
+      if (width != null && height != null && width > 0 && height > 0) {
+        return { width, height }
+      }
+      return null
     }
     
-    // Use audio title as alt
-    const audioCover = seoAudioCover()
-    if (audioCover?.title) {
-      return audioCover.title
+    if (source.kind === 'audio') {
+      const { cover } = source
+      const width = cover.width
+      const height = cover.height
+      if (width != null && height != null && width > 0 && height > 0) {
+        return { width, height }
+      }
+      return null
+    }
+    
+    return { width: 1200, height: 630 }
+  })
+  
+  const ogImageAlt = createMemo(() => {
+    const source = seoImageSource()
+    
+    if (!source) {
+      return undefined
+    }
+    
+    if (source.kind === 'media') {
+      return source.row.media_type === "image" ? blipTitle() : undefined
+    }
+    
+    if (source.kind === 'audio' && source.cover.title) {
+      return source.cover.title
     }
     
     return undefined
