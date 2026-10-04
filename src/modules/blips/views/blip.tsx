@@ -281,15 +281,17 @@ export function BlipView() {
     const mimeType = firstMedia.mime_type
     const processingStatus = firstMedia.processing_status
 
+    // Videos and GIFs use Thumb variant
+    if (mimeType.startsWith("video/") || mimeType === "image/gif") {
+      return variantUrl(storageKey, MediaVariant.Thumb)
+    }
+
+    // Other images use Large variant when complete, else original
     if (mimeType.startsWith("image/")) {
       if (processingStatus === "complete") {
         return variantUrl(storageKey, MediaVariant.Large)
       }
       return originalUrl(storageKey, mimeType)
-    }
-
-    if (mimeType.startsWith("video/") || mimeType === "image/gif") {
-      return variantUrl(storageKey, MediaVariant.Thumb)
     }
 
     return "/og-image.jpg"
