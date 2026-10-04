@@ -39,8 +39,17 @@ export function BlipsView() {
     subscribe: false,
   })
   const { entities: blips, setInitialData } = store
+  
+  const allBlips = createMemo(() => {
+    const ssrData = initialBlips()
+    if (ssrData !== undefined) {
+      return ssrData
+    }
+    return blips() ?? []
+  })
+  
   const rootFeedBlips = createMemo(() =>
-    (blips() ?? []).filter(
+    allBlips().filter(
       blip => blip.parent_id === null && blip.blip_type === BLIP_TYPES.ROOT,
     ),
   )

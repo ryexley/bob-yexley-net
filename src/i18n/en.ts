@@ -449,6 +449,7 @@ export const en = {
         },
         actions: {
           readMore: "Read more",
+          viewDetails: "View blip details",
           addReaction: "Add reaction",
           updatesTooltip: "{count, plural, one {# update} other {# updates}}",
           commentsTooltip:

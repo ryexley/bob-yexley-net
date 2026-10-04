@@ -40,7 +40,8 @@ export function Signals(props) {
   })
 
   const visibleBlips = () => {
-    const allBlips = blips() ?? []
+    const ssrData = initialBlips()
+    const allBlips = ssrData !== undefined ? ssrData : (blips() ?? [])
     if (isAuthenticated()) {
       return allBlips
     }
