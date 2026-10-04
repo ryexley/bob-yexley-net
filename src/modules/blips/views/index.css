@@ -51,3 +51,15 @@
   padding: 1.5rem 0;
   text-align: center;
 }
+
+.blips-all-tags-nav {
+  display: flex;
+  justify-content: flex-end;
+  margin: 0 auto 0.5rem;
+  max-width: 64rem;
+}
+
+.blips-all-tags-link {
+  color: var(--colors-links);
+  font-size: 0.875rem;
+}

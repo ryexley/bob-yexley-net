@@ -13,7 +13,7 @@
 }
 
 .tag-edit-drawer-summary-meta {
-  color: var(--text-secondary);
+  color: var(--colors-mono-09);
   font-size: 0.875rem;
 }
 
@@ -28,7 +28,7 @@
   flex-direction: column;
   gap: 0.5rem;
   padding: 1rem;
-  background: var(--surface);
+  background: var(--colors-mono-03);
   border-radius: 0.5rem;
   font-size: 0.875rem;
 }
@@ -41,7 +41,7 @@
 
 .tag-edit-drawer-detail-label {
   font-weight: 500;
-  color: var(--text-secondary);
+  color: var(--colors-mono-09);
 }
 
 .tag-edit-drawer-fieldset {
@@ -64,19 +64,19 @@
 .tag-edit-drawer-notes-input {
   width: 100%;
   padding: 0.75rem;
-  border: 1px solid var(--border);
+  border: 1px solid var(--colors-mono-07);
   border-radius: 0.5rem;
   font-family: inherit;
   font-size: 0.875rem;
   line-height: 1.5;
-  background: var(--background);
-  color: var(--text);
+  background: var(--colors-mono-02);
+  color: var(--colors-mono-11);
   resize: vertical;
   min-height: 6rem;
 }
 
 .tag-edit-drawer-notes-input:focus {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--colors-links);
   outline-offset: 2px;
 }
 
@@ -87,5 +87,5 @@
 
 .tag-edit-drawer-field-hint {
   font-size: 0.75rem;
-  color: var(--text-tertiary);
+  color: var(--colors-mono-08);
 }

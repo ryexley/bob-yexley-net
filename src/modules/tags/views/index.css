@@ -9,7 +9,7 @@
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  color: var(--accent);
+  color: var(--colors-links);
   text-decoration: none;
   font-size: 0.875rem;
   margin-bottom: 2rem;
@@ -33,7 +33,7 @@
 }
 
 .tags-view-header-copy p {
-  color: var(--text-secondary);
+  color: var(--colors-mono-09);
   margin: 0;
 }
 
@@ -43,12 +43,12 @@
   align-items: center;
   gap: 1rem;
   padding: 3rem;
-  color: var(--text-secondary);
+  color: var(--colors-mono-09);
 }
 
 .tags-view-toolbar {
   padding: 1rem;
-  background: var(--surface);
+  background: var(--colors-mono-03);
   border-radius: 0.5rem;
 }
 
@@ -67,21 +67,21 @@
   justify-content: center;
   width: 2.5rem;
   height: 2.5rem;
-  border: 1px solid var(--border);
+  border: 1px solid var(--colors-mono-07);
   border-radius: 0.5rem;
-  background: var(--background);
-  color: var(--text);
+  background: var(--colors-mono-02);
+  color: var(--colors-mono-11);
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .tags-view-toolbar-icon-button:hover {
-  background: var(--surface);
+  background: var(--colors-mono-03);
 }
 
 .tags-view-summary {
   font-size: 0.875rem;
-  color: var(--text-secondary);
+  color: var(--colors-mono-09);
   padding: 0 0.5rem;
 }
 
@@ -96,8 +96,8 @@
   flex-direction: column;
   gap: 0.75rem;
   padding: 1rem;
-  background: var(--surface);
-  border: 1px solid var(--border);
+  background: var(--colors-mono-03);
+  border: 1px solid var(--colors-mono-07);
   border-radius: 0.5rem;
   text-align: left;
   cursor: pointer;
@@ -105,7 +105,7 @@
 }
 
 .tags-view-card:hover {
-  border-color: var(--accent);
+  border-color: var(--colors-links);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
@@ -137,13 +137,13 @@
 
 .tags-view-card-meta {
   font-size: 0.75rem;
-  color: var(--text-secondary);
+  color: var(--colors-mono-09);
   margin: 0;
 }
 
 .tags-view-card-description {
   font-size: 0.875rem;
-  color: var(--text-secondary);
+  color: var(--colors-mono-09);
   margin: 0;
   line-height: 1.5;
   display: -webkit-box;
@@ -155,5 +155,5 @@
 .tags-view-empty-state {
   text-align: center;
   padding: 3rem;
-  color: var(--text-secondary);
+  color: var(--colors-mono-09);
 }

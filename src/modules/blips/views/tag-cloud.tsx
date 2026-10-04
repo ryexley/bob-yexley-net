@@ -21,14 +21,14 @@ export function TagCloudView() {
     const count = tag.blip_count
     const allCounts = tags().map(t => t.blip_count)
     if (allCounts.length === 0) {
-      return "size-3"
+      return "tag-cloud-size-3"
     }
 
     const minCount = Math.min(...allCounts)
     const maxCount = Math.max(...allCounts)
 
     if (minCount === maxCount) {
-      return "size-3"
+      return "tag-cloud-size-3"
     }
 
     const logMin = Math.log(minCount || 1)
@@ -38,18 +38,18 @@ export function TagCloudView() {
     const normalized = (logCount - logMin) / (logMax - logMin)
 
     if (normalized < 0.2) {
-      return "size-1"
+      return "tag-cloud-size-1"
     }
     if (normalized < 0.4) {
-      return "size-2"
+      return "tag-cloud-size-2"
     }
     if (normalized < 0.6) {
-      return "size-3"
+      return "tag-cloud-size-3"
     }
     if (normalized < 0.8) {
-      return "size-4"
+      return "tag-cloud-size-4"
     }
-    return "size-5"
+    return "tag-cloud-size-5"
   }
 
   return (
@@ -61,8 +61,11 @@ export function TagCloudView() {
       />
       <PageSection
         id="tag-cloud"
-        title={tr("title")}
-        subtitle={tr("subtitle")}>
+        class="tag-cloud-section">
+        <header class="tag-cloud-header">
+          <h1 class="tag-cloud-title">{tr("title")}</h1>
+          <p class="tag-cloud-subtitle">{tr("subtitle")}</p>
+        </header>
         <Show
           when={hasData()}
           fallback={
@@ -84,7 +87,7 @@ export function TagCloudView() {
                   <a
                     href={pages.blipsTag(tag.name)}
                     class={`tag-cloud-link ${getSizeClass(tag)}`}
-                    title={`${tag.name} (${tag.blip_count} ${tag.blip_count === 1 ? "blip" : "blips"})`}>
+                    title={tr("linkTitle", { name: tag.name, count: tag.blip_count })}>
                     {tag.name}
                   </a>
                 )}
