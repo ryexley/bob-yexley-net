@@ -17,6 +17,7 @@ import {
   Show,
   untrack,
 } from "solid-js"
+import { getRequestEvent } from "solid-js/web"
 import { Hashtag, Icon } from "@/components/icon"
 import { Button } from "@/components/button"
 import { MarkdownRenderer as Markdown } from "@/components/markdown/renderer"
@@ -183,6 +184,17 @@ export function BlipView() {
     const fromStore = store.getById(params.id)
     return fromStore ?? blipQuery() ?? null
   })
+
+  // Set 404 status during SSR when blip is not found
+  // Check synchronously during render, not in an effect (effects don't run during SSR)
+  const query = blipQuery()
+  if (query === null) {
+    const event = getRequestEvent()
+    if (event && event.response) {
+      event.response.status = 404
+    }
+  }
+
   const [recentRealtimeUpdateStates, setRecentRealtimeUpdateStates] =
     createSignal<Record<string, { shimmering: boolean }>>({})
   const [hydratedRootTags, setHydratedRootTags] = createSignal<string[]>([])
@@ -835,6 +847,17 @@ export function BlipView() {
 
     openEditUpdate(rootBlipId, updateBlipId)
   }
+
+  // Set 404 status when blip is not found
+  createEffect(() => {
+    const query = blipQuery()
+    if (query === null) {
+      const event = getRequestEvent()
+      if (event && event.response) {
+        event.response.status = 404
+      }
+    }
+  })
 
   const handleToggleReaction = async (emoji: string) => {
     const currentBlip = displayBlip()
