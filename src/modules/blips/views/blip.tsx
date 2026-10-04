@@ -57,6 +57,7 @@ import {
   withLightboxGuest,
   groupMediaByBlipId,
 } from "@/modules/media/data/queries"
+import { findAudioEmbedRegions, parseAudioEmbedObjectLiteral, coerceAudioPlayerProps } from "@/components/markdown/audio/audio-embed-syntax"
 import type { BlipMediaRow } from "@/modules/media/data/queries"
 import { MediaVariant, variantUrl, originalUrl } from "@/modules/media/media-utils"
 import { useBlipComposer } from "@/modules/blips/context/blip-composer-context"
@@ -82,6 +83,39 @@ import "./blip.css"
 
 const tr = ptr("blips.views.detail")
 const commentThreadTr = ptr("blips.components.commentThread")
+
+// Extract first audio embed coverImage from content (for og:image fallback)
+function extractFirstAudioCoverImage(content: string | null | undefined): {
+  coverImage: string
+  title?: string
+  width?: number
+  height?: number
+} | null {
+  if (!content) return null
+  
+  const regions = findAudioEmbedRegions(content)
+  for (const region of regions) {
+    const objectLiteral = parseAudioEmbedObjectLiteral(region.block.objectLiteral)
+    if (!objectLiteral) continue
+    
+    const props = coerceAudioPlayerProps(objectLiteral)
+    if (!props?.coverImage) continue
+    
+    // Only accept absolute http(s) URLs
+    if (!props.coverImage.startsWith('http://') && !props.coverImage.startsWith('https://')) {
+      continue
+    }
+    
+    return {
+      coverImage: props.coverImage,
+      title: props.title,
+      width: typeof objectLiteral.width === 'number' ? objectLiteral.width : undefined,
+      height: typeof objectLiteral.height === 'number' ? objectLiteral.height : undefined,
+    }
+  }
+  
+  return null
+}
 
 export function BlipView() {
   const REALTIME_UPDATE_HIGHLIGHT_MS = 60_000
@@ -240,86 +274,137 @@ export function BlipView() {
     return media
   })
   
-  // Media for og:image: root media first, then first update media as fallback
-  const seoRootMedia = createMemo(() => {
+  // Choose og:image source in correct priority order
+  const seoImageSource = createMemo((): 
+    | { kind: 'media'; row: BlipMediaRow }
+    | { kind: 'audio'; cover: { coverImage: string; title?: string; width?: number; height?: number } }
+    | null => {
     const allMedia = seoMediaQuery.latest ?? []
     const mediaByBlip = groupMediaByBlipId(allMedia)
+    const graph = blipGraphQuery.latest
     
-    // Root media first
+    // (1) Root blip_media
     const rootMedia = mediaByBlip[params.id] ?? []
     if (rootMedia.length > 0) {
-      return rootMedia
+      return { kind: 'media', row: rootMedia[0] }
     }
     
-    // Fallback: first media from published updates (in creation order)
-    // Re-compute published update IDs from the graph that was fetched
-    const graph = blipGraphQuery.latest
-    if (!graph) return []
-    
-    const publishedUpdateIds = (graph.updates ?? [])
-      .filter(update => update.published)
-      .map(update => update.id)
-    
-    for (const updateId of publishedUpdateIds) {
-      const updateMedia = mediaByBlip[updateId]
-      if (updateMedia?.length > 0) {
-        return updateMedia
+    // (2) Root blip audio coverImage
+    const rootBlip = blipQuery()
+    if (rootBlip?.content) {
+      const audioCover = extractFirstAudioCoverImage(rootBlip.content)
+      if (audioCover) {
+        return { kind: 'audio', cover: audioCover }
       }
     }
     
-    return []
+    // (3) For each published update in page order: media, else audio coverImage
+    if (graph) {
+      const publishedUpdates = (graph.updates ?? [])
+        .filter(update => update.published)
+      
+      for (const update of publishedUpdates) {
+        // Check update's media first
+        const updateMedia = mediaByBlip[update.id] ?? []
+        if (updateMedia.length > 0) {
+          return { kind: 'media', row: updateMedia[0] }
+        }
+        
+        // Then check update's audio coverImage
+        if (update.content) {
+          const audioCover = extractFirstAudioCoverImage(update.content)
+          if (audioCover) {
+            return { kind: 'audio', cover: audioCover }
+          }
+        }
+      }
+    }
+    
+    // (4) No source found
+    return null
   })
   
   const ogImageUrl = createMemo(() => {
-    const media = seoRootMedia()
-    if (media.length === 0) {
+    const source = seoImageSource()
+    
+    if (!source) {
       return "/og-image.jpg"
     }
+    
+    if (source.kind === 'media') {
+      const { row } = source
+      const storageKey = row.storage_key
+      const mimeType = row.mime_type
+      const processingStatus = row.processing_status
 
-    const firstMedia = media[0]
-    const storageKey = firstMedia.storage_key
-    const mimeType = firstMedia.mime_type
-    const processingStatus = firstMedia.processing_status
-
-    // Videos and GIFs use Thumb variant
-    if (mimeType.startsWith("video/") || mimeType === "image/gif") {
-      return variantUrl(storageKey, MediaVariant.Thumb)
-    }
-
-    // Other images use Large variant when complete, else original
-    if (mimeType.startsWith("image/")) {
-      if (processingStatus === "complete") {
-        return variantUrl(storageKey, MediaVariant.Large)
+      // Videos and GIFs use Thumb variant
+      if (mimeType.startsWith("video/") || mimeType === "image/gif") {
+        return variantUrl(storageKey, MediaVariant.Thumb)
       }
-      return originalUrl(storageKey, mimeType)
+
+      // Other images use Large variant when complete, else original
+      if (mimeType.startsWith("image/")) {
+        if (processingStatus === "complete") {
+          return variantUrl(storageKey, MediaVariant.Large)
+        }
+        return originalUrl(storageKey, mimeType)
+      }
+    }
+    
+    if (source.kind === 'audio') {
+      return source.cover.coverImage
     }
 
     return "/og-image.jpg"
   })
 
   const ogImageDimensions = createMemo(() => {
-    const media = seoRootMedia()
-    if (media.length === 0) {
+    const source = seoImageSource()
+    
+    if (!source) {
       return { width: 1200, height: 630 }
     }
+    
+    if (source.kind === 'media') {
+      const { row } = source
+      const width = row.width
+      const height = row.height
 
-    const firstMedia = media[0]
-    const width = firstMedia.width
-    const height = firstMedia.height
-
-    if (width != null && height != null && width > 0 && height > 0) {
-      return { width, height }
+      if (width != null && height != null && width > 0 && height > 0) {
+        return { width, height }
+      }
+      return null
     }
-
-    return null
+    
+    if (source.kind === 'audio') {
+      const { cover } = source
+      const width = cover.width
+      const height = cover.height
+      if (width != null && height != null && width > 0 && height > 0) {
+        return { width, height }
+      }
+      return null
+    }
+    
+    return { width: 1200, height: 630 }
   })
+  
   const ogImageAlt = createMemo(() => {
-    const media = seoRootMedia()
-    if (media.length === 0) {
+    const source = seoImageSource()
+    
+    if (!source) {
       return undefined
     }
-    const firstMedia = media[0]
-    return firstMedia.media_type === "image" ? blipTitle() : undefined
+    
+    if (source.kind === 'media') {
+      return source.row.media_type === "image" ? blipTitle() : undefined
+    }
+    
+    if (source.kind === 'audio' && source.cover.title) {
+      return source.cover.title
+    }
+    
+    return undefined
   })
   const canonicalPath = createMemo(() => `/blips/${params.id}`)
   const publishedTime = createMemo(() => {
