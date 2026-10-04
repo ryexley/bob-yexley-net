@@ -63,3 +63,27 @@
   color: var(--colors-links);
   font-size: 0.875rem;
 }
+
+.blips-browse-tags-nav {
+  display: flex;
+  justify-content: center;
+  margin: -0.75rem auto 1.5rem;
+  max-width: 60rem;
+  width: 100%;
+}
+
+.blips-browse-tags-link,
+.blips-browse-tags-link:link,
+.blips-browse-tags-link:visited {
+  color: var(--colors-mono-10);
+  font-size: 0.875rem;
+  letter-spacing: 0.02em;
+  text-decoration: none;
+  transition: var(--transitions-primary);
+}
+
+.blips-browse-tags-link:hover,
+.blips-browse-tags-link:focus-visible {
+  color: var(--colors-links);
+  text-decoration: none;
+}

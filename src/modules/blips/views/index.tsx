@@ -222,6 +222,13 @@ export function BlipsView() {
             </span>
             <span class="blips-page-heading-tail">{tr("headingTail")}</span>
           </h1>
+          <nav class="blips-browse-tags-nav">
+            <a
+              href={pages.blipsTags}
+              class="blips-browse-tags-link">
+              {tr("browseTags")}
+            </a>
+          </nav>
           <Show
             when={hasInitialData()}
             fallback={

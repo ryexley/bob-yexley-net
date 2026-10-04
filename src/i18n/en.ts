@@ -450,6 +450,7 @@ export const en = {
         headingLead: "moments, thoughts and updates — just ",
         headingMark: "Blips",
         headingTail: " on the radar",
+        browseTags: "Browse tags",
         loading: "Loading blips...",
         nav: {
           home: "Home",
