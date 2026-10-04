@@ -7,15 +7,12 @@ export async function GET({ request }: APIEvent) {
   try {
     const supabase = await getServerClient()
     
-    // Fetch all published, approved blips
+    // Fetch all blips (view_blips already filters for roots, RLS handles visibility)
     const { data: blips, error } = await supabase
       .from("view_blips")
       .select("id, updated_at, publish_at")
-      .eq("published", true)
-      .eq("moderation_status", "approved")
-      .lte("publish_at", new Date().toISOString())
-      .eq("parent_id", null)
-      .order("publish_at", { ascending: false })
+      .order("sort_at", { ascending: false })
+      .order("created_at", { ascending: false })
 
     if (error) {
       console.error("[sitemap] Error fetching blips:", error)

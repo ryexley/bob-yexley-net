@@ -79,15 +79,12 @@ export async function GET({ request }: APIEvent) {
   try {
     const supabase = await getServerClient()
     
-    // Fetch latest published, approved blips
+    // Fetch latest blips (view_blips already filters for roots, RLS handles visibility)
     const { data: blips, error } = await supabase
       .from("view_blips")
       .select("id, content, publish_at, updated_at")
-      .eq("published", true)
-      .eq("moderation_status", "approved")
-      .lte("publish_at", new Date().toISOString())
-      .eq("parent_id", null)
-      .order("publish_at", { ascending: false })
+      .order("sort_at", { ascending: false })
+      .order("created_at", { ascending: false })
       .limit(FEED_ITEM_LIMIT)
 
     if (error) {
