@@ -21,7 +21,21 @@ type TagWithCountRow = TagRow & {
 const adminTagUpdateSchema = z.object({
   name: z.string().min(1).max(100),
   description: z.string().max(4000).optional().nullable(),
-  coverImage: z.string().max(1000).optional().nullable(),
+  // Either an absolute http(s) URL or an R2 storage key relative to the
+  // public media base URL (e.g. `media/{userId}/tags/...`).
+  coverImage: z
+    .string()
+    .trim()
+    .max(1000)
+    .refine(
+      value =>
+        value.length === 0 ||
+        /^https?:\/\/\S+$/i.test(value) ||
+        (/^[A-Za-z0-9][A-Za-z0-9._\-/]*$/.test(value) && !value.includes("..")),
+      "Cover image must be an http(s) URL or a media storage key",
+    )
+    .optional()
+    .nullable(),
 })
 
 const mergeTagsSchema = z.object({
@@ -50,6 +64,15 @@ async function canCurrentRequestAccessAdminTags(): Promise<boolean> {
   }
 
   return profile.role === "admin" || profile.role === "superuser"
+}
+
+const readEmbeddedCount = (value: unknown): number => {
+  if (!Array.isArray(value) || value.length === 0) {
+    return 0
+  }
+
+  const count = (value[0] as { count?: unknown } | null)?.count
+  return typeof count === "number" ? count : 0
 }
 
 const mapAdminTagRecord = (row: TagWithCountRow): AdminTagRecord => ({
@@ -84,7 +107,7 @@ export async function loadAdminTags(): Promise<AdminTagsQueryResult> {
         cover_image,
         created_at,
         updated_at,
-        blip_tags!inner(count)
+        blip_tags(count)
       `)
       .order("name", { ascending: true })
 
@@ -92,15 +115,21 @@ export async function loadAdminTags(): Promise<AdminTagsQueryResult> {
       throw new Error(error.message)
     }
 
-    const tags: AdminTagRecord[] = (data ?? []).map((row: any) => ({
-      id: row.id,
-      name: row.name,
-      description: row.description,
-      coverImage: row.cover_image,
-      blipCount: Array.isArray(row.blip_tags) ? row.blip_tags.length : 0,
-      createdAt: row.created_at,
-      updatedAt: row.updated_at,
-    }))
+    // `blip_tags(count)` is an aggregate embed: PostgREST returns
+    // `[{ count: N }]`, not one element per association. A left (non-inner)
+    // embed keeps tags that currently have no blips so they can still be
+    // managed here.
+    const tags: AdminTagRecord[] = (data ?? []).map(row =>
+      mapAdminTagRecord({
+        id: row.id,
+        name: row.name,
+        description: row.description,
+        cover_image: row.cover_image,
+        created_at: row.created_at,
+        updated_at: row.updated_at,
+        blip_count: readEmbeddedCount(row.blip_tags),
+      }),
+    )
 
     return {
       authorized: true,
@@ -180,7 +209,7 @@ export async function updateAdminTag(
       .update({
         name: canonicalName,
         description: parsed.data.description ?? null,
-        cover_image: parsed.data.coverImage ?? null,
+        cover_image: parsed.data.coverImage || null,
       })
       .eq("id", tagId)
       .select(`
@@ -249,9 +278,12 @@ export async function mergeTags(payload: unknown): Promise<MergeTagsResult> {
   }
 
   try {
-    const adminClient = getAdminClient()
-    
-    const { error: mergeError } = await adminClient.rpc("merge_tags", {
+    // merge_tags is SECURITY DEFINER and checks is_admin() + a valid app
+    // session for auth.uid(), so it must run with the caller's JWT. The
+    // service-role client has no auth.uid() and would always be rejected.
+    const supabase = await getServerClient()
+
+    const { error: mergeError } = await supabase.rpc("merge_tags", {
       source_id: parsed.data.sourceId,
       target_id: parsed.data.targetId,
     })

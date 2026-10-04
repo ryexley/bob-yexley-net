@@ -1,4 +1,4 @@
-import { createAsync, useNavigate } from "@solidjs/router"
+import { createAsync, revalidate, useNavigate } from "@solidjs/router"
 import { Meta, Title } from "@solidjs/meta"
 import { createEffect, createMemo, createSignal, For, Show } from "solid-js"
 import { useConfirm } from "@/components/confirm-dialog"
@@ -10,6 +10,7 @@ import { Stack } from "@/components/stack"
 import { useAuth } from "@/context/auth-context"
 import { RequiresAdmin } from "@/modules/auth/components/requires-role"
 import { TagEditDrawer } from "@/modules/tags/components/tag-edit-drawer"
+import { resolveTagCoverUrl } from "@/modules/tags/cover"
 import { mergeAdminTags } from "@/modules/tags/data/client"
 import { getAdminTags } from "@/modules/tags/data/queries"
 import type {
@@ -159,7 +160,9 @@ export function TagsView() {
       variant: "default",
       onConfirm: async () => {
         const sourceId = selectedTag()?.id
-        if (!sourceId) return
+        if (!sourceId) {
+          return
+        }
 
         const result = await mergeAdminTags({
           sourceId,
@@ -174,10 +177,12 @@ export function TagsView() {
           return
         }
 
-        // Remove the merged tag from the list and close drawer
+        // Remove the merged tag locally, close the drawer, then refetch so the
+        // target's blip count / inherited description / cover are accurate.
         setTags(currentTags => currentTags.filter(t => t.id !== sourceId))
         setSelectedTagId(null)
-        
+        await revalidate(getAdminTags.key)
+
         notify.success({
           content: tr("notifications.mergeSuccess"),
         })
@@ -185,18 +190,8 @@ export function TagsView() {
     })
   }
 
-  const getThumbnailUrl = (tag: AdminTagRecord): string | null => {
-    if (!tag.coverImage) {
-      return null
-    }
-
-    if (tag.coverImage.startsWith("http://") || tag.coverImage.startsWith("https://")) {
-      return tag.coverImage
-    }
-
-    const mediaUrl = import.meta.env.VITE_MEDIA_STORAGE_URL as string
-    return `${mediaUrl}/${tag.coverImage}`
-  }
+  const getThumbnailUrl = (tag: AdminTagRecord): string | null =>
+    resolveTagCoverUrl(tag.coverImage)
 
   return (
     <>
@@ -307,7 +302,7 @@ export function TagsView() {
                         <div class="tags-view-card-info">
                           <h3 class="tags-view-card-name">{tag.name}</h3>
                           <p class="tags-view-card-meta">
-                            {tag.blipCount} {tag.blipCount === 1 ? "blip" : "blips"}
+                            {tr("blipCount", { count: tag.blipCount })}
                           </p>
                         </div>
                       </div>
