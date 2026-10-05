@@ -68,6 +68,12 @@ interface PersonalCloudImageProps {
   eager?: boolean
   /** When false, skip the 500ms opacity fade-in after load (e.g. lightbox). Default true. */
   fadeIn?: boolean
+  /**
+   * Fill the parent box (100% × 100%) instead of sizing the container from
+   * `width`/`height`. `width`/`height` still drive variant choice and the
+   * compact placeholder. Use when the parent (e.g. a grid tile) owns the size.
+   */
+  fill?: boolean
   objectFit?: "cover" | "contain" | "fill" | "scale-down" | "none"
   [key: string]: any
 }
@@ -87,6 +93,7 @@ export const PersonalCloudImage: Component<PersonalCloudImageProps> = props => {
     "imageClass",
     "eager",
     "fadeIn",
+    "fill",
     "objectFit",
   ])
 
@@ -204,11 +211,15 @@ export const PersonalCloudImage: Component<PersonalCloudImageProps> = props => {
     }
     return getDimensions({ width: local.width, height: local.height })
   })
-  const containerStyle = createMemo(() => ({
-    height: resolveContainerDimension(dimensions().height),
-    width: resolveContainerDimension(dimensions().width),
-    "aspect-ratio": String(dimensions().aspectRatio),
-  }))
+  const containerStyle = createMemo(() =>
+    local.fill
+      ? { height: "100%", width: "100%" }
+      : {
+          height: resolveContainerDimension(dimensions().height),
+          width: resolveContainerDimension(dimensions().width),
+          "aspect-ratio": String(dimensions().aspectRatio),
+        },
+  )
   const placeholderStyle = createMemo(() => ({
     background: placeholderBackground(),
     opacity: imageLoaded() || (!getFadeIn() && currentSrc()) ? 0 : 1,

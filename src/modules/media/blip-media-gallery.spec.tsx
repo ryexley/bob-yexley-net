@@ -1,4 +1,5 @@
 import { fireEvent, render } from "@solidjs/testing-library"
+import { createSignal } from "solid-js"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import {
   BlipMediaGallery,
@@ -52,7 +53,7 @@ describe("BlipMediaGallery", () => {
     expect(document.querySelector(".blip-media-gallery")).toBeNull()
   })
 
-  it("renders a tappable thumbnail per item using the micro variant", () => {
+  it("renders a tappable thumbnail per item using the small variant", () => {
     const set = [
       media({ id: "a", storage_key: "media/u/b/a", display_order: 0 }),
       media({ id: "b", storage_key: "media/u/b/b", display_order: 1 }),
@@ -68,10 +69,66 @@ describe("BlipMediaGallery", () => {
     expect(items).toHaveLength(2)
     const firstImg = items[0].querySelector("img.personal-cloud-image-img")
     expect(firstImg?.getAttribute("src")).toBe(
-      "https://cdn.test/media/u/b/a-micro.webp",
+      "https://cdn.test/media/u/b/a-small.webp",
     )
     // Lightbox is closed until a thumbnail is tapped.
     expect(document.querySelector(".lightbox")).toBeNull()
+  })
+
+  it("stretches image thumbnails to fill the tile", () => {
+    render(() => (
+      <BlipMediaGallery
+        media={[media({ storage_key: "media/u/b/a" })]}
+        labels={labels}
+      />
+    ))
+    const frame = document.querySelector(
+      ".blip-media-gallery-item .personal-cloud-image",
+    ) as HTMLElement
+    expect(frame.style.width).toBe("100%")
+    expect(frame.style.height).toBe("100%")
+  })
+
+  it("keeps the same tiles when media is refetched as new row objects", () => {
+    const rows = () => [
+      media({ id: "a", storage_key: "media/u/b/a", display_order: 0 }),
+      media({
+        id: "v",
+        storage_key: "media/u/b/v",
+        media_type: "video",
+        mime_type: "video/quicktime",
+        display_order: 1,
+      }),
+    ]
+    const [list, setList] = createSignal(rows())
+    render(() => (
+      <BlipMediaGallery
+        media={list()}
+        labels={labels}
+      />
+    ))
+    const before = Array.from(
+      document.querySelectorAll(".blip-media-gallery-item"),
+    )
+    const poster = document.querySelector(".blip-media-gallery-video-poster")
+    expect(before).toHaveLength(2)
+
+    setList(rows())
+
+    const after = Array.from(
+      document.querySelectorAll(".blip-media-gallery-item"),
+    )
+    expect(after).toHaveLength(2)
+    expect(after[0]).toBe(before[0])
+    expect(after[1]).toBe(before[1])
+    expect(document.querySelector(".blip-media-gallery-video-poster")).toBe(
+      poster,
+    )
+
+    setList([...rows(), media({ id: "c", storage_key: "media/u/b/c" })])
+    const grown = document.querySelectorAll(".blip-media-gallery-item")
+    expect(grown).toHaveLength(3)
+    expect(grown[0]).toBe(before[0])
   })
 
   it("uses the same compact teaser tile for a single item", () => {
@@ -86,7 +143,7 @@ describe("BlipMediaGallery", () => {
       ".blip-media-gallery-item img.personal-cloud-image-img",
     )
     expect(img?.getAttribute("src")).toBe(
-      "https://cdn.test/media/u/b/solo-micro.webp",
+      "https://cdn.test/media/u/b/solo-small.webp",
     )
     expect(document.querySelector(".blip-media-gallery.is-single")).toBeNull()
     const item = document.querySelector(".blip-media-gallery-item")
@@ -216,7 +273,7 @@ describe("BlipMediaGallery", () => {
       document
         .querySelector("img.personal-cloud-image-img")
         ?.getAttribute("src"),
-    ).toBe("https://cdn.test/media/u/b/g-micro.webp")
+    ).toBe("https://cdn.test/media/u/b/g-small.webp")
   })
 
   it("omits a document-embedded row even when its saved placement is stale", () => {

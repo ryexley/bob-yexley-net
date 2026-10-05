@@ -178,4 +178,27 @@ describe("PersonalCloudImage", () => {
     const frame = document.querySelector(".personal-cloud-image") as HTMLElement
     expect(frame.style.aspectRatio).toBe("800 / 1200")
   })
+
+  it("fills its parent instead of sizing from width/height when `fill` is set", () => {
+    render(() => (
+      <PersonalCloudImage
+        imageKey={KEY}
+        mimeType="image/jpeg"
+        width={80}
+        height={80}
+        fill
+        alt="tile"
+      />
+    ))
+
+    const frame = document.querySelector(".personal-cloud-image") as HTMLElement
+    expect(frame.style.width).toBe("100%")
+    expect(frame.style.height).toBe("100%")
+    expect(frame.style.aspectRatio).toBe("")
+    // width/height still pick the variant.
+    expect(img()?.getAttribute("src")).toBe(
+      `https://cdn.test/${KEY}-micro.webp`,
+    )
+    expect(img()?.hasAttribute("fill")).toBe(false)
+  })
 })
