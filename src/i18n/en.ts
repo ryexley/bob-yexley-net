@@ -1211,6 +1211,16 @@ export const en = {
               "Manage blip tags, set cover images for og:image previews, and merge duplicate tags.",
             total: "{count, plural, one {# tag} other {# tags}}",
           },
+          media: {
+            title: "Media",
+            description:
+              "Generate the missing thumbnails and resized versions for images whose processing failed at upload.",
+            action: "Reprocess failed images",
+            running: "Reprocessing…",
+            status:
+              "{reprocessed} reprocessed, {failed} failed, {remaining} still unprocessed",
+            error: "Reprocessing stopped: {message}",
+          },
         },
       },
     },
