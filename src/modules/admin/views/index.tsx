@@ -10,6 +10,7 @@ import { getAdminCollections } from "@/modules/scripture-collections/data/querie
 import { getAdminReferences } from "@/modules/scripture-references/data/queries"
 import { getAdminUsers } from "@/modules/users/data/queries"
 import { getAdminTags } from "@/modules/tags/data/queries"
+import { ReprocessFailedMediaCard } from "@/modules/media/reprocess-failed-media-card"
 import { ANALYTICS_SITE_ID } from "@/lib/analytics/constants"
 import { ptr } from "@/i18n"
 import { pages } from "@/urls"
@@ -255,6 +256,7 @@ export function AdminHomeView() {
                     </span>
                   </div>
                 </a>
+                <ReprocessFailedMediaCard />
               </div>
             ) : (
               <div class="loading-state">

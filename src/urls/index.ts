@@ -47,6 +47,7 @@ export const api = {
     sign: "/api/media/sign",
     object: "/api/media/object",
     process: "/api/media/process",
+    reprocessFailed: "/api/media/reprocess-failed",
     multipart: {
       create: "/api/media/multipart/create",
       signPart: "/api/media/multipart/sign-part",
