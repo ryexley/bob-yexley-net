@@ -67,7 +67,7 @@
     width: 2.5rem;
     height: 0.3rem;
     margin: 0.85rem auto 0.15rem;
-    border-radius: 999px;
+    border-radius: 999rem;
     background: var(--colors-mono-06);
   }
 }

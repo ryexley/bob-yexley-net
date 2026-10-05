@@ -154,7 +154,7 @@ export function getDimensions({ width, height }, baseFontSize = 16) {
     const widthValue = typeof parsedWidth === "number" ? parsedWidth : "100%"
     const heightValue =
       typeof parsedWidth === "number"
-        ? `${parsedWidth / DEFAULT_ASPECT_RATIO}px`
+        ? toRemLength(parsedWidth / DEFAULT_ASPECT_RATIO, baseFontSize)
         : `${100 / DEFAULT_ASPECT_RATIO}%`
 
     return {
@@ -169,7 +169,7 @@ export function getDimensions({ width, height }, baseFontSize = 16) {
     const heightValue = typeof parsedHeight === "number" ? parsedHeight : "100%"
     const widthValue =
       typeof parsedHeight === "number"
-        ? `${parsedHeight * DEFAULT_ASPECT_RATIO}px`
+        ? toRemLength(parsedHeight * DEFAULT_ASPECT_RATIO, baseFontSize)
         : `${100 * DEFAULT_ASPECT_RATIO}%`
 
     return {
@@ -196,7 +196,7 @@ export function resolveContainerDimension(parsedDimension) {
   }
 
   if (typeof parsedDimension === "number" && parsedDimension > 0) {
-    return `${parsedDimension}px`
+    return toRemLength(parsedDimension)
   }
 
   if (parsedDimension === 0 || parsedDimension === "0px") {

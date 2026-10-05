@@ -1,7 +1,7 @@
 .tags-view {
   min-height: 100vh;
   padding: 2rem;
-  max-width: 1200px;
+  max-width: 75rem;
   margin: 0 auto;
 }
 
@@ -54,11 +54,11 @@
 
 .tags-view-search {
   flex: 1;
-  max-width: 400px;
+  max-width: 25rem;
 }
 
 .tags-view-sort-field {
-  min-width: 150px;
+  min-width: 9.375rem;
 }
 
 .tags-view-toolbar-icon-button {
@@ -67,7 +67,7 @@
   justify-content: center;
   width: 2.5rem;
   height: 2.5rem;
-  border: 1px solid var(--colors-mono-07);
+  border: 0.0625rem solid var(--colors-mono-07);
   border-radius: 0.5rem;
   background: var(--colors-mono-02);
   color: var(--colors-mono-11);
@@ -87,7 +87,7 @@
 
 .tags-view-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(17.5rem, 1fr));
   gap: 1rem;
 }
 
@@ -97,7 +97,7 @@
   gap: 0.75rem;
   padding: 1rem;
   background: var(--colors-mono-03);
-  border: 1px solid var(--colors-mono-07);
+  border: 0.0625rem solid var(--colors-mono-07);
   border-radius: 0.5rem;
   text-align: left;
   cursor: pointer;
@@ -106,7 +106,7 @@
 
 .tags-view-card:hover {
   border-color: var(--colors-links);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 0.125rem 0.5rem rgba(0, 0, 0, 0.1);
 }
 
 .tags-view-card-header {
@@ -116,8 +116,8 @@
 }
 
 .tags-view-card-thumbnail {
-  width: 60px;
-  height: 60px;
+  width: 3.75rem;
+  height: 3.75rem;
   object-fit: cover;
   border-radius: 0.375rem;
   flex-shrink: 0;

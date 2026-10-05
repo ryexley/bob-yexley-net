@@ -2,7 +2,7 @@
   .toolbar-separator {
     background-color: var(--colors-mono-04);
     height: 1.5rem;
-    width: 1px;
+    width: 0.0625rem;
   }
 
   .delete {

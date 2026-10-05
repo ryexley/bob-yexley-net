@@ -15,9 +15,10 @@ import {
 } from "@/modules/blips/components/scripture-passage-panel"
 import { cx } from "@/util"
 import { withWindow } from "@/util/browser"
+import { remToViewportWidth } from "@/util/breakpoint"
 import "./scripture-reference.css"
 
-const SCRIPTURE_REFERENCE_MOBILE_MAX_WIDTH = 640
+const SCRIPTURE_REFERENCE_MOBILE_MAX_WIDTH = remToViewportWidth(40) // @media (max-width: 40rem)
 const DRAWER_CLOSE_ANIMATION_MS = 500
 
 const scriptureReferenceDrawerBehavior = {

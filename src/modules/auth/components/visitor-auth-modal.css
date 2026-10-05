@@ -29,13 +29,13 @@
   }
 
   .visitor-auth-card {
-    perspective: 1200px;
+    perspective: 75rem;
     width: var(--content-width);
   }
 
   .visitor-auth-flip-card {
     min-height: auto;
-    perspective: 1200px;
+    perspective: 75rem;
     position: relative;
     width: 100%;
 
@@ -240,7 +240,7 @@
   .visitor-auth-pin-input {
     &:-webkit-autofill {
       -webkit-text-fill-color: var(--colors-text-primary);
-      box-shadow: inset 0 0 0 1000px var(--colors-mono-02);
+      box-shadow: inset 0 0 0 62.5rem var(--colors-mono-02);
     }
   }
 
@@ -302,7 +302,7 @@
   }
 
   .visitor-auth-cancel {
-    border: 1px solid var(--colors-mono-06);
+    border: 0.0625rem solid var(--colors-mono-06);
     margin-right: auto;
   }
 }

@@ -225,7 +225,7 @@
           .overflow {
             align-items: center;
             background: var(--colors-mono-03);
-            border-radius: 9999px;
+            border-radius: 999rem;
             color: var(--colors-mono-08);
             display: inline-flex;
             flex-shrink: 0;
@@ -251,8 +251,8 @@
         .activity-indicator {
           align-items: center;
           background: transparent;
-          border: 1px solid var(--colors-mono-05);
-          border-radius: 999px;
+          border: 0.0625rem solid var(--colors-mono-05);
+          border-radius: 999rem;
           color: var(--colors-mono-08);
           cursor: pointer;
           display: inline-flex;
@@ -292,8 +292,8 @@
       .timestamp {
         align-items: center;
         background: color-mix(in srgb, var(--colors-info) 12%, transparent);
-        border: 1px solid var(--colors-info);
-        border-radius: 999px;
+        border: 0.0625rem solid var(--colors-info);
+        border-radius: 999rem;
         color: var(--colors-info);
         display: inline-flex;
         font-style: normal;
@@ -387,7 +387,7 @@
     background: rgba(var(--colors-mono-01-rgb), 0.52);
     border: 0.0625rem solid
       color-mix(in srgb, var(--colors-cool-blue) 72%, transparent);
-    border-radius: 9999px;
+    border-radius: 999rem;
     box-shadow:
       0 0.125rem 0.5rem rgba(var(--colors-mono-01-rgb), 0.32),
       0 0 0.375rem color-mix(in srgb, var(--colors-cool-blue) 28%, transparent),
