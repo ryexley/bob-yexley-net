@@ -1,3 +1,4 @@
+import type { BlipLinkTarget } from "@/urls"
 import type { Blip as BlipType } from "@/modules/blips/data/schema"
 import { createEffect, createMemo, createSignal, For, Show, splitProps } from "solid-js"
 import { Blip } from "@/modules/blips/components/blip"
@@ -21,7 +22,7 @@ import "./blips.css"
 export function Blips(props: {
   blips: BlipType[]
   groupByDate?: boolean
-  onView?: (blipId: string) => void
+  onView?: (blip: BlipLinkTarget) => void
 }) {
   const [local] = splitProps(props, ["blips", "groupByDate", "onView"])
   const { isAuthenticated } = useAuth() as any

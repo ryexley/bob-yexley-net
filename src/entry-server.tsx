@@ -22,10 +22,11 @@ export default createHandler(() => (
   />
 ), context => {
   const pathname = new URL(context.request.url).pathname
-  // Keep /blips/:id on async SSR so link unfurlers receive fully resolved
-  // metadata (og:title/og:description) in the first HTML response.
-  // Blip IDs are fixed to a 17-digit timestamp format.
-  const isBlipDetailRoute = /^\/blips\/\d{17}\/?$/.test(pathname)
+  // Keep /blips/:id and /blips/:id/:slug on async SSR so link unfurlers
+  // receive fully resolved metadata (og:title/og:description) in the first
+  // HTML response, and so a stale slug can be answered with a 301 before any
+  // HTML is streamed. Blip IDs are fixed to a 17-digit timestamp format.
+  const isBlipDetailRoute = /^\/blips\/\d{17}(?:\/[^/]+)?\/?$/.test(pathname)
 
   if (isBlipDetailRoute) {
     // Link unfurlers read the first HTML response only, so block streaming here.

@@ -66,8 +66,8 @@ export function Signals(props) {
       </h2>
       <Blips
         blips={visibleBlips()}
-        onView={blipId =>
-          navigate(pages.blip(blipId), {
+        onView={blip =>
+          navigate(pages.blip(blip), {
             scroll: true,
             state: { fromBlips: true },
           })

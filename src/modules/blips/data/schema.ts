@@ -26,6 +26,8 @@ export const blipSchema = z
   .object({
     id: z.string(),
     title: z.string().nullable(),
+    // Readable URL slug (root blips). NULL/absent means link by id only.
+    slug: z.string().nullable().optional(),
     content: z.string().nullable(), // allow null for drafts
     user_id: z.string().nullable(),
     parent_id: z.string().nullable(),

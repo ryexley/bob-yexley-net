@@ -41,7 +41,7 @@ import {
   isBlipScheduled,
 } from "@/modules/blips/util"
 import { ptr } from "@/i18n"
-import { pages } from "@/urls"
+import { pages, type BlipLinkTarget } from "@/urls"
 import { clsx as cx } from "@/util"
 import "./blip.css"
 
@@ -67,7 +67,7 @@ export function Blip(props: {
   tags?: string[]
   media?: BlipMediaRow[]
   onEdit?: (blipId: string) => void
-  onView?: (blipId: string) => void
+  onView?: (blip: BlipLinkTarget) => void
 }) {
   const [local] = splitProps(props, [
     "blip",
@@ -152,16 +152,16 @@ export function Blip(props: {
       return
     }
 
-    preloadRoute(pages.blip(local.blip.id), { preloadData: true })
+    preloadRoute(pages.blip(local.blip), { preloadData: true })
   }
 
   const openDetails = () => {
     if (typeof local.onView === "function") {
-      local.onView(local.blip.id)
+      local.onView(local.blip)
       return
     }
 
-    navigate(pages.blip(local.blip.id), {
+    navigate(pages.blip(local.blip), {
       scroll: true,
       state: { fromBlips: true },
     })
@@ -275,7 +275,7 @@ export function Blip(props: {
             tabIndex={canOpenDetails() ? 0 : undefined}>
             <Show when={typeof local.onView === "function"}>
               <A
-                href={pages.blip(local.blip.id)}
+                href={pages.blip(local.blip)}
                 class="stretched-link"
                 aria-label={tr("actions.viewDetails")}
                 onClick={event => {

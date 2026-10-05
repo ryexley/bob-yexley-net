@@ -178,6 +178,7 @@ vi.mock("@/i18n", () => ({
       "blips.components.blipEditor.metadata.title": "Blip metadata",
       "blips.components.blipEditor.metadata.allowComments": "Allow Comments",
       "blips.components.blipEditor.metadata.publishAt": "Publish Date",
+      "blips.components.blipEditor.metadata.slug": "Slug",
       "blips.components.blipEditor.draftPicker.new": "New Blip",
       "blips.components.blipEditor.draftPicker.untitled": "Untitled draft",
       "blips.components.blipEditor.actions.close": "Close",
@@ -725,6 +726,132 @@ describe("BlipEditor", () => {
       await mediaState.options.onMediaPersisted()
 
       await waitFor(() => expect(save().disabled).toBe(false))
+    })
+  })
+
+  describe("slug field", () => {
+    const openMetadata = async () => {
+      await fireEvent.click(
+        screen.getByRole("button", { name: "Show blip metadata" }),
+      )
+      return screen.getByLabelText("Slug") as HTMLInputElement
+    }
+    const lastDbUpsert = () =>
+      storeSpies.upsert.mock.calls
+        .filter(([, options]) => !options?.cacheOnly)
+        .at(-1)?.[0] as Partial<Blip> | undefined
+
+    it("prefills a new draft's slug from its heading and saves it", async () => {
+      render(() => (
+        <BlipEditor
+          open
+          onPanelOpenChange={() => undefined}
+          close={() => undefined}
+        />
+      ))
+      await waitFor(() =>
+        expect(screen.getByTestId("mock-markdown-editor")).toBeTruthy(),
+      )
+
+      state.lastMarkdownEditorProps.onChange(
+        "### College GameDay, Week 5!\n\nBig day.",
+      )
+      const input = await openMetadata()
+      expect(input.value).toBe("college-gameday-week-5")
+
+      await fireEvent.click(screen.getByRole("button", { name: "Save" }))
+      await waitFor(() =>
+        expect(lastDbUpsert()?.slug).toBe("college-gameday-week-5"),
+      )
+    })
+
+    it("normalizes a hand-edited slug and regenerates a blank one", async () => {
+      render(() => (
+        <BlipEditor
+          open
+          onPanelOpenChange={() => undefined}
+          close={() => undefined}
+        />
+      ))
+      await waitFor(() =>
+        expect(screen.getByTestId("mock-markdown-editor")).toBeTruthy(),
+      )
+      state.lastMarkdownEditorProps.onChange("First sentence here. Second.")
+      const input = await openMetadata()
+      expect(input.value).toBe("first-sentence-here")
+
+      await fireEvent.input(input, { target: { value: "My Custom Slug!!" } })
+      await fireEvent.blur(input)
+      expect(input.value).toBe("my-custom-slug")
+
+      // A hand-edited slug no longer follows the content.
+      state.lastMarkdownEditorProps.onChange("Different text now.")
+      expect(input.value).toBe("my-custom-slug")
+
+      await fireEvent.click(screen.getByRole("button", { name: "Save" }))
+      await waitFor(() => expect(lastDbUpsert()?.slug).toBe("my-custom-slug"))
+
+      // The mocked editor (unlike the real one, which mounts the panel via
+      // <Dynamic>) re-creates the metadata panel whenever the save status
+      // changes, so re-query the input after each status-changing event.
+      const slugInput = () => screen.getByLabelText("Slug") as HTMLInputElement
+      await fireEvent.input(slugInput(), { target: { value: "   " } })
+      await fireEvent.blur(slugInput())
+      expect(slugInput().value).toBe("different-text-now")
+    })
+
+    it("keeps a published blip's stored slug when its text changes", async () => {
+      state.entities = [
+        makeDraft({
+          id: "blip-7",
+          content: "### Original heading",
+          published: true,
+          slug: "original-heading",
+        }),
+      ]
+      render(() => (
+        <BlipEditor
+          open
+          blipId="blip-7"
+          onPanelOpenChange={() => undefined}
+          close={() => undefined}
+        />
+      ))
+      await waitFor(() =>
+        expect(screen.getByTestId("mock-markdown-editor")).toBeTruthy(),
+      )
+
+      state.lastMarkdownEditorProps.onChange("### A totally new heading")
+      const input = await openMetadata()
+      expect(input.value).toBe("original-heading")
+
+      await fireEvent.click(screen.getByRole("button", { name: "Save" }))
+      await waitFor(() =>
+        expect(lastDbUpsert()?.slug).toBe("original-heading"),
+      )
+    })
+
+    it("keeps a draft's custom slug instead of following the content", async () => {
+      state.entities = [
+        makeDraft({
+          id: "blip-8",
+          content: "### Some heading",
+          slug: "hand-picked",
+        }),
+      ]
+      render(() => (
+        <BlipEditor
+          open
+          blipId="blip-8"
+          onPanelOpenChange={() => undefined}
+          close={() => undefined}
+        />
+      ))
+      await waitFor(() =>
+        expect(screen.getByTestId("mock-markdown-editor")).toBeTruthy(),
+      )
+      const input = await openMetadata()
+      expect(input.value).toBe("hand-picked")
     })
   })
 })
