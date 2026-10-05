@@ -1,8 +1,30 @@
+export type BlipLinkTarget = {
+  id: string
+  slug?: string | null
+}
+
+/**
+ * Canonical in-site path for a root blip: `/blips/{id}/{slug}`, or
+ * `/blips/{id}` when the blip has no slug. Every blip link (cards, share,
+ * canonical, og:url, JSON-LD, sitemap, RSS) goes through this helper.
+ */
+export const blipPath = (blip: BlipLinkTarget | string): string => {
+  const id = typeof blip === "string" ? blip : blip.id
+  const slug = typeof blip === "string" ? "" : (blip.slug ?? "").trim()
+  return slug
+    ? `/blips/${encodeURIComponent(id)}/${encodeURIComponent(slug)}`
+    : `/blips/${encodeURIComponent(id)}`
+}
+
+/** Absolute canonical URL for a root blip. */
+export const blipUrl = (siteUrl: string, blip: BlipLinkTarget | string): string =>
+  `${siteUrl.trim().replace(/\/+$/, "")}${blipPath(blip)}`
+
 export const pages = {
   home: "/",
   signals: "/signals",
   blips: "/blips",
-  blip: (id: string) => `/blips/${id}`,
+  blip: blipPath,
   blipsTag: (tag: string) => `/blips/tag/${tag}`,
   blipsTags: "/blips/tags",
   resume: "/resume/",

@@ -293,9 +293,46 @@ const VIEW_BLIPS_SELECT = [
   "reactions_count",
   "my_reaction_count",
   "reactions",
+  "slug",
 ].join(", ")
 
 const VIEW_BLIP_GRAPH_SELECT = `${VIEW_BLIPS_SELECT}, comments, updates`
+
+/**
+ * True when PostgREST rejected a select because `view_blips.slug` does not
+ * exist yet (app deployed before the add_blip_slugs migration).
+ */
+export const isMissingSlugColumnError = (error: unknown): boolean => {
+  if (!error || typeof error !== "object") {
+    return false
+  }
+  const { code, message } = error as { code?: unknown; message?: unknown }
+  return code === "42703" && String(message ?? "").includes("slug")
+}
+
+/** Drop `slug` from a select list (for the pre-migration fallback). */
+export const withoutSlugColumn = (select: string): string =>
+  select
+    .split(",")
+    .map(column => column.trim())
+    .filter(column => column && column !== "slug")
+    .join(", ")
+
+/**
+ * Run a view_blips select, retrying once without `slug` if the column is not
+ * there yet. Keeps public pages up during a deploy-before-migrate window;
+ * links simply fall back to `/blips/{id}` until the migration lands.
+ */
+export const selectWithSlugFallback = async <R extends { error: unknown }>(
+  select: string,
+  run: (select: string) => PromiseLike<R>,
+): Promise<R> => {
+  const result = await run(select)
+  if (!isMissingSlugColumnError(result.error)) {
+    return result
+  }
+  return run(withoutSlugColumn(select))
+}
 
 const mapTagNames = (tags?: ViewTagValue[] | null): string[] =>
   [
@@ -345,6 +382,7 @@ const mapViewBlipRow = (row: ViewBlipRow): Blip => ({
   my_reaction_count: row.my_reaction_count ?? 0,
   reactions: mapReactionSummaries(row.reactions),
   author: mapAuthor(row.author),
+  slug: row.slug ?? null,
 })
 
 const mapReactionSummaries = (
@@ -569,12 +607,14 @@ const queryViewBlipsPage = async (
   limit: number = 20,
   offset: number = 0,
 ): Promise<Blip[]> => {
-  const { data, error } = await supabase
-    .from("view_blips")
-    .select(VIEW_BLIPS_SELECT)
-    .order("sort_at", { ascending: false })
-    .order("created_at", { ascending: false })
-    .range(offset, offset + limit - 1)
+  const { data, error } = await selectWithSlugFallback(VIEW_BLIPS_SELECT, select =>
+    supabase
+      .from("view_blips")
+      .select(select)
+      .order("sort_at", { ascending: false })
+      .order("created_at", { ascending: false })
+      .range(offset, offset + limit - 1),
+  )
 
   if (error) {
     throw error
@@ -593,15 +633,19 @@ const queryViewBlipsByTagPage = async (
     return []
   }
 
-  const { data: directData, error: directError } = await supabase
-    .from("view_blips")
-    .select(VIEW_BLIPS_SELECT)
-    // `tags` on `view_blips` is jsonb of objects ({ id, name, description }).
-    // Query directly in SQL first for efficient paging.
-    .filter("tags", "cs", JSON.stringify([{ name: tag }]))
-    .order("sort_at", { ascending: false })
-    .order("created_at", { ascending: false })
-    .range(offset, offset + limit - 1)
+  const { data: directData, error: directError } = await selectWithSlugFallback(
+    VIEW_BLIPS_SELECT,
+    select =>
+      supabase
+        .from("view_blips")
+        .select(select)
+        // `tags` on `view_blips` is jsonb of objects ({ id, name, description }).
+        // Query directly in SQL first for efficient paging.
+        .filter("tags", "cs", JSON.stringify([{ name: tag }]))
+        .order("sort_at", { ascending: false })
+        .order("created_at", { ascending: false })
+        .range(offset, offset + limit - 1),
+  )
 
   if (!directError) {
     return mapViewBlipRows((directData ?? []) as unknown as ViewBlipRow[])
@@ -703,11 +747,9 @@ export const getBlip = query(async (id: string) => {
       const { getServerClient } = await import("@/lib/vendor/supabase/server")
       const supabase = await getServerClient()
 
-      const { data, error } = await supabase
-        .from("view_blips")
-        .select(VIEW_BLIPS_SELECT)
-        .eq("id", id)
-        .maybeSingle()
+      const { data, error } = await selectWithSlugFallback(VIEW_BLIPS_SELECT, select =>
+        supabase.from("view_blips").select(select).eq("id", id).maybeSingle(),
+      )
 
       if (error) {
         throw error
@@ -744,11 +786,9 @@ export const getBlipGraph = query(async (
       const { getServerClient } = await import("@/lib/vendor/supabase/server")
       const supabase = await getServerClient()
 
-      const { data, error } = await supabase
-        .from("view_blips")
-        .select(VIEW_BLIP_GRAPH_SELECT)
-        .eq("id", id)
-        .maybeSingle()
+      const { data, error } = await selectWithSlugFallback(VIEW_BLIP_GRAPH_SELECT, select =>
+        supabase.from("view_blips").select(select).eq("id", id).maybeSingle(),
+      )
 
       if (error) {
         throw error

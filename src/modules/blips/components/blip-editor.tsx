@@ -13,6 +13,7 @@ import { revalidate } from "@solidjs/router"
 import { DateTimePicker } from "@/components/date-time-picker"
 import { Stack } from "@/components/stack"
 import { Switch } from "@/components/switch"
+import "@/components/input.css"
 import {
   MarkdownEditor,
   type MarkdownEditorApi,
@@ -49,6 +50,8 @@ import { useSupabase } from "@/context/services-context"
 import { useAuth } from "@/context/auth-context"
 import { useViewport } from "@/context/viewport"
 import { BLIP_TYPES, type Blip } from "@/modules/blips/data/schema"
+import { deriveBlipSlug, normalizeBlipSlug } from "@/modules/blips/slug"
+import { blipPath } from "@/urls"
 import { blipId, blipStore, tagStore } from "@/modules/blips/data"
 import {
   mediaTypeTagsForAttachments,
@@ -234,6 +237,16 @@ export function BlipEditor(props: BlipEditorProps) {
   const [lastDbSavedPublishAt, setLastDbSavedPublishAt] = createSignal<
     string | null
   >(null)
+  // Slug: while the blip is an unpublished draft and the author hasn't typed
+  // a custom slug, the field follows the content (so a slug is never locked
+  // in from a half-written first autosave). Once the blip is published, or
+  // the author edits the field, the slug is fixed and no longer tracks text
+  // edits. Blank on blur/save regenerates it from the heading/first sentence.
+  const [slugInput, setSlugInput] = createSignal("")
+  const [slugEdited, setSlugEdited] = createSignal(false)
+  const [lastDbSavedSlug, setLastDbSavedSlug] = createSignal<string | null>(
+    null,
+  )
   const [selectedTags, setSelectedTags] = createSignal<BlipTagOption[]>([])
   const [tagOptions, setTagOptions] = createSignal<BlipTagOption[]>([])
   const [lastDbSavedTagValues, setLastDbSavedTagValues] = createSignal<
@@ -264,6 +277,15 @@ export function BlipEditor(props: BlipEditorProps) {
     const blip = store.getById(id)
     return blip?.published ?? false
   })
+
+  const derivedSlug = createMemo(() => deriveBlipSlug({ content: content() }))
+  const slugFollowsContent = () => !slugEdited() && !isPublished()
+  const slugFieldValue = () =>
+    slugFollowsContent() ? derivedSlug() : slugInput()
+  const slugToSave = (): string | null =>
+    (slugFollowsContent()
+      ? derivedSlug()
+      : normalizeBlipSlug(slugInput()) || derivedSlug()) || null
 
   let hideStatusTimeout: ReturnType<typeof setTimeout> | null = null
   let fadeStatusTimeout: ReturnType<typeof setTimeout> | null = null
@@ -421,6 +443,9 @@ export function BlipEditor(props: BlipEditorProps) {
     setPublishAt(null)
     setLastCachedPublishAt(null)
     setLastDbSavedPublishAt(null)
+    setSlugInput("")
+    setSlugEdited(false)
+    setLastDbSavedSlug(null)
     setSelectedTags([])
     setLastDbSavedTagValues([])
     setSaveStatus("idle")
@@ -446,6 +471,15 @@ export function BlipEditor(props: BlipEditorProps) {
     setPublishAt(selectedPublishAt)
     setLastCachedPublishAt(selectedPublishAt)
     setLastDbSavedPublishAt(selectedPublishAt)
+    const storedSlug = selectedBlip.slug?.trim() || null
+    const selectedDerivedSlug = deriveBlipSlug(selectedBlip)
+    setSlugInput(storedSlug ?? selectedDerivedSlug)
+    // A stored slug that differs from what the content would produce was set
+    // by hand: keep it instead of following the content.
+    setSlugEdited(Boolean(storedSlug) && storedSlug !== selectedDerivedSlug)
+    // A missing slug is filled in by the DB trigger on the next save with
+    // the same derived value, so treat that as already saved.
+    setLastDbSavedSlug(storedSlug ?? (selectedDerivedSlug || null))
     setSelectedTags([])
     setLastDbSavedTagValues([])
     setSaveStatus("idle")
@@ -633,6 +667,16 @@ export function BlipEditor(props: BlipEditorProps) {
     setMediaDirty(true)
   }
 
+  // Record the slug the DB now holds. The insert/update trigger normalizes
+  // (and fills in a missing) slug, so prefer the returned row's value.
+  const syncSavedSlug = (sentSlug: string | null, savedSlug?: string | null) => {
+    const persisted = savedSlug === undefined ? sentSlug : savedSlug
+    setLastDbSavedSlug(persisted)
+    if (!slugFollowsContent() && persisted && persisted !== slugInput()) {
+      setSlugInput(persisted)
+    }
+  }
+
   // Save to cache only (localStorage + signal)
   const saveToCacheOnly = async (markdown: string) => {
     const blipId = currentBlipId()
@@ -653,6 +697,7 @@ export function BlipEditor(props: BlipEditorProps) {
           content: markdown,
           allow_comments: nextAllowComments,
           publish_at: nextPublishAt,
+          slug: slugToSave(),
           tags: selectedTagValues(),
           // Persist ownership in cache so draft toolbars render consistently.
           ...(userId ? { user_id: userId } : {}),
@@ -687,6 +732,7 @@ export function BlipEditor(props: BlipEditorProps) {
       const saveStartedAt = Date.now()
       const nextAllowComments = allowComments()
       const nextPublishAt = publishAt()
+      const nextSlug = slugToSave()
       await startSavingStatus("saving-db")
 
       const result = await store.upsert({
@@ -694,6 +740,7 @@ export function BlipEditor(props: BlipEditorProps) {
         content: markdown,
         allow_comments: nextAllowComments,
         publish_at: nextPublishAt,
+        slug: nextSlug,
         user_id: userId, // Add user_id for RLS
         blip_type: BLIP_TYPES.ROOT,
         parent_id: null,
@@ -711,6 +758,7 @@ export function BlipEditor(props: BlipEditorProps) {
       setLastCachedAllowComments(nextAllowComments)
       setLastDbSavedPublishAt(nextPublishAt)
       setLastCachedPublishAt(nextPublishAt)
+      syncSavedSlug(nextSlug, result.data?.slug)
       setHasPersistedCurrentBlip(true)
       setSaveStatus("saved-db")
       showStatusWithFade()
@@ -771,6 +819,7 @@ export function BlipEditor(props: BlipEditorProps) {
     const dbSavedPublishAt = lastDbSavedPublishAt()
     const closingTagValues = selectedTagValues()
     const dbSavedTagValues = lastDbSavedTagValues()
+    const closingSlug = slugToSave()
     const userId = user()?.id
     const hasBlipId = Boolean(closingBlipId)
     const hasContent = closingContent.trim().length > 0
@@ -783,7 +832,8 @@ export function BlipEditor(props: BlipEditorProps) {
     const needsDbSave =
       closingContent !== dbSavedContent ||
       closingAllowComments !== dbSavedAllowComments ||
-      !areTimestampsEqual(closingPublishAt, dbSavedPublishAt)
+      !areTimestampsEqual(closingPublishAt, dbSavedPublishAt) ||
+      closingSlug !== lastDbSavedSlug()
     const needsTagSave = !areTagValuesEqual(closingTagValues, dbSavedTagValues)
 
     if (!canPersistCurrentBlip) {
@@ -797,6 +847,7 @@ export function BlipEditor(props: BlipEditorProps) {
           content: closingContent,
           allow_comments: closingAllowComments,
           publish_at: closingPublishAt,
+          slug: closingSlug,
           ...(userId ? { user_id: userId } : {}),
           blip_type: BLIP_TYPES.ROOT,
           parent_id: null,
@@ -832,6 +883,7 @@ export function BlipEditor(props: BlipEditorProps) {
         content: closingContent,
         allow_comments: closingAllowComments,
         publish_at: closingPublishAt,
+        slug: closingSlug,
         user_id: userId,
         blip_type: BLIP_TYPES.ROOT,
         parent_id: null,
@@ -851,6 +903,7 @@ export function BlipEditor(props: BlipEditorProps) {
       setLastCachedAllowComments(closingAllowComments)
       setLastDbSavedPublishAt(closingPublishAt)
       setLastCachedPublishAt(closingPublishAt)
+      syncSavedSlug(closingSlug, dbResult.data?.slug)
       setHasPersistedCurrentBlip(true)
     }
 
@@ -1005,6 +1058,9 @@ export function BlipEditor(props: BlipEditorProps) {
           setPublishAt(null)
           setLastCachedPublishAt(null)
           setLastDbSavedPublishAt(null)
+          setSlugInput("")
+          setSlugEdited(false)
+          setLastDbSavedSlug(null)
           setLastDbSavedTagValues([])
           setSaveStatus("idle")
           setEditorView("editor")
@@ -1056,10 +1112,12 @@ export function BlipEditor(props: BlipEditorProps) {
         return false
       }
 
+      const ensuredSlug = currentBlipId() === id ? slugToSave() : null
       const result = await store.upsert({
         id,
         user_id: userId,
         content: content(),
+        slug: ensuredSlug,
         blip_type: BLIP_TYPES.ROOT,
         parent_id: null,
       } as Partial<Blip>)
@@ -1069,6 +1127,7 @@ export function BlipEditor(props: BlipEditorProps) {
       }
 
       if (currentBlipId() === id) {
+        syncSavedSlug(ensuredSlug, result.data?.slug)
         setHasPersistedCurrentBlip(true)
       }
       return true
@@ -1275,6 +1334,30 @@ export function BlipEditor(props: BlipEditorProps) {
     }
   }
 
+  const handleSlugInput = (nextSlug: string) => {
+    setSlugInput(nextSlug)
+    setSlugEdited(true)
+    setSaveStatus("idle")
+
+    if (currentBlipId() && (content().trim() || hasPersistedCurrentBlip())) {
+      debouncedCacheSave(content())
+      debouncedDbSave(content())
+    }
+  }
+
+  // Normalize on blur with the same slugify used everywhere else. Blank
+  // regenerates from the heading/first sentence (and, for drafts, resumes
+  // following the content).
+  const handleSlugBlur = () => {
+    const normalized = normalizeBlipSlug(slugInput())
+    if (!normalized) {
+      setSlugEdited(false)
+      setSlugInput(derivedSlug())
+      return
+    }
+    setSlugInput(normalized)
+  }
+
   const handleTagSelectionChange = (nextTags: BlipTagOption[]) => {
     setSelectedTags(nextTags)
     setSaveStatus("idle")
@@ -1379,6 +1462,7 @@ export function BlipEditor(props: BlipEditorProps) {
     content() !== lastDbSavedContent() ||
     allowComments() !== lastDbSavedAllowComments() ||
     !areTimestampsEqual(publishAt(), lastDbSavedPublishAt()) ||
+    slugToSave() !== lastDbSavedSlug() ||
     !areTagValuesEqual(selectedTagValues(), lastDbSavedTagValues())
 
   const handleToggleMetadataView = () => {
@@ -1517,6 +1601,42 @@ export function BlipEditor(props: BlipEditorProps) {
             portalMount={comboboxPortalMount()}
             containerClass="publish-at"
           />
+        </div>
+        <div class="section">
+          {/* Plain controlled input (the shared <Input> wraps Kobalte's
+              uncontrolled TextField) using the same input-* classes. */}
+          <div class="input-field blip-slug">
+            <label
+              class="input-label"
+              for="blip-editor-slug">
+              {tr("metadata.slug")}
+            </label>
+            <input
+              id="blip-editor-slug"
+              class="input-control"
+              type="text"
+              value={slugFieldValue()}
+              placeholder={tr("metadata.slugPlaceholder")}
+              aria-describedby="blip-editor-slug-hint"
+              autocapitalize="none"
+              autocorrect="off"
+              spellcheck={false}
+              inputMode="url"
+              maxLength={120}
+              onInput={event => handleSlugInput(event.currentTarget.value)}
+              onBlur={handleSlugBlur}
+            />
+            <div
+              id="blip-editor-slug-hint"
+              class="input-hint">
+              {tr("metadata.slugHint", {
+                path: blipPath({
+                  id: currentBlipId() ?? "",
+                  slug: normalizeBlipSlug(slugFieldValue()) || derivedSlug(),
+                }),
+              })}
+            </div>
+          </div>
         </div>
       </div>
     )

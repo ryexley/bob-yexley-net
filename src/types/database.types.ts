@@ -346,6 +346,7 @@ export type Database = {
           parent_id: string | null
           publish_at: string | null
           published: boolean | null
+          slug: string | null
           title: string | null
           updated_at: string | null
           user_id: string | null
@@ -360,6 +361,7 @@ export type Database = {
           parent_id?: string | null
           publish_at?: string | null
           published?: boolean | null
+          slug?: string | null
           title?: string | null
           updated_at?: string | null
           user_id?: string | null
@@ -374,6 +376,7 @@ export type Database = {
           parent_id?: string | null
           publish_at?: string | null
           published?: boolean | null
+          slug?: string | null
           title?: string | null
           updated_at?: string | null
           user_id?: string | null
@@ -648,6 +651,7 @@ export type Database = {
           published: boolean | null
           reactions: Json | null
           reactions_count: number | null
+          slug: string | null
           sort_at: string | null
           tags: Json | null
           title: string | null
@@ -883,10 +887,18 @@ export type Database = {
           visitors: number
         }[]
       }
+      blip_slug_source: {
+        Args: { content: string; title: string }
+        Returns: string
+      }
       cleanup_old_sessions: { Args: { retention?: string }; Returns: number }
       current_user_role: {
         Args: never
         Returns: Database["public"]["Enums"]["app_role"]
+      }
+      derive_blip_slug: {
+        Args: { content: string; title: string }
+        Returns: string
       }
       merge_tags: {
         Args: { source_id: string; target_id: string }
@@ -894,6 +906,10 @@ export type Database = {
       }
       is_admin: { Args: never; Returns: boolean }
       is_superuser: { Args: never; Returns: boolean }
+      normalize_blip_slug: {
+        Args: { input: string; max_length?: number }
+        Returns: string
+      }
       record_failed_visitor_login_attempt: {
         Args: { max_attempts?: number; target_email: string }
         Returns: Json

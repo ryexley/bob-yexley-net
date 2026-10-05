@@ -624,6 +624,9 @@ export const en = {
           title: "Blip metadata",
           allowComments: "Allow Comments",
           publishAt: "Publish Date",
+          slug: "Slug",
+          slugPlaceholder: "generated from the heading or first sentence",
+          slugHint: "URL: {path}",
         },
         draftPicker: {
           new: "New Blip",

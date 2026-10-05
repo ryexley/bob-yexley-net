@@ -12,7 +12,7 @@ import { isBlipPubliclyVisible } from "@/modules/blips/util"
 import { useAuth } from "@/context/auth-context"
 import { PageSection } from "@/modules/home/components/page-section"
 import { ptr } from "@/i18n"
-import { pages } from "@/urls"
+import { pages, type BlipLinkTarget } from "@/urls"
 import { withWindow } from "@/util/browser"
 import "./index.css"
 
@@ -98,8 +98,8 @@ export function BlipsTagView() {
     }
   }
 
-  const handleViewBlip = (blipId: string) => {
-    navigate(pages.blip(blipId), {
+  const handleViewBlip = (blip: BlipLinkTarget) => {
+    navigate(pages.blip(blip), {
       scroll: true,
       state: {
         fromBlips: true,

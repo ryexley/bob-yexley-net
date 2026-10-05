@@ -16,7 +16,7 @@ import {
   Show,
   untrack,
 } from "solid-js"
-import { getRequestEvent } from "solid-js/web"
+import { getRequestEvent, isServer } from "solid-js/web"
 import { Seo } from "@/components/seo"
 import { JsonLd, createBlogPostingSchema } from "@/components/json-ld"
 import { deriveBlipTitle, deriveBlipDescription, formatPageTitle } from "@/modules/blips/seo"
@@ -78,7 +78,8 @@ import {
   type TopLevelSortDirection,
 } from "@/modules/blips/views/blip-detail-ordering"
 import { ptr } from "@/i18n"
-import { pages } from "@/urls"
+import { blipPath, pages } from "@/urls"
+import { resolveBlipSlugRedirect } from "@/modules/blips/slug"
 import { clsx as cx } from "@/util"
 import { withWindow } from "@/util/browser"
 import "./blip.css"
@@ -196,6 +197,37 @@ export function BlipView() {
       event.response.status = 404
     }
   }
+
+  // `/blips/{id}/{slug}`: a slug that isn't the blip's current slug (stale,
+  // mistyped, wrong case) permanently redirects to the canonical URL. Plain
+  // `/blips/{id}` is served as-is; its canonical link points at the slug URL.
+  // Only compare against the graph for *this* id: `.latest` keeps serving
+  // the previous blip while a client-side navigation refetches.
+  const slugRedirectTarget = createMemo(() => {
+    const graphBlip = blipGraphQuery.latest?.blip
+    return graphBlip && graphBlip.id === params.id
+      ? resolveBlipSlugRedirect(params.slug, graphBlip)
+      : null
+  })
+  const ssrSlugRedirectTarget = isServer
+    ? resolveBlipSlugRedirect(
+        params.slug,
+        query?.blip.id === params.id ? query.blip : null,
+      )
+    : null
+  if (ssrSlugRedirectTarget) {
+    const event = getRequestEvent()
+    if (event && event.response) {
+      event.response.status = 301
+      event.response.headers.set("Location", ssrSlugRedirectTarget)
+    }
+  }
+  createEffect(() => {
+    const target = slugRedirectTarget()
+    if (target && !isServer) {
+      navigate(target, { replace: true, scroll: false, state: location.state })
+    }
+  })
 
   const [recentRealtimeUpdateStates, setRecentRealtimeUpdateStates] =
     createSignal<Record<string, { shimmering: boolean }>>({})
@@ -436,7 +468,14 @@ export function BlipView() {
     
     return undefined
   })
-  const canonicalPath = createMemo(() => `/blips/${params.id}`)
+  const canonicalPath = createMemo(() => {
+    const slugFor = (candidate: Blip | null | undefined) =>
+      candidate?.id === params.id ? candidate.slug : undefined
+    return blipPath({
+      id: params.id,
+      slug: slugFor(blip()) ?? slugFor(blipQuery()) ?? null,
+    })
+  })
   const publishedTime = createMemo(() => {
     const currentBlip = blip()
     if (!currentBlip) {
@@ -474,8 +513,7 @@ export function BlipView() {
       return ""
     }
 
-    const path = location.pathname || `/blips/${params.id}`
-    return `${siteUrl}${path.startsWith("/") ? path : `/${path}`}`
+    return `${siteUrl}${canonicalPath()}`
   })
   const visibleUpdates = createMemo(() => {
     const allUpdates = updates().filter(update =>
