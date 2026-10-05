@@ -176,8 +176,46 @@ export function eventTargetsVideoControlChrome(
   return isVideoControlChromeHit(event.clientX, event.clientY, video)
 }
 
+/**
+ * Only the visible slide's `<video>` holds a `src`. Every other video slide
+ * keeps its URL in `data-src` with `preload="none"`, so opening a lightbox over
+ * a page with N videos fetches one file instead of N full downloads (all
+ * slides used to mount with `src` + `preload="auto"`).
+ */
+export const attachVideoSource = (el: HTMLVideoElement) => {
+  const src = el.dataset.src
+  if (!src || el.getAttribute("src") === src) {
+    return
+  }
+  el.preload = "auto"
+  el.setAttribute("src", src)
+}
+
+/**
+ * Pause, drop `src` and `load()` so the browser aborts the fetch and frees the
+ * decoder/buffer (removing the attribute alone keeps the old resource alive).
+ */
+export const releaseVideoSource = (el: HTMLVideoElement) => {
+  if (!el.hasAttribute("src")) {
+    return
+  }
+  try {
+    el.pause()
+  } catch {
+    // jsdom: not implemented
+  }
+  el.preload = "none"
+  el.removeAttribute("src")
+  try {
+    el.load()
+  } catch {
+    // jsdom: not implemented
+  }
+}
+
 /** One `play()` per navigation — skip if already playing; muted fallback only when paused. */
 const playVideoElement = (el: HTMLVideoElement) => {
+  attachVideoSource(el)
   if (!el.paused) {
     return
   }
@@ -220,6 +258,20 @@ function LightboxSlide(props: {
   createEffect(() => {
     if (!isVisible()) {
       setShowControls(false)
+    }
+  })
+
+  let videoEl: HTMLVideoElement | undefined
+  createEffect(() => {
+    const visible = isVisible()
+    const el = videoEl
+    if (!el) {
+      return
+    }
+    if (visible) {
+      attachVideoSource(el)
+    } else {
+      releaseVideoSource(el)
     }
   })
 
@@ -301,19 +353,24 @@ function LightboxSlide(props: {
                 if (!el) {
                   return
                 }
+                videoEl = el
                 props.registerVideo(props.slideKey, el)
-                onCleanup(() => props.unregisterVideo(props.slideKey, el))
+                onCleanup(() => {
+                  props.unregisterVideo(props.slideKey, el)
+                  releaseVideoSource(el)
+                })
               }}
               class={cx("lightbox-video", !isVisible() && "is-offscreen")}
-              src={originalUrl(
+              data-src={originalUrl(
                 props.record.storage_key,
                 props.record.mime_type,
               )}
+              poster={thumbUrl()}
               width={props.record.width ?? undefined}
               height={props.record.height ?? undefined}
               controls={showControls() && isVisible()}
               playsinline
-              preload="auto"
+              preload="none"
               onClick={event => {
                 if (event.currentTarget instanceof HTMLVideoElement) {
                   handleVideoActivate(event, event.currentTarget)

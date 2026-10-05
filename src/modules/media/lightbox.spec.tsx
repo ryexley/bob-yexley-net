@@ -142,6 +142,54 @@ describe("Lightbox", () => {
     play.mockRestore()
   })
 
+  it("only loads the visible video and releases it after navigating away", async () => {
+    const play = vi.spyOn(HTMLMediaElement.prototype, "play").mockResolvedValue(undefined)
+    const pause = vi.spyOn(HTMLMediaElement.prototype, "pause").mockImplementation(() => {})
+    const load = vi.spyOn(HTMLMediaElement.prototype, "load").mockImplementation(() => {})
+    const clips = ["one", "two", "three"].map((name, i) =>
+      media({
+        id: name,
+        storage_key: `media/u/b/${name}`,
+        media_type: "video",
+        mime_type: "video/quicktime",
+        display_order: i,
+      }),
+    )
+
+    render(() => (
+      <Lightbox media={clips} index={0} onClose={vi.fn()} labels={labels} />
+    ))
+
+    const withSrc = () =>
+      Array.from(document.querySelectorAll("video.lightbox-video")).filter(el =>
+        el.hasAttribute("src"),
+      ) as HTMLVideoElement[]
+
+    expect(document.querySelectorAll("video.lightbox-video").length).toBe(5)
+    expect(withSrc().map(el => el.getAttribute("src"))).toEqual([
+      "https://cdn.test/media/u/b/one-original.mov",
+    ])
+    const first = visibleVideo()!
+    expect(first.getAttribute("poster")).toBe("https://cdn.test/media/u/b/one-thumb.webp")
+    for (const el of document.querySelectorAll("video.lightbox-video:not([src])")) {
+      expect(el.getAttribute("preload")).toBe("none")
+    }
+
+    load.mockClear()
+    fireEvent.click(document.querySelector(".lightbox-nav-next") as Element)
+
+    expect(withSrc().map(el => el.getAttribute("src"))).toEqual([
+      "https://cdn.test/media/u/b/two-original.mov",
+    ])
+    expect(first.hasAttribute("src")).toBe(false)
+    expect(load).toHaveBeenCalled()
+    await vi.waitFor(() => expect(play).toHaveBeenCalled())
+
+    play.mockRestore()
+    pause.mockRestore()
+    load.mockRestore()
+  })
+
   it("navigates with the arrow keys and renders an animated gif on the last slide", () => {
     render(() => (
       <Lightbox media={set} index={1} onClose={vi.fn()} labels={labels} />
