@@ -1,0 +1,32 @@
+---
+description: CSS sizing units — rem/em, never px
+globs: **/*.{css,ts,tsx}
+alwaysApply: true
+---
+
+# CSS Units: rem/em, Never px
+
+All sizing on this site must scale with the user's font size settings, so it
+stays adaptable and accessible (WCAG 1.4.4 Resize Text).
+
+- Use `rem` (or `em` when the size should follow the local font size) for every
+  length: widths, heights, padding, margin, gap, font sizes, border widths,
+  border radii, shadows, blur, offsets, media/container query breakpoints
+  (`@media (min-width: 48rem)`, `matchMedia("(min-width: 48rem)")`).
+- `%`, `fr`, `vw`/`vh`/`dvh`/`svh`, `ch`, `aspect-ratio`, `min()`/`max()`/
+  `clamp()` built from those units, and unitless values are all fine.
+- **Never use `px`** in CSS, inline styles, Tailwind arbitrary values
+  (`w-[80px]`), or style strings built in TS/TSX.
+- **No hairline exception.** The codebase already uses `0.0625rem` for 1px
+  borders/outlines (and `0.125rem` for 2px); use those instead of `1px`/`2px`.
+  Fully rounded shapes use `50%` (circles) or `999rem` (pills), not `9999px`.
+- Numbers passed to components as `width`/`height` props (e.g.
+  `PersonalCloudImage`) are pixel *hints* for choosing an image variant. They
+  must never be emitted as CSS `px`; let the layout (grid, `%`, `aspect-ratio`)
+  size the element, or convert to rem.
+- Not sizing, so px is acceptable: pointer/gesture math and the transforms
+  derived from it (`translateX(${dragX}px)`), `IntersectionObserver`
+  `rootMargin` (px/% only), canvas/image pixel dimensions, and image variant
+  widths generated on the server.
+- When you touch a file that still uses px for sizing, convert those values in
+  the same change (keep the cleanup scoped to what you are editing).

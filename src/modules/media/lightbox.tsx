@@ -54,7 +54,7 @@ const readIsDesktop = (): boolean => {
     // jsdom / SSR — default desktop so layout tests stay stable.
     return true
   }
-  return window.matchMedia("(min-width: 768px)").matches
+  return window.matchMedia("(min-width: 48rem)").matches
 }
 
 type CarouselSlide = {
@@ -670,7 +670,7 @@ function LightboxContent(props: LightboxContentProps) {
       queueMicrotask(() => playVideoForTrack(trackIndex()))
       return
     }
-    const queryList = window.matchMedia("(min-width: 768px)")
+    const queryList = window.matchMedia("(min-width: 48rem)")
     const sync = () => setIsDesktop(queryList.matches)
     sync()
     queryList.addEventListener("change", sync)

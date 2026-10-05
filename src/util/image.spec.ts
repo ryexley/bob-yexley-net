@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest"
-import { generateRandomRadialGradients } from "./image"
+import { generateRandomRadialGradients, toRemLength } from "./image"
 
 vi.mock("@/util/random", () => ({
   random: vi.fn((min: number) => min),
@@ -52,5 +52,23 @@ describe("generateRandomRadialGradients", () => {
     expect(result).toBe(
       "radial-gradient(circle 7.8125rem at 0% 0%, rgba(0, 0, 0, 0.3) 0%, transparent 125%)",
     )
+  })
+})
+
+describe("toRemLength", () => {
+  it("converts pixel hints and px strings to rem", () => {
+    expect(toRemLength(80)).toBe("5rem")
+    expect(toRemLength(64)).toBe("4rem")
+    expect(toRemLength("120px")).toBe("7.5rem")
+    expect(toRemLength(45)).toBe("2.8125rem")
+  })
+
+  it("passes through non-px lengths and drops empty sizes", () => {
+    expect(toRemLength("100%")).toBe("100%")
+    expect(toRemLength("auto")).toBe("auto")
+    expect(toRemLength("3rem")).toBe("3rem")
+    expect(toRemLength(0)).toBeUndefined()
+    expect(toRemLength("0px")).toBeUndefined()
+    expect(toRemLength(undefined)).toBeUndefined()
   })
 })

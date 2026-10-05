@@ -8,10 +8,10 @@ import { Lightbox, type LightboxLabels } from "./lightbox"
 import { MediaVariant, originalUrl, variantUrl } from "./media-utils"
 
 /**
- * Nominal (desktop) size for gallery thumbnails on the blip detail page. Tiles
- * stretch to fill a 3-column grid on mobile (~105–130px), so the image fills
- * its tile (`fill`) and uses the 200px `small` variant rather than the 96px
- * `micro`, which would be upscaled.
+ * Variant-selection *hint* (CSS-pixel scale) for gallery thumbnails — never
+ * emitted as a size. Tiles size themselves from the fluid grid
+ * (`minmax(5rem, 1fr)`, square) and the image fills its tile (`fill`). The
+ * 200px-wide `small` variant is used because tiles grow past the 96px `micro`.
  */
 export const GALLERY_THUMB_PX = 80
 
