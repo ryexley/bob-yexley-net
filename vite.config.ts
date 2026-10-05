@@ -44,6 +44,13 @@ export default defineConfig({
     },
   },
   nitro: {
+    // Nitro 3 inlines server deps into ESM chunks unless they are traced.
+    // libheif-js (via heic-convert) is Emscripten output that reads
+    // `__dirname`, which doesn't exist in ESM — bundling it made
+    // `import("./process")` throw, so every /api/media/process call 500'd and
+    // no WebP variants were generated after the SolidStart 2 upgrade.
+    // Ship it (and sharp) as real node_modules instead.
+    traceDeps: ["heic-convert", "libheif-js", "sharp"],
     vercel: {
       functions: {
         maxDuration: 60,
