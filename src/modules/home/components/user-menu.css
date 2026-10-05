@@ -104,7 +104,7 @@
   -webkit-tap-highlight-color: transparent;
   backdrop-filter: blur(0.35rem);
   background: rgba(var(--colors-mono-02-rgb), 0.68);
-  border: 1px solid rgba(var(--colors-mono-03-rgb), 0.9);
+  border: 0.0625rem solid rgba(var(--colors-mono-03-rgb), 0.9);
   border-radius: var(--radius-md);
   color: var(--colors-text-primary);
   cursor: pointer;

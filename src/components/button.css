@@ -52,7 +52,7 @@
       outline: none;
     }
 
-    border: 1px solid var(--colors-mono-06);
+    border: 0.0625rem solid var(--colors-mono-06);
     background-color: transparent;
     color: var(--colors-mono-10);
 

@@ -16,7 +16,7 @@ stays adaptable and accessible (WCAG 1.4.4 Resize Text).
 - `%`, `fr`, `vw`/`vh`/`dvh`/`svh`, `ch`, `aspect-ratio`, `min()`/`max()`/
   `clamp()` built from those units, and unitless values are all fine.
 - **Never use `px`** in CSS, inline styles, Tailwind arbitrary values
-  (`w-[80px]`), or style strings built in TS/TSX.
+  (e.g. a `w-[…]` value in px), or style strings built in TS/TSX.
 - **No hairline exception.** The codebase already uses `0.0625rem` for 1px
   borders/outlines (and `0.125rem` for 2px); use those instead of `1px`/`2px`.
   Fully rounded shapes use `50%` (circles) or `999rem` (pills), not `9999px`.
@@ -27,6 +27,17 @@ stays adaptable and accessible (WCAG 1.4.4 Resize Text).
 - Not sizing, so px is acceptable: pointer/gesture math and the transforms
   derived from it (`translateX(${dragX}px)`), `IntersectionObserver`
   `rootMargin` (px/% only), canvas/image pixel dimensions, and image variant
-  widths generated on the server.
+  widths generated on the server. Also acceptable: values measured from layout
+  at runtime (in CSS px) and written straight back as positions or offsets —
+  scrollbar-width compensation, tooltip arrow offsets, on-screen keyboard insets
+  / visual-viewport offsets, and sizes clamped against the measured viewport.
+- JS viewport-width checks (`viewport.width() <= N`) compare against
+  `window.innerWidth` in CSS px. Declare the threshold in rem with
+  `remToViewportWidth(48)` from `@/util/breakpoint` so it matches
+  `@media (max-width: 48rem)` (media queries resolve rem against the browser
+  default 16px, not the html `font-size`).
+- Note: `html { font-size: clamp(0.875rem, 4vw, 1rem) }` makes `1rem` 14–16px on
+  viewports narrower than 25rem, so rem lengths shrink slightly on small phones
+  (by design); media-query breakpoints are unaffected.
 - When you touch a file that still uses px for sizing, convert those values in
   the same change (keep the cleanup scoped to what you are editing).

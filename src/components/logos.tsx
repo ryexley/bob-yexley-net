@@ -19,10 +19,8 @@ function Row(props) {
 }
 
 export function Monogram(props) {
-  const [{ size = 64, color = "currentColor", ring = true }, rest] = splitProps(
-    props,
-    ["size", "color", "ring"],
-  )
+  const [{ size = "4rem", color = "currentColor", ring = true }, rest] =
+    splitProps(props, ["size", "color", "ring"])
 
   // We draw in a 512x512 viewBox and let the browser scale it.
   // The circle stroke is set to non-scaling for crispness.

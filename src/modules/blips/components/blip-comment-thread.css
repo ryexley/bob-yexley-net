@@ -29,7 +29,7 @@
 
 .blip-comment-thread-heading {
   align-items: center;
-  border: 1px solid var(--colors-mono-05);
+  border: 0.0625rem solid var(--colors-mono-05);
   border-radius: 999rem;
   color: var(--colors-mono-09);
   display: inline-flex;
@@ -124,7 +124,7 @@
     var(--colors-mono-02) 95%,
     var(--colors-blue-margeurite) 5%
   );
-  border: 1px solid var(--colors-mono-04);
+  border: 0.0625rem solid var(--colors-mono-04);
   border-radius: 0.5rem;
   display: flex;
   flex-direction: column;
@@ -229,8 +229,8 @@
   }
 
   .blip-comment-status {
-    border: 1px solid var(--colors-mono-05);
-    border-radius: 999px;
+    border: 0.0625rem solid var(--colors-mono-05);
+    border-radius: 999rem;
     font-size: 0.7rem;
     padding: 0.1rem 0.45rem;
 

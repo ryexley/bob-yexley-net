@@ -276,7 +276,7 @@ export const CloudinaryImage: Component<CloudinaryImageProps> = props => {
       style={containerStyle()}>
       <div
         class={cx(
-          "cdn-image-placeholder absolute inset-0 flex min-h-[10rem] min-w-[10rem] h-full w-full flex-col items-center justify-center overflow-hidden p-4 transition-opacity duration-500 ease-in-out border border-[var(--colors-mono-02)]",
+          "cdn-image-placeholder absolute inset-0 flex min-h-[10rem] min-w-[10rem] h-full w-full flex-col items-center justify-center overflow-hidden p-4 transition-opacity duration-500 ease-in-out border-[0.0625rem] border-[var(--colors-mono-02)]",
         )}
         style={placeholderStyle()}
         aria-hidden={imageLoaded()}>

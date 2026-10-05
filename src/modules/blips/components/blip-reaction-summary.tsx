@@ -13,6 +13,7 @@ import { useAuth } from "@/context/auth-context"
 import { useViewport } from "@/context/viewport"
 import type { BlipReactionSummary as BlipReactionSummaryData } from "@/modules/blips/data/reactions-schema"
 import { cx } from "@/util"
+import { remToViewportWidth } from "@/util/breakpoint"
 import "./blip-reactions.css"
 
 type BlipReactionSummaryProps = {
@@ -24,7 +25,7 @@ type BlipReactionSummaryProps = {
 
 const LONG_PRESS_MS = 500
 const LONG_PRESS_MOVE_THRESHOLD_PX = 12
-const MOBILE_MAX_WIDTH = 768
+const MOBILE_MAX_WIDTH = remToViewportWidth(48) // @media (max-width: 48rem)
 const formatDisplayNames = (names: string[]) => names.join(", ")
 
 export function BlipReactionSummary(props: BlipReactionSummaryProps) {

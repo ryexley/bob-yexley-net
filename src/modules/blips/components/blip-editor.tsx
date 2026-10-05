@@ -73,6 +73,7 @@ import {
 } from "@/modules/media"
 import { getBlipMediaFor } from "@/modules/media/data/queries"
 import { slugify } from "@/util/formatters"
+import { remToViewportWidth } from "@/util/breakpoint"
 // Blip editor drawer styles are imported by `@/layouts/main/main.css` so they
 // remain available for portaled editor UI in the shared main-layout chrome.
 
@@ -95,7 +96,7 @@ type EditorView = "picker" | "editor"
 type EditorSurfaceView = "editor" | "metadata"
 
 const tr = ptr("blips.components.blipEditor")
-const DESKTOP_LAYOUT_BREAKPOINT_PX = 768
+const DESKTOP_LAYOUT_BREAKPOINT_PX = remToViewportWidth(48) // @media (min-width: 48rem)
 const DESKTOP_SHELL_MIN_WIDTH_PX = 30 * 16
 const DESKTOP_SHELL_MAX_WIDTH_PX = 48 * 16
 const DESKTOP_SHELL_MIN_HEIGHT_PX = 16 * 16

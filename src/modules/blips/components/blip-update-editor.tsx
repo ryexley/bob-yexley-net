@@ -57,6 +57,7 @@ import {
   validateMediaFiles,
 } from "@/modules/media"
 import { getBlipMediaFor } from "@/modules/media/data/queries"
+import { remToViewportWidth } from "@/util/breakpoint"
 import "./blip-update-editor.css"
 
 type BlipUpdateEditorProps = {
@@ -78,7 +79,7 @@ type SaveContext = {
 
 const trDetail = ptr("blips.views.detail")
 const trEditor = ptr("blips.components.blipEditor")
-const MOBILE_MAX_WIDTH = 768
+const MOBILE_MAX_WIDTH = remToViewportWidth(48) // @media (max-width: 48rem)
 
 /** First media attach on a new update persists an FK stub — unpublished in DB only. */
 export const resolveMediaTriggeredUpdatePersistPublished = (

@@ -76,7 +76,7 @@ export const getAvatarBackground = (
     const x = Math.round(random() * 100)
     const y = Math.round(random() * 100)
     const size = 38 + Math.round(random() * 46)
-    return `radial-gradient(circle ${size}px at ${x}% ${y}%, ${color} 0%, transparent ${size}%)`
+    return `radial-gradient(circle ${size / 16}rem at ${x}% ${y}%, ${color} 0%, transparent ${size}%)`
   })
 
   return {

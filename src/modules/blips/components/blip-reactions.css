@@ -12,8 +12,8 @@
   .reaction {
     align-items: center;
     background: color-mix(in srgb, var(--colors-mono-02) 88%, transparent);
-    border: 1px solid var(--colors-mono-05);
-    border-radius: 999px;
+    border: 0.0625rem solid var(--colors-mono-05);
+    border-radius: 999rem;
     color: var(--colors-mono-09);
     display: inline-flex;
     gap: 0.25rem;
@@ -89,7 +89,7 @@
 
 .blip-reactions-popover {
   background: rgba(var(--colors-mono-01-rgb), 0.95);
-  border: 1px solid var(--colors-mono-04);
+  border: 0.0625rem solid var(--colors-mono-04);
   border-radius: var(--radius-md);
   box-shadow:
     0 0.25rem 0.5rem rgb(0 0 0 / 0.24),

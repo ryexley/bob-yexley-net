@@ -70,8 +70,8 @@
 
 .blip-editor-focus-proxy {
   font-size: 1rem;
-  height: 1px;
-  left: -9999px;
+  height: 0.0625rem;
+  left: -999rem;
   line-height: 1.5rem;
   opacity: 0;
   padding: 0;
@@ -79,7 +79,7 @@
   position: fixed;
   resize: none;
   top: 0;
-  width: 1px;
+  width: 0.0625rem;
 }
 
 .blip-editor-picker-header {
@@ -349,7 +349,7 @@
   }
 
   .blip-tags .combobox-value-area {
-    min-height: calc(var(--blip-editor-metadata-field-height) - 2px);
+    min-height: calc(var(--blip-editor-metadata-field-height) - 0.125rem);
   }
 
   .date-time-picker {
@@ -370,14 +370,14 @@
   }
 
   .switch-main-row {
-    min-height: calc(var(--blip-editor-metadata-field-height) - 2px);
+    min-height: calc(var(--blip-editor-metadata-field-height) - 0.125rem);
   }
 }
 
 .blip-editor-control-pill {
   background: rgba(var(--colors-mono-01-rgb), 0.92);
   border: 0.0625rem solid var(--colors-mono-04);
-  border-radius: 9999px;
+  border-radius: 999rem;
   box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.22);
   overflow: hidden;
   width: 100%;
@@ -417,7 +417,7 @@
 
   &::-webkit-scrollbar-thumb {
     background: color-mix(in srgb, var(--colors-mono-06) 55%, transparent);
-    border-radius: 999px;
+    border-radius: 999rem;
   }
 }
 
@@ -474,7 +474,7 @@
 
 .blip-editor-control-divider {
   background: var(--colors-mono-04);
-  border-radius: 9999px;
+  border-radius: 999rem;
   height: 1.5rem;
   width: 0.0625rem;
 }
@@ -482,7 +482,7 @@
 .blip-editor-toolbar-toggle,
 .blip-editor-metadata-toggle {
   align-items: center;
-  border-radius: 9999px;
+  border-radius: 999rem;
   cursor: pointer;
   display: inline-flex;
   height: 1.5rem;
@@ -536,7 +536,7 @@
   align-items: center;
   appearance: none;
   background: var(--colors-mono-03);
-  border: 1px solid var(--colors-mono-05);
+  border: 0.0625rem solid var(--colors-mono-05);
   border-radius: 0.5rem;
   color: var(--colors-text-primary);
   cursor: pointer;
@@ -629,13 +629,13 @@
 .media-button-input {
   border: 0;
   clip: rect(0 0 0 0);
-  height: 1px;
-  margin: -1px;
+  height: 0.0625rem;
+  margin: -0.0625rem;
   overflow: hidden;
   padding: 0;
   position: absolute;
   white-space: nowrap;
-  width: 1px;
+  width: 0.0625rem;
 }
 
 .media-thumbnail-strip {
@@ -722,7 +722,7 @@
     background: rgba(var(--colors-mono-01-rgb), 0.52);
     border: 0.0625rem solid
       color-mix(in srgb, var(--colors-cool-blue) 72%, transparent);
-    border-radius: 9999px;
+    border-radius: 999rem;
     box-shadow:
       0 0.125rem 0.5rem rgba(var(--colors-mono-01-rgb), 0.32),
       0 0 0.375rem color-mix(in srgb, var(--colors-cool-blue) 28%, transparent),
@@ -799,7 +799,7 @@
     appearance: none;
     background: rgba(var(--colors-mono-01-rgb), 0.85);
     border: 0.0625rem solid var(--colors-mono-05);
-    border-radius: 9999px;
+    border-radius: 999rem;
     cursor: pointer;
     display: flex;
     height: 1.375rem;
@@ -882,7 +882,7 @@
 
   .composer-preview-close {
     background: rgba(var(--colors-mono-01-rgb), 0.75);
-    border-radius: 9999px;
+    border-radius: 999rem;
     inset-block-end: auto;
     inset-block-start: 0.5rem;
     inset-inline-end: 0.5rem;
@@ -912,11 +912,11 @@
       --dialog-transform-base: none;
       --dialog-transform-enter: translateY(0.5rem);
       --dialog-transform-exit: translateY(0.5rem);
-      bottom: var(--blip-editor-keyboard-inset, 0px);
+      bottom: var(--blip-editor-keyboard-inset, 0rem);
       left: 0;
       max-width: none;
       right: 0;
-      top: var(--blip-editor-viewport-top, 0px);
+      top: var(--blip-editor-viewport-top, 0rem);
       transform: none;
       width: 100vw;
     }

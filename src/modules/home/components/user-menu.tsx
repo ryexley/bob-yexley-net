@@ -24,10 +24,11 @@ import { isNotEmpty } from "@/util"
 import { ProfileDrawer } from "@/modules/home/components/profile-drawer"
 import { clearActiveTextInputSession } from "@/modules/blips/components/editor-focus-bridge"
 import { useOptionalBlipComposer } from "@/modules/blips/context/blip-composer-context"
+import { remToViewportWidth } from "@/util/breakpoint"
 import "./user-menu.css"
 
 const tr = ptr("home.components.userMenu")
-const MOBILE_MENU_MAX_WIDTH = 768
+const MOBILE_MENU_MAX_WIDTH = remToViewportWidth(48) // @media (max-width: 48rem)
 type UserMenuItem = {
   icon?: string
   iconNode?: JSX.Element

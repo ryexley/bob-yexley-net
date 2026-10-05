@@ -28,7 +28,7 @@
 .notification {
   align-items: flex-start;
   background: color-mix(in srgb, var(--colors-mono-02) 92%, transparent);
-  border: 1px solid var(--colors-mono-04);
+  border: 0.0625rem solid var(--colors-mono-04);
   border-radius: 0.5rem;
   box-shadow: 0 0.5rem 1.5rem rgb(0 0 0 / 0.35);
   color: var(--colors-mono-11);
@@ -129,7 +129,7 @@
 .notification-close {
   align-items: center;
   background: transparent;
-  border: 1px solid transparent;
+  border: 0.0625rem solid transparent;
   border-radius: 0.4rem;
   color: var(--colors-mono-09);
   cursor: pointer;

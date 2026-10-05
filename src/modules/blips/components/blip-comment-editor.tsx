@@ -31,6 +31,7 @@ import { PortaledInlineTransition } from "@/modules/blips/components/portaled-in
 import { TIME } from "@/util/enums"
 import { clsx as cx } from "@/util"
 import { ptr } from "@/i18n"
+import { remToViewportWidth } from "@/util/breakpoint"
 import "./blip-comment-editor.css"
 
 type SaveStatus = "idle" | "saving" | "saved" | "error"
@@ -47,7 +48,7 @@ type BlipCommentEditorProps = {
 }
 
 const tr = ptr("blips.components.commentEditor")
-const MOBILE_MAX_WIDTH = 768
+const MOBILE_MAX_WIDTH = remToViewportWidth(48) // @media (max-width: 48rem)
 
 export const resolveCommentEditorDraft = ({
   editingCommentId,

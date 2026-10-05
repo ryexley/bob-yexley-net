@@ -99,7 +99,7 @@
 .blip-card-skeleton-reaction-pill {
   align-items: center;
   background: transparent;
-  border: 1px solid var(--colors-mono-05);
+  border: 0.0625rem solid var(--colors-mono-05);
   border-radius: 999rem;
   display: inline-flex;
 }

@@ -3,9 +3,10 @@
   backdrop-filter: blur(0.5rem);
   -webkit-backdrop-filter: blur(0.5rem);
   background: color-mix(in srgb, var(--colors-mono-02) 88%, transparent);
-  border: 1px solid color-mix(in srgb, var(--colors-mono-11) 22%, transparent);
+  border: 0.0625rem solid
+    color-mix(in srgb, var(--colors-mono-11) 22%, transparent);
   border-radius: var(--radius-pill);
-  bottom: calc(var(--site-dock-inset) + env(safe-area-inset-bottom, 0px));
+  bottom: calc(var(--site-dock-inset) + env(safe-area-inset-bottom, 0rem));
   box-shadow: 0 0.125rem 0.5rem
     color-mix(in srgb, var(--colors-mono-00) 20%, transparent);
   box-sizing: border-box;
@@ -91,7 +92,7 @@
         var(--colors-resonant-blue) 7%,
         transparent
       );
-      box-shadow: 0 0 0 1px
+      box-shadow: 0 0 0 0.0625rem
         color-mix(in srgb, var(--colors-resonant-blue) 35%, transparent);
       color: var(--colors-resonant-blue);
       opacity: 1;

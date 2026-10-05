@@ -53,7 +53,7 @@
   --site-dock-gap: 0.625rem;
   --site-dock-inset: 0.75rem;
   --site-dock-offset: calc(
-    var(--site-dock-height) + var(--site-dock-inset) + env(safe-area-inset-bottom, 0px)
+    var(--site-dock-height) + var(--site-dock-inset) + env(safe-area-inset-bottom, 0rem)
   );
 }
 
@@ -70,7 +70,7 @@
 html {
   color-scheme: only dark;
   /* Scale down content on very small screens */
-  font-size: clamp(14px, 4vw, 16px);
+  font-size: clamp(0.875rem, 4vw, 1rem);
 }
 
 html,
@@ -220,7 +220,7 @@ fieldset {
 
     &::-webkit-scrollbar-thumb {
       background: transparent;
-      border-radius: 999px;
+      border-radius: 999rem;
     }
 
     &:hover {

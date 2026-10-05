@@ -15,7 +15,7 @@
   .status-bar-divider {
     background-color: var(--colors-mono-04);
     height: 1.5rem;
-    width: 1px;
+    width: 0.0625rem;
   }
 
   .toggle-toolbar {
@@ -23,9 +23,9 @@
     display: flex;
     justify-content: center;
     padding: 0.3125rem;
-    border-radius: 99999px;
+    border-radius: 999rem;
     background-color: var(--colors-mono-01);
-    border: 1px solid var(--colors-mono-02);
+    border: 0.0625rem solid var(--colors-mono-02);
     cursor: pointer;
     font-size: 1rem;
     transition: background-color 0.25s;

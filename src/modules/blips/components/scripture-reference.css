@@ -53,7 +53,7 @@
 
 .scripture-reference-drawer-handle {
   background-color: var(--colors-mono-05);
-  border-radius: 999px;
+  border-radius: 999rem;
   flex: 0 0 auto;
   height: 0.3125rem;
   width: 4.5rem;

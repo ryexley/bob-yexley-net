@@ -24,7 +24,7 @@ export function Card(props: CardProps) {
   return (
     <div
       class={cn(
-        "border border-[var(--colors-mono-02)] rounded-md p-4 shadow-xl shadow-black/50 min-w-[21.875rem] transition-[var(--transitions-primary)]",
+        "border-[0.0625rem] border-[var(--colors-mono-02)] rounded-md p-4 shadow-[0_1.25rem_1.5625rem_-0.3125rem_#0000001a,0_0.5rem_0.625rem_-0.375rem_#0000001a] shadow-black/50 min-w-[21.875rem] transition-[var(--transitions-primary)]",
         local.class,
       )}>
       <Stack gap="0">

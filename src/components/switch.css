@@ -35,7 +35,7 @@
   --switch-thumb-size: 1rem;
   align-items: center;
   background: var(--colors-mono-02);
-  border: 1px solid var(--colors-mono-07);
+  border: 0.0625rem solid var(--colors-mono-07);
   border-radius: var(--radius-pill);
   cursor: pointer;
   display: inline-flex;

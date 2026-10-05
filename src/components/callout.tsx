@@ -24,7 +24,7 @@ export function Callout(props: CalloutProps) {
   return (
     <div
       class={cn(
-        "flex items-start gap-3 rounded-md border px-2 py-1 text-sm",
+        "flex items-start gap-3 rounded-md border-[0.0625rem] px-2 py-1 text-sm",
         "animate-slide-in-down",
         local.class,
       )}
