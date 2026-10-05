@@ -201,4 +201,21 @@ describe("PersonalCloudImage", () => {
     )
     expect(img()?.hasAttribute("fill")).toBe(false)
   })
+
+  it("emits rem, not px, when sized from numeric width/height", () => {
+    render(() => (
+      <PersonalCloudImage
+        imageKey={KEY}
+        mimeType="image/jpeg"
+        width={64}
+        height={48}
+        alt="sized"
+      />
+    ))
+
+    const frame = document.querySelector(".personal-cloud-image") as HTMLElement
+    expect(frame.style.width).toBe("4rem")
+    expect(frame.style.height).toBe("3rem")
+    expect(frame.getAttribute("style")).not.toContain("px")
+  })
 })
