@@ -9,8 +9,10 @@ import {
   untrack,
 } from "solid-js"
 import { Dialog, DialogCloseButton } from "@/components/dialog"
+import { LoadingSpinner } from "@/components/icon"
 import { IconButton } from "@/components/icon-button"
 import { PersonalCloudImage } from "@/components/personal-cloud-image"
+import { ptr } from "@/i18n"
 import { clsx as cx } from "@/util"
 import type { BlipMediaRow } from "./data/queries"
 import { LightboxPinchZoom } from "./lightbox-pinch-zoom"
@@ -34,6 +36,8 @@ export type LightboxProps = {
   /** Min-px swipe distance to trigger navigation (mobile). Default 40. */
   swipeThreshold?: number
 }
+
+const tr = ptr("shared.components.lightbox")
 
 const AXIS_LOCK_PX = 10
 /** Native `<video controls>` chrome sits along the bottom of the element box. */
@@ -235,6 +239,44 @@ const playVideoElement = (el: HTMLVideoElement) => {
   })
 }
 
+/**
+ * Centered spinner + polite live-region label shown over a slide while its
+ * media is loading (or a playing video is buffering).
+ */
+function LightboxLoadingOverlay(props: { label: string }) {
+  return (
+    <div
+      class="lightbox-loading"
+      role="status"
+      aria-live="polite">
+      <span class="lightbox-loading-badge">
+        <LoadingSpinner
+          class="lightbox-loading-spinner"
+          size="2.25rem"
+          aria-hidden="true"
+        />
+      </span>
+      <span class="sr-only">{props.label}</span>
+    </div>
+  )
+}
+
+/**
+ * `idle`: no `src` (off-screen slide). `loading`: `src` attached, no frame yet.
+ * `ready`: a frame is decoded / playing. `buffering`: ran dry mid-play.
+ */
+export type LightboxVideoState =
+  | "idle"
+  | "loading"
+  | "ready"
+  | "buffering"
+  | "error"
+
+/** `HTMLMediaElement.HAVE_CURRENT_DATA` — a frame is available to show. */
+const HAVE_CURRENT_DATA = 2
+/** `HTMLMediaElement.HAVE_FUTURE_DATA` — enough to keep playing for now. */
+const HAVE_FUTURE_DATA = 3
+
 function LightboxSlide(props: {
   slideKey: string
   record: BlipMediaRow
@@ -261,6 +303,9 @@ function LightboxSlide(props: {
     }
   })
 
+  const [videoState, setVideoState] = createSignal<LightboxVideoState>("idle")
+  const [posterFailed, setPosterFailed] = createSignal(false)
+
   let videoEl: HTMLVideoElement | undefined
   createEffect(() => {
     const visible = isVisible()
@@ -270,10 +315,118 @@ function LightboxSlide(props: {
     }
     if (visible) {
       attachVideoSource(el)
+      setVideoState(el.readyState >= HAVE_CURRENT_DATA ? "ready" : "loading")
     } else {
       releaseVideoSource(el)
+      setVideoState("idle")
     }
   })
+
+  /** Only react to media events while this slide owns a `src`. */
+  const videoHasSource = (event: Event) =>
+    event.currentTarget instanceof HTMLVideoElement &&
+    event.currentTarget.hasAttribute("src")
+
+  const markVideoReady = (event: Event) => {
+    if (videoHasSource(event)) {
+      setVideoState("ready")
+    }
+  }
+
+  const markVideoBuffering = (event: Event) => {
+    if (!videoHasSource(event)) {
+      return
+    }
+    const el = event.currentTarget as HTMLVideoElement
+    // `stalled` also fires while a fully buffered clip idles; only treat it
+    // as buffering when playback can't actually continue.
+    if (event.type === "stalled" && el.readyState >= HAVE_FUTURE_DATA) {
+      return
+    }
+    setVideoState(state =>
+      state === "error" ? state : state === "ready" ? "buffering" : "loading",
+    )
+  }
+
+  const markVideoError = (event: Event) => {
+    if (videoHasSource(event)) {
+      setVideoState("error")
+    }
+  }
+
+  const retryVideo = (event: MouseEvent) => {
+    event.stopPropagation()
+    const el = videoEl
+    if (!el) {
+      return
+    }
+    setVideoState("loading")
+    releaseVideoSource(el)
+    playVideoElement(el)
+  }
+
+  const showVideoPoster = () =>
+    !posterFailed() &&
+    (!isVisible() || videoState() === "loading" || videoState() === "error")
+  const showVideoSpinner = () =>
+    isVisible() && (videoState() === "loading" || videoState() === "buffering")
+
+  const [imageLoaded, setImageLoaded] = createSignal(false)
+  const [imageFailed, setImageFailed] = createSignal(false)
+  const [imageBackdropFailed, setImageBackdropFailed] = createSignal(false)
+  const imageBackdropUrl = () =>
+    props.record.processing_status === "complete"
+      ? variantUrl(props.record.storage_key, MediaVariant.Micro)
+      : undefined
+  const isLightboxImage = (target: EventTarget | null) =>
+    target instanceof HTMLImageElement &&
+    target.classList.contains("personal-cloud-image-img")
+
+  /**
+   * `PersonalCloudImage` owns its `<img>` (and walks fallback candidates on
+   * 404), so watch its load/error from the frame in the capture phase —
+   * neither event bubbles.
+   */
+  const bindImageFrame = (frame: HTMLDivElement) => {
+    const onLoad = (event: Event) => {
+      if (isLightboxImage(event.target)) {
+        setImageFailed(false)
+        setImageLoaded(true)
+      }
+    }
+    const onError = (event: Event) => {
+      if (!isLightboxImage(event.target)) {
+        return
+      }
+      setImageLoaded(false)
+      // The component swaps to the next candidate or, once exhausted, removes
+      // the `<img>` and shows its own error placeholder.
+      queueMicrotask(() => {
+        if (!frame.querySelector("img.personal-cloud-image-img")) {
+          setImageFailed(true)
+        }
+      })
+    }
+    frame.addEventListener("load", onLoad, true)
+    frame.addEventListener("error", onError, true)
+    onCleanup(() => {
+      frame.removeEventListener("load", onLoad, true)
+      frame.removeEventListener("error", onError, true)
+    })
+    queueMicrotask(() => {
+      const img = frame.querySelector(
+        "img.personal-cloud-image-img",
+      ) as HTMLImageElement | null
+      if (img?.complete && img.naturalWidth > 0) {
+        setImageLoaded(true)
+      }
+    })
+  }
+  const showImageSpinner = () =>
+    isActive() &&
+    props.record.processing_status !== "pending" &&
+    !imageLoaded() &&
+    !imageFailed()
 
   const handleVideoActivate = (event: MouseEvent, el: HTMLVideoElement) => {
     if (!isVisible()) {
@@ -304,25 +457,49 @@ function LightboxSlide(props: {
           <LightboxPinchZoom
             enabled={pinchZoomEnabled()}
             onInteractionLock={props.onZoomInteractionLock}>
-            <PersonalCloudImage
-              imageKey={props.record.storage_key}
-              mimeType={props.record.mime_type}
-              processingStatus={
-                props.record.processing_status as
-                  | "pending"
-                  | "complete"
-                  | "failed"
-              }
-              variant={
-                props.isDesktop ? MediaVariant.Large : MediaVariant.Medium
-              }
-              intrinsicWidth={props.record.width}
-              intrinsicHeight={props.record.height}
-              objectFit="contain"
-              eager={isActive()}
-              fadeIn={false}
-              class="lightbox-image"
-            />
+            <div
+              ref={bindImageFrame}
+              class={cx("lightbox-image-frame", {
+                "is-loading": !imageLoaded(),
+              })}
+              aria-busy={showImageSpinner()}>
+              <Show
+                when={
+                  !imageLoaded() && !imageBackdropFailed() && imageBackdropUrl()
+                }>
+                {url => (
+                  <img
+                    class="lightbox-image-backdrop"
+                    src={url()}
+                    alt=""
+                    aria-hidden="true"
+                    onError={() => setImageBackdropFailed(true)}
+                  />
+                )}
+              </Show>
+              <PersonalCloudImage
+                imageKey={props.record.storage_key}
+                mimeType={props.record.mime_type}
+                processingStatus={
+                  props.record.processing_status as
+                    | "pending"
+                    | "complete"
+                    | "failed"
+                }
+                variant={
+                  props.isDesktop ? MediaVariant.Large : MediaVariant.Medium
+                }
+                intrinsicWidth={props.record.width}
+                intrinsicHeight={props.record.height}
+                objectFit="contain"
+                eager={isActive()}
+                fadeIn={false}
+                class="lightbox-image"
+              />
+              <Show when={showImageSpinner()}>
+                <LightboxLoadingOverlay label={tr("loadingImage")} />
+              </Show>
+            </div>
           </LightboxPinchZoom>
         </Show>
         <Show when={props.record.media_type === "gif"}>
@@ -340,12 +517,17 @@ function LightboxSlide(props: {
           </LightboxPinchZoom>
         </Show>
         <Show when={props.record.media_type === "video"}>
-          <div class="lightbox-video-wrap">
-            <Show when={!isVisible()}>
+          <div
+            class="lightbox-video-wrap"
+            data-video-state={videoState()}
+            aria-busy={showVideoSpinner()}>
+            <Show when={showVideoPoster()}>
               <img
                 class="lightbox-video-poster"
                 src={thumbUrl()}
                 alt=""
+                aria-hidden="true"
+                onError={() => setPosterFailed(true)}
               />
             </Show>
             <video
@@ -371,6 +553,12 @@ function LightboxSlide(props: {
               controls={showControls() && isVisible()}
               playsinline
               preload="none"
+              onLoadedData={markVideoReady}
+              onCanPlay={markVideoReady}
+              onPlaying={markVideoReady}
+              onWaiting={markVideoBuffering}
+              onStalled={markVideoBuffering}
+              onError={markVideoError}
               onClick={event => {
                 if (event.currentTarget instanceof HTMLVideoElement) {
                   handleVideoActivate(event, event.currentTarget)
@@ -378,6 +566,23 @@ function LightboxSlide(props: {
               }}>
               <track kind="captions" />
             </video>
+            <Show when={showVideoSpinner()}>
+              <LightboxLoadingOverlay label={tr("loadingVideo")} />
+            </Show>
+            <Show when={isVisible() && videoState() === "error"}>
+              <div
+                class="lightbox-video-error"
+                role="alert">
+                <p class="lightbox-video-error-message">{tr("videoError")}</p>
+                <button
+                  type="button"
+                  class="lightbox-video-retry"
+                  onPointerDown={event => event.stopPropagation()}
+                  onClick={retryVideo}>
+                  {tr("retry")}
+                </button>
+              </div>
+            </Show>
           </div>
         </Show>
       </div>
