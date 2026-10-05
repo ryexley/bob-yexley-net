@@ -131,9 +131,12 @@ describe("Lightbox", () => {
     expect(video?.hasAttribute("autoplay")).toBe(false)
     expect(video?.hasAttribute("muted")).toBe(false)
     expect(video?.hasAttribute("controls")).toBe(false)
-    expect(
-      document.querySelector(".lightbox-slide[aria-hidden='false'] img.lightbox-video-poster"),
-    ).toBeNull()
+    // Poster backdrop stays up until the first frame is ready.
+    const poster = () =>
+      document.querySelector(".lightbox-slide[aria-hidden='false'] img.lightbox-video-poster")
+    expect(poster()?.getAttribute("src")).toBe("https://cdn.test/media/u/b/clip-thumb.webp")
+    fireEvent(video!, new Event("playing"))
+    expect(poster()).toBeNull()
 
     await vi.waitFor(() => expect(play).toHaveBeenCalled())
 
@@ -188,6 +191,162 @@ describe("Lightbox", () => {
     play.mockRestore()
     pause.mockRestore()
     load.mockRestore()
+  })
+
+  describe("loading states", () => {
+    const clip = (name: string, i = 0) =>
+      media({
+        id: name,
+        storage_key: `media/u/b/${name}`,
+        media_type: "video",
+        mime_type: "video/quicktime",
+        display_order: i,
+      })
+    const visibleSlide = () =>
+      document.querySelector('.lightbox-slide[aria-hidden="false"]') as HTMLElement
+    const spinner = () =>
+      visibleSlide()?.querySelector('.lightbox-loading[role="status"]') as HTMLElement | null
+    const allSpinners = () => document.querySelectorAll(".lightbox-loading")
+    let play: ReturnType<typeof vi.spyOn>
+    let pause: ReturnType<typeof vi.spyOn>
+    let load: ReturnType<typeof vi.spyOn>
+
+    beforeEach(() => {
+      play = vi.spyOn(HTMLMediaElement.prototype, "play").mockResolvedValue(undefined)
+      pause = vi.spyOn(HTMLMediaElement.prototype, "pause").mockImplementation(() => {})
+      load = vi.spyOn(HTMLMediaElement.prototype, "load").mockImplementation(() => {})
+    })
+
+    afterEach(() => {
+      play.mockRestore()
+      pause.mockRestore()
+      load.mockRestore()
+    })
+
+    it("shows the poster and a labelled spinner until the video can play", () => {
+      render(() => (
+        <Lightbox media={[clip("solo")]} index={0} onClose={vi.fn()} labels={labels} />
+      ))
+
+      const wrap = visibleSlide().querySelector(".lightbox-video-wrap") as HTMLElement
+      expect(spinner()?.textContent).toBe("Loading video")
+      expect(wrap.getAttribute("aria-busy")).toBe("true")
+      expect(wrap.querySelector("img.lightbox-video-poster")?.getAttribute("src")).toBe(
+        "https://cdn.test/media/u/b/solo-thumb.webp",
+      )
+
+      fireEvent(visibleVideo()!, new Event("canplay"))
+
+      expect(spinner()).toBeNull()
+      expect(wrap.getAttribute("aria-busy")).toBe("false")
+      expect(wrap.querySelector("img.lightbox-video-poster")).toBeNull()
+    })
+
+    it("shows the spinner again while buffering mid-play", () => {
+      render(() => (
+        <Lightbox media={[clip("solo")]} index={0} onClose={vi.fn()} labels={labels} />
+      ))
+      const video = visibleVideo()!
+      fireEvent(video, new Event("playing"))
+      expect(spinner()).toBeNull()
+
+      fireEvent(video, new Event("waiting"))
+      expect(spinner()?.textContent).toBe("Loading video")
+      // Keep the paused frame visible rather than flashing the poster back.
+      expect(visibleSlide().querySelector("img.lightbox-video-poster")).toBeNull()
+
+      fireEvent(video, new Event("playing"))
+      expect(spinner()).toBeNull()
+    })
+
+    it("ignores a stalled event when enough data is buffered", () => {
+      render(() => (
+        <Lightbox media={[clip("solo")]} index={0} onClose={vi.fn()} labels={labels} />
+      ))
+      const video = visibleVideo()!
+      fireEvent(video, new Event("playing"))
+      Object.defineProperty(video, "readyState", { configurable: true, value: 4 })
+      fireEvent(video, new Event("stalled"))
+      expect(spinner()).toBeNull()
+    })
+
+    it("shows an error with a retry that reloads the video", () => {
+      render(() => (
+        <Lightbox media={[clip("solo")]} index={0} onClose={vi.fn()} labels={labels} />
+      ))
+      const video = visibleVideo()!
+      fireEvent(video, new Event("error"))
+
+      const alert = visibleSlide().querySelector('[role="alert"]')
+      expect(alert?.textContent).toContain("This video couldn't be loaded.")
+      expect(spinner()).toBeNull()
+
+      play.mockClear()
+      fireEvent.click(alert!.querySelector("button.lightbox-video-retry")!)
+
+      expect(visibleSlide().querySelector('[role="alert"]')).toBeNull()
+      expect(spinner()?.textContent).toBe("Loading video")
+      expect(video.getAttribute("src")).toBe("https://cdn.test/media/u/b/solo-original.mov")
+      expect(load).toHaveBeenCalled()
+      expect(play).toHaveBeenCalled()
+    })
+
+    it("only spins for the visible video and resets the one left behind", () => {
+      render(() => (
+        <Lightbox
+          media={[clip("one", 0), clip("two", 1), clip("three", 2)]}
+          index={0}
+          onClose={vi.fn()}
+          labels={labels}
+        />
+      ))
+      expect(allSpinners().length).toBe(1)
+      const first = visibleVideo()!
+      fireEvent(first, new Event("playing"))
+      expect(allSpinners().length).toBe(0)
+
+      fireEvent.click(document.querySelector(".lightbox-nav-next") as Element)
+
+      expect(allSpinners().length).toBe(1)
+      expect(first.hasAttribute("src")).toBe(false)
+      expect(first.closest(".lightbox-video-wrap")?.getAttribute("data-video-state")).toBe("idle")
+      // Releasing the old video must not surface an error for it.
+      fireEvent(first, new Event("error"))
+      expect(document.querySelector('[role="alert"]')).toBeNull()
+      expect(
+        Array.from(document.querySelectorAll("video.lightbox-video")).filter(el =>
+          el.hasAttribute("src"),
+        ).length,
+      ).toBe(1)
+    })
+
+    it("shows a blurred micro backdrop and spinner until the full image loads", () => {
+      render(() => (
+        <Lightbox media={set} index={0} onClose={vi.fn()} labels={labels} />
+      ))
+      const frame = visibleSlide().querySelector(".lightbox-image-frame") as HTMLElement
+      expect(frame.classList.contains("is-loading")).toBe(true)
+      expect(frame.getAttribute("aria-busy")).toBe("true")
+      expect(spinner()?.textContent).toBe("Loading image")
+      expect(frame.querySelector("img.lightbox-image-backdrop")?.getAttribute("src")).toBe(
+        "https://cdn.test/media/u/b/a-micro.webp",
+      )
+
+      fireEvent.load(image()!)
+
+      expect(frame.classList.contains("is-loading")).toBe(false)
+      expect(frame.getAttribute("aria-busy")).toBe("false")
+      expect(spinner()).toBeNull()
+      expect(frame.querySelector("img.lightbox-image-backdrop")).toBeNull()
+    })
+
+    it("does not spin for gifs", () => {
+      render(() => (
+        <Lightbox media={set} index={2} onClose={vi.fn()} labels={labels} />
+      ))
+      expect(document.querySelector("img.lightbox-gif")).toBeTruthy()
+      expect(spinner()).toBeNull()
+    })
   })
 
   it("navigates with the arrow keys and renders an animated gif on the last slide", () => {

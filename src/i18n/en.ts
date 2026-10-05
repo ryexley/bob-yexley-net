@@ -37,6 +37,12 @@ export const en = {
       globalLoadingIndicator: {
         ariaLabel: "Loading",
       },
+      lightbox: {
+        loadingVideo: "Loading video",
+        loadingImage: "Loading image",
+        videoError: "This video couldn't be loaded.",
+        retry: "Try again",
+      },
       routeBoundary: {
         loading: "Loading ...",
         errorTitle: "Something went wrong",
