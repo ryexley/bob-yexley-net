@@ -1,4 +1,4 @@
-import { For, Show, createSignal } from "solid-js"
+import { For, Show, createMemo, createSignal } from "solid-js"
 import { Icon } from "@/components/icon"
 import { PersonalCloudImage } from "@/components/personal-cloud-image"
 import { clsx as cx } from "@/util"
@@ -7,7 +7,12 @@ import { galleryMedia } from "./placement"
 import { Lightbox, type LightboxLabels } from "./lightbox"
 import { MediaVariant, originalUrl, variantUrl } from "./media-utils"
 
-/** Display size for multi-item gallery thumbnails on the blip detail page. */
+/**
+ * Nominal (desktop) size for gallery thumbnails on the blip detail page. Tiles
+ * stretch to fill a 3-column grid on mobile (~105–130px), so the image fills
+ * its tile (`fill`) and uses the 200px `small` variant rather than the 96px
+ * `micro`, which would be upscaled.
+ */
 export const GALLERY_THUMB_PX = 80
 
 /**
@@ -80,6 +85,21 @@ export function BlipMediaGallery(props: BlipMediaGalleryProps) {
   const [openIndex, setOpenIndex] = createSignal<number | null>(null)
   const usesPageLightbox = () => typeof props.onOpenItem === "function"
   const media = () => galleryMedia(props.media, props.content)
+  // Key tiles by row id, not object identity: a media refetch hands back new
+  // row objects for the same media, and `<For>` would re-create every tile
+  // (re-requesting and re-fading each thumbnail) even though nothing changed.
+  const mediaById = createMemo(
+    () => new Map(media().map(record => [record.id, record])),
+  )
+  const mediaIds = createMemo(
+    () => media().map(record => record.id),
+    undefined,
+    {
+      equals: (previous, next) =>
+        previous.length === next.length &&
+        previous.every((id, index) => id === next[index]),
+    },
+  )
 
   const openItem = (record: BlipMediaRow, localIndex: number) => {
     if (usesPageLightbox()) {
@@ -101,43 +121,51 @@ export function BlipMediaGallery(props: BlipMediaGalleryProps) {
       <div
         class={cx("blip-media-gallery", props.class)}
         data-count={media().length}>
-        <For each={media()}>
-          {(record, index) => (
-            <button
-              type="button"
-              class="blip-media-gallery-item"
-              aria-label={itemAriaLabel(record, index())}
-              onClick={() => openItem(record, index())}>
-              <Show when={record.media_type === "image"}>
-                <PersonalCloudImage
-                  imageKey={record.storage_key}
-                  mimeType={record.mime_type}
-                  processingStatus={
-                    record.processing_status as
-                      | "pending"
-                      | "complete"
-                      | "failed"
-                  }
-                  variant={MediaVariant.Micro}
-                  width={GALLERY_THUMB_PX}
-                  height={GALLERY_THUMB_PX}
-                  objectFit="cover"
-                  eager
-                  class="blip-media-gallery-image"
-                />
-              </Show>
-              <Show when={record.media_type === "gif"}>
-                <img
-                  class="blip-media-gallery-gif"
-                  src={originalUrl(record.storage_key, record.mime_type)}
-                  alt=""
-                  loading="lazy"
-                />
-              </Show>
-              <Show when={record.media_type === "video"}>
-                <GalleryVideoThumb record={record} />
-              </Show>
-            </button>
+        <For each={mediaIds()}>
+          {(id, index) => (
+            <Show when={mediaById().get(id)}>
+              {record => (
+                <button
+                  type="button"
+                  class="blip-media-gallery-item"
+                  aria-label={itemAriaLabel(record(), index())}
+                  onClick={() => openItem(record(), index())}>
+                  <Show when={record().media_type === "image"}>
+                    <PersonalCloudImage
+                      imageKey={record().storage_key}
+                      mimeType={record().mime_type}
+                      processingStatus={
+                        record().processing_status as
+                          | "pending"
+                          | "complete"
+                          | "failed"
+                      }
+                      variant={MediaVariant.Small}
+                      width={GALLERY_THUMB_PX}
+                      height={GALLERY_THUMB_PX}
+                      fill
+                      objectFit="cover"
+                      eager
+                      class="blip-media-gallery-image"
+                    />
+                  </Show>
+                  <Show when={record().media_type === "gif"}>
+                    <img
+                      class="blip-media-gallery-gif"
+                      src={originalUrl(
+                        record().storage_key,
+                        record().mime_type,
+                      )}
+                      alt=""
+                      loading="lazy"
+                    />
+                  </Show>
+                  <Show when={record().media_type === "video"}>
+                    <GalleryVideoThumb record={record()} />
+                  </Show>
+                </button>
+              )}
+            </Show>
           )}
         </For>
       </div>

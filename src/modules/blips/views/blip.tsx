@@ -593,6 +593,30 @@ export function BlipView() {
       direction: topLevelSortDirection(),
     }),
   )
+  // `buildTopLevelActivity` returns fresh wrapper objects on every recompute,
+  // and the updates themselves swap identity once the store seeds (graph rows →
+  // cached copies). `<For>` keys by reference, so iterating those objects
+  // re-created every <UpdateBlip> — and its gallery thumbnails — whenever any
+  // input changed, which flickered every tile during load. Iterate stable
+  // string keys instead and look the current item up by key.
+  const topLevelActivityByKey = createMemo(
+    () =>
+      new Map(
+        topLevelActivity().map(item => [
+          `${item.kind}:${item.blip.id}`,
+          item,
+        ]),
+      ),
+  )
+  const topLevelActivityKeys = createMemo(
+    () => [...topLevelActivityByKey().keys()],
+    undefined,
+    {
+      equals: (previous, next) =>
+        previous.length === next.length &&
+        previous.every((key, index) => key === next[index]),
+    },
+  )
   const topLevelSortTooltip = createMemo(() =>
     topLevelSortDirection() === "desc"
       ? tr("sort.toggleToOldest")
@@ -1403,41 +1427,50 @@ export function BlipView() {
                         <Show when={hasTopLevelActivity()}>
                           <section class="blip-activity-section">
                             <ul class="blip-detail-activity-list">
-                              <For each={topLevelActivity()}>
-                                {activity =>
-                                  activity.kind === "comment" ? (
-                                    <BlipCommentListItem
-                                      comment={activity.blip}
-                                      parentBlip={blip() ?? data()}
-                                    />
-                                  ) : (
-                                    <UpdateBlip
-                                      blip={activity.blip}
-                                      comments={getCommentsForParent(
-                                        activity.blip.id,
-                                      )}
-                                      media={
-                                        mediaByBlip()[activity.blip.id] ?? []
+                              <For each={topLevelActivityKeys()}>
+                                {key => {
+                                  const activity = () =>
+                                    topLevelActivityByKey().get(key)
+                                  return (
+                                    <Show when={activity()}>
+                                      {current =>
+                                        current().kind === "comment" ? (
+                                          <BlipCommentListItem
+                                            comment={current().blip}
+                                            parentBlip={blip() ?? data()}
+                                          />
+                                        ) : (
+                                          <UpdateBlip
+                                            blip={current().blip}
+                                            comments={getCommentsForParent(
+                                              current().blip.id,
+                                            )}
+                                            media={
+                                              mediaByBlip()[current().blip.id] ??
+                                              []
+                                            }
+                                            mediaLabels={galleryLabels}
+                                            onOpenMediaItem={openPageMediaItem}
+                                            getMediaOpenItemLabel={
+                                              pageMediaOpenItemLabel
+                                            }
+                                            onEdit={handleEditUpdate}
+                                            isRecentRealtime={
+                                              recentRealtimeUpdateStates()[
+                                                current().blip.id
+                                              ] !== undefined
+                                            }
+                                            isShimmering={
+                                              recentRealtimeUpdateStates()[
+                                                current().blip.id
+                                              ]?.shimmering === true
+                                            }
+                                          />
+                                        )
                                       }
-                                      mediaLabels={galleryLabels}
-                                      onOpenMediaItem={openPageMediaItem}
-                                      getMediaOpenItemLabel={
-                                        pageMediaOpenItemLabel
-                                      }
-                                      onEdit={handleEditUpdate}
-                                      isRecentRealtime={
-                                        recentRealtimeUpdateStates()[
-                                          activity.blip.id
-                                        ] !== undefined
-                                      }
-                                      isShimmering={
-                                        recentRealtimeUpdateStates()[
-                                          activity.blip.id
-                                        ]?.shimmering === true
-                                      }
-                                    />
+                                    </Show>
                                   )
-                                }
+                                }}
                               </For>
                             </ul>
                           </section>
