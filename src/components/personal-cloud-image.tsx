@@ -17,6 +17,7 @@ import {
   getDimensions,
   parseDimension,
   resolveContainerDimension,
+  toRemLength,
 } from "@/util/image"
 import {
   MediaVariant,
@@ -215,8 +216,10 @@ export const PersonalCloudImage: Component<PersonalCloudImageProps> = props => {
     local.fill
       ? { height: "100%", width: "100%" }
       : {
-          height: resolveContainerDimension(dimensions().height),
-          width: resolveContainerDimension(dimensions().width),
+          // Numeric width/height are pixel *hints* (variant choice); emit rem
+          // so the frame scales with the root font size instead of fixed px.
+          height: toRemLength(resolveContainerDimension(dimensions().height)),
+          width: toRemLength(resolveContainerDimension(dimensions().width)),
           "aspect-ratio": String(dimensions().aspectRatio),
         },
   )
@@ -250,7 +253,7 @@ export const PersonalCloudImage: Component<PersonalCloudImageProps> = props => {
       typeof window.matchMedia === "function"
     ) {
       setDeviceVariant(
-        window.matchMedia("(min-width: 768px)").matches
+        window.matchMedia("(min-width: 48rem)").matches
           ? MediaVariant.Large
           : MediaVariant.Medium,
       )
@@ -338,7 +341,7 @@ export const PersonalCloudImage: Component<PersonalCloudImageProps> = props => {
       style={containerStyle()}>
       <div
         class={cx(
-          "personal-cloud-image-placeholder absolute inset-0 flex h-full w-full flex-col items-center justify-center overflow-hidden transition-opacity duration-500 ease-in-out border border-[var(--colors-mono-02)]",
+          "personal-cloud-image-placeholder absolute inset-0 flex h-full w-full flex-col items-center justify-center overflow-hidden transition-opacity duration-500 ease-in-out border-[0.0625rem] border-[var(--colors-mono-02)]",
           isCompactPlaceholder() ? "p-1" : "p-4",
         )}
         style={placeholderStyle()}

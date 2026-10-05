@@ -206,6 +206,32 @@ export function resolveContainerDimension(parsedDimension) {
   return parsedDimension
 }
 
+/**
+ * Convert a resolved container dimension to a CSS length without px: numbers
+ * (pixel hints) and `"<n>px"` strings become rem at the 16px root default, so
+ * the box still scales with the user's font size. `%`/viewport/rem/`auto` and
+ * other strings pass through unchanged.
+ */
+export function toRemLength(
+  dimension: string | number | null | undefined,
+  baseFontSize = 16,
+): string | undefined {
+  if (dimension == null) {
+    return undefined
+  }
+  const toRem = (value: number) =>
+    `${Number((value / baseFontSize).toFixed(4))}rem`
+  if (typeof dimension === "number") {
+    return dimension > 0 ? toRem(dimension) : undefined
+  }
+  const pxMatch = dimension.trim().match(/^(\d+(?:\.\d+)?)px$/)
+  if (pxMatch) {
+    const value = parseFloat(pxMatch[1])
+    return value > 0 ? toRem(value) : undefined
+  }
+  return dimension
+}
+
 export const imageUrl = (id: string): string => {
   const cloudName = getEnv().CLOUDINARY_CLOUD_NAME
   if (!cloudName) {
