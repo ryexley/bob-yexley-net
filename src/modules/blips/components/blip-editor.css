@@ -326,7 +326,7 @@
       background-color: var(--colors-mono-02);
       border: 0.0625rem solid var(--colors-mono-04);
       border-radius: var(--form-control-radius);
-      font-family: var(--font-mono, ui-monospace, monospace);
+      font-family: inherit;
       font-size: 0.9375rem;
       min-height: var(--blip-editor-metadata-field-height);
     }
