@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest"
 import { BLIP_TYPES } from "@/modules/blips/data/schema"
 import {
   buildBlipReactionStates,
+  isMissingSlugColumnError,
   mapViewUpdateRows,
+  selectWithSlugFallback,
 } from "@/modules/blips/data/queries"
 
 describe("blip queries", () => {
@@ -122,5 +124,39 @@ describe("blip queries", () => {
         },
       ],
     })
+  })
+})
+
+describe("view_blips slug column fallback", () => {
+  it("recognizes a missing slug column error", () => {
+    expect(
+      isMissingSlugColumnError({ code: "42703", message: "column view_blips.slug does not exist" }),
+    ).toBe(true)
+    expect(isMissingSlugColumnError({ code: "42703", message: "column foo does not exist" })).toBe(
+      false,
+    )
+    expect(isMissingSlugColumnError({ code: "PGRST116", message: "slug" })).toBe(false)
+    expect(isMissingSlugColumnError(null)).toBe(false)
+  })
+
+  it("retries once without slug when the column is missing", async () => {
+    const calls: string[] = []
+    const result = await selectWithSlugFallback("id, title, slug, tags", async select => {
+      calls.push(select)
+      return calls.length === 1
+        ? { data: null, error: { code: "42703", message: "column view_blips.slug does not exist" } }
+        : { data: [{ id: "1" }], error: null }
+    })
+    expect(calls).toEqual(["id, title, slug, tags", "id, title, tags"])
+    expect(result.data).toEqual([{ id: "1" }])
+  })
+
+  it("does not retry on success or unrelated errors", async () => {
+    let count = 0
+    await selectWithSlugFallback("id, slug", async () => {
+      count += 1
+      return { data: null, error: { code: "500", message: "boom" } }
+    })
+    expect(count).toBe(1)
   })
 })

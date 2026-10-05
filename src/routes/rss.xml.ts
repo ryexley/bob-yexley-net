@@ -2,6 +2,8 @@ import type { APIEvent } from "@solidjs/start/server"
 import { getServerClient } from "@/lib/vendor/supabase/server"
 import { marked } from "marked"
 import { deriveBlipTitle, deriveBlipDescription } from "@/modules/blips/seo"
+import { selectWithSlugFallback } from "@/modules/blips/data/queries"
+import { blipUrl } from "@/urls"
 
 const SITE_URL = "https://bob.yexley.net"
 const FEED_ITEM_LIMIT = 50
@@ -21,12 +23,23 @@ export async function GET({ request }: APIEvent) {
     const supabase = await getServerClient()
     
     // Fetch latest blips (view_blips already filters for roots, RLS handles visibility)
-    const { data: blips, error } = await supabase
-      .from("view_blips")
-      .select("id, content, publish_at, updated_at")
-      .order("sort_at", { ascending: false })
-      .order("created_at", { ascending: false })
-      .limit(FEED_ITEM_LIMIT)
+    const { data, error } = await selectWithSlugFallback(
+      "id, slug, content, publish_at, updated_at",
+      select =>
+        supabase
+          .from("view_blips")
+          .select(select)
+          .order("sort_at", { ascending: false })
+          .order("created_at", { ascending: false })
+          .limit(FEED_ITEM_LIMIT),
+    )
+    const blips = (data ?? null) as unknown as Array<{
+      id: string
+      slug?: string | null
+      content: string | null
+      publish_at: string | null
+      updated_at: string
+    }> | null
 
     if (error) {
       console.error("[rss] Error fetching blips:", error)
@@ -35,7 +48,7 @@ export async function GET({ request }: APIEvent) {
     const items = (blips || []).map(blip => {
       const title = escapeXml(deriveBlipTitle(blip.content || ""))
       const description = escapeXml(deriveBlipDescription(blip.content || ""))
-      const link = `${SITE_URL}/blips/${blip.id}`
+      const link = escapeXml(blipUrl(SITE_URL, blip))
       const pubDate = new Date(blip.publish_at || blip.updated_at).toUTCString()
       
       // Render markdown to HTML for content:encoded
