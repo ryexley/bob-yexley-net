@@ -371,6 +371,64 @@ export async function deleteObject(
  * The original is left untouched. No DB writes happen here; the caller persists
  * the returned keys and flips `processing_status`.
  */
+/**
+ * Read an `-original.<ext>` object from R2, generate the WebP variants with
+ * sharp and write them back beside it. Shared by `processMedia` (fresh
+ * uploads) and `reprocessFailedMedia` (backfilling rows whose variants never
+ * got generated). Throws on any R2 or decode failure, including `NoSuchKey`.
+ * Callers own auth and key-ownership checks.
+ */
+export async function generateVariants(
+  key: string,
+  baseKey: string,
+): Promise<ProcessMediaResponse> {
+  const { bucket } = getR2Config()
+  const client = getR2Client()
+
+  const original = await client.send(
+    new GetObjectCommand({ Bucket: bucket, Key: key }),
+  )
+  if (!original.Body) {
+    const missing = new Error("Original object not found")
+    missing.name = "NoSuchKey"
+    throw missing
+  }
+
+  const bytes = await original.Body.transformToByteArray()
+  // Load sharp only when processing. Signing/multipart routes must not
+  // import the native binary or a Vercel load failure 500s every upload.
+  const { processImage } = await import("./process")
+  const processed = await processImage(bytes)
+
+  const variantEntries = await Promise.all(
+    processed.variants.map(async variant => {
+      const variantKey = `${baseKey}-${variant.variant}.webp`
+      await client.send(
+        new PutObjectCommand({
+          Bucket: bucket,
+          Key: variantKey,
+          Body: variant.data,
+          ContentType: variant.contentType,
+        }),
+      )
+      return [
+        variant.variant,
+        { key: variantKey, width: variant.width, height: variant.height },
+      ] as const
+    }),
+  )
+
+  const variants = Object.fromEntries(
+    variantEntries,
+  ) as Record<string, ProcessedVariantInfo> as ProcessMediaResponse["variants"]
+
+  return {
+    storageKey: baseKey,
+    original: processed.original,
+    variants,
+  }
+}
+
 export async function processMedia(
   payload: unknown,
 ): Promise<MediaResult<ProcessMediaResponse>> {
@@ -389,49 +447,7 @@ export async function processMedia(
   }
 
   try {
-    const { bucket } = getR2Config()
-    const client = getR2Client()
-
-    const original = await client.send(
-      new GetObjectCommand({ Bucket: bucket, Key: key }),
-    )
-    if (!original.Body) {
-      return fail("Original object not found", 404)
-    }
-
-    const bytes = await original.Body.transformToByteArray()
-    // Load sharp only when processing. Signing/multipart routes must not
-    // import the native binary or a Vercel load failure 500s every upload.
-    const { processImage } = await import("./process")
-    const processed = await processImage(bytes)
-
-    const variantEntries = await Promise.all(
-      processed.variants.map(async variant => {
-        const variantKey = `${baseKey}-${variant.variant}.webp`
-        await client.send(
-          new PutObjectCommand({
-            Bucket: bucket,
-            Key: variantKey,
-            Body: variant.data,
-            ContentType: variant.contentType,
-          }),
-        )
-        return [
-          variant.variant,
-          { key: variantKey, width: variant.width, height: variant.height },
-        ] as const
-      }),
-    )
-
-    const variants = Object.fromEntries(
-      variantEntries,
-    ) as Record<string, ProcessedVariantInfo> as ProcessMediaResponse["variants"]
-
-    return ok({
-      storageKey: baseKey,
-      original: processed.original,
-      variants,
-    })
+    return ok(await generateVariants(key, baseKey))
   } catch (error) {
     if (error instanceof Error && error.name === "NoSuchKey") {
       return fail("Original object not found", 404)
