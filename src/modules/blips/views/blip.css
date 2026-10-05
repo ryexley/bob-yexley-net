@@ -128,8 +128,8 @@
     .timestamp {
       align-items: center;
       background: color-mix(in srgb, var(--colors-info) 12%, transparent);
-      border: 1px solid var(--colors-info);
-      border-radius: 999px;
+      border: 0.0625rem solid var(--colors-info);
+      border-radius: 999rem;
       color: var(--colors-info);
       display: inline-flex;
       font-style: normal;
@@ -165,7 +165,7 @@
 
 .blip-detail-footer-separator {
   border: 0;
-  border-top: 1px solid var(--colors-mono-04);
+  border-top: 0.0625rem solid var(--colors-mono-04);
   margin: 0.25rem 0;
   width: 100%;
 }
@@ -308,7 +308,7 @@
 
   .blip-comments-chip {
     align-items: center;
-    border: 1px solid var(--colors-mono-05);
+    border: 0.0625rem solid var(--colors-mono-05);
     border-radius: 999rem;
     color: var(--colors-mono-09);
     display: inline-flex;
@@ -419,7 +419,7 @@
 
   .blip-updates-chip {
     align-items: center;
-    border: 1px solid var(--colors-mono-05);
+    border: 0.0625rem solid var(--colors-mono-05);
     border-radius: 999rem;
     color: var(--colors-mono-09);
     display: inline-flex;

@@ -27,7 +27,7 @@
     justify-content: center;
     align-items: center;
     outline: none;
-    border-radius: 6px;
+    border-radius: 0.375rem;
     color: white;
     transition: 250ms background-color;
 
@@ -79,7 +79,7 @@
       line-height: 1;
       color: var(--colors-links);
       border-radius: max(
-        0px,
+        0rem,
         calc(
           var(--menu-content-radius) -
             (var(--menu-content-padding) + var(--menu-content-border))

@@ -1,7 +1,7 @@
 .info-tooltip-trigger {
   align-items: center;
   background: transparent;
-  border: 1px solid transparent;
+  border: 0.0625rem solid transparent;
   border-radius: var(--radius-round);
   color: var(--colors-mono-08);
   cursor: help;

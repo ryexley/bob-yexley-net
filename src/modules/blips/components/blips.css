@@ -38,7 +38,7 @@
 
 .blips-date-header {
   --date-corner: var(--radius-md);
-  --date-edge: 1px;
+  --date-edge: 0.0625rem;
   --date-fade-end: 70%;
   background: color-mix(in srgb, var(--colors-mono-01) 50%, transparent);
   backdrop-filter: blur(0.55rem);
