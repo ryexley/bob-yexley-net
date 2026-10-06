@@ -382,7 +382,7 @@ export function ProfileDrawer(props: ProfileDrawerProps) {
                     type="button"
                     variant="outline"
                     size="sm"
-                    icon={isEditing() ? undefined : "person_edit"}
+                    icon={isEditing() ? undefined : "userRoundPen"}
                     label={isEditing() ? tr("actions.cancelEdit") : tr("actions.edit")}
                     class="profile-drawer-edit-toggle"
                     disabled={isSaving() || isRefreshingAvatar()}

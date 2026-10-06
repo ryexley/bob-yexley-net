@@ -1166,7 +1166,7 @@ export function BlipUpdateEditor(props: BlipUpdateEditorProps) {
         bodyClass="blip-update-editor-body"
         focusProxyRef={focusBridge.setFocusProxyRef}
         focusProxyAriaLabel={trDetail("updates.placeholder")}
-        icon={isMobileViewport() ? undefined : "chat"}
+        icon={isMobileViewport() ? undefined : "messageCircle"}
         showFocusProxy={false}
         onPasteCapture={handleClipboardPaste}
         Header={

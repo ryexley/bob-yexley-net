@@ -23,6 +23,9 @@ export function Icon(props: IconProps) {
   // one-letter call that becomes the intermittent `t is not a function` crash.
   const glyph = () => (local.name ? iconGlyphs[local.name] : undefined)
   const filled = () => glyph()?.filled === true
+  const pathNodes = () =>
+    // oxlint-disable-next-line solid/prefer-for -- For-inside-svg minifies to `t is not a function`
+    (glyph()?.paths ?? []).map(pathD => <path d={pathD} />)
 
   return (
     <svg
@@ -39,9 +42,7 @@ export function Icon(props: IconProps) {
       role={local.title ? "img" : undefined}
       {...rest}>
       {local.title ? <title>{local.title}</title> : null}
-      {(glyph()?.paths ?? []).map(pathD => (
-        <path d={pathD} />
-      ))}
+      {pathNodes()}
     </svg>
   )
 }
