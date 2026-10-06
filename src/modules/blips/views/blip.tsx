@@ -1337,7 +1337,7 @@ export function BlipView() {
                                     variant="ghost"
                                     size="xs"
                                     label={tr("updates.editor.newLabel")}
-                                    iconRight="messageCirclePlus"
+                                    iconRight="messageSquarePlus"
                                     class={cx("blip-detail-add-update", {
                                       active: showComposer(),
                                     })}

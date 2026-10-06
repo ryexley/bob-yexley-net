@@ -273,6 +273,7 @@ describe("BlipEditor", () => {
     expect(screen.queryByTestId("mock-blip-tags")).toBeNull()
     expect(screen.getByRole("button", { name: "Save" })).toBeTruthy()
     expect(screen.getByRole("button", { name: "Publish" })).toBeTruthy()
+    expect(screen.getByRole("button", { name: "Delete Draft" })).toBeTruthy()
     expect(
       screen.getByRole("button", { name: "Show blip metadata" }),
     ).toBeTruthy()

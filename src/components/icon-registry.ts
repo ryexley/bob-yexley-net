@@ -82,12 +82,13 @@ export type IconName =
   | "messagesSquare"
   | "messageCircle"
   | "messageSquarePlus"
+  | "messageSquareText"
   | "messageCirclePlus"
   | "rocket"
   | "filePenLine"
   | "radar"
   | "hash"
-  | "badgeInfo"
+  | "settings2"
   | "upload"
   | "skipForward"
   | "arrowUpDown"
@@ -310,9 +311,9 @@ export const iconGlyphs: Record<IconName, IconGlyph> = {
   /* circle-user (account_circle) */
   circleUser: {
     paths: [
-      "M18 20a6 6 0 0 0-12 0",
-      "M2 12a10 10 0 1 0 20 0a10 10 0 1 0-20 0",
-      "M10 9a3 3 0 1 0 6 0a3 3 0 1 0-6 0",
+      "M22 12A10 10 0 1 1 2 12a10 10 0 0 1 20 0",
+      "M15 10A3 3 0 1 1 9 10a3 3 0 0 1 6 0",
+      "M7 20.662V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.662",
     ],
   },
 
@@ -459,11 +460,11 @@ export const iconGlyphs: Record<IconName, IconGlyph> = {
     ],
   },
 
-  /* image */
+  /* image — Lucide image: rounded rect + sun + mountain */
   image: {
     paths: [
-      "M3 5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z",
-      "M11 9A2 2 0 1 1 7 9a2 2 0 0 1 4 0",
+      "M5 3h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z",
+      "M9 7a2 2 0 0 1 2 2 2 2 0 0 1-2 2 2 2 0 0 1-2-2 2 2 0 0 1 2-2",
       "m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21",
     ],
   },
@@ -682,12 +683,22 @@ export const iconGlyphs: Record<IconName, IconGlyph> = {
     ],
   },
 
+  /* message-square-text (update) */
+  messageSquareText: {
+    paths: [
+      "M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z",
+      "M7 11h10",
+      "M7 15h6",
+      "M7 7h8",
+    ],
+  },
+
   /* message-circle-plus (chat_add_on) */
   messageCirclePlus: {
     paths: [
-      "M7.9 20A9 9 0 1 0 4 16.1L2 22z",
-      "M12 7v6",
-      "M9 10h6",
+      "M2.992 16.342a2 2 0 0 1 .094 1.167l-1.065 3.29a1 1 0 0 0 1.236 1.168l3.413-.998a2 2 0 0 1 1.099.092 10 10 0 1 0-4.777-4.719",
+      "M8 12h8",
+      "M12 8v8",
     ],
   },
 
@@ -735,12 +746,13 @@ export const iconGlyphs: Record<IconName, IconGlyph> = {
     ],
   },
 
-  /* badge-info (page_info close alternative) */
-  badgeInfo: {
+  /* settings-2 */
+  settings2: {
     paths: [
-      "M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76z",
-      "M12 16v-4",
-      "M12 8h.01",
+      "M14 17H5",
+      "M19 7h-9",
+      "M17 14a3 3 0 0 1 3 3 3 3 0 0 1-3 3 3 3 0 0 1-3-3 3 3 0 0 1 3-3",
+      "M7 4a3 3 0 0 1 3 3 3 3 0 0 1-3 3 3 3 0 0 1-3-3 3 3 0 0 1 3-3",
     ],
   },
 
