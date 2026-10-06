@@ -98,7 +98,7 @@ export function Select(props: SelectProps) {
           {state => state.selectedOption().label}
         </SelectPrimitive.Value>
         <span class="select-trigger-icon" aria-hidden="true">
-          <Icon name="expand_more" />
+          <Icon name="chevronDown" />
         </span>
       </SelectPrimitive.Trigger>
       <Show when={isNotEmpty(local.hint)}>

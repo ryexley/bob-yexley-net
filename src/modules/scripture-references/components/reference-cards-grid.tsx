@@ -105,7 +105,7 @@ export function ReferenceCardsGrid(props: ReferenceCardsGridProps) {
                           </For>
                         </ul>
                       )}>
-                      <Icon name="more_horiz" />
+                      <Icon name="ellipsis" />
                     </Tooltip>
                   </Show>
                 </Show>

@@ -1,12 +1,12 @@
 import { JSX, splitProps, For, Show, ComponentProps } from "solid-js"
 import { DropdownMenu } from "@kobalte/core/dropdown-menu"
-import { Icon } from "@/components/icon"
+import { Icon, type IconName } from "@/components/icon"
 import { IconButtonSize } from "@/components/icon-button"
 import { clsx as cx } from "@/util"
 import "./menu.css"
 
 type MenuItem = {
-  icon?: string
+  icon?: IconName
   iconNode?: JSX.Element
   label: string
   onClick: () => void

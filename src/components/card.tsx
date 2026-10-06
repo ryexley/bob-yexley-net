@@ -1,11 +1,11 @@
 import { splitProps } from "solid-js"
 import { Stack } from "@/components/stack"
-import { Icon } from "@/components/icon"
+import { Icon, type IconName } from "@/components/icon"
 import { cn } from "@/lib/util"
 import { isNotEmpty } from "@/util"
 
 type CardProps = {
-  icon?: string
+  icon?: IconName
   title?: string
   subtitle?: string
   children: any

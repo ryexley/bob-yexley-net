@@ -144,7 +144,7 @@ export function FormDrawer(props: FormDrawerProps) {
           class="form-drawer-close"
           aria-label={props.closeAriaLabel ?? "Close"}
           onClick={() => requestClose()}>
-          <Icon name="chevron_right" />
+          <Icon name="chevronRight" />
         </button>
         <div class="form-drawer-body">
           <div class={props.contentClass ?? "form-drawer-content"}>{props.children}</div>

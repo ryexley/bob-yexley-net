@@ -165,7 +165,7 @@ export function UpdateBlip(props: {
         <header class="header">
           <span class="kind">
             <Icon
-              name="chat"
+              name="messageCircle"
               class="kind-icon"
             />
             <span>{tr("modeLabel")}</span>

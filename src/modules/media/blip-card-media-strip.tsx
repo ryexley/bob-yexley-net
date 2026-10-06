@@ -63,7 +63,7 @@ function StripVideoThumb(props: { record: BlipMediaRow }) {
       <span
         class="play"
         aria-hidden="true">
-        <Icon name="play_arrow" />
+        <Icon name="play" />
       </span>
     </span>
   )

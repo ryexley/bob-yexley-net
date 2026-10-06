@@ -1,6 +1,6 @@
 import { ComponentProps, JSX, splitProps } from "solid-js"
 import { Button as KobalteButton } from "@kobalte/core/button"
-import { Icon } from "@/components/icon"
+import { Icon, type IconName } from "@/components/icon"
 import { cx } from "@/util"
 import { isNotEmpty } from "@/util"
 import "./button.css"
@@ -12,8 +12,8 @@ type ButtonProps = {
   variant?: ButtonVariant
   size?: ButtonSize
   label: string | JSX.Element
-  icon?: string
-  iconRight?: string
+  icon?: IconName
+  iconRight?: IconName
 } & Omit<ComponentProps<typeof KobalteButton>, "children">
 
 export function Button(props: ButtonProps) {

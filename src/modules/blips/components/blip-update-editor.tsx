@@ -1040,7 +1040,7 @@ export function BlipUpdateEditor(props: BlipUpdateEditorProps) {
     if (status === "saved-db") {
       return (
         <Icon
-          name="cloud_upload"
+          name="cloudUpload"
           class="status-saved-icon"
         />
       )
@@ -1062,7 +1062,7 @@ export function BlipUpdateEditor(props: BlipUpdateEditorProps) {
               <div class="blip-editor-control-pill-left">
                 <IconButton
                   size="xs"
-                  icon="close"
+                  icon="x"
                   class="blip-editor-close"
                   aria-label={trEditor("actions.close")}
                   tabIndex={-1}
@@ -1097,14 +1097,14 @@ export function BlipUpdateEditor(props: BlipUpdateEditorProps) {
                   onClick={() => ctx.onToggleToolbar()}
                   onMouseDown={preventEditorBlur}
                   onPointerUp={blurControl}>
-                  <Icon name="format_bold" />
-                  <Icon name="format_italic" />
-                  <Icon name="format_underlined" />
+                  <Icon name="bold" />
+                  <Icon name="italic" />
+                  <Icon name="underline" />
                 </button>
                 <div class="blip-editor-control-divider" />
                 <IconButton
                   size="xs"
-                  icon="cloud_upload"
+                  icon="cloudUpload"
                   class="blip-action-save"
                   aria-label={trEditor("actions.save")}
                   tabIndex={-1}
@@ -1137,7 +1137,7 @@ export function BlipUpdateEditor(props: BlipUpdateEditorProps) {
                 />
                 <IconButton
                   size="xs"
-                  icon="delete"
+                  icon="trash"
                   class="blip-action-delete"
                   aria-label={trDetail("updates.actions.delete")}
                   tabIndex={-1}

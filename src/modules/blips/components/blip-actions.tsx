@@ -134,7 +134,7 @@ export function BlipActions(props: BlipActionsProps) {
           </Show>
           <IconButton
             size="xs"
-            icon="delete"
+            icon="trash"
             class="delete"
             onClick={() => {
               const blipId = local.blip?.id
@@ -160,7 +160,7 @@ export function BlipActions(props: BlipActionsProps) {
           <Show when={!local.blip?.published}>
             <IconButton
               size="xs"
-              icon="rocket_launch"
+              icon="rocket"
               class="publish"
               aria-label={tr("actions.publish")}
               onClick={handleTogglePublish}
@@ -170,7 +170,7 @@ export function BlipActions(props: BlipActionsProps) {
           <Show when={local.blip?.published && !isScheduled()}>
             <IconButton
               size="xs"
-              icon="check_circle"
+              icon="circleCheck"
               class="unpublish"
               aria-label={tr("actions.unpublish")}
               onClick={handleTogglePublish}
@@ -180,7 +180,7 @@ export function BlipActions(props: BlipActionsProps) {
           <Show when={isScheduled()}>
             <IconButton
               size="xs"
-              icon="rocket_launch"
+              icon="rocket"
               class="publish-now"
               aria-label={tr("actions.publishNow")}
               onClick={handleTogglePublish}
@@ -189,7 +189,7 @@ export function BlipActions(props: BlipActionsProps) {
           </Show>
           <IconButton
             size="xs"
-            icon="edit_note"
+            icon="filePenLine"
             class="edit"
             onClick={() => {
               const blipId = local.blip?.id

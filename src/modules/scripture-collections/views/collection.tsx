@@ -318,7 +318,7 @@ export function ScriptureCollectionDetailView() {
         )}
       </Title>
       <Meta
-        name="description"
+        name="fileText"
         content={
           collection()
             ? tr("metaDescription", { name: collection()!.name })
@@ -329,7 +329,7 @@ export function ScriptureCollectionDetailView() {
         <a
           href={pages.scriptureCollections}
           class="scripture-collection-detail-view-back-link">
-          <Icon name="arrow_back" />
+          <Icon name="arrowLeft" />
           {tr("actions.backToCollections")}
         </a>
         <div class="scripture-collection-detail-view-shell">

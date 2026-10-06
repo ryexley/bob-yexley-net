@@ -40,7 +40,7 @@ export function MediaButton(props: MediaButtonProps) {
     <>
       <IconButton
         size="xs"
-        icon="perm_media"
+        icon="images"
         class="blip-editor-media-button"
         aria-label={props.label}
         tabIndex={-1}

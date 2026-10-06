@@ -55,9 +55,9 @@ export function StatusBar(props: StatusBarProps) {
           onClick={() => local.onToggleToolbar()}
           onMouseDown={preventControlFocus}
           onPointerUp={blurControl}>
-          <Icon name="format_bold" />
-          <Icon name="format_italic" />
-          <Icon name="format_underlined" />
+          <Icon name="bold" />
+          <Icon name="italic" />
+          <Icon name="underline" />
         </button>
         <Show when={local.actions}>
           <div class="status-bar-divider" />

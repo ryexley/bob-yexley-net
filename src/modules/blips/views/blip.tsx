@@ -1199,7 +1199,7 @@ export function BlipView() {
               href={pages.blips}
               onClick={handleBackToBlips}
               class="blip-detail-back-link">
-              <Icon name="arrow_back" />
+              <Icon name="arrowLeft" />
               {tr("actions.backToBlips")}
             </a>
             <Show
@@ -1225,7 +1225,7 @@ export function BlipView() {
                             {rootTimestampDisplay()?.label ?? ""}
                             <Show when={rootTimestampDisplay()?.scheduled}>
                               <Icon
-                                name="schedule"
+                                name="clock"
                                 class="icon"
                               />
                             </Show>
@@ -1337,7 +1337,7 @@ export function BlipView() {
                                     variant="ghost"
                                     size="xs"
                                     label={tr("updates.editor.newLabel")}
-                                    iconRight="chat_add_on"
+                                    iconRight="messageCirclePlus"
                                     class={cx("blip-detail-add-update", {
                                       active: showComposer(),
                                     })}
@@ -1411,7 +1411,7 @@ export function BlipView() {
                                     ),
                                 }}>
                                 <Icon
-                                  name="list_arrow"
+                                  name="arrowUpDown"
                                   class="blip-detail-sort-toggle-icon"
                                 />
                               </Tooltip>

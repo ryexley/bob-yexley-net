@@ -1,6 +1,6 @@
 import { Dialog as DialogPrimitive } from "@kobalte/core/dialog"
 import { type ComponentProps, type ParentProps, type JSX } from "solid-js"
-import { Icon } from "@/components/icon"
+import { Icon, type IconName } from "@/components/icon"
 import { cx } from "@/util"
 import "./dialog.css"
 
@@ -76,7 +76,7 @@ export function DialogFooter(props: ParentProps<{ class?: string }>) {
 
 type DialogCloseButtonProps = {
   class?: string
-  icon?: string
+  icon?: IconName
   "aria-label"?: string
 }
 

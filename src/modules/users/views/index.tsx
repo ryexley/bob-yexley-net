@@ -226,14 +226,14 @@ export function UsersView() {
     <>
       <Title>{windowTitle(tr("pageTitle"))}</Title>
       <Meta
-        name="description"
+        name="fileText"
         content={tr("metaDescription")}
       />
       <main class="users-view">
         <a
           href={pages.admin}
           class="users-view-back-link">
-          <Icon name="arrow_back" />
+          <Icon name="arrowLeft" />
           {tr("actions.backToAdmin")}
         </a>
         <div class="users-view-shell">

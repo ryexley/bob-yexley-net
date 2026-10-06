@@ -171,7 +171,7 @@ export function PasteCatcher(props: PasteCatcherProps) {
       aria-hidden={!open()}>
       <div class="sheet">
         <p class="prompt">
-          <Icon name="content_paste" />
+          <Icon name="clipboardPaste" />
           <span>{props.title}</span>
           <button
             type="button"

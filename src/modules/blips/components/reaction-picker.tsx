@@ -50,7 +50,7 @@ export function ReactionPicker(props: ReactionPickerProps) {
         aria-disabled={props.limitReached ? "true" : undefined}
         disabled={props.busy}
         onClick={event => props.onTriggerClick(event)}>
-        <Icon name="add_reaction" />
+        <Icon name="faceSlightlySmilingPlus" />
       </PopoverTrigger>
       <Show when={!props.limitReached}>
         <PopoverContent
