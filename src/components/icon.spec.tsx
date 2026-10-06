@@ -30,8 +30,8 @@ describe("ImagePlaceholder", () => {
     const svg = container.querySelector("svg")
 
     expect(svg?.classList.contains("icon")).toBe(false)
-    expect(svg?.className).toContain("h-1/2")
-    expect(svg?.className).toContain("w-1/2")
-    expect(svg?.className).toContain("max-h-40")
+    expect(svg?.classList.contains("h-1/2")).toBe(true)
+    expect(svg?.classList.contains("w-1/2")).toBe(true)
+    expect(svg?.classList.contains("max-h-40")).toBe(true)
   })
 })
