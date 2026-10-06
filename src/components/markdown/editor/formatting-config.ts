@@ -18,12 +18,13 @@ import {
 } from "@milkdown/preset-commonmark"
 import { toggleHighlightCommand } from "./plugins/highlight"
 import { ptr } from "@/i18n"
+import type { IconName } from "@/components/icon"
 
 const pasteTr = ptr("shared.components.markdownEditor.paste")
 
 export interface FormattingOption {
   key: string
-  icon?: string
+  icon?: IconName
   label?: string
   ariaLabel?: string
   handler: (ctx: any, payload?: any) => void
@@ -74,7 +75,7 @@ const hasAncestorNode = (ctx: any, nodeName: string) => {
 export const formattingOptions: FormattingOption[] = [
   {
     key: "undo",
-    icon: "undo",
+    icon: "undo2",
     handler: ctx => {
       const view = ctx.get(editorViewCtx)
       undo(view.state, view.dispatch)
@@ -84,7 +85,7 @@ export const formattingOptions: FormattingOption[] = [
   },
   {
     key: "redo",
-    icon: "redo",
+    icon: "redo2",
     handler: ctx => {
       const view = ctx.get(editorViewCtx)
       redo(view.state, view.dispatch)
@@ -94,19 +95,15 @@ export const formattingOptions: FormattingOption[] = [
   },
   {
     key: "paste",
-    icon: "content_paste",
+    icon: "clipboardPaste",
     ariaLabel: pasteTr("ariaLabel"),
     handler: () => {
-      // MarkdownEditor owns this: the clipboard read, or the paste catcher it
-      // falls back to, both have to happen inside the tap's user gesture.
     },
-    // Never disabled. Whether the clipboard holds anything is unknowable on iOS
-    // without a gesture, and the catcher path does not need the clipboard API.
     group: 0,
   },
   {
     key: "bold",
-    icon: "format_bold",
+    icon: "bold",
     handler: ctx => {
       const commands = ctx.get(commandsCtx)
       commands.call(toggleStrongCommand.key)
@@ -116,7 +113,7 @@ export const formattingOptions: FormattingOption[] = [
   },
   {
     key: "italic",
-    icon: "format_italic",
+    icon: "italic",
     handler: ctx => {
       const commands = ctx.get(commandsCtx)
       commands.call(toggleEmphasisCommand.key)
@@ -126,7 +123,7 @@ export const formattingOptions: FormattingOption[] = [
   },
   {
     key: "highlight",
-    icon: "stylus_highlighter",
+    icon: "highlighter",
     handler: (
       ctx,
       payload?: {
@@ -168,7 +165,7 @@ export const formattingOptions: FormattingOption[] = [
   },
   {
     key: "blockquote",
-    icon: "format_quote",
+    icon: "quote",
     handler: ctx => {
       const commands = ctx.get(commandsCtx)
       commands.call(wrapInBlockquoteCommand.key)
@@ -178,7 +175,7 @@ export const formattingOptions: FormattingOption[] = [
   },
   {
     key: "ul",
-    icon: "format_list_bulleted",
+    icon: "list",
     handler: ctx => {
       const commands = ctx.get(commandsCtx)
       commands.call(wrapInBulletListCommand.key)
@@ -188,7 +185,7 @@ export const formattingOptions: FormattingOption[] = [
   },
   {
     key: "ol",
-    icon: "format_list_numbered",
+    icon: "listOrdered",
     handler: ctx => {
       const commands = ctx.get(commandsCtx)
       commands.call(wrapInOrderedListCommand.key)
@@ -198,7 +195,7 @@ export const formattingOptions: FormattingOption[] = [
   },
   {
     key: "indent",
-    icon: "format_indent_increase",
+    icon: "listIndentIncrease",
     handler: ctx => {
       const view = ctx.get(editorViewCtx)
       const schema = ctx.get(schemaCtx)
@@ -223,7 +220,7 @@ export const formattingOptions: FormattingOption[] = [
   },
   {
     key: "outdent",
-    icon: "format_indent_decrease",
+    icon: "listIndentDecrease",
     handler: ctx => {
       const view = ctx.get(editorViewCtx)
       const schema = ctx.get(schemaCtx)
@@ -248,7 +245,7 @@ export const formattingOptions: FormattingOption[] = [
   },
   {
     key: "hr",
-    icon: "horizontal_rule",
+    icon: "minus",
     handler: ctx => {
       const commands = ctx.get(commandsCtx)
       commands.call(insertHrCommand.key)

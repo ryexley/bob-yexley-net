@@ -233,7 +233,7 @@ export function VisitorAuthModal(props: VisitorAuthModalProps) {
                       tabindex="-1"
                       aria-hidden="true"
                       onClick={() => props.onOpenChange(false)}>
-                      <Icon name="shield_lock" />
+                      <Icon name="shieldLock" />
                     </a>
                     <h2>{title()}</h2>
                   </DialogTitle>
@@ -242,7 +242,7 @@ export function VisitorAuthModal(props: VisitorAuthModalProps) {
                     class="visitor-auth-help-inline"
                     onClick={() => setShowHelpBack(true)}>
                     <span>{tr("help.trigger")}</span>
-                    <Icon name="help" />
+                    <Icon name="circleQuestionMark" />
                   </button>
                 </div>
                 <DialogDescription class="visitor-auth-subtitle">
@@ -354,7 +354,7 @@ export function VisitorAuthModal(props: VisitorAuthModalProps) {
                   type="button"
                   class="visitor-auth-help-back-button"
                   onClick={() => setShowHelpBack(false)}>
-                  <Icon name="arrow_back" />
+                  <Icon name="arrowLeft" />
                   <span>{tr("help.backAction")}</span>
                 </button>
               </div>

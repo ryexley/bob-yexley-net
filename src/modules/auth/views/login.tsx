@@ -122,7 +122,7 @@ export function Login() {
             gap="1rem"
             class="login-shell">
             <Card
-              icon="shield_lock"
+              icon="shieldLock"
               title={tr("loginFormCardTitle")}
               subtitle={tr("loginFormCardDescription")}
               class="login-card">

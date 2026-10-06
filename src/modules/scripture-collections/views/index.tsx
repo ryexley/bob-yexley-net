@@ -218,14 +218,14 @@ export function ScriptureCollectionsView() {
     <>
       <Title>{windowTitle(tr("pageTitle"))}</Title>
       <Meta
-        name="description"
+        name="fileText"
         content={tr("metaDescription")}
       />
       <main class="scripture-collections-view">
         <a
           href={pages.scripture}
           class="scripture-collections-view-back-link">
-          <Icon name="arrow_back" />
+          <Icon name="arrowLeft" />
           {tr("actions.backToScripture")}
         </a>
         <div class="scripture-collections-view-shell">

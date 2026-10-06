@@ -1,13 +1,13 @@
 import { mergeProps, splitProps } from "solid-js"
 import { Button as KobalteButton } from "@kobalte/core/button"
-import { Icon } from "@/components/icon"
+import { Icon, type IconName } from "@/components/icon"
 import { cx } from "@/util"
 import "./icon-button.css"
 
 export type IconButtonSize = "xs" | "sm" | "md" | "lg"
 
 export type IconButtonProps = {
-  icon: string
+  icon: IconName
   size?: IconButtonSize
   class?: string
   iconClass?: string

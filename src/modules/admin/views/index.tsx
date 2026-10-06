@@ -115,7 +115,7 @@ export function AdminHomeView() {
     <>
       <Title>{windowTitle(tr("pageTitle"))}</Title>
       <Meta
-        name="description"
+        name="fileText"
         content={tr("metaDescription")}
       />
       <main class="admin-home-view">
@@ -138,7 +138,7 @@ export function AdminHomeView() {
                   class="card">
                   <div class="card-header">
                     <Icon
-                      name="group"
+                      name="users"
                       class="icon"
                     />
                     <h2 class="card-title">{tr("cards.users.title")}</h2>
@@ -170,7 +170,7 @@ export function AdminHomeView() {
                   />
                   <div class="card-header">
                     <Icon
-                      name="menu_book"
+                      name="bookOpen"
                       class="icon"
                     />
                     <h2 class="card-title">{tr("cards.scripture.title")}</h2>
@@ -204,7 +204,7 @@ export function AdminHomeView() {
                   class="card">
                   <div class="card-header">
                     <Icon
-                      name="label"
+                      name="tag"
                       class="icon"
                     />
                     <h2 class="card-title">{tr("cards.tags.title")}</h2>
@@ -229,7 +229,7 @@ export function AdminHomeView() {
                   class="card">
                   <div class="card-header">
                     <Icon
-                      name="bar_chart"
+                      name="chartColumn"
                       class="icon"
                     />
                     <h2 class="card-title">{tr("cards.analytics.title")}</h2>

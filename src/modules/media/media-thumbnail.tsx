@@ -164,7 +164,7 @@ export function MediaThumbnail(props: MediaThumbnailProps) {
             !isBusy()
           }>
           <span class="media-thumbnail-type-badge">
-            <Icon name="play_arrow" />
+            <Icon name="play" />
           </span>
         </Show>
 
@@ -227,7 +227,7 @@ export function MediaThumbnail(props: MediaThumbnailProps) {
                 props.onRetry(props.attachment.key)
               }
             }}>
-            <Icon name="refresh" />
+            <Icon name="refreshCw" />
           </span>
         </Show>
       </button>
@@ -240,7 +240,7 @@ export function MediaThumbnail(props: MediaThumbnailProps) {
           event.stopPropagation()
           props.onRemove(props.attachment.key)
         }}>
-        <Icon name="close" />
+        <Icon name="x" />
       </button>
     </div>
   )

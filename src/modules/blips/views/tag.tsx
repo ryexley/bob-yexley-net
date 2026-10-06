@@ -165,7 +165,7 @@ export function BlipsTagView() {
                     ? tr("paging.actions.loading")
                     : tr("paging.actions.showMore")
                 }
-                iconRight={isLoadingMore() ? "autorenew" : "expand_circle_down"}
+                iconRight={isLoadingMore() ? "refreshCw" : "circleChevronDown"}
               />
             </div>
           </Show>

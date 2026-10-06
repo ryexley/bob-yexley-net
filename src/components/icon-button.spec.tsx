@@ -9,7 +9,7 @@ describe("IconButton", () => {
 
     render(() => (
       <IconButton
-        icon="cloud_upload"
+        icon="cloudUpload"
         aria-label="Save"
         disabled={disabled()}
       />

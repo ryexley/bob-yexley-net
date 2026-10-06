@@ -71,12 +71,12 @@ export function UserAvatar(props: UserAvatarProps) {
       {...rest}>
       <Show
         when={presentation().initials}
-        fallback={<Icon name="account_circle" />}>
+        fallback={<Icon name="circleUser" />}>
         <span class="user-avatar-initials">{presentation().initials}</span>
       </Show>
       <Show when={shouldShowBadge(local.role, local.badgeMode ?? "superuser")}>
         <span class="user-avatar-badge" aria-hidden="true">
-          <Icon name="shield_person" />
+          <Icon name="shieldUser" />
         </span>
       </Show>
     </span>

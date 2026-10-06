@@ -1774,7 +1774,7 @@ export const AudioPlayer: Component<AudioPlayerProps> = rawProps => {
           <IconButton
             class="rail-side volume-toggle"
             size="sm"
-            icon="volume_up"
+            icon="volume2"
             aria-label={
               settingsPanel() === "volume" ? "Hide volume" : "Show volume"
             }
@@ -1783,7 +1783,7 @@ export const AudioPlayer: Component<AudioPlayerProps> = rawProps => {
           <IconButton
             class="rail-side speed-toggle"
             size="sm"
-            icon="speed"
+            icon="gauge"
             aria-label={
               settingsPanel() === "speed"
                 ? "Hide playback speed"
@@ -1797,7 +1797,7 @@ export const AudioPlayer: Component<AudioPlayerProps> = rawProps => {
           <IconButton
             class="seek-action"
             size="sm"
-            icon="replay"
+            icon="rotateCcw"
             aria-label={`Rewind ${local.scrubSeconds} seconds`}
             onClick={seekBack}
             onMouseDown={e => replaySeekIconSpin(e, "back")}
@@ -1813,12 +1813,12 @@ export const AudioPlayer: Component<AudioPlayerProps> = rawProps => {
             )}
             onClick={togglePlay}
             aria-label={playing() ? "Pause" : "Play"}>
-            <Icon name={playing() ? "pause" : "play_arrow"} />
+            <Icon name={playing() ? "pause" : "play"} />
           </KobalteButton>
           <IconButton
             class="seek-action"
             size="sm"
-            icon="forward_media"
+            icon="skipForward"
             aria-label={`Forward ${local.scrubSeconds} seconds`}
             onClick={seekForward}
             onMouseDown={e => replaySeekIconSpin(e, "forward")}

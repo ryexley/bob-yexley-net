@@ -802,7 +802,7 @@ export function Combobox<Option, OptGroup = never>(
                             aria-label={`Remove ${label}`}
                             onPointerDown={(event) => event.stopPropagation()}
                             onClick={removeChip(state, option)}>
-                            <Icon name="close" />
+                            <Icon name="x" />
                           </button>
                         </span>
                       )
@@ -824,7 +824,7 @@ export function Combobox<Option, OptGroup = never>(
                 suppressOpenOnNextInputFocus = true
               }}
               aria-label="Toggle options">
-              <Icon name="keyboard_arrow_down" />
+              <Icon name="chevronDown" />
             </ComboboxPrimitive.Trigger>
           </>
         )}
@@ -849,7 +849,7 @@ export function Combobox<Option, OptGroup = never>(
           <div
             class="combobox-scroll-hint top"
             aria-hidden="true">
-            <Icon name="keyboard_arrow_up" />
+            <Icon name="chevronUp" />
           </div>
           <ComboboxPrimitive.Listbox
             data-corvu-no-drag=""
@@ -859,7 +859,7 @@ export function Combobox<Option, OptGroup = never>(
           <div
             class="combobox-scroll-hint bottom"
             aria-hidden="true">
-            <Icon name="keyboard_arrow_down" />
+            <Icon name="chevronDown" />
           </div>
         </ComboboxPrimitive.Content>
       </ComboboxPrimitive.Portal>

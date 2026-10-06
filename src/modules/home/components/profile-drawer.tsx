@@ -270,7 +270,7 @@ export function ProfileDrawer(props: ProfileDrawerProps) {
           class="profile-drawer-close"
           aria-label={tr("actions.close")}
           onClick={() => requestClose()}>
-          <Icon name="close" />
+          <Icon name="x" />
         </button>
         <div class="profile-drawer-shell">
           <div class="profile-drawer-summary">
@@ -290,7 +290,7 @@ export function ProfileDrawer(props: ProfileDrawerProps) {
                 <Tooltip content={tr("tooltips.regenerateAvatar")}>
                   <IconButton
                     size="xs"
-                    icon="autorenew"
+                    icon="refreshCw"
                     class="profile-drawer-avatar-regenerate"
                     aria-label={tr("actions.regenerateAvatar")}
                     disabled={isAvatarActionBusy()}
@@ -406,7 +406,7 @@ export function ProfileDrawer(props: ProfileDrawerProps) {
                       type="button"
                       variant="outline"
                       size="sm"
-                      icon="logout"
+                      icon="logOut"
                       label={auth.isAuthenticated() ? trMenu("logout") : ""}
                       class="profile-drawer-logout"
                       onClick={() => {

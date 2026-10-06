@@ -1,5 +1,5 @@
 import { splitProps } from "solid-js"
-import { Icon } from "@/components/icon"
+import { Icon, type IconName } from "@/components/icon"
 import { cn } from "@/lib/util"
 
 type CalloutVariant = "info" | "warning" | "error" | "success" | "reminder"
@@ -8,7 +8,7 @@ type CalloutProps = {
   variant?: CalloutVariant
   title?: string
   content: string
-  icon?: string
+  icon?: IconName
   class?: string
 }
 

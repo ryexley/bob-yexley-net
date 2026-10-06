@@ -1,11 +1,11 @@
 import { Show, type JSX } from "solid-js"
-import { Icon } from "@/components/icon"
+import { Icon, type IconName } from "@/components/icon"
 import { clsx as cx } from "@/util"
 
 type EditorShellProps = {
   children: JSX.Element
   focusProxyAriaLabel: string
-  icon?: string
+  icon?: IconName
   focusProxyRef?: (element: HTMLTextAreaElement) => void
   showFocusProxy?: boolean
   Header?: JSX.Element

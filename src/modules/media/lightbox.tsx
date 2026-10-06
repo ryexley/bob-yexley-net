@@ -995,7 +995,7 @@ function LightboxContent(props: LightboxContentProps) {
       <Show when={isDesktop() && canWrapNavigate()}>
         <IconButton
           class="lightbox-nav lightbox-nav-previous"
-          icon="chevron_left"
+          icon="chevronLeft"
           aria-label={props.labels.previous}
           onClick={goPrevious}
         />
@@ -1040,7 +1040,7 @@ function LightboxContent(props: LightboxContentProps) {
       <Show when={isDesktop() && canWrapNavigate()}>
         <IconButton
           class="lightbox-nav lightbox-nav-next"
-          icon="chevron_right"
+          icon="chevronRight"
           aria-label={props.labels.next}
           onClick={goNext}
         />
@@ -1055,7 +1055,7 @@ function LightboxContent(props: LightboxContentProps) {
             <IconButton
               class="lightbox-pager lightbox-pager-previous"
               size="sm"
-              icon="chevron_left"
+              icon="chevronLeft"
               aria-label={props.labels.previous}
               onClick={goPrevious}
             />
@@ -1067,7 +1067,7 @@ function LightboxContent(props: LightboxContentProps) {
             <IconButton
               class="lightbox-pager lightbox-pager-next"
               size="sm"
-              icon="chevron_right"
+              icon="chevronRight"
               aria-label={props.labels.next}
               onClick={goNext}
             />

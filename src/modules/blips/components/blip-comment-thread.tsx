@@ -219,7 +219,7 @@ function BlipCommentCard(props: BlipCommentCardProps) {
                 <Tooltip content={tr("actions.editTooltip")}>
                   <IconButton
                     size="xs"
-                    icon="edit_note"
+                    icon="filePenLine"
                     class="edit"
                     aria-label={tr("actions.edit")}
                     onClick={() =>
@@ -232,7 +232,7 @@ function BlipCommentCard(props: BlipCommentCardProps) {
                 <Tooltip content={tr("actions.deleteTooltip")}>
                   <IconButton
                     size="xs"
-                    icon="delete"
+                    icon="trash"
                     class="delete"
                     aria-label={tr("actions.delete")}
                     onClick={() => props.onDelete(props.comment)}
@@ -244,7 +244,7 @@ function BlipCommentCard(props: BlipCommentCardProps) {
                   <Tooltip content={tr("actions.unpublishTooltip")}>
                     <IconButton
                       size="xs"
-                      icon="check_circle"
+                      icon="circleCheck"
                       class="unpublish"
                       aria-label={tr("actions.unpublish")}
                       onClick={() => {
@@ -257,7 +257,7 @@ function BlipCommentCard(props: BlipCommentCardProps) {
                   <Tooltip content={tr("actions.approveTooltip")}>
                     <IconButton
                       size="xs"
-                      icon="check_circle"
+                      icon="circleCheck"
                       class="approve"
                       aria-label={tr("actions.approve")}
                       onClick={() => {
@@ -270,7 +270,7 @@ function BlipCommentCard(props: BlipCommentCardProps) {
                   <Tooltip content={tr("actions.rejectTooltip")}>
                     <IconButton
                       size="xs"
-                      icon="cancel"
+                      icon="circleX"
                       class="reject"
                       aria-label={tr("actions.reject")}
                       onClick={() => {

@@ -291,7 +291,7 @@ export function Blip(props: {
                   <span class="timestamp-label">{timestampLabel()}</span>
                   <Show when={isScheduled()}>
                     <Icon
-                      name="schedule"
+                      name="clock"
                       class="timestamp-icon"
                     />
                   </Show>
@@ -326,7 +326,7 @@ export function Blip(props: {
                     }}
                     class="read-more"
                     label={tr("actions.readMore")}
-                    iconRight="arrow_forward"
+                    iconRight="arrowRight"
                   />
                 </Show>
               </div>
@@ -375,7 +375,7 @@ export function Blip(props: {
                       event.stopPropagation()
                       openDetails()
                     }}>
-                    <Icon name="chat" />
+                    <Icon name="messageCircle" />
                     <span>{local.blip.updates_count ?? 0}</span>
                   </button>
                 </Tooltip>
@@ -395,7 +395,7 @@ export function Blip(props: {
                       event.stopPropagation()
                       openDetails()
                     }}>
-                    <Icon name="forum" />
+                    <Icon name="messagesSquare" />
                     <span>{local.blip.comments_count ?? 0}</span>
                   </button>
                 </Tooltip>

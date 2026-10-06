@@ -1,7 +1,7 @@
 import { createContext, For, Show, useContext, type JSX } from "solid-js"
 import { Portal } from "solid-js/web"
 import { Toast, toaster } from "@kobalte/core/toast"
-import { Icon } from "@/components/icon"
+import { Icon, type IconName } from "@/components/icon"
 import { ptr, tr } from "@/i18n"
 import { isEmpty, isNotEmpty } from "@/util"
 import "./notification.css"
@@ -45,12 +45,12 @@ const missingProviderFallback: NotifyApi = {
 }
 const NotificationContext = createContext<NotifyApi>(missingProviderFallback)
 
-const variantIconMap: Record<NotificationVariant, string> = {
-  message: "notifications",
+const variantIconMap: Record<NotificationVariant, IconName> = {
+  message: "bell",
   info: "info",
-  success: "check_circle",
-  warn: "warning",
-  error: "cancel",
+  success: "circleCheck",
+  warn: "triangleAlert",
+  error: "circleX",
 }
 
 const looksLikeTranslationKey = (value: string) => /\.(?!\s|$)/.test(value)
@@ -135,7 +135,7 @@ function NotificationToast(props: {
         <Toast.CloseButton
           class="notification-close"
           aria-label={trNotification("actions.closeAriaLabel")}>
-          <Icon name="close" />
+          <Icon name="x" />
         </Toast.CloseButton>
       </Show>
     </Toast>
