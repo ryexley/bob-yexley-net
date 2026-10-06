@@ -16,7 +16,7 @@ type InfoTooltipProps = {
 export function InfoTooltip(props: InfoTooltipProps) {
   const local = mergeProps(
     {
-      icon: "help",
+      icon: "circleQuestionMark",
     },
     props,
   )

@@ -262,7 +262,7 @@ export function AnalyticsView() {
     <>
       <Title>{windowTitle(tr("pageTitle"))}</Title>
       <Meta
-        name="fileText"
+        name="description"
         content={tr("metaDescription")}
       />
       <main class="analytics-view">

@@ -35,7 +35,7 @@ export function Seo(props: SeoProps) {
   return (
     <>
       <Title>{props.title}</Title>
-      <Meta name="fileText" content={props.description} />
+      <Meta name="description" content={props.description} />
       <Link rel="canonical" href={canonicalUrl()} />
 
       <Meta property="og:title" content={props.title} />

@@ -206,7 +206,7 @@ export default function Toolbar(props: ToolbarProps) {
                 })}>
                 <Show
                   when={option.label}
-                  fallback={<Icon name={option.icon ?? ""} />}>
+                  fallback={option.icon ? <Icon name={option.icon} /> : null}>
                   <span class="toolbar-button-label">{option.label}</span>
                 </Show>
               </button>

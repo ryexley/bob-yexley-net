@@ -40,7 +40,7 @@ type BlipCommentListItemProps = {
 const tr = ptr("blips.components.commentThread")
 const trBlip = ptr("blips.components.blip")
 const trCommentEditor = ptr("blips.components.commentEditor")
-const COMMENT_KIND_ICON = "forum"
+const COMMENT_KIND_ICON = "messagesSquare"
 
 const isPendingComment = (comment: Blip) =>
   comment.moderation_status === "pending"

@@ -159,7 +159,7 @@ export function UserMenu() {
   const menuItems = createMemo(() => {
     const items: UserMenuItem[] = [
       {
-        icon: "account_circle",
+        icon: "circleUser",
         label: tr("profile"),
         onClick: openProfileDrawer,
       },
@@ -167,7 +167,7 @@ export function UserMenu() {
 
     if (isSuperuser()) {
       items.push({
-        icon: "shield_person",
+        icon: "shieldUser",
         label: tr("admin"),
         onClick: openAdminHome,
       })
@@ -188,7 +188,7 @@ export function UserMenu() {
     }
 
     items.push({
-      icon: "logout",
+      icon: "logOut",
       label: tr("logout"),
       onClick: () => {
         void handleLogout()

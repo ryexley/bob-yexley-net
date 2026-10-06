@@ -86,7 +86,7 @@ export function DialogCloseButton(props: DialogCloseButtonProps) {
       class={cx("dialog-close-button", props.class)}
       aria-label={props["aria-label"] || "Close dialog"}>
       <Icon
-        name={props.icon || "close"}
+        name={props.icon || "x"}
         class="dialog-close-icon"
       />
     </DialogPrimitive.CloseButton>

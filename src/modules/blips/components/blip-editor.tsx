@@ -1694,7 +1694,7 @@ export function BlipEditor(props: BlipEditorProps) {
                   onMouseDown={handleMetadataToggleMouseDown}
                   onPointerUp={blurControl}
                   onTouchStart={handleMetadataToggleTouchStart}>
-                  <Icon name={metadataOpen() ? "edit_note" : "page_info"} />
+                  <Icon name={metadataOpen() ? "filePenLine" : "badgeInfo"} />
                 </button>
                 <button
                   type="button"
@@ -1727,8 +1727,8 @@ export function BlipEditor(props: BlipEditorProps) {
                   size="xs"
                   icon={
                     ctx.statusContext?.isPublished
-                      ? "check_circle"
-                      : "arrow_upload_ready"
+                      ? "circleCheck"
+                      : "upload"
                   }
                   disabled={
                     !ctx.statusContext?.hasBlipId ||

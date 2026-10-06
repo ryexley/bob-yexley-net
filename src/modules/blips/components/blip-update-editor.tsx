@@ -1117,8 +1117,8 @@ export function BlipUpdateEditor(props: BlipUpdateEditorProps) {
                   size="xs"
                   icon={
                     ctx.statusContext?.isPublished
-                      ? "check_circle"
-                      : "arrow_upload_ready"
+                      ? "circleCheck"
+                      : "upload"
                   }
                   disabled={!ctx.statusContext?.canTogglePublish}
                   onClick={ctx.statusContext?.handleTogglePublish}

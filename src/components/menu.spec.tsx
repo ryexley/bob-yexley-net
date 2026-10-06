@@ -40,12 +40,12 @@ describe("Menu", () => {
 
     expect(screen.getByRole("button", { name: "custom trigger" })).toBeTruthy()
     expect(screen.getByText("custom header")).toBeTruthy()
-    expect(screen.queryByText("more_vert")).toBeNull()
+    expect(screen.queryByText("ellipsisVertical")).toBeNull()
   })
 
   it("renders default trigger icon when custom trigger is absent", () => {
     render(() => <Menu items={[{ label: "Profile", onClick: () => {} }]} />)
 
-    expect(screen.getByText("more_vert")).toBeTruthy()
+    expect(screen.getByText("ellipsisVertical")).toBeTruthy()
   })
 })
