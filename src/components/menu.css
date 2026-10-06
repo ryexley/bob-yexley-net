@@ -117,6 +117,7 @@
 
         .menu-blip-icon {
           --menu-blip-accent: var(--colors-scarlett);
+          color: var(--colors-mono-00);
         }
       }
 
@@ -129,6 +130,7 @@
 
       .menu-blip-icon {
         --menu-blip-accent: var(--colors-success);
+        color: var(--colors-mono-07);
         display: block;
         flex: 0 0 1.25rem;
         width: 1.25rem;
