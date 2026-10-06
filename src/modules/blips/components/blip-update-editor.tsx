@@ -1117,8 +1117,8 @@ export function BlipUpdateEditor(props: BlipUpdateEditorProps) {
                   size="xs"
                   icon={
                     ctx.statusContext?.isPublished
-                      ? "check_circle"
-                      : "arrow_upload_ready"
+                      ? "circleCheck"
+                      : "upload"
                   }
                   disabled={!ctx.statusContext?.canTogglePublish}
                   onClick={ctx.statusContext?.handleTogglePublish}
@@ -1166,7 +1166,7 @@ export function BlipUpdateEditor(props: BlipUpdateEditorProps) {
         bodyClass="blip-update-editor-body"
         focusProxyRef={focusBridge.setFocusProxyRef}
         focusProxyAriaLabel={trDetail("updates.placeholder")}
-        icon={isMobileViewport() ? undefined : "chat"}
+        icon={isMobileViewport() ? undefined : "messageCircle"}
         showFocusProxy={false}
         onPasteCapture={handleClipboardPaste}
         Header={

@@ -218,7 +218,7 @@ export function ScriptureCollectionsView() {
     <>
       <Title>{windowTitle(tr("pageTitle"))}</Title>
       <Meta
-        name="fileText"
+        name="description"
         content={tr("metaDescription")}
       />
       <main class="scripture-collections-view">
@@ -286,7 +286,7 @@ export function ScriptureCollectionsView() {
                     onClick={() =>
                       setSortDirection(direction => (direction === "desc" ? "asc" : "desc"))
                     }>
-                    <Icon name={sortDirection() === "desc" ? "south" : "north"} />
+                    <Icon name={sortDirection() === "desc" ? "arrowDown" : "arrowUp"} />
                   </button>
 
                   <button
@@ -299,7 +299,7 @@ export function ScriptureCollectionsView() {
                       filtersOpen() ? tr("actions.hideFilters") : tr("actions.showFilters")
                     }
                     onClick={() => setFiltersOpen(open => !open)}>
-                    <Icon name={filtersOpen() ? "filter_alt_off" : "filter_alt"} />
+                    <Icon name={filtersOpen() ? "funnelX" : "funnel"} />
                   </button>
                 </div>
               </div>

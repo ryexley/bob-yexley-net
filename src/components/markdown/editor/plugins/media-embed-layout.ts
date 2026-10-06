@@ -8,6 +8,7 @@ import {
   type MediaEmbedSize,
   MEDIA_EMBED_NODE,
 } from "@/components/markdown/media/media-embed-syntax"
+import type { IconName } from "@/components/icon"
 import type { FormattingOption } from "../formatting-config"
 
 const tr = ptr("blips.components.blipEditor.media.layout")
@@ -148,7 +149,7 @@ const sizeOption = (
 
 const alignOption = (
   align: MediaEmbedAlign,
-  icon: string,
+  icon: IconName,
   ariaKey: "alignLeft" | "alignCenter" | "alignRight",
 ): FormattingOption => ({
   key: `media-align-${align}`,
@@ -162,7 +163,7 @@ const alignOption = (
 
 const lightboxOption: FormattingOption = {
   key: "media-lightbox",
-  icon: "fit_screen",
+  icon: "maximize",
   ariaLabel: tr("lightbox"),
   handler: ctx => {
     const current = selectedEmbedAttr(ctx, parseMediaEmbedLightbox, "lightbox")
@@ -180,9 +181,9 @@ export const mediaLayoutOptions: FormattingOption[] = [
   sizeOption("25", "25%", "size25"),
   sizeOption("50", "50%", "size50"),
   sizeOption("100", "100%", "size100"),
-  alignOption("left", "format_align_left", "alignLeft"),
-  alignOption("center", "format_align_center", "alignCenter"),
-  alignOption("right", "format_align_right", "alignRight"),
+  alignOption("left", "alignLeft", "alignLeft"),
+  alignOption("center", "alignCenter", "alignCenter"),
+  alignOption("right", "alignRight", "alignRight"),
   lightboxOption,
 ]
 

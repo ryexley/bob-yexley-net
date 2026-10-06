@@ -51,7 +51,7 @@ export function TagCloudView() {
     <>
       <Title>{windowTitle(tr("pageTitle"))}</Title>
       <Meta
-        name="fileText"
+        name="description"
         content={tr("metaDescription")}
       />
       <PageSection

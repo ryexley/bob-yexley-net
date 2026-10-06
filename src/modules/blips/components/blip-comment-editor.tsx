@@ -447,7 +447,7 @@ export function BlipCommentEditor(props: BlipCommentEditorProps) {
       bodyClass="blip-comment-editor-body"
       focusProxyRef={focusBridge.setFocusProxyRef}
       focusProxyAriaLabel={tr("placeholder")}
-      icon={isMobileViewport() ? undefined : "add_comment"}
+      icon={isMobileViewport() ? undefined : "messageSquarePlus"}
       showFocusProxy={false}
       Header={
         surfaceProps.useDialogTitle ? (

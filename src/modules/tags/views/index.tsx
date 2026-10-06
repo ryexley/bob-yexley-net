@@ -197,7 +197,7 @@ export function TagsView() {
     <>
       <Title>{windowTitle(tr("pageTitle"))}</Title>
       <Meta
-        name="fileText"
+        name="description"
         content={tr("metaDescription")}
       />
       <main class="tags-view">
@@ -270,7 +270,7 @@ export function TagsView() {
                     onClick={() =>
                       setSortDirection(direction => (direction === "desc" ? "asc" : "desc"))
                     }>
-                    <Icon name={sortDirection() === "desc" ? "south" : "north"} />
+                    <Icon name={sortDirection() === "desc" ? "arrowDown" : "arrowUp"} />
                   </button>
                 </Stack>
               </Stack>

@@ -1,4 +1,4 @@
-import { For, splitProps, type JSX } from "solid-js"
+import { splitProps, type JSX } from "solid-js"
 import { cx } from "~/util"
 import { iconGlyphs, type IconName } from "./icon-registry"
 import "./icon.css"
@@ -19,12 +19,13 @@ export function Icon(props: IconProps) {
     "title",
     "aria-hidden",
   ])
-  const glyph = () => iconGlyphs[local.name]
+  // Avoid Solid `For` inside `<svg>`: its function child minifies to a
+  // one-letter call that becomes the intermittent `t is not a function` crash.
+  const glyph = () => (local.name ? iconGlyphs[local.name] : undefined)
   const filled = () => glyph()?.filled === true
-
-  if (!local.name || !glyph()) {
-    return null
-  }
+  const pathNodes = () =>
+    // oxlint-disable-next-line solid/prefer-for -- For-inside-svg minifies to `t is not a function`
+    (glyph()?.paths ?? []).map(pathD => <path d={pathD} />)
 
   return (
     <svg
@@ -41,7 +42,7 @@ export function Icon(props: IconProps) {
       role={local.title ? "img" : undefined}
       {...rest}>
       {local.title ? <title>{local.title}</title> : null}
-      <For each={glyph().paths}>{d => <path d={d} />}</For>
+      {pathNodes()}
     </svg>
   )
 }
@@ -62,9 +63,9 @@ export function ImagePlaceholder(props: JSX.SvgSVGAttributes<SVGSVGElement>) {
       stroke-linejoin="round"
       class={cx("icon", local.class)}
       {...rest}>
-      <path d="M5 21h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2z" />
-      <path d="M21 15l-5-5L5 21" />
-      <path d="M10 8.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z" />
+      <path d="M3 5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+      <path d="M11 9A2 2 0 1 1 7 9a2 2 0 0 1 4 0" />
+      <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
     </svg>
   )
 }

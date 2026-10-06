@@ -93,7 +93,10 @@ export type IconName =
   | "arrowUpDown"
   | "faceSlightlySmilingPlus"
   | "badgeMinus"
-  | "loaderCircle";
+  | "loaderCircle"
+  | "alignLeft"
+  | "alignCenter"
+  | "alignRight";
 
 export type IconGlyph = {
   paths: string[];
@@ -377,9 +380,7 @@ export const iconGlyphs: Record<IconName, IconGlyph> = {
 
   /* bookmark */
   bookmark: {
-    paths: [
-      "M4 4h16a2 2 0 0 1 2 2v16l-6-4-6 4V6a2 2 0 0 1 2-2z",
-    ],
+    paths: ["m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"],
   },
 
   /* book-open (menu_book) */
@@ -452,18 +453,18 @@ export const iconGlyphs: Record<IconName, IconGlyph> = {
   /* cloud-upload */
   cloudUpload: {
     paths: [
-      "M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z",
-      "m16 16-4-4-4 4",
-      "M12 12v9",
+      "M12 13v8",
+      "M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242",
+      "m8 17 4-4 4 4",
     ],
   },
 
   /* image */
   image: {
     paths: [
-      "M5 21h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2z",
-      "M21 15l-5-5L5 21",
-      "M10 8.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z",
+      "M3 5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z",
+      "M11 9A2 2 0 1 1 7 9a2 2 0 0 1 4 0",
+      "m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21",
     ],
   },
 
@@ -551,78 +552,60 @@ export const iconGlyphs: Record<IconName, IconGlyph> = {
   /* bold (format_bold) */
   bold: {
     paths: [
-      "M6 12h9a4 4 0 0 1 0 8H7a1 1 0 0 1-1-1z",
-      "M6 5h8a4 4 0 0 1 0 8H7a1 1 0 0 1-1-1z",
+      "M6 12h9a4 4 0 0 1 0 8H7a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h7a4 4 0 0 1 0 8",
     ],
   },
 
   /* italic (format_italic) */
   italic: {
-    paths: ["M19 4h-9", "M14 20H5", "m15 4-6 16"],
+    paths: ["M19 4H10", "M14 20H5", "M15 4 9 20"],
   },
 
   /* underline (format_underlined) */
   underline: {
-    paths: [
-      "M6 4v7a6 6 0 0 0 12 0V4",
-      "M4 21h16",
-    ],
+    paths: ["M6 4v6a6 6 0 0 0 12 0V4", "M4 20h16"],
   },
 
   /* quote (format_quote) */
   quote: {
     paths: [
-      "M16 3a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2 4 4 0 0 1 4 4v1a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-1a2 2 0 0 0-2-2V5a2 2 0 0 1 2-2z",
-      "M6 3a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2 4 4 0 0 1 4 4v1a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-1a2 2 0 0 0-2-2V5a2 2 0 0 1 2-2z",
+      "M16 3a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2 1 1 0 0 1 1 1v1a2 2 0 0 1-2 2 1 1 0 0 0-1 1v2a1 1 0 0 0 1 1 6 6 0 0 0 6-6V5a2 2 0 0 0-2-2z",
+      "M5 3a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2 1 1 0 0 1 1 1v1a2 2 0 0 1-2 2 1 1 0 0 0-1 1v2a1 1 0 0 0 1 1 6 6 0 0 0 6-6V5a2 2 0 0 0-2-2z",
     ],
   },
 
   /* list (format_list_bulleted) */
   list: {
     paths: [
-      "M8 6h13",
-      "M8 12h13",
-      "M8 18h13",
-      "M3 6h.01",
+      "M3 5h.01",
       "M3 12h.01",
-      "M3 18h.01",
+      "M3 19h.01",
+      "M8 5h13",
+      "M8 12h13",
+      "M8 19h13",
     ],
   },
 
   /* list-ordered (format_list_numbered) */
   listOrdered: {
     paths: [
-      "M10 6h11",
-      "M10 12h11",
-      "M10 18h11",
-      "M4 6h1v4",
-      "M4 10h2",
-      "M6 18H4c0-1 2-2 2-3s-1-1.5-2-1",
+      "M11 5h10",
+      "M11 12h10",
+      "M11 19h10",
+      "M4 4h1v5",
+      "M4 9h2",
+      "M6.5 20H3.4c0-1 2.6-1.925 2.6-3.5a1.5 1.5 0 0 0-2.6-1.02",
     ],
   },
 
   /* list-indent-increase (format_indent_increase) */
   listIndentIncrease: {
-    paths: [
-      "M3 8h7",
-      "M3 12h11",
-      "M3 16h7",
-      "M13 4h8",
-      "M13 20h8",
-      "m7 6-3 3 3 3V6z",
-    ],
+    paths: ["M21 5H11", "M21 12H11", "M21 19H11", "m3 8 4 4-4 4"],
   },
 
   /* list-indent-decrease (format_indent_decrease) */
   listIndentDecrease: {
-    paths: [
-      "M3 8h7",
-      "M3 12h11",
-      "M3 16h7",
-      "M13 4h8",
-      "M13 20h8",
-      "m4 9 3-3-3-3v6z",
-    ],
+    paths: ["M21 5H11", "M21 12H11", "M21 19H11", "m7 8-4 4 4 4"],
   },
 
   /* minus (horizontal_rule) */
@@ -641,9 +624,11 @@ export const iconGlyphs: Record<IconName, IconGlyph> = {
   /* clipboard-paste (content_paste) */
   clipboardPaste: {
     paths: [
-      "M15 2H9a1 1 0 0 0-1 1v2c0 .6.4 1 1 1h6c.6 0 1-.4 1-1V3c0-.6-.4-1-1-1Z",
-      "M8 4H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2M16 4h2a2 2 0 0 1 2 2v2M11 14h10",
-      "m17 10 4 4-4 4",
+      "M11 14h10",
+      "M16 4h2a2 2 0 0 1 2 2v1.344",
+      "m17 18 4-4-4-4",
+      "M8 4H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 1.793-1.113",
+      "M9 2h6a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z",
     ],
   },
 
@@ -660,20 +645,16 @@ export const iconGlyphs: Record<IconName, IconGlyph> = {
   /* funnel (filter_alt) */
   funnel: {
     paths: [
-      "M6 6h12",
-      "M9 12h6",
-      "M11 18h2",
+      "M10 20a1 1 0 0 0 .553.895l2 1A1 1 0 0 0 14 21v-7a2 2 0 0 1 .517-1.341L21.74 4.67A1 1 0 0 0 21 3H3a1 1 0 0 0-.742 1.67l7.225 7.989A2 2 0 0 1 10 14z",
     ],
   },
 
-  /* custom funnel-x (filter_alt_off) — funnel with X overlay */
+  /* filter-x (filter_alt_off) */
   funnelX: {
     paths: [
-      "M6 6h12",
-      "M9 12h6",
-      "M11 18h2",
-      "m14 8-8 8",
-      "m6 8 8 8",
+      "M12.531 3H3a1 1 0 0 0-.742 1.67l7.225 7.989A2 2 0 0 1 10 14v6a1 1 0 0 0 .553.895l2 1A1 1 0 0 0 14 21v-7a2 2 0 0 1 .517-1.341l.427-.473",
+      "m16.5 3.5 5 5",
+      "m21.5 3.5-5 5",
     ],
   },
 
@@ -695,9 +676,9 @@ export const iconGlyphs: Record<IconName, IconGlyph> = {
   /* message-square-plus (add_comment) */
   messageSquarePlus: {
     paths: [
-      "M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z",
-      "M12 7v6",
-      "M9 10h6",
+      "M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z",
+      "M12 8v6",
+      "M9 11h6",
     ],
   },
 
@@ -763,12 +744,12 @@ export const iconGlyphs: Record<IconName, IconGlyph> = {
     ],
   },
 
-  /* upload (arrow_upload_ready close alternative) */
+  /* upload (arrow_upload_ready) */
   upload: {
     paths: [
-      "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4",
-      "m17 8-5-5-5 5",
       "M12 3v12",
+      "m17 8-5-5-5 5",
+      "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4",
     ],
   },
 
@@ -790,15 +771,15 @@ export const iconGlyphs: Record<IconName, IconGlyph> = {
     ],
   },
 
-  /* face-slightly-smiling-plus (add_reaction close alternative) */
+  /* smile-plus (add_reaction) */
   faceSlightlySmilingPlus: {
     paths: [
-      "M15 8.5a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0z",
-      "M10 8.5a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0z",
-      "M8 13s1 2 4 2 4-2 4-2",
-      "M8 2a10 10 0 1 0 0 20",
-      "M2 8v4",
-      "M4 10H0",
+      "M22 11v1a10 10 0 1 1-9-10",
+      "M8 14s1.5 2 4 2 4-2 4-2",
+      "M9 9h.01",
+      "M15 9h.01",
+      "M16 5h6",
+      "M19 2v6",
     ],
   },
 
@@ -813,5 +794,20 @@ export const iconGlyphs: Record<IconName, IconGlyph> = {
   /* loader-circle (LoadingSpinner close alternative) */
   loaderCircle: {
     paths: ["M12 2a10 10 0 1 0 10 10"],
+  },
+
+  /* align-left (format_align_left) */
+  alignLeft: {
+    paths: ["M21 5H3", "M15 12H3", "M17 19H3"],
+  },
+
+  /* align-center (format_align_center) */
+  alignCenter: {
+    paths: ["M21 5H3", "M17 12H7", "M19 19H5"],
+  },
+
+  /* align-right (format_align_right) */
+  alignRight: {
+    paths: ["M21 5H3", "M21 12H9", "M21 19H7"],
   },
 };

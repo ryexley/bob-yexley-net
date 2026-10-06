@@ -231,7 +231,7 @@ export function Pin(props: PinProps) {
               tabindex={-1}
               aria-label={isMasked() ? "Show PIN" : "Hide PIN"}
               onClick={() => setIsMasked(previous => !previous)}>
-              <Icon name={isMasked() ? "visibility" : "visibility_off"} />
+              <Icon name={isMasked() ? "eye" : "eyeOff"} />
             </button>
           ) : null}
         </div>

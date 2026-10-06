@@ -12,7 +12,7 @@ import { useNavigate } from "@solidjs/router"
 import { Drawer } from "@/components/drawer"
 import { useAuth } from "@/context/auth-context"
 import { useViewport } from "@/context/viewport"
-import { Blip as BlipIcon, Icon } from "@/components/icon"
+import { Blip as BlipIcon, Icon, type IconName } from "@/components/icon"
 import { Menu } from "@/components/menu"
 import { Stack } from "@/components/stack"
 import { UserAvatar } from "@/modules/users/components/user-avatar"
@@ -159,7 +159,7 @@ export function UserMenu() {
   const menuItems = createMemo(() => {
     const items: UserMenuItem[] = [
       {
-        icon: "account_circle",
+        icon: "circleUser",
         label: tr("profile"),
         onClick: openProfileDrawer,
       },
@@ -167,7 +167,7 @@ export function UserMenu() {
 
     if (isSuperuser()) {
       items.push({
-        icon: "shield_person",
+        icon: "shieldUser",
         label: tr("admin"),
         onClick: openAdminHome,
       })
@@ -188,7 +188,7 @@ export function UserMenu() {
     }
 
     items.push({
-      icon: "logout",
+      icon: "logOut",
       label: tr("logout"),
       onClick: () => {
         void handleLogout()
