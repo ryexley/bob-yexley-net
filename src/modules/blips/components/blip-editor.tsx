@@ -1748,22 +1748,17 @@ export function BlipEditor(props: BlipEditorProps) {
                   onMouseDown={preventEditorBlur}
                   onPointerUp={blurControl}
                 />
-                <Show
-                  when={
-                    !ctx.statusContext?.isPublished &&
-                    ctx.statusContext?.hasBlipId
-                  }>
-                  <IconButton
-                    size="xs"
-                    icon="trash"
-                    class="blip-action-delete"
-                    aria-label={tr("actions.delete")}
-                    tabIndex={-1}
-                    onClick={ctx.statusContext?.handleDelete}
-                    onMouseDown={preventEditorBlur}
-                    onPointerUp={blurControl}
-                  />
-                </Show>
+                <IconButton
+                  size="xs"
+                  icon="trash"
+                  class="blip-action-delete"
+                  aria-label={tr("actions.delete")}
+                  tabIndex={-1}
+                  disabled={!ctx.statusContext?.hasBlipId}
+                  onClick={ctx.statusContext?.handleDelete}
+                  onMouseDown={preventEditorBlur}
+                  onPointerUp={blurControl}
+                />
               </div>
             </div>
           </div>
