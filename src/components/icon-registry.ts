@@ -310,9 +310,9 @@ export const iconGlyphs: Record<IconName, IconGlyph> = {
   /* circle-user (account_circle) */
   circleUser: {
     paths: [
-      "M18 20a6 6 0 0 0-12 0",
-      "M2 12a10 10 0 1 0 20 0a10 10 0 1 0-20 0",
-      "M10 9a3 3 0 1 0 6 0a3 3 0 1 0-6 0",
+      "M22 12A10 10 0 1 1 2 12a10 10 0 0 1 20 0",
+      "M15 10A3 3 0 1 1 9 10a3 3 0 0 1 6 0",
+      "M7 20.662V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.662",
     ],
   },
 
