@@ -1,6 +1,6 @@
 import { render } from "@solidjs/testing-library"
 import { describe, expect, it } from "vitest"
-import { Icon } from "@/components/icon"
+import { Icon, ImagePlaceholder } from "@/components/icon"
 import { iconGlyphs, type IconName } from "@/components/icon-registry"
 
 const iconNames = Object.keys(iconGlyphs) as IconName[]
@@ -19,5 +19,19 @@ describe("Icon registry", () => {
       ).toBe(true)
       unmount()
     }
+  })
+})
+
+describe("ImagePlaceholder", () => {
+  it("does not apply the toolbar .icon size lock so layout classes can enlarge it", () => {
+    const { container } = render(() => (
+      <ImagePlaceholder class="relative h-1/2 w-1/2 max-h-40" />
+    ))
+    const svg = container.querySelector("svg")
+
+    expect(svg?.classList.contains("icon")).toBe(false)
+    expect(svg?.className).toContain("h-1/2")
+    expect(svg?.className).toContain("w-1/2")
+    expect(svg?.className).toContain("max-h-40")
   })
 })

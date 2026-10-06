@@ -49,15 +49,29 @@ export function Icon(props: IconProps) {
 
 export function ImagePlaceholder(props: JSX.SvgSVGAttributes<SVGSVGElement>) {
   const [local, rest] = splitProps(props, ["class"])
+  const glyph = iconGlyphs.image
+  const pathNodes = () =>
+    // oxlint-disable-next-line solid/prefer-for -- For-inside-svg minifies to `t is not a function`
+    glyph.paths.map(pathD => <path d={pathD} />)
 
+  // Keep this off `.icon`: callers size it with layout classes (h-1/2, 45%,
+  // etc.). The shared icon rule locks width/height to 1em and would shrink
+  // the image-background watermark back to toolbar size.
   return (
-    <Icon
-      name="image"
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      width="1.5rem"
+      height="1.5rem"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
       class={local.class}
-      width="1.5em"
-      height="1.5em"
-      {...rest}
-    />
+      {...rest}>
+      {pathNodes()}
+    </svg>
   )
 }
 
