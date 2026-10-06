@@ -696,9 +696,9 @@ export const iconGlyphs: Record<IconName, IconGlyph> = {
   /* message-circle-plus (chat_add_on) */
   messageCirclePlus: {
     paths: [
-      "M7.9 20A9 9 0 1 0 4 16.1L2 22z",
-      "M12 7v6",
-      "M9 10h6",
+      "M2.992 16.342a2 2 0 0 1 .094 1.167l-1.065 3.29a1 1 0 0 0 1.236 1.168l3.413-.998a2 2 0 0 1 1.099.092 10 10 0 1 0-4.777-4.719",
+      "M8 12h8",
+      "M12 8v8",
     ],
   },
 
