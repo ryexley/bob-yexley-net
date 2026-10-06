@@ -62,6 +62,21 @@ vi.mock("@/modules/blips/components/blip-reaction-summary", () => ({
   BlipReactionSummary: () => null,
 }))
 
+const openNewComment = vi.fn()
+const optionalComposer = vi.fn(() => undefined as { openNewComment: typeof openNewComment } | undefined)
+
+vi.mock("@/modules/blips/context/blip-composer-context", () => ({
+  useOptionalBlipComposer: () => optionalComposer(),
+}))
+
+vi.mock("@/modules/blips/components/blip-comment-trigger", () => ({
+  BlipCommentTrigger: (props: { onCompose: () => void }) => (
+    <button type="button" aria-label="actions.addComment" onClick={props.onCompose}>
+      add-comment
+    </button>
+  ),
+}))
+
 vi.mock("@/i18n", () => ({
   ptr: () => (key: string, values?: { count?: number }) => {
     if (key === "tags.overflow") {
@@ -196,5 +211,41 @@ describe("Blip card tags", () => {
     expect(document.querySelector(".blip-card .tag-list .overflow")?.textContent).toBe(
       "+3",
     )
+  })
+})
+
+describe("Blip card comments", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    optionalComposer.mockReturnValue(undefined)
+  })
+
+  it("hides the add-comment control when no composer is available", () => {
+    render(() => <BlipCard blip={makeBlip()} />)
+
+    expect(
+      document.querySelector('[aria-label="actions.addComment"]'),
+    ).toBeNull()
+  })
+
+  it("shows the add-comment control next to reactions when a composer is available", () => {
+    optionalComposer.mockReturnValue({ openNewComment })
+
+    render(() => <BlipCard blip={makeBlip()} />)
+
+    expect(
+      document.querySelector('[aria-label="actions.addComment"]'),
+    ).toBeTruthy()
+  })
+
+  it("shows a muted comments-disabled indicator when comments are turned off", () => {
+    optionalComposer.mockReturnValue({ openNewComment })
+
+    render(() => <BlipCard blip={makeBlip({ allow_comments: false })} />)
+
+    expect(document.body.textContent).toContain("actions.commentsDisabled")
+    expect(
+      document.querySelector('[aria-label="actions.addComment"]'),
+    ).toBeNull()
   })
 })

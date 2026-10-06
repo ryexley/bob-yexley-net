@@ -20,8 +20,10 @@ import { Stack } from "@/components/stack"
 import { useAuth } from "@/context/auth-context"
 import { useSupabase } from "@/context/services-context"
 import { BlipActions } from "@/modules/blips/components/blip-actions"
+import { BlipCommentTrigger } from "@/modules/blips/components/blip-comment-trigger"
 import { BlipReactionSummary } from "@/modules/blips/components/blip-reaction-summary"
 import { BlipReactionTrigger } from "@/modules/blips/components/blip-reaction-trigger"
+import { useOptionalBlipComposer } from "@/modules/blips/context/blip-composer-context"
 import { blipStore } from "@/modules/blips/data/store"
 import {
   buildOptimisticReactionState,
@@ -46,6 +48,7 @@ import { clsx as cx } from "@/util"
 import "./blip.css"
 
 const tr = ptr("blips.components.blip")
+const commentThreadTr = ptr("blips.components.commentThread")
 
 export const BLIP_CARD_VISIBLE_TAG_LIMIT = 3
 export const BLIP_CARD_COMPACT_TAG_LIMIT = 1
@@ -81,6 +84,7 @@ export function Blip(props: {
   const { isAuthenticated, userProfile, userSystem } = useAuth()
   const supabase = useSupabase()
   const notify = useNotify()
+  const composer = useOptionalBlipComposer()
   const blips = blipStore(supabase.client, { subscribe: false })
   const reactions = reactionStore(supabase.client, { subscribe: false })
   let contentRef: HTMLDivElement | undefined
@@ -416,6 +420,26 @@ export function Blip(props: {
                   blips.updateCachedReactionState(local.blip.id, nextState)
                 }}
               />
+              <Show when={composer}>
+                <div
+                  class="_commentAction"
+                  onClick={event => event.stopPropagation()}
+                  onPointerDown={event => event.stopPropagation()}>
+                  {local.blip.allow_comments !== false ? (
+                    <BlipCommentTrigger
+                      onCompose={() => composer?.openNewComment(local.blip.id)}
+                    />
+                  ) : (
+                    <Tooltip
+                      content={commentThreadTr("disabled")}
+                      triggerAs="span"
+                      triggerClass="comments-disabled-indicator">
+                      <Icon name="lock" />
+                      <span>{tr("actions.commentsDisabled")}</span>
+                    </Tooltip>
+                  )}
+                </div>
+              </Show>
             </Stack>
           </footer>
         </div>

@@ -271,6 +271,33 @@
             font-size: 0.9rem;
           }
         }
+
+        ._commentAction {
+          display: inline-flex;
+        }
+
+        .tooltip-trigger.comments-disabled-indicator {
+          align-items: center;
+          border: 0.0625rem solid
+            color-mix(in srgb, var(--colors-mono-05) 72%, transparent);
+          border-radius: 999rem;
+          color: var(--colors-mono-07);
+          display: inline-flex;
+          gap: 0.25rem;
+          line-height: 1;
+          padding: 0.18rem 0.45rem;
+
+          .icon {
+            color: currentcolor;
+            font-size: 0.875rem;
+          }
+
+          span {
+            font-size: 0.6875rem;
+            font-weight: 500;
+            white-space: nowrap;
+          }
+        }
       }
     }
 
