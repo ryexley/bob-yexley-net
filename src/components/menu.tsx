@@ -15,7 +15,7 @@ type MenuItem = {
 
 type MenuProps = {
   Trigger?: JSX.Element | (() => JSX.Element)
-  triggerIcon?: string
+  triggerIcon?: IconName
   triggerButtonSize?: IconButtonSize
   triggerClass?: string
   items: MenuItem[]
@@ -26,7 +26,7 @@ type MenuProps = {
 
 export function Menu(props: MenuProps) {
   const propsWithDefaults = {
-    triggerIcon: "more_vert" as string,
+    triggerIcon: "ellipsisVertical" as IconName,
     triggerButtonSize: "md" as IconButtonSize,
     modal: true,
     ...props,

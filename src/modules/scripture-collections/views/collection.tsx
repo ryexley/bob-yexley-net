@@ -318,7 +318,7 @@ export function ScriptureCollectionDetailView() {
         )}
       </Title>
       <Meta
-        name="fileText"
+        name="description"
         content={
           collection()
             ? tr("metaDescription", { name: collection()!.name })
@@ -414,7 +414,7 @@ export function ScriptureCollectionDetailView() {
                               direction === "desc" ? "asc" : "desc",
                             )
                           }>
-                          <Icon name={sortDirection() === "desc" ? "south" : "north"} />
+                          <Icon name={sortDirection() === "desc" ? "arrowDown" : "arrowUp"} />
                         </button>
 
                         <button
@@ -429,7 +429,7 @@ export function ScriptureCollectionDetailView() {
                               : referenceTr("actions.showFilters")
                           }
                           onClick={() => setFiltersOpen(open => !open)}>
-                          <Icon name={filtersOpen() ? "filter_alt_off" : "filter_alt"} />
+                          <Icon name={filtersOpen() ? "funnelX" : "funnel"} />
                         </button>
                       </div>
                     </div>

@@ -115,7 +115,7 @@ export function AdminHomeView() {
     <>
       <Title>{windowTitle(tr("pageTitle"))}</Title>
       <Meta
-        name="fileText"
+        name="description"
         content={tr("metaDescription")}
       />
       <main class="admin-home-view">
