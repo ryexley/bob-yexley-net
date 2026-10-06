@@ -375,7 +375,7 @@ export function Blip(props: {
                       event.stopPropagation()
                       openDetails()
                     }}>
-                    <Icon name="messageCircle" />
+                    <Icon name="messageSquareText" />
                     <span>{local.blip.updates_count ?? 0}</span>
                   </button>
                 </Tooltip>
