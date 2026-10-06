@@ -88,7 +88,7 @@ export type IconName =
   | "filePenLine"
   | "radar"
   | "hash"
-  | "badgeInfo"
+  | "settings2"
   | "upload"
   | "skipForward"
   | "arrowUpDown"
@@ -746,12 +746,13 @@ export const iconGlyphs: Record<IconName, IconGlyph> = {
     ],
   },
 
-  /* badge-info (page_info close alternative) */
-  badgeInfo: {
+  /* settings-2 */
+  settings2: {
     paths: [
-      "M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76z",
-      "M12 16v-4",
-      "M12 8h.01",
+      "M14 17H5",
+      "M19 7h-9",
+      "M17 14a3 3 0 0 1 3 3 3 3 0 0 1-3 3 3 3 0 0 1-3-3 3 3 0 0 1 3-3",
+      "M7 4a3 3 0 0 1 3 3 3 3 0 0 1-3 3 3 3 0 0 1-3-3 3 3 0 0 1 3-3",
     ],
   },
 

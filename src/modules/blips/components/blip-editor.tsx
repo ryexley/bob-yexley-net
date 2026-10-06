@@ -1694,7 +1694,7 @@ export function BlipEditor(props: BlipEditorProps) {
                   onMouseDown={handleMetadataToggleMouseDown}
                   onPointerUp={blurControl}
                   onTouchStart={handleMetadataToggleTouchStart}>
-                  <Icon name={metadataOpen() ? "filePenLine" : "badgeInfo"} />
+                  <Icon name={metadataOpen() ? "filePenLine" : "settings2"} />
                 </button>
                 <button
                   type="button"
