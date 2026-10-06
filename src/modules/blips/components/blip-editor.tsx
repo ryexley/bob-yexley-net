@@ -1559,7 +1559,7 @@ export function BlipEditor(props: BlipEditorProps) {
     if (status === "saved-db") {
       return (
         <Icon
-          name="cloud_upload"
+          name="cloudUpload"
           class="status-saved-icon"
         />
       )
@@ -1654,7 +1654,7 @@ export function BlipEditor(props: BlipEditorProps) {
               <div class="blip-editor-control-pill-left">
                 <IconButton
                   size="xs"
-                  icon="close"
+                  icon="x"
                   class="blip-editor-close"
                   aria-label={tr("actions.close")}
                   tabIndex={-1}
@@ -1707,14 +1707,14 @@ export function BlipEditor(props: BlipEditorProps) {
                   onClick={() => ctx.onToggleToolbar()}
                   onMouseDown={preventEditorBlur}
                   onPointerUp={blurControl}>
-                  <Icon name="format_bold" />
-                  <Icon name="format_italic" />
-                  <Icon name="format_underlined" />
+                  <Icon name="bold" />
+                  <Icon name="italic" />
+                  <Icon name="underline" />
                 </button>
                 <div class="blip-editor-control-divider" />
                 <IconButton
                   size="xs"
-                  icon="cloud_upload"
+                  icon="cloudUpload"
                   class="blip-action-save"
                   aria-label={tr("actions.save")}
                   tabIndex={-1}
@@ -1755,7 +1755,7 @@ export function BlipEditor(props: BlipEditorProps) {
                   }>
                   <IconButton
                     size="xs"
-                    icon="delete"
+                    icon="trash"
                     class="blip-action-delete"
                     aria-label={tr("actions.delete")}
                     tabIndex={-1}
@@ -1813,7 +1813,7 @@ export function BlipEditor(props: BlipEditorProps) {
               <div class="blip-editor-picker-header">
                 <IconButton
                   size="xs"
-                  icon="close"
+                  icon="x"
                   class="blip-editor-picker-close"
                   aria-label={tr("actions.close")}
                   onClick={() => void requestCloseEditor()}
@@ -1903,7 +1903,7 @@ export function BlipEditor(props: BlipEditorProps) {
                     type="button"
                     class="blip-draft-picker-item"
                     onClick={() => openExistingBlip(draft)}>
-                    <Icon name="edit_note" />
+                    <Icon name="filePenLine" />
                     <span>{getDraftLabel(draft)}</span>
                   </button>
                 )}

@@ -35,7 +35,7 @@ export function ReprocessFailedMediaCard() {
     <div class="card media-card">
       <div class="card-header">
         <Icon
-          name="photo_library"
+          name="images"
           class="icon"
         />
         <h2 class="card-title">{tr("title")}</h2>
@@ -47,7 +47,7 @@ export function ReprocessFailedMediaCard() {
         <Button
           size="sm"
           variant="secondary"
-          icon="refresh"
+          icon="refreshCw"
           label={running() ? tr("running") : tr("action")}
           disabled={running()}
           onClick={run}

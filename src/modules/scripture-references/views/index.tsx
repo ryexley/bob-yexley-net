@@ -285,14 +285,14 @@ export function ScriptureReferencesView() {
     <>
       <Title>{windowTitle(tr("pageTitle"))}</Title>
       <Meta
-        name="description"
+        name="fileText"
         content={tr("metaDescription")}
       />
       <main class="scripture-references-view">
         <a
           href={pages.scripture}
           class="scripture-references-view-back-link">
-          <Icon name="arrow_back" />
+          <Icon name="arrowLeft" />
           {tr("actions.backToScripture")}
         </a>
         <div class="scripture-references-view-shell">

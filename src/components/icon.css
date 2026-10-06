@@ -1,6 +1,11 @@
 .icon {
-  color: var(--colors-mono-07);
+  display: inline-block;
+  flex-shrink: 0;
+  vertical-align: middle;
+  width: 1em;
+  height: 1em;
   font-size: 1.5rem;
+  color: var(--colors-mono-07);
   transition:
     color 250ms ease-in-out,
     opacity 250ms ease-in-out,
@@ -40,6 +45,12 @@
   circle {
     animation: loading-spinner-dash 1.5s ease-in-out infinite;
     stroke-linecap: round;
+  }
+}
+
+.blip-icon {
+  &.icon {
+    color: currentColor;
   }
 }
 

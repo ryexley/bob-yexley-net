@@ -30,7 +30,7 @@ import "./user-menu.css"
 const tr = ptr("home.components.userMenu")
 const MOBILE_MENU_MAX_WIDTH = remToViewportWidth(48) // @media (max-width: 48rem)
 type UserMenuItem = {
-  icon?: string
+  icon?: IconName
   iconNode?: JSX.Element
   label: string
   onClick: () => void | Promise<void>

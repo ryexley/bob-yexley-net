@@ -226,7 +226,7 @@ function InlineGif(props: { storageKey: string; mimeType: string }) {
         <span
           class="play"
           aria-hidden="true">
-          <Icon name={playing() ? "pause" : "play_arrow"} />
+          <Icon name={playing() ? "pause" : "play"} />
         </span>
       </button>
     </div>
@@ -273,7 +273,7 @@ function InlineVideo(props: {
       <span
         class="play"
         aria-hidden="true">
-        <Icon name="play_arrow" />
+        <Icon name="play" />
       </span>
     </MediaFrame>
   )

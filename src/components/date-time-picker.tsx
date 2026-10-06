@@ -879,7 +879,7 @@ export function DateTimePicker(props: DateTimePickerProps) {
 
                 openPicker()
               }}>
-              <Icon name="calendar_month" />
+              <Icon name="calendar" />
             </button>
           </div>
         </PopoverAnchor>
@@ -911,7 +911,7 @@ export function DateTimePicker(props: DateTimePickerProps) {
                 aria-label="Previous month"
                 onMouseDown={event => event.preventDefault()}
                 onClick={() => setDisplayMonth(current => subMonths(current, 1))}>
-                <Icon name="chevron_left" />
+                <Icon name="chevronLeft" />
               </button>
               <div class="month">{getMonthLabel(displayMonth())}</div>
               <button
@@ -920,7 +920,7 @@ export function DateTimePicker(props: DateTimePickerProps) {
                 aria-label="Next month"
                 onMouseDown={event => event.preventDefault()}
                 onClick={() => setDisplayMonth(current => addMonths(current, 1))}>
-                <Icon name="chevron_right" />
+                <Icon name="chevronRight" />
               </button>
             </div>
             <div class="calendar">
@@ -1007,7 +1007,7 @@ export function DateTimePicker(props: DateTimePickerProps) {
                       {state => state.selectedOption().label}
                     </SelectPrimitive.Value>
                     <span class="select-trigger-icon" aria-hidden="true">
-                      <Icon name="expand_more" />
+                      <Icon name="chevronDown" />
                     </span>
                   </SelectPrimitive.Trigger>
                   <SelectPrimitive.Portal mount={local.portalMount ?? rootRef}>
@@ -1043,7 +1043,7 @@ export function DateTimePicker(props: DateTimePickerProps) {
                   </button>
                 </div>
                 <IconButton
-                  icon="check_circle"
+                  icon="circleCheck"
                   size="sm"
                   class="set"
                   aria-label="Set date and time"

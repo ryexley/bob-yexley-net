@@ -9,7 +9,7 @@ import {
   untrack,
 } from "solid-js"
 import DrawerPrimitive from "@corvu/drawer"
-import { Icon } from "./icon"
+import { Icon, type IconName } from "./icon"
 import { clsx as cx, isNotEmpty } from "@/util"
 // Drawer styles are imported by `@/layouts/main/main.css` so they stay loaded
 // for the shared main-layout chrome across client-side route transitions.
@@ -35,7 +35,7 @@ export interface DrawerProps {
 
   showTrigger?: boolean
   Trigger?: ValidComponent
-  triggerIcon?: string
+  triggerIcon?: IconName
   triggerClass?: string
   triggerIconClass?: string
   triggerAriaLabel?: string
@@ -43,7 +43,7 @@ export interface DrawerProps {
   showClose?: boolean
   Close?: ValidComponent
   closeClass?: string
-  closeIcon?: string
+  closeIcon?: IconName
   closeIconClass?: string
   closeAriaLabel?: string
 
@@ -62,12 +62,12 @@ export interface DrawerProps {
   children: ValidComponent | Component | JSX.Element | HTMLElement
 }
 
-const resolveTriggerIcon = (position: DrawerPosition) => {
+const resolveTriggerIcon = (position: DrawerPosition): IconName => {
   const triggerIconPositions = {
-    [DrawerPosition.LEFT]: "menu_open",
-    [DrawerPosition.RIGHT]: "menu_open",
-    [DrawerPosition.TOP]: "top_panel_open",
-    [DrawerPosition.BOTTOM]: "top_panel_open",
+    [DrawerPosition.LEFT]: "panelLeftOpen" as IconName,
+    [DrawerPosition.RIGHT]: "panelRightOpen" as IconName,
+    [DrawerPosition.TOP]: "panelTopOpen" as IconName,
+    [DrawerPosition.BOTTOM]: "panelTopOpen" as IconName,
   }
 
   return triggerIconPositions[position]
@@ -84,7 +84,7 @@ export function Drawer(props: DrawerProps) {
         untrack(() => props.side || DrawerPosition.RIGHT),
       ),
       showClose: true,
-      closeIcon: "close",
+      closeIcon: "x" as IconName,
       closeAriaLabel: "Close",
     },
     props,

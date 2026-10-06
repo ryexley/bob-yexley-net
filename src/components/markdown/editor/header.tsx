@@ -1,10 +1,10 @@
 import { For, Show } from "solid-js"
-import { Icon } from "@/components/icon"
+import { Icon, type IconName } from "@/components/icon"
 import "./header.css"
 
 export type HeaderAction = {
   label: string
-  icon?: string
+  icon?: IconName
   onClick: () => void
   variant?: "primary" | "secondary" | "danger"
   disabled?: boolean

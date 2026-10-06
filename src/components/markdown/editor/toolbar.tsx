@@ -271,7 +271,7 @@ export default function Toolbar(props: ToolbarProps) {
               onClick={handleRemoveLink}
               onMouseDown={preventControlFocus}
               onPointerUp={blurControl}>
-              <Icon name="link_off" />
+              <Icon name="unlink" />
             </button>
           </Show>
           <button
@@ -282,7 +282,7 @@ export default function Toolbar(props: ToolbarProps) {
             onClick={closeLinkEditor}
             onMouseDown={preventControlFocus}
             onPointerUp={blurControl}>
-            <Icon name="close" />
+            <Icon name="x" />
           </button>
         </div>
       </form>

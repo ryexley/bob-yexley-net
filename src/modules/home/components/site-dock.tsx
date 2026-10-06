@@ -1,7 +1,7 @@
 import { A, useLocation, useNavigate } from "@solidjs/router"
 import { createMemo, createSignal, For, Show } from "solid-js"
 import { Drawer } from "@/components/drawer"
-import { Blip as BlipIcon, Icon } from "@/components/icon"
+import { Blip as BlipIcon, Icon, type IconName } from "@/components/icon"
 import { Stack } from "@/components/stack"
 import { useAuth } from "@/context/auth-context"
 import { useVisitorAuth } from "@/modules/auth/components/visitor-auth-modal"
@@ -22,9 +22,9 @@ import "./site-dock.css"
 
 const tr = ptr("home.components.siteDock")
 
-const navIconByPath: Record<string, string> = {
-  [pages.home]: "home",
-  [pages.resume]: "description",
+const navIconByPath: Record<string, IconName> = {
+  [pages.home]: "house",
+  [pages.resume]: "fileText",
 }
 
 export function SiteDock() {
@@ -80,7 +80,7 @@ export function SiteDock() {
             class="item"
             aria-label={tr("signIn")}
             onClick={() => visitorAuth.open()}>
-            <Icon name="account_circle" />
+            <Icon name="circleUser" />
           </button>
         }>
         <div class="item user">
@@ -93,7 +93,7 @@ export function SiteDock() {
         aria-label={tr("home")}
         aria-current={homeCurrent()}
         onClick={handleHomeClick}>
-        <Icon name="home" />
+        <Icon name="house" />
       </A>
       <A
         class="item"
@@ -139,7 +139,7 @@ export function SiteDock() {
                       class="menu-blip-icon"
                     />
                   ) : (
-                    <Icon name={navIconByPath[link.path] ?? "chevron_right"} />
+                    <Icon name={navIconByPath[link.path] ?? "chevronRight"} />
                   )}
                   <span>{link.label}</span>
                 </button>

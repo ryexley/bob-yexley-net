@@ -78,7 +78,7 @@ export function Signals(props) {
           href={pages.blips}
           class="signals-see-more-link">
           {tr("actions.seeMore")}
-          <Icon name="arrow_forward" />
+          <Icon name="arrowRight" />
         </a>
       </div>
     </PageSection>

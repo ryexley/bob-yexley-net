@@ -262,14 +262,14 @@ export function AnalyticsView() {
     <>
       <Title>{windowTitle(tr("pageTitle"))}</Title>
       <Meta
-        name="description"
+        name="fileText"
         content={tr("metaDescription")}
       />
       <main class="analytics-view">
         <a
           href={pages.admin}
           class="analytics-view-back-link">
-          <Icon name="arrow_back" />
+          <Icon name="arrowLeft" />
           {tr("actions.backToAdmin")}
         </a>
         <div class="analytics-view-shell">

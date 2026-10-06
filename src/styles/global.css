@@ -299,16 +299,6 @@ fieldset {
     "opsz" 24;
 }
 
-.material-icons-not-loaded .material-icons,
-.material-symbols-not-loaded .material-symbols-outlined {
-  opacity: 0.5;
-}
-
-.material-icons-loaded .material-icons,
-.material-symbols-loaded .material-symbols-outlined {
-  opacity: 1;
-}
-
 @layer components {
   .icon {
     color: var(--colors-mono-07);

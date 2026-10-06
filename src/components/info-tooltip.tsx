@@ -1,12 +1,12 @@
 import { mergeProps, type JSXElement } from "solid-js"
-import { Icon } from "@/components/icon"
+import { Icon, type IconName } from "@/components/icon"
 import { Tooltip } from "@/components/tooltip"
 import { cx } from "@/util"
 import "./info-tooltip.css"
 
 type InfoTooltipProps = {
   info: JSXElement
-  icon?: string
+  icon?: IconName
   class?: string
   iconClass?: string
   contentClass?: string

@@ -40,7 +40,7 @@ export function BlipCommentTrigger(props: BlipCommentTriggerProps) {
       title={tr("actions.addComment")}
       disabled={props.disabled}
       onClick={handleClick}>
-      <Icon name="add_comment" />
+      <Icon name="messageSquarePlus" />
     </button>
   )
 }

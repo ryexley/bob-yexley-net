@@ -200,7 +200,8 @@ describe("ProfileDrawer", () => {
     render(() => <ProfileDrawer open onOpenChange={() => undefined} />)
 
     expect(screen.getByText("Admin")).toBeTruthy()
-    expect(screen.getByText("shield_person")).toBeTruthy()
+    const svgIcon = document.querySelector('svg.icon')
+    expect(svgIcon).toBeTruthy()
   })
 
   it("uses the right-side drawer on tablet and desktop widths", () => {
