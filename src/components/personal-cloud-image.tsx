@@ -237,14 +237,21 @@ export const PersonalCloudImage: Component<PersonalCloudImageProps> = props => {
 
   // Reset the load/fallback state whenever the source set changes (new key,
   // variant, or processing transition) so a recycled component re-attempts
-  // from the largest candidate.
+  // from the largest candidate. Keyed on the string *value* so a media refetch
+  // that hands back new row objects with identical values does not reset a
+  // loaded image whose unchanged `src` will never fire `onLoad` again.
+  const sourceSignature = createMemo(
+    () => `${local.imageKey}|${variant()}|${getProcessingStatus()}`,
+  )
   createEffect(() => {
-    void local.imageKey
-    void variant()
-    void getProcessingStatus()
+    void sourceSignature()
     setCandidateIndex(0)
     setImageLoaded(false)
     setMeasuredSize(null)
+    // An already-decoded <img> with the same src will not fire `onLoad` again.
+    if (image && image.complete && image.naturalWidth > 0) {
+      handleImageLoaded()
+    }
   })
 
   onMount(() => {
