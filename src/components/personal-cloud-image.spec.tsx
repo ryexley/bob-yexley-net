@@ -1,4 +1,5 @@
 import { fireEvent, render } from "@solidjs/testing-library"
+import { createSignal } from "solid-js"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { PersonalCloudImage } from "./personal-cloud-image"
 
@@ -217,5 +218,36 @@ describe("PersonalCloudImage", () => {
     expect(frame.style.width).toBe("4rem")
     expect(frame.style.height).toBe("3rem")
     expect(frame.getAttribute("style")).not.toContain("px")
+  })
+
+  it("stays visible when a refetch re-feeds identical values as new objects", () => {
+    const [row, setRow] = createSignal({
+      storage_key: KEY,
+      mime_type: "image/jpeg",
+      processing_status: "complete" as const,
+    })
+    render(() => (
+      <PersonalCloudImage
+        imageKey={row().storage_key}
+        mimeType={row().mime_type}
+        processingStatus={row().processing_status}
+        width={80}
+        height={80}
+        alt="tile"
+      />
+    ))
+
+    const placeholder = () =>
+      document.querySelector(".personal-cloud-image-placeholder") as HTMLElement
+    const el = img() as HTMLImageElement
+    fireEvent.load(el)
+    expect(placeholder().style.opacity).toBe("0")
+
+    // Same values, new object identity (as a media refetch returns).
+    setRow({ ...row() })
+
+    expect(img()).toBe(el)
+    expect(placeholder().style.opacity).toBe("0")
+    expect(el.classList.contains("opacity-100")).toBe(true)
   })
 })
