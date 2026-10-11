@@ -14,6 +14,7 @@ import { useAuth } from "@/context/auth-context"
 import { ptr } from "@/i18n"
 import { pages, type BlipLinkTarget } from "@/urls"
 import { withWindow } from "@/util/browser"
+import { createMounted } from "@/util/mounted"
 import "./index.css"
 
 const BLIPS_PAGE_SIZE = 20
@@ -23,6 +24,8 @@ export function BlipsView() {
   const navigate = useNavigate()
   const supabase = useSupabase()
   const { isAuthenticated, userProfile, userSystem, loading } = useAuth() as any
+  // Drafts only show once hydrated: the server always renders signed out.
+  const mounted = createMounted()
   const initialBlips = createAsync(() => getBlips(BLIPS_PAGE_SIZE, 0))
   let lastReactionViewerKey: string | null = null
   let lastReactionViewer = {
@@ -57,7 +60,7 @@ export function BlipsView() {
   )
   const visibleRootFeedBlips = createMemo(() => {
     const allRootFeedBlips = rootFeedBlips() ?? []
-    if (isAuthenticated()) {
+    if (mounted() && isAuthenticated()) {
       return allRootFeedBlips
     }
 

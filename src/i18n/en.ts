@@ -47,6 +47,7 @@ export const en = {
         loading: "Loading ...",
         errorTitle: "Something went wrong",
         errorBody: "This page could not finish loading.",
+        errorStack: "Technical details",
         retry: "Try again",
         retrying: "Retrying ...",
       },

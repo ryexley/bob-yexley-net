@@ -97,10 +97,11 @@ export function Blips(props: {
       const rootsNeedingUpdateIds = ids.filter(
         id => (blipsById.get(id)?.updates_count ?? 0) > 0,
       )
+      // A failed server call resolves to null, not `{}`.
       const updateIdsByRoot =
-        rootsNeedingUpdateIds.length > 0
+        (rootsNeedingUpdateIds.length > 0
           ? await getUpdateBlipIdsForRoots(rootsNeedingUpdateIds)
-          : {}
+          : null) ?? {}
       const mediaBlipIds = [
         ...new Set([...ids, ...Object.values(updateIdsByRoot).flat()]),
       ]
