@@ -52,3 +52,19 @@
   margin: 0;
   overflow-wrap: anywhere;
 }
+
+.route-boundary__stack {
+  color: var(--colors-mono-09);
+  font-size: 0.75rem;
+  max-width: 100%;
+  text-align: left;
+}
+
+.route-boundary__stack pre {
+  font-family: ui-monospace, monospace;
+  margin: 0.5rem 0 0;
+  max-height: 16rem;
+  overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
