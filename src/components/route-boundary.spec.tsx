@@ -33,6 +33,24 @@ describe("RouteError", () => {
     routerState.revalidate.mockImplementation(async () => {})
   })
 
+  it("logs the full error and exposes its stack for minified production crashes", () => {
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {})
+    const error = new TypeError("t is not a function")
+    error.stack = "TypeError: t is not a function\n    at xt (routing.js:1:2)"
+
+    const { container } = render(() => (
+      <RouteError
+        error={error}
+        onReset={() => {}}
+      />
+    ))
+
+    expect(consoleError).toHaveBeenCalledWith("Route error boundary caught:", error)
+    expect(container.querySelector(".route-boundary__stack pre")?.textContent).toContain(
+      "at xt (routing.js:1:2)",
+    )
+  })
+
   it("surfaces the underlying failure alongside a way out", () => {
     render(() => (
       <RouteError

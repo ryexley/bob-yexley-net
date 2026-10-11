@@ -14,6 +14,7 @@ import { PageSection } from "@/modules/home/components/page-section"
 import { ptr } from "@/i18n"
 import { pages, type BlipLinkTarget } from "@/urls"
 import { withWindow } from "@/util/browser"
+import { createMounted } from "@/util/mounted"
 import "./index.css"
 
 const BLIPS_PAGE_SIZE = 20
@@ -23,6 +24,8 @@ export function BlipsTagView() {
   const params = useParams()
   const navigate = useNavigate()
   const { isAuthenticated } = useAuth() as any
+  // Drafts only show once hydrated: the server always renders signed out.
+  const mounted = createMounted()
   const initialBlips = createAsync(() => getBlipsByTag(params.tag, BLIPS_PAGE_SIZE, 0))
   const [blips, setBlips] = createSignal<Blip[]>([])
   const [isLoadingMore, setIsLoadingMore] = createSignal(false)
@@ -32,7 +35,7 @@ export function BlipsTagView() {
     const storeData = blips()
     // Use store data when available, fall back to SSR data for initial render
     const allBlips = storeData.length > 0 ? storeData : (initialBlips() ?? [])
-    if (isAuthenticated()) {
+    if (mounted() && isAuthenticated()) {
       return allBlips
     }
     return allBlips.filter(blip => isBlipPubliclyVisible(blip))

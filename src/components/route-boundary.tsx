@@ -1,4 +1,4 @@
-import { createSignal, Show } from "solid-js"
+import { createSignal, onMount, Show } from "solid-js"
 import { revalidate } from "@solidjs/router"
 import { Button } from "@/components/button"
 import { ptr } from "@/i18n"
@@ -34,6 +34,11 @@ export function RouteError(props: { error: unknown; onReset: () => void }) {
 
   const detail = () =>
     props.error instanceof Error ? props.error.message : String(props.error ?? "")
+  const stack = () => (props.error instanceof Error ? (props.error.stack ?? "") : "")
+
+  // Minified production messages (`t is not a function`) say nothing on their
+  // own; log the whole error so the stack is there to map back to source.
+  onMount(() => console.error("Route error boundary caught:", props.error))
 
   const retry = async () => {
     setRetrying(true)
@@ -57,6 +62,12 @@ export function RouteError(props: { error: unknown; onReset: () => void }) {
       <p class="route-boundary__message">{tr("errorBody")}</p>
       <Show when={detail()}>
         <p class="route-boundary__detail">{detail()}</p>
+      </Show>
+      <Show when={stack()}>
+        <details class="route-boundary__stack">
+          <summary>{tr("errorStack")}</summary>
+          <pre>{stack()}</pre>
+        </details>
       </Show>
       <Button
         variant="secondary"
