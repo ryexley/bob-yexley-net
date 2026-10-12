@@ -7,6 +7,7 @@ import {
   onCleanup,
   onMount,
   Suspense,
+  untrack,
   useContext,
   type Accessor,
   type Context,
@@ -71,7 +72,9 @@ function AuthProviderReady(props: {
   // starts from the same user the server painted. Effects never run on SSR.
   const seededProfile = peekRequestAuthProfile()
   const ssrSnapshot =
-    seededProfile !== undefined ? seededProfile : (props.ssrProfile() ?? null)
+    seededProfile !== undefined
+      ? seededProfile
+      : untrack(() => props.ssrProfile() ?? null)
   const [liveProfile, setLiveProfile] = createSignal<UserProfile | null | undefined>(
     undefined,
   )
