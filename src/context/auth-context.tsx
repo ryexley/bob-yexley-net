@@ -6,7 +6,9 @@ import {
   createSignal,
   onCleanup,
   onMount,
+  Suspense,
   useContext,
+  type Accessor,
   type Context,
 } from "solid-js"
 import { createAsync } from "@solidjs/router"
@@ -17,6 +19,7 @@ import {
   resolveSignedInAuth,
 } from "@/context/auth-controller"
 import { setVisitorAuthenticateHandler } from "@/modules/auth/components/visitor-auth-modal"
+import { peekRequestAuthProfile } from "@/lib/vendor/supabase/request-auth-profile"
 import { getUserProfile } from "@/modules/auth/data/queries"
 import { debounce } from "@/util/debounce"
 import { TIME } from "@/util/enums"
@@ -49,6 +52,26 @@ const AUTH_RESUME_EVENTS = ["SIGNED_IN", "INITIAL_SESSION", "TOKEN_REFRESHED"] a
 
 export function AuthProvider(props: { children: any }) {
   const ssrProfile = createAsync(() => getUserProfile(), { deferStream: true })
+
+  return (
+    <Suspense>
+      <AuthProviderReady ssrProfile={ssrProfile}>
+        {props.children}
+      </AuthProviderReady>
+    </Suspense>
+  )
+}
+
+function AuthProviderReady(props: {
+  children: any
+  ssrProfile: Accessor<UserProfile | null | undefined>
+}) {
+  // Seed from the request-scoped profile on the server (preloaded before
+  // render). On the client, read the serialized createAsync value so hydration
+  // starts from the same user the server painted. Effects never run on SSR.
+  const seededProfile = peekRequestAuthProfile()
+  const ssrSnapshot =
+    seededProfile !== undefined ? seededProfile : (props.ssrProfile() ?? null)
   const [liveProfile, setLiveProfile] = createSignal<UserProfile | null | undefined>(
     undefined,
   )
@@ -60,7 +83,7 @@ export function AuthProvider(props: { children: any }) {
       return live
     }
 
-    return ssrProfile() ?? null
+    return ssrSnapshot ?? props.ssrProfile() ?? null
   })
   const loading = createMemo(() => {
     const live = liveLoading()
@@ -68,7 +91,7 @@ export function AuthProvider(props: { children: any }) {
       return live
     }
 
-    return ssrProfile() === undefined
+    return ssrSnapshot === undefined && props.ssrProfile() === undefined
   })
   const user = createMemo(() => profile()?.user ?? null)
   const userProfile = createMemo(() => profile()?.profile ?? null)

@@ -174,7 +174,14 @@ const createCookieServerClient = (
       getAll() {
         return readRequestCookies()
       },
-      setAll(cookies) {
+      setAll(cookies, headers) {
+        const responseHeaders = getRequestEvent()?.response?.headers
+        if (headers && responseHeaders) {
+          for (const [name, value] of Object.entries(headers)) {
+            responseHeaders.set(name, value)
+          }
+        }
+
         for (const cookie of cookies) {
           try {
             writeResponseCookie(cookie.name, cookie.value, {

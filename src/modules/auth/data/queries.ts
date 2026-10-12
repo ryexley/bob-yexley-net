@@ -1,4 +1,5 @@
 import { query } from "@solidjs/router"
+import { rememberRequestAuthProfile } from "@/lib/vendor/supabase/request-auth-profile"
 import {
   buildUserProfile,
   selectUserProfileRecord,
@@ -13,6 +14,7 @@ export const getUserProfile = query(async (): Promise<UserProfile | null> => {
     const { client, user } = await getServerAuth()
 
     if (!user?.id) {
+      rememberRequestAuthProfile(null)
       return null
     }
 
@@ -23,16 +25,21 @@ export const getUserProfile = query(async (): Promise<UserProfile | null> => {
 
     if (error) {
       console.error("Failed to load current user profile:", error)
+      rememberRequestAuthProfile(null)
       return null
     }
 
     if (!data) {
+      rememberRequestAuthProfile(null)
       return null
     }
 
-    return buildUserProfile(data, user)
+    const profile = buildUserProfile(data, user)
+    rememberRequestAuthProfile(profile)
+    return profile
   } catch (error) {
     console.error("getUserProfile query failed:", error)
+    rememberRequestAuthProfile(null)
     return null
   }
 }, "user-profile")

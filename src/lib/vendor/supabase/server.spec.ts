@@ -10,7 +10,10 @@ const harness = vi.hoisted(() => {
   const getUser = vi.fn()
   const signOut = vi.fn()
   let lastSetAll:
-    | ((cookies: { name: string; value: string; options?: object }[]) => void)
+    | ((
+        cookies: { name: string; value: string; options?: object }[],
+        headers?: Record<string, string>,
+      ) => void)
     | undefined
 
   const createRequest = () => {
@@ -47,7 +50,10 @@ const harness = vi.hoisted(() => {
     },
     setLastSetAll(
       fn:
-        | ((cookies: { name: string; value: string; options?: object }[]) => void)
+        | ((
+            cookies: { name: string; value: string; options?: object }[],
+            headers?: Record<string, string>,
+          ) => void)
         | undefined,
     ) {
       lastSetAll = fn
@@ -81,7 +87,10 @@ vi.mock("@supabase/ssr", () => ({
     _key: string,
     options: {
       cookies: {
-        setAll: (cookies: { name: string; value: string; options?: object }[]) => void
+        setAll: (
+          cookies: { name: string; value: string; options?: object }[],
+          headers?: Record<string, string>,
+        ) => void
       }
     },
   ) => {
@@ -135,13 +144,19 @@ describe("getServerAuth", () => {
   it("rotates cookies when getUser refreshes an expired access token", async () => {
     harness.cookie = `${STORAGE_KEY}=expired-access`
     harness.getUser.mockImplementation(async () => {
-      harness.lastSetAll?.([
+      harness.lastSetAll?.(
+        [
+          {
+            name: STORAGE_KEY,
+            value: "rotated",
+            options: { path: "/", maxAge: 3600 },
+          },
+        ],
         {
-          name: STORAGE_KEY,
-          value: "rotated",
-          options: { path: "/", maxAge: 3600 },
+          "Cache-Control":
+            "private, no-cache, no-store, must-revalidate, max-age=0",
         },
-      ])
+      )
       return {
         data: { user: { id: "user-1", email: "bob@example.com" } },
         error: null,
@@ -156,7 +171,7 @@ describe("getServerAuth", () => {
       `${STORAGE_KEY}=rotated`,
     )
     expect(harness.responseHeaders.get("Cache-Control")).toBe(
-      AUTH_SESSION_CACHE_CONTROL,
+      "private, no-cache, no-store, must-revalidate, max-age=0",
     )
   })
 
