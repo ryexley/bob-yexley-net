@@ -9,7 +9,7 @@ This document captures development conventions and patterns for AI agents and fu
 ### Architecture
 
 - **Icon component**: `src/components/icon.tsx` — renders `<Icon name="iconName" />` as inline SVG (24×24 viewBox, 1em size)
-- **Registry**: `src/components/icon-registry.ts` — typed `IconName` union + `iconGlyphs` Record mapping names to Lucide path data
+- **Registry**: `src/components/icon-registry.ts` — typed `IconName` union + `iconGlyphs` Record mapping names to official Lucide SVG children
 - **No npm package**: do NOT install `lucide-react` or `lucide-solid` — the registry is hand-curated for this site's actual icon needs
 
 ### Icon Names
@@ -22,10 +22,9 @@ This document captures development conventions and patterns for AI agents and fu
 
 1. **Find the icon** at [lucide.dev](https://lucide.dev) or [https://lucide.dev/icons](https://lucide.dev/icons)
 2. **Download the SVG** (or view source)
-3. **Copy path `d` values** from the `<path d="…">` elements into `iconGlyphs` in `icon-registry.ts`
-4. **Convert shapes**: if the SVG has `<circle>`, `<rect>`, or `<line>` elements instead of paths, convert them to equivalent `<path d="…">` (or approximate with the Lucide alternate if available)
-5. **Add to the `IconName` union** at the top of `icon-registry.ts`
-6. **Brand marks**: if adding a brand logo (e.g. social media icon), set `filled: true` in the glyph entry. Most Lucide icons are outline-stroked (filled: false, the default).
+3. **Copy the SVG children unchanged** (`path`, `circle`, `rect`, `line`) into `iconGlyphs` in `icon-registry.ts`. Do not rewrite shapes as paths.
+4. **Add to the `IconName` union** at the top of `icon-registry.ts`
+5. **Brand marks**: if adding a brand logo (e.g. social media icon), set `filled: true` in the glyph entry. Most Lucide icons are outline-stroked (filled: false, the default).
 
 **Example** — adding `heart`:
 
@@ -41,8 +40,8 @@ export type IconName =
 export const iconGlyphs: Record<IconName, IconGlyph> = {
   // ...
   heart: {
-    paths: [
-      "M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"
+    nodes: [
+      { tag: "path", d: "M2 9.5a5.5 5.5 0 0 1 9.591-3.676.56.56 0 0 0 .818 0A5.49 5.49 0 0 1 22 9.5c0 2.29-1.5 4-3 5.5l-5.492 5.313a2 2 0 0 1-3 .019L5 15c-1.5-1.5-3-3.2-3-5.5" },
     ],
   },
   // ...

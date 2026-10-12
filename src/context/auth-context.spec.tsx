@@ -8,6 +8,10 @@ const initialProfileState = vi.hoisted(() => ({
   value: null as any,
 }))
 
+const requestProfileState = vi.hoisted(() => ({
+  value: undefined as any,
+}))
+
 const sessionProfile = {
   user: {
     id: "user-1",
@@ -67,6 +71,10 @@ const authMockState = vi.hoisted(() => {
 
 vi.mock("@solidjs/router", () => ({
   createAsync: () => () => initialProfileState.value,
+}))
+
+vi.mock("@/lib/vendor/supabase/request-auth-profile", () => ({
+  peekRequestAuthProfile: () => requestProfileState.value,
 }))
 
 vi.mock("@/modules/auth/data/queries", () => ({
@@ -163,6 +171,7 @@ describe("AuthProvider", () => {
 
   beforeEach(() => {
     initialProfileState.value = null
+    requestProfileState.value = undefined
     authMockState.openCurrentSession.mockClear()
     authMockState.getUserProfile.mockClear()
     authMockState.logout.mockClear()
@@ -177,6 +186,71 @@ describe("AuthProvider", () => {
       data: true,
       error: null,
     }))
+  })
+
+  it("exposes the serialized profile during SSR", () => {
+    initialProfileState.value = sessionProfile
+    let firstAuthenticated = false
+    let firstName = ""
+    let firstLoading = true
+
+    function FirstPaintProbe() {
+      const auth = useAuth()
+      firstAuthenticated = auth.isAuthenticated()
+      firstName = auth.userProfile()?.displayName ?? ""
+      firstLoading = auth.loading()
+      return null
+    }
+
+    render(() => (
+      <AuthProvider>
+        <FirstPaintProbe />
+      </AuthProvider>
+    ))
+
+    expect(firstAuthenticated).toBe(true)
+    expect(firstName).toBe("Bob")
+    expect(firstLoading).toBe(false)
+  })
+
+  it("exposes the request-scoped profile during SSR when createAsync is empty", () => {
+    initialProfileState.value = undefined
+    requestProfileState.value = sessionProfile
+    let firstAuthenticated = false
+    let firstName = ""
+    let firstLoading = true
+
+    function FirstPaintProbe() {
+      const auth = useAuth()
+      firstAuthenticated = auth.isAuthenticated()
+      firstName = auth.userProfile()?.displayName ?? ""
+      firstLoading = auth.loading()
+      return null
+    }
+
+    render(() => (
+      <AuthProvider>
+        <FirstPaintProbe />
+      </AuthProvider>
+    ))
+
+    expect(firstAuthenticated).toBe(true)
+    expect(firstName).toBe("Bob")
+    expect(firstLoading).toBe(false)
+  })
+
+  it("starts the first client render from the serialized profile", () => {
+    initialProfileState.value = sessionProfile
+
+    render(() => (
+      <AuthProvider>
+        <AuthStatusProbe />
+      </AuthProvider>
+    ))
+
+    expect(screen.getByTestId("auth-state").textContent).toBe("authenticated")
+    expect(screen.getByTestId("display-name").textContent).toBe("Bob")
+    expect(screen.getByTestId("auth-loading").textContent).toBe("ready")
   })
 
   it("hydrates an existing initial browser session", async () => {

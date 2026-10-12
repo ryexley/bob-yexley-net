@@ -1,5 +1,29 @@
 // @refresh reload
 import { createHandler, StartServer } from "@solidjs/start/server"
+import { getSupabaseAuthStorageKey } from "@/lib/vendor/supabase/browser-url"
+import {
+  applyAuthSessionCacheControl,
+  requestHasAuthSessionCookie,
+} from "@/lib/vendor/supabase/server-session"
+import { getEnv } from "@/util/env"
+
+const applyHtmlAuthCacheHeaders = (context: {
+  request: Request
+  response?: { headers: Headers }
+}) => {
+  applyAuthSessionCacheControl(
+    context.response?.headers,
+    requestHasAuthSessionCookie(
+      context.request.headers.get("Cookie"),
+      getSupabaseAuthStorageKey(getEnv().SUPABASE_URL),
+    ),
+  )
+}
+
+const preloadAuthProfile = async () => {
+  const { getUserProfile } = await import("@/modules/auth/data/queries")
+  await getUserProfile()
+}
 
 export default createHandler(() => (
   <StartServer
@@ -21,17 +45,23 @@ export default createHandler(() => (
     )}
   />
 ), context => {
+  applyHtmlAuthCacheHeaders(context)
   const pathname = new URL(context.request.url).pathname
+  const hasSessionCookie = requestHasAuthSessionCookie(
+    context.request.headers.get("Cookie"),
+    getSupabaseAuthStorageKey(getEnv().SUPABASE_URL),
+  )
   // Keep /blips/:id and /blips/:id/:slug on async SSR so link unfurlers
   // receive fully resolved metadata (og:title/og:description) in the first
   // HTML response, and so a stale slug can be answered with a 301 before any
   // HTML is streamed. Blip IDs are fixed to a 17-digit timestamp format.
   const isBlipDetailRoute = /^\/blips\/\d{17}(?:\/[^/]+)?\/?$/.test(pathname)
 
-  if (isBlipDetailRoute) {
-    // Link unfurlers read the first HTML response only, so block streaming here.
+  if (isBlipDetailRoute || hasSessionCookie) {
+    // Signed-in HTML must include the admin toolbar and drafts in the first
+    // document, otherwise hydration sees Kobalte buttons the stream omitted.
     return { mode: "async" }
   }
 
   return { mode: "stream" }
-})
+}, preloadAuthProfile)

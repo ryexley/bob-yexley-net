@@ -9,7 +9,6 @@ import { blipStore, getBlips } from "@/modules/blips/data"
 import { isBlipPubliclyVisible } from "@/modules/blips/util"
 import { ptr } from "@/i18n"
 import { pages } from "@/urls"
-import { createMounted } from "@/util/mounted"
 import "@/modules/blips/views/blips-section-chrome.css"
 import "./signals.css"
 
@@ -20,8 +19,6 @@ export function Signals(props) {
   const initialBlips = createAsync(() => getBlips(4))
   const navigate = useNavigate()
   const { isAuthenticated } = useAuth() as any
-  // Drafts only show once hydrated: the server always renders signed out.
-  const mounted = createMounted()
 
   const supabase = useSupabase()
   const {
@@ -45,7 +42,7 @@ export function Signals(props) {
   const visibleBlips = () => {
     const ssrData = initialBlips()
     const allBlips = ssrData !== undefined ? ssrData : (blips() ?? [])
-    if (mounted() && isAuthenticated()) {
+    if (isAuthenticated()) {
       return allBlips
     }
     return allBlips.filter(blip => isBlipPubliclyVisible(blip))

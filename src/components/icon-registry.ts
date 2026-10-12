@@ -1,10 +1,7 @@
-/* Curated Lucide outline paths (ISC). Copyright (c) Lucide Contributors.
-   https://lucide.dev — download the nearest SVG and copy path `d` values here.
-   Convert `circle` / `rect` / `line` to an equivalent path. Do not import
-   Lucide React/Solid packages. Keep these camelCase names.
-
-   Material Design Icons paths (Apache-2.0) for brand marks noted with filled.
-   Copyright (c) Pictogrammers. https://pictogrammers.com/library/mdi
+/* Official Lucide SVG children (ISC). Copyright (c) Lucide Contributors.
+   https://lucide.dev — downloaded unchanged from lucide-static@1.55.0.
+   Keep these camelCase names. Do not convert circle / rect / line to paths.
+   Do not import Lucide React/Solid packages.
 
    Migrated from Material Symbols/Icons webfonts 2026-10-06. */
 
@@ -99,727 +96,803 @@ export type IconName =
   | "alignCenter"
   | "alignRight";
 
+export type IconSvgNode =
+  | { tag: "path"; d: string }
+  | { tag: "circle"; cx: string; cy: string; r: string; fill?: string }
+  | { tag: "rect"; width: string; height: string; x?: string; y?: string; rx?: string; ry?: string }
+  | { tag: "line"; x1: string; y1: string; x2: string; y2: string }
+
 export type IconGlyph = {
-  paths: string[];
-  filled?: boolean;
-};
+  nodes: IconSvgNode[]
+  filled?: boolean
+}
 
 export const iconGlyphs: Record<IconName, IconGlyph> = {
-  /* x (close) */
+  /* x */
   x: {
-    paths: ["M18 6 6 18", "m6 6 12 12"],
+    nodes: [
+      { tag: "path", d: "M18 6 6 18" },
+      { tag: "path", d: "m6 6 12 12" },
+    ],
   },
 
-  /* arrow-left (arrow_back) */
+  /* arrow-left */
   arrowLeft: {
-    paths: ["M12 19l-7-7 7-7", "M19 12H5"],
+    nodes: [
+      { tag: "path", d: "m12 19-7-7 7-7" },
+      { tag: "path", d: "M19 12H5" },
+    ],
   },
 
-  /* arrow-right (arrow_forward) */
+  /* arrow-right */
   arrowRight: {
-    paths: ["m12 5 7 7-7 7", "M19 12H5"],
+    nodes: [
+      { tag: "path", d: "M5 12h14" },
+      { tag: "path", d: "m12 5 7 7-7 7" },
+    ],
   },
 
-  /* arrow-up (north) */
+  /* arrow-up */
   arrowUp: {
-    paths: ["m5 12 7-7 7 7", "M12 19V5"],
+    nodes: [
+      { tag: "path", d: "m5 12 7-7 7 7" },
+      { tag: "path", d: "M12 19V5" },
+    ],
   },
 
-  /* arrow-down (south) */
+  /* arrow-down */
   arrowDown: {
-    paths: ["M12 5v14", "m19 12-7 7-7-7"],
+    nodes: [
+      { tag: "path", d: "M12 5v14" },
+      { tag: "path", d: "m19 12-7 7-7-7" },
+    ],
   },
 
   /* chevron-left */
   chevronLeft: {
-    paths: ["m15 18-6-6 6-6"],
+    nodes: [
+      { tag: "path", d: "m15 18-6-6 6-6" },
+    ],
   },
 
   /* chevron-right */
   chevronRight: {
-    paths: ["m9 18 6-6-6-6"],
+    nodes: [
+      { tag: "path", d: "m9 18 6-6-6-6" },
+    ],
   },
 
-  /* chevron-down (expand_more, keyboard_arrow_down) */
+  /* chevron-down */
   chevronDown: {
-    paths: ["m6 9 6 6 6-6"],
+    nodes: [
+      { tag: "path", d: "m6 9 6 6 6-6" },
+    ],
   },
 
-  /* chevron-up (keyboard_arrow_up) */
+  /* chevron-up */
   chevronUp: {
-    paths: ["m18 15-6-6-6 6"],
+    nodes: [
+      { tag: "path", d: "m18 15-6-6-6 6" },
+    ],
   },
 
-  /* circle-chevron-down (expand_circle_down) */
+  /* circle-chevron-down */
   circleChevronDown: {
-    paths: [
-      "M2 12a10 10 0 1 0 20 0a10 10 0 1 0-20 0",
-      "m8 12 4 4 4-4",
+    nodes: [
+      { tag: "circle", cx: "12", cy: "12", r: "10" },
+      { tag: "path", d: "m16 10-4 4-4-4" },
     ],
   },
 
   /* check */
   check: {
-    paths: ["M20 6 9 17l-5-5"],
+    nodes: [
+      { tag: "path", d: "M20 6 9 17l-5-5" },
+    ],
   },
 
-  /* circle-check (check_circle) */
+  /* circle-check */
   circleCheck: {
-    paths: [
-      "M22 12A10 10 0 1 1 2 12a10 10 0 0 1 20 0",
-      "m9 12 2 2 4-4",
+    nodes: [
+      { tag: "circle", cx: "12", cy: "12", r: "10" },
+      { tag: "path", d: "m16 9-5.5 5.5L8 12" },
     ],
   },
 
-  /* circle-x (cancel) */
+  /* circle-x */
   circleX: {
-    paths: [
-      "M2 12a10 10 0 1 0 20 0a10 10 0 1 0-20 0",
-      "m15 9-6 6",
-      "m9 9 6 6",
+    nodes: [
+      { tag: "circle", cx: "12", cy: "12", r: "10" },
+      { tag: "path", d: "m15 9-6 6" },
+      { tag: "path", d: "m9 9 6 6" },
     ],
   },
 
-  /* trash (delete) */
+  /* trash */
   trash: {
-    paths: [
-      "M3 6h18",
-      "M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6",
-      "M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2",
+    nodes: [
+      { tag: "path", d: "M10 11v6" },
+      { tag: "path", d: "M14 11v6" },
+      { tag: "path", d: "M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" },
+      { tag: "path", d: "M3 6h18" },
+      { tag: "path", d: "M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" },
     ],
   },
 
-  /* house (home) */
+  /* house */
   house: {
-    paths: [
-      "M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8",
-      "M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z",
+    nodes: [
+      { tag: "path", d: "M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8" },
+      { tag: "path", d: "M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" },
     ],
   },
 
   /* menu */
   menu: {
-    paths: ["M4 5h16", "M4 12h16", "M4 19h16"],
+    nodes: [
+      { tag: "path", d: "M4 5h16" },
+      { tag: "path", d: "M4 12h16" },
+      { tag: "path", d: "M4 19h16" },
+    ],
   },
 
-  /* panel-left-open (menu_open left) */
+  /* panel-left-open */
   panelLeftOpen: {
-    paths: [
-      "M18 6l-6 6 6 6",
-      "M3 3h18a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z",
-      "M9 3v18",
+    nodes: [
+      { tag: "rect", x: "3", y: "3", width: "18", height: "18", rx: "2" },
+      { tag: "path", d: "M9 3v18" },
+      { tag: "path", d: "m14 9 3 3-3 3" },
     ],
   },
 
-  /* panel-right-open (menu_open right) */
+  /* panel-right-open */
   panelRightOpen: {
-    paths: [
-      "M6 6l6 6-6 6",
-      "M3 3h18a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z",
-      "M15 3v18",
+    nodes: [
+      { tag: "rect", x: "3", y: "3", width: "18", height: "18", rx: "2" },
+      { tag: "path", d: "M15 3v18" },
+      { tag: "path", d: "m10 15-3-3 3-3" },
     ],
   },
 
-  /* panel-top-open (top_panel_open) */
+  /* panel-top-open */
   panelTopOpen: {
-    paths: [
-      "M6 6l6 6 6-6",
-      "M3 3h18a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z",
-      "M3 9h18",
+    nodes: [
+      { tag: "rect", x: "3", y: "3", width: "18", height: "18", rx: "2" },
+      { tag: "path", d: "M3 9h18" },
+      { tag: "path", d: "m15 14-3 3-3-3" },
     ],
   },
 
-  /* ellipsis (more_horiz) */
+  /* ellipsis */
   ellipsis: {
-    paths: [
-      "M5 12a1 1 0 1 0 2 0a1 1 0 1 0-2 0",
-      "M11 12a1 1 0 1 0 2 0a1 1 0 1 0-2 0",
-      "M17 12a1 1 0 1 0 2 0a1 1 0 1 0-2 0",
+    nodes: [
+      { tag: "circle", cx: "12", cy: "12", r: "1" },
+      { tag: "circle", cx: "19", cy: "12", r: "1" },
+      { tag: "circle", cx: "5", cy: "12", r: "1" },
     ],
   },
 
-  /* ellipsis-vertical (more_vert) */
+  /* ellipsis-vertical */
   ellipsisVertical: {
-    paths: [
-      "M12 5a1 1 0 1 0 0 2a1 1 0 1 0 0-2",
-      "M12 11a1 1 0 1 0 0 2a1 1 0 1 0 0-2",
-      "M12 17a1 1 0 1 0 0 2a1 1 0 1 0 0-2",
+    nodes: [
+      { tag: "circle", cx: "12", cy: "12", r: "1" },
+      { tag: "circle", cx: "12", cy: "5", r: "1" },
+      { tag: "circle", cx: "12", cy: "19", r: "1" },
     ],
   },
 
   /* lock */
   lock: {
-    paths: [
-      "M5 11h14a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2z",
-      "M7 11V7a5 5 0 0 1 10 0v4",
+    nodes: [
+      { tag: "rect", x: "3", y: "11", width: "18", height: "11", rx: "2", ry: "2" },
+      { tag: "path", d: "M7 11V7a5 5 0 0 1 10 0v4" },
     ],
   },
 
-  /* eye (visibility) */
+  /* eye */
   eye: {
-    paths: [
-      "M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0",
-      "M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0z",
+    nodes: [
+      { tag: "path", d: "M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0" },
+      { tag: "circle", cx: "12", cy: "12", r: "3" },
     ],
   },
 
-  /* eye-off (visibility_off) */
+  /* eye-off */
   eyeOff: {
-    paths: [
-      "m10.733 5.076a10.744 10.744 0 0 1 11.205 7.27 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49",
-      "M14.084 14.158a3 3 0 0 1-4.242-4.242",
-      "M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143",
-      "m2 2 20 20",
+    nodes: [
+      { tag: "path", d: "M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49" },
+      { tag: "path", d: "M14.084 14.158a3 3 0 0 1-4.242-4.242" },
+      { tag: "path", d: "M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143" },
+      { tag: "path", d: "m2 2 20 20" },
     ],
   },
 
-  /* circle-question-mark (help) */
+  /* circle-question-mark */
   circleQuestionMark: {
-    paths: [
-      "M2 12a10 10 0 1 0 20 0a10 10 0 1 0-20 0",
-      "M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3",
-      "M12 17h.01",
+    nodes: [
+      { tag: "circle", cx: "12", cy: "12", r: "10" },
+      { tag: "path", d: "M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" },
+      { tag: "path", d: "M12 17h.01" },
     ],
   },
 
   /* info */
   info: {
-    paths: [
-      "M22 12A10 10 0 1 1 2 12a10 10 0 0 1 20 0",
-      "M12 16v-4",
-      "M12 8h.01",
+    nodes: [
+      { tag: "circle", cx: "12", cy: "12", r: "10" },
+      { tag: "path", d: "M12 16v-4" },
+      { tag: "path", d: "M12 8h.01" },
     ],
   },
 
-  /* triangle-alert (warning) */
+  /* triangle-alert */
   triangleAlert: {
-    paths: [
-      "m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3",
-      "M12 9v4",
-      "M12 17h.01",
+    nodes: [
+      { tag: "path", d: "m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" },
+      { tag: "path", d: "M12 9v4" },
+      { tag: "path", d: "M12 17h.01" },
     ],
   },
 
-  /* bell (notifications) */
+  /* bell */
   bell: {
-    paths: [
-      "M10.268 21a2 2 0 0 0 3.464 0",
-      "M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9",
+    nodes: [
+      { tag: "path", d: "M10.268 21a2 2 0 0 0 3.464 0" },
+      { tag: "path", d: "M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326" },
     ],
   },
 
-  /* circle-user (account_circle) */
+  /* circle-user */
   circleUser: {
-    paths: [
-      "M22 12A10 10 0 1 1 2 12a10 10 0 0 1 20 0",
-      "M15 10A3 3 0 1 1 9 10a3 3 0 0 1 6 0",
-      "M7 20.662V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.662",
+    nodes: [
+      { tag: "circle", cx: "12", cy: "12", r: "10" },
+      { tag: "circle", cx: "12", cy: "10", r: "3" },
+      { tag: "path", d: "M7 20.662V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.662" },
     ],
   },
 
-  /* log-out (logout) */
+  /* log-out */
   logOut: {
-    paths: [
-      "m16 17 5-5-5-5",
-      "M21 12H9",
-      "M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4",
+    nodes: [
+      { tag: "path", d: "m16 17 5-5-5-5" },
+      { tag: "path", d: "M21 12H9" },
+      { tag: "path", d: "M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" },
     ],
   },
 
-  /* user-round-pen (person_edit) */
+  /* user-round-pen */
   userRoundPen: {
-    paths: [
-      "M10 19H5a2 2 0 0 1-2-2v-1a4 4 0 0 1 4-4h4",
-      "M2 8a5 5 0 1 0 10 0A5 5 0 1 0 2 8",
-      "M21.378 12.626a1 1 0 0 0-3.004-3.004l-4.01 4.012a2 2 0 0 0-.506.854l-.837 2.87a.5.5 0 0 0 .62.62l2.87-.837a2 2 0 0 0 .854-.506z",
+    nodes: [
+      { tag: "path", d: "M2 21a8 8 0 0 1 10.821-7.487" },
+      { tag: "path", d: "M21.378 16.626a1 1 0 0 0-3.004-3.004l-4.01 4.012a2 2 0 0 0-.506.854l-.837 2.87a.5.5 0 0 0 .62.62l2.87-.837a2 2 0 0 0 .854-.506z" },
+      { tag: "circle", cx: "10", cy: "8", r: "5" },
     ],
   },
 
   /* shield-lock */
   shieldLock: {
-    paths: [
-      "M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z",
-      "M8 10h8a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2v-2a2 2 0 0 1 2-2z",
-      "M10 10V8a2 2 0 1 1 4 0v2",
+    nodes: [
+      { tag: "path", d: "M20 9.807V6a1 1 0 00-1-1c-2 0-4.49-1.19-6.24-2.72a1.17 1.17 0 00-1.52 0C9.5 3.8 7 5 5 5a1 1 0 00-1 1v7c0 3.88 2.107 6.254 5 7.796" },
+      { tag: "path", d: "M19 17v-2a2 2 0 00-4 0v2" },
+      { tag: "rect", x: "13", y: "17", width: "8", height: "5", rx: "1" },
     ],
   },
 
-  /* shield-user (shield_person) */
+  /* shield-user */
   shieldUser: {
-    paths: [
-      "M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z",
-      "M9 12a3 3 0 1 0 6 0a3 3 0 1 0-6 0",
-      "M16 19c0-2.21-1.79-4-4-4s-4 1.79-4 4",
+    nodes: [
+      { tag: "path", d: "M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" },
+      { tag: "path", d: "M6.376 18.91a6 6 0 0 1 11.249.003" },
+      { tag: "circle", cx: "12", cy: "11", r: "4" },
     ],
   },
 
-  /* badge-check (verified) */
+  /* badge-check */
   badgeCheck: {
-    paths: [
-      "M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76z",
-      "m9 12 2 2 4-4",
+    nodes: [
+      { tag: "path", d: "M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z" },
+      { tag: "path", d: "m16 9-5.5 5.5L8 12" },
     ],
   },
 
-  /* users (group) */
+  /* users */
   users: {
-    paths: [
-      "M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2",
-      "M16 3.128a4 4 0 0 1 0 7.744",
-      "M22 21v-2a4 4 0 0 0-3-3.87",
-      "M5 7a4 4 0 1 0 8 0a4 4 0 1 0-8 0",
+    nodes: [
+      { tag: "path", d: "M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" },
+      { tag: "path", d: "M16 3.128a4 4 0 0 1 0 7.744" },
+      { tag: "path", d: "M22 21v-2a4 4 0 0 0-3-3.87" },
+      { tag: "circle", cx: "9", cy: "7", r: "4" },
     ],
   },
 
-  /* tag (label) */
+  /* tag */
   tag: {
-    paths: [
-      "M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z",
-      "M7.5 8a.5.5 0 1 0 0-1 .5.5 0 1 0 0 1",
+    nodes: [
+      { tag: "path", d: "M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" },
+      { tag: "circle", cx: "7.5", cy: "7.5", r: ".5", fill: "currentColor" },
     ],
   },
 
   /* bookmark */
   bookmark: {
-    paths: ["m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"],
+    nodes: [
+      { tag: "path", d: "M17 3a2 2 0 0 1 2 2v15a1 1 0 0 1-1.496.868l-4.512-2.578a2 2 0 0 0-1.984 0l-4.512 2.578A1 1 0 0 1 5 20V5a2 2 0 0 1 2-2z" },
+    ],
   },
 
-  /* book-open (menu_book) */
+  /* book-open */
   bookOpen: {
-    paths: [
-      "M12 7v14",
-      "M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4",
-      "M21 18a1 1 0 0 0 1-1V4a1 1 0 0 0-1-1h-5a4 4 0 0 0-4 4",
+    nodes: [
+      { tag: "path", d: "M12 5v16" },
+      { tag: "path", d: "M20.001 19A2 2 0 0022 17V5a2 2 0 00-1.999-2L16 3.002A5 5 0 0012 5a5 5 0 00-4-2H4a2 2 0 00-2 2v12a2 2 0 001.999 2H8a5 5 0 014 2 5 5 0 014-2z" },
     ],
   },
 
-  /* chart-column (bar_chart) */
+  /* chart-column */
   chartColumn: {
-    paths: [
-      "M3 3v16a2 2 0 0 0 2 2h16",
-      "M18 17V9",
-      "M13 17V5",
-      "M8 17v-3",
+    nodes: [
+      { tag: "path", d: "M3 3v16a2 2 0 0 0 2 2h16" },
+      { tag: "path", d: "M18 17V9" },
+      { tag: "path", d: "M13 17V5" },
+      { tag: "path", d: "M8 17v-3" },
     ],
   },
 
-  /* file-text (description) */
+  /* file-text */
   fileText: {
-    paths: [
-      "M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z",
-      "M14 2v4a2 2 0 0 0 2 2h4",
-      "M10 9H8",
-      "M16 13H8",
-      "M16 17H8",
+    nodes: [
+      { tag: "path", d: "M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z" },
+      { tag: "path", d: "M14 2v5a1 1 0 0 0 1 1h5" },
+      { tag: "path", d: "M10 9H8" },
+      { tag: "path", d: "M16 13H8" },
+      { tag: "path", d: "M16 17H8" },
     ],
   },
 
-  /* calendar (calendar_month) */
+  /* calendar */
   calendar: {
-    paths: [
-      "M8 2v4",
-      "M16 2v4",
-      "M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z",
-      "M3 10h18",
+    nodes: [
+      { tag: "path", d: "M8 2v3" },
+      { tag: "path", d: "M16 2v3" },
+      { tag: "rect", x: "3", y: "3", width: "18", height: "18", rx: "2" },
+      { tag: "path", d: "M3 9h18" },
     ],
   },
 
-  /* clock (schedule) */
+  /* clock */
   clock: {
-    paths: [
-      "M2 12a10 10 0 1 0 20 0a10 10 0 1 0-20 0",
-      "M12 6v6l4 2",
+    nodes: [
+      { tag: "circle", cx: "12", cy: "12", r: "10" },
+      { tag: "path", d: "M12 6v6l4 2" },
     ],
   },
 
   /* save */
   save: {
-    paths: [
-      "M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z",
-      "M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7",
-      "M7 3v4a1 1 0 0 0 1 1h3",
+    nodes: [
+      { tag: "path", d: "M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z" },
+      { tag: "path", d: "M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7" },
+      { tag: "path", d: "M7 3v4a1 1 0 0 0 1 1h7" },
     ],
   },
 
-  /* refresh-cw (refresh, autorenew) */
+  /* refresh-cw */
   refreshCw: {
-    paths: [
-      "M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8",
-      "M21 3v5h-5",
-      "M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16",
-      "M8 16H3v5",
+    nodes: [
+      { tag: "path", d: "M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" },
+      { tag: "path", d: "M21 3v5h-5" },
+      { tag: "path", d: "M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" },
+      { tag: "path", d: "M8 16H3v5" },
     ],
   },
 
   /* cloud-upload */
   cloudUpload: {
-    paths: [
-      "M12 13v8",
-      "M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242",
-      "m8 17 4-4 4 4",
+    nodes: [
+      { tag: "path", d: "M12 13v8" },
+      { tag: "path", d: "M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242" },
+      { tag: "path", d: "m8 17 4-4 4 4" },
     ],
   },
 
-  /* image — Lucide image: rounded rect + sun + mountain */
+  /* image */
   image: {
-    paths: [
-      "M5 3h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z",
-      "M9 7a2 2 0 0 1 2 2 2 2 0 0 1-2 2 2 2 0 0 1-2-2 2 2 0 0 1 2-2",
-      "m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21",
+    nodes: [
+      { tag: "rect", x: "3", y: "3", width: "18", height: "18", rx: "2", ry: "2" },
+      { tag: "circle", cx: "9", cy: "9", r: "2" },
+      { tag: "path", d: "m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" },
     ],
   },
 
-  /* images (photo_library, perm_media) */
+  /* images */
   images: {
-    paths: [
-      "M18 22H4a2 2 0 0 1-2-2V6",
-      "M22 13V6a2 2 0 0 0-2-2H9a2 2 0 0 0-2 2v7",
-      "m17 21-5-5-5 5",
-      "M14 10.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z",
+    nodes: [
+      { tag: "path", d: "m22 11-1.296-1.296a2.4 2.4 0 0 0-3.408 0L11 16" },
+      { tag: "path", d: "M4 8a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2" },
+      { tag: "circle", cx: "13", cy: "7", r: "1", fill: "currentColor" },
+      { tag: "rect", x: "8", y: "2", width: "14", height: "14", rx: "2" },
     ],
   },
 
-  /* play (play_arrow) */
+  /* play */
   play: {
-    paths: ["M6 4l15 8-15 8Z"],
+    nodes: [
+      { tag: "path", d: "M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z" },
+    ],
   },
 
   /* pause */
   pause: {
-    paths: ["M10 4H6v16h4z", "M18 4h-4v16h4z"],
+    nodes: [
+      { tag: "rect", x: "14", y: "3", width: "5", height: "18", rx: "1" },
+      { tag: "rect", x: "5", y: "3", width: "5", height: "18", rx: "1" },
+    ],
   },
 
-  /* volume-2 (volume_up) */
+  /* volume-2 */
   volume2: {
-    paths: [
-      "M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298z",
-      "M15.5 8.5a5 5 0 0 1 0 7",
-      "M19 6a9 9 0 0 1 0 12",
+    nodes: [
+      { tag: "path", d: "M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298z" },
+      { tag: "path", d: "M16 9a5 5 0 0 1 0 6" },
+      { tag: "path", d: "M19.364 18.364a9 9 0 0 0 0-12.728" },
     ],
   },
 
-  /* gauge (speed) */
+  /* gauge */
   gauge: {
-    paths: [
-      "m12 14 4-4",
-      "M3.34 19a10 10 0 1 1 17.32 0",
+    nodes: [
+      { tag: "path", d: "m12 14 4-4" },
+      { tag: "path", d: "M3.34 19a10 10 0 1 1 17.32 0" },
     ],
   },
 
-  /* rotate-ccw (replay) */
+  /* rotate-ccw */
   rotateCcw: {
-    paths: [
-      "M3 12a9 9 0 1 0 3-6.718",
-      "M3 4v6h6",
+    nodes: [
+      { tag: "path", d: "M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" },
+      { tag: "path", d: "M3 3v5h5" },
     ],
   },
 
   /* link */
   link: {
-    paths: [
-      "M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71",
-      "M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71",
+    nodes: [
+      { tag: "path", d: "M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" },
+      { tag: "path", d: "M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" },
     ],
   },
 
-  /* unlink (link_off) */
+  /* unlink */
   unlink: {
-    paths: [
-      "m18.84 12.25 1.72-1.71a5 5 0 0 0-7.07-7.07l-1.71 1.71",
-      "m8.59 13.51-1.72 1.71a5 5 0 0 0 7.07 7.07l1.71-1.71",
-      "M14 11l-5 5",
-      "M21 3l-6 6",
-      "m15 9 6 6",
-      "m9 3-6 6",
+    nodes: [
+      { tag: "path", d: "m18.84 12.25 1.72-1.71h-.02a5.004 5.004 0 0 0-.12-7.07 5.006 5.006 0 0 0-6.95 0l-1.72 1.71" },
+      { tag: "path", d: "m5.17 11.75-1.71 1.71a5.004 5.004 0 0 0 .12 7.07 5.006 5.006 0 0 0 6.95 0l1.71-1.71" },
+      { tag: "line", x1: "8", y1: "2", x2: "8", y2: "5" },
+      { tag: "line", x1: "2", y1: "8", x2: "5", y2: "8" },
+      { tag: "line", x1: "16", y1: "19", x2: "16", y2: "22" },
+      { tag: "line", x1: "19", y1: "16", x2: "22", y2: "16" },
     ],
   },
 
-  /* undo-2 (undo) */
+  /* undo-2 */
   undo2: {
-    paths: [
-      "M9 14 4 9l5-5",
-      "M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5a5.5 5.5 0 0 1-5.5 5.5H11",
+    nodes: [
+      { tag: "path", d: "M9 14 4 9l5-5" },
+      { tag: "path", d: "M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5a5.5 5.5 0 0 1-5.5 5.5H11" },
     ],
   },
 
-  /* redo-2 (redo) */
+  /* redo-2 */
   redo2: {
-    paths: [
-      "m15 14 5-5-5-5",
-      "M20 9H9.5A5.5 5.5 0 0 0 4 14.5A5.5 5.5 0 0 0 9.5 20H13",
+    nodes: [
+      { tag: "path", d: "m15 14 5-5-5-5" },
+      { tag: "path", d: "M20 9H9.5A5.5 5.5 0 0 0 4 14.5A5.5 5.5 0 0 0 9.5 20H13" },
     ],
   },
 
-  /* bold (format_bold) */
+  /* bold */
   bold: {
-    paths: [
-      "M6 12h9a4 4 0 0 1 0 8H7a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h7a4 4 0 0 1 0 8",
+    nodes: [
+      { tag: "path", d: "M6 12h9a4 4 0 0 1 0 8H7a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h7a4 4 0 0 1 0 8" },
     ],
   },
 
-  /* italic (format_italic) */
+  /* italic */
   italic: {
-    paths: ["M19 4H10", "M14 20H5", "M15 4 9 20"],
+    nodes: [
+      { tag: "line", x1: "19", y1: "4", x2: "10", y2: "4" },
+      { tag: "line", x1: "14", y1: "20", x2: "5", y2: "20" },
+      { tag: "line", x1: "15", y1: "4", x2: "9", y2: "20" },
+    ],
   },
 
-  /* underline (format_underlined) */
+  /* underline */
   underline: {
-    paths: ["M6 4v6a6 6 0 0 0 12 0V4", "M4 20h16"],
+    nodes: [
+      { tag: "path", d: "M6 4v6a6 6 0 0 0 12 0V4" },
+      { tag: "line", x1: "4", y1: "20", x2: "20", y2: "20" },
+    ],
   },
 
-  /* quote (format_quote) */
+  /* quote */
   quote: {
-    paths: [
-      "M16 3a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2 1 1 0 0 1 1 1v1a2 2 0 0 1-2 2 1 1 0 0 0-1 1v2a1 1 0 0 0 1 1 6 6 0 0 0 6-6V5a2 2 0 0 0-2-2z",
-      "M5 3a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2 1 1 0 0 1 1 1v1a2 2 0 0 1-2 2 1 1 0 0 0-1 1v2a1 1 0 0 0 1 1 6 6 0 0 0 6-6V5a2 2 0 0 0-2-2z",
+    nodes: [
+      { tag: "path", d: "M16 3a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2 1 1 0 0 1 1 1v1a2 2 0 0 1-2 2 1 1 0 0 0-1 1v2a1 1 0 0 0 1 1 6 6 0 0 0 6-6V5a2 2 0 0 0-2-2z" },
+      { tag: "path", d: "M5 3a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2 1 1 0 0 1 1 1v1a2 2 0 0 1-2 2 1 1 0 0 0-1 1v2a1 1 0 0 0 1 1 6 6 0 0 0 6-6V5a2 2 0 0 0-2-2z" },
     ],
   },
 
-  /* list (format_list_bulleted) */
+  /* list */
   list: {
-    paths: [
-      "M3 5h.01",
-      "M3 12h.01",
-      "M3 19h.01",
-      "M8 5h13",
-      "M8 12h13",
-      "M8 19h13",
+    nodes: [
+      { tag: "path", d: "M3 5h.01" },
+      { tag: "path", d: "M3 12h.01" },
+      { tag: "path", d: "M3 19h.01" },
+      { tag: "path", d: "M8 5h13" },
+      { tag: "path", d: "M8 12h13" },
+      { tag: "path", d: "M8 19h13" },
     ],
   },
 
-  /* list-ordered (format_list_numbered) */
+  /* list-ordered */
   listOrdered: {
-    paths: [
-      "M11 5h10",
-      "M11 12h10",
-      "M11 19h10",
-      "M4 4h1v5",
-      "M4 9h2",
-      "M6.5 20H3.4c0-1 2.6-1.925 2.6-3.5a1.5 1.5 0 0 0-2.6-1.02",
+    nodes: [
+      { tag: "path", d: "M11 5h10" },
+      { tag: "path", d: "M11 12h10" },
+      { tag: "path", d: "M11 19h10" },
+      { tag: "path", d: "M4 4h1v5" },
+      { tag: "path", d: "M4 9h2" },
+      { tag: "path", d: "M6.5 20H3.4c0-1 2.6-1.925 2.6-3.5a1.5 1.5 0 0 0-2.6-1.02" },
     ],
   },
 
-  /* list-indent-increase (format_indent_increase) */
+  /* list-indent-increase */
   listIndentIncrease: {
-    paths: ["M21 5H11", "M21 12H11", "M21 19H11", "m3 8 4 4-4 4"],
+    nodes: [
+      { tag: "path", d: "M21 5H11" },
+      { tag: "path", d: "M21 12H11" },
+      { tag: "path", d: "M21 19H11" },
+      { tag: "path", d: "m3 8 4 4-4 4" },
+    ],
   },
 
-  /* list-indent-decrease (format_indent_decrease) */
+  /* list-indent-decrease */
   listIndentDecrease: {
-    paths: ["M21 5H11", "M21 12H11", "M21 19H11", "m7 8-4 4 4 4"],
+    nodes: [
+      { tag: "path", d: "M21 5H11" },
+      { tag: "path", d: "M21 12H11" },
+      { tag: "path", d: "M21 19H11" },
+      { tag: "path", d: "m7 8-4 4 4 4" },
+    ],
   },
 
-  /* minus (horizontal_rule) */
+  /* minus */
   minus: {
-    paths: ["M5 12h14"],
+    nodes: [
+      { tag: "path", d: "M5 12h14" },
+    ],
   },
 
-  /* highlighter (stylus_highlighter) */
+  /* highlighter */
   highlighter: {
-    paths: [
-      "m9 11-6 6v3h9l3-3",
-      "m22 12-4.6 4.6a2 2 0 0 1-2.8 0l-5.2-5.2a2 2 0 0 1 0-2.8L14 4",
+    nodes: [
+      { tag: "path", d: "m9 11-6 6v3h9l3-3" },
+      { tag: "path", d: "m22 12-4.6 4.6a2 2 0 0 1-2.8 0l-5.2-5.2a2 2 0 0 1 0-2.8L14 4" },
     ],
   },
 
-  /* clipboard-paste (content_paste) */
+  /* clipboard-paste */
   clipboardPaste: {
-    paths: [
-      "M11 14h10",
-      "M16 4h2a2 2 0 0 1 2 2v1.344",
-      "m17 18 4-4-4-4",
-      "M8 4H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 1.793-1.113",
-      "M9 2h6a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z",
+    nodes: [
+      { tag: "path", d: "M11 14h10" },
+      { tag: "path", d: "M16 4h2a2 2 0 0 1 2 2v1.344" },
+      { tag: "path", d: "m17 18 4-4-4-4" },
+      { tag: "path", d: "M8 4H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 1.793-1.113" },
+      { tag: "rect", x: "8", y: "2", width: "8", height: "4", rx: "1" },
     ],
   },
 
-  /* maximize (fit_screen) */
+  /* maximize */
   maximize: {
-    paths: [
-      "M8 3H5a2 2 0 0 0-2 2v3",
-      "M21 8V5a2 2 0 0 0-2-2h-3",
-      "M3 16v3a2 2 0 0 0 2 2h3",
-      "M16 21h3a2 2 0 0 0 2-2v-3",
+    nodes: [
+      { tag: "path", d: "M8 3H5a2 2 0 0 0-2 2v3" },
+      { tag: "path", d: "M21 8V5a2 2 0 0 0-2-2h-3" },
+      { tag: "path", d: "M3 16v3a2 2 0 0 0 2 2h3" },
+      { tag: "path", d: "M16 21h3a2 2 0 0 0 2-2v-3" },
     ],
   },
 
-  /* funnel (filter_alt) */
+  /* funnel */
   funnel: {
-    paths: [
-      "M10 20a1 1 0 0 0 .553.895l2 1A1 1 0 0 0 14 21v-7a2 2 0 0 1 .517-1.341L21.74 4.67A1 1 0 0 0 21 3H3a1 1 0 0 0-.742 1.67l7.225 7.989A2 2 0 0 1 10 14z",
+    nodes: [
+      { tag: "path", d: "M10 20a1 1 0 0 0 .553.895l2 1A1 1 0 0 0 14 21v-7a2 2 0 0 1 .517-1.341L21.74 4.67A1 1 0 0 0 21 3H3a1 1 0 0 0-.742 1.67l7.225 7.989A2 2 0 0 1 10 14z" },
     ],
   },
 
-  /* filter-x (filter_alt_off) */
+  /* funnel-x */
   funnelX: {
-    paths: [
-      "M12.531 3H3a1 1 0 0 0-.742 1.67l7.225 7.989A2 2 0 0 1 10 14v6a1 1 0 0 0 .553.895l2 1A1 1 0 0 0 14 21v-7a2 2 0 0 1 .517-1.341l.427-.473",
-      "m16.5 3.5 5 5",
-      "m21.5 3.5-5 5",
+    nodes: [
+      { tag: "path", d: "M12.531 3H3a1 1 0 0 0-.742 1.67l7.225 7.989A2 2 0 0 1 10 14v6a1 1 0 0 0 .553.895l2 1A1 1 0 0 0 14 21v-7a2 2 0 0 1 .517-1.341l.427-.473" },
+      { tag: "path", d: "m16.5 3.5 5 5" },
+      { tag: "path", d: "m21.5 3.5-5 5" },
     ],
   },
 
-  /* messages-square (forum) */
+  /* messages-square */
   messagesSquare: {
-    paths: [
-      "M14 9a2 2 0 0 1-2 2H6l-4 4V4c0-1.1.9-2 2-2h8a2 2 0 0 1 2 2z",
-      "M18 9h2a2 2 0 0 1 2 2v11l-4-4h-6a2 2 0 0 1-2-2v-1",
+    nodes: [
+      { tag: "path", d: "M16 10a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 14.286V4a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" },
+      { tag: "path", d: "M20 9a2 2 0 0 1 2 2v10.286a.71.71 0 0 1-1.212.502l-2.202-2.202A2 2 0 0 0 17.172 19H10a2 2 0 0 1-2-2v-1" },
     ],
   },
 
-  /* message-circle (chat) */
+  /* message-circle */
   messageCircle: {
-    paths: [
-      "M7.9 20A9 9 0 1 0 4 16.1L2 22z",
+    nodes: [
+      { tag: "path", d: "M2.992 16.342a2 2 0 0 1 .094 1.167l-1.065 3.29a1 1 0 0 0 1.236 1.168l3.413-.998a2 2 0 0 1 1.099.092 10 10 0 1 0-4.777-4.719" },
     ],
   },
 
-  /* message-square-plus (add_comment) */
+  /* message-square-plus */
   messageSquarePlus: {
-    paths: [
-      "M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z",
-      "M12 8v6",
-      "M9 11h6",
+    nodes: [
+      { tag: "path", d: "M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z" },
+      { tag: "path", d: "M12 8v6" },
+      { tag: "path", d: "M9 11h6" },
     ],
   },
 
-  /* message-square-text (update) */
+  /* message-square-text */
   messageSquareText: {
-    paths: [
-      "M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z",
-      "M7 11h10",
-      "M7 15h6",
-      "M7 7h8",
+    nodes: [
+      { tag: "path", d: "M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z" },
+      { tag: "path", d: "M7 11h10" },
+      { tag: "path", d: "M7 15h6" },
+      { tag: "path", d: "M7 7h8" },
     ],
   },
 
-  /* message-circle-plus (chat_add_on) */
+  /* message-circle-plus */
   messageCirclePlus: {
-    paths: [
-      "M2.992 16.342a2 2 0 0 1 .094 1.167l-1.065 3.29a1 1 0 0 0 1.236 1.168l3.413-.998a2 2 0 0 1 1.099.092 10 10 0 1 0-4.777-4.719",
-      "M8 12h8",
-      "M12 8v8",
+    nodes: [
+      { tag: "path", d: "M2.992 16.342a2 2 0 0 1 .094 1.167l-1.065 3.29a1 1 0 0 0 1.236 1.168l3.413-.998a2 2 0 0 1 1.099.092 10 10 0 1 0-4.777-4.719" },
+      { tag: "path", d: "M8 12h8" },
+      { tag: "path", d: "M12 8v8" },
     ],
   },
 
-  /* rocket (rocket_launch) */
+  /* rocket */
   rocket: {
-    paths: [
-      "M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z",
-      "m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z",
-      "M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0",
-      "M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5",
+    nodes: [
+      { tag: "path", d: "M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5" },
+      { tag: "path", d: "M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09" },
+      { tag: "path", d: "M9 12a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.4 22.4 0 0 1-4 2z" },
+      { tag: "path", d: "M9 12H4s.55-3.03 2-4c1.62-1.08 5 .05 5 .05" },
     ],
   },
 
-  /* file-pen-line (edit_note) */
+  /* file-pen-line */
   filePenLine: {
-    paths: [
-      "M14.364 13.634a2 2 0 0 0-.506.854l-.837 2.87a.5.5 0 0 0 .62.62l2.87-.837a2 2 0 0 0 .854-.506l4.013-4.009a1 1 0 0 0-3.004-3.004z",
-      "M14.487 7.858A1 1 0 0 1 14 7V2",
-      "M20 19.645V20a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l2.516 2.516",
-      "M8 18h1",
+    nodes: [
+      { tag: "path", d: "M14.364 13.634a2 2 0 0 0-.506.854l-.837 2.87a.5.5 0 0 0 .62.62l2.87-.837a2 2 0 0 0 .854-.506l4.013-4.009a1 1 0 0 0-3.004-3.004z" },
+      { tag: "path", d: "M14.487 7.858A1 1 0 0 1 14 7V2" },
+      { tag: "path", d: "M20 19.645V20a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l2.516 2.516" },
+      { tag: "path", d: "M8 18h1" },
     ],
   },
 
-  /* radar (Blip custom icon) */
+  /* radar */
   radar: {
-    paths: [
-      "M19.07 4.93A10 10 0 0 0 6.99 3.34",
-      "M4 6h.01",
-      "M2.29 9.62A10 10 0 1 0 21.31 8.35",
-      "M16.24 7.76A6 6 0 1 0 8.23 16.67",
-      "M12 18h.01",
-      "M17.99 11.66A6 6 0 0 1 15.77 16.67",
-      "M12 12m-2 0a2 2 0 1 0 4 0a2 2 0 1 0-4 0",
-      "m13.41 10.59 5.66-5.66",
+    nodes: [
+      { tag: "path", d: "M19.07 4.93A10 10 0 0 0 6.99 3.34" },
+      { tag: "path", d: "M4 6h.01" },
+      { tag: "path", d: "M2.29 9.62A10 10 0 1 0 21.31 8.35" },
+      { tag: "path", d: "M16.24 7.76A6 6 0 1 0 8.23 16.67" },
+      { tag: "path", d: "M12 18h.01" },
+      { tag: "path", d: "M17.99 11.66A6 6 0 0 1 15.77 16.67" },
+      { tag: "circle", cx: "12", cy: "12", r: "2" },
+      { tag: "path", d: "m13.41 10.59 5.66-5.66" },
     ],
   },
 
-  /* hash (Hashtag custom icon) */
+  /* hash */
   hash: {
-    paths: [
-      "M4 9h16",
-      "M4 15h16",
-      "M10 3 8 21",
-      "M16 3l-2 18",
+    nodes: [
+      { tag: "line", x1: "4", y1: "9", x2: "20", y2: "9" },
+      { tag: "line", x1: "4", y1: "15", x2: "20", y2: "15" },
+      { tag: "line", x1: "10", y1: "3", x2: "8", y2: "21" },
+      { tag: "line", x1: "16", y1: "3", x2: "14", y2: "21" },
     ],
   },
 
   /* settings-2 */
   settings2: {
-    paths: [
-      "M14 17H5",
-      "M19 7h-9",
-      "M17 14a3 3 0 0 1 3 3 3 3 0 0 1-3 3 3 3 0 0 1-3-3 3 3 0 0 1 3-3",
-      "M7 4a3 3 0 0 1 3 3 3 3 0 0 1-3 3 3 3 0 0 1-3-3 3 3 0 0 1 3-3",
+    nodes: [
+      { tag: "path", d: "M14 17H5" },
+      { tag: "path", d: "M19 7h-9" },
+      { tag: "circle", cx: "17", cy: "17", r: "3" },
+      { tag: "circle", cx: "7", cy: "7", r: "3" },
     ],
   },
 
-  /* upload (arrow_upload_ready) */
+  /* upload */
   upload: {
-    paths: [
-      "M12 3v12",
-      "m17 8-5-5-5 5",
-      "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4",
+    nodes: [
+      { tag: "path", d: "M12 3v12" },
+      { tag: "path", d: "m17 8-5-5-5 5" },
+      { tag: "path", d: "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" },
     ],
   },
 
-  /* skip-forward (forward_media close alternative) */
+  /* skip-forward */
   skipForward: {
-    paths: [
-      "M6 4l10 8-10 8Z",
-      "M19 5v14",
+    nodes: [
+      { tag: "path", d: "M21 4v16" },
+      { tag: "path", d: "M6.029 4.285A2 2 0 0 0 3 6v12a2 2 0 0 0 3.029 1.715l9.997-5.998a2 2 0 0 0 .003-3.432z" },
     ],
   },
 
-  /* arrow-up-down (list_arrow close alternative) */
+  /* arrow-up-down */
   arrowUpDown: {
-    paths: [
-      "m21 16-4 4-4-4",
-      "M17 20V4",
-      "m3 8 4-4 4 4",
-      "M7 4v16",
+    nodes: [
+      { tag: "path", d: "m21 16-4 4-4-4" },
+      { tag: "path", d: "M17 20V4" },
+      { tag: "path", d: "m3 8 4-4 4 4" },
+      { tag: "path", d: "M7 4v16" },
     ],
   },
 
-  /* smile-plus (add_reaction) */
+  /* face-slightly-smiling-plus */
   faceSlightlySmilingPlus: {
-    paths: [
-      "M22 11v1a10 10 0 1 1-9-10",
-      "M8 14s1.5 2 4 2 4-2 4-2",
-      "M9 9h.01",
-      "M15 9h.01",
-      "M16 5h6",
-      "M19 2v6",
+    nodes: [
+      { tag: "path", d: "M13.267 2.08a10 10 0 108.653 8.653" },
+      { tag: "path", d: "M15 10V9" },
+      { tag: "path", d: "M16 5h6" },
+      { tag: "path", d: "M16.472 15a6 6 0 01-8.943 0" },
+      { tag: "path", d: "M19 2v6" },
+      { tag: "path", d: "M9 10V9" },
     ],
   },
 
-  /* badge-minus (verified_off close alternative) */
+  /* badge-minus */
   badgeMinus: {
-    paths: [
-      "M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76z",
-      "M8 12h8",
+    nodes: [
+      { tag: "path", d: "M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z" },
+      { tag: "line", x1: "8", y1: "12", x2: "16", y2: "12" },
     ],
   },
 
-  /* loader-circle (LoadingSpinner close alternative) */
+  /* loader-circle */
   loaderCircle: {
-    paths: ["M12 2a10 10 0 1 0 10 10"],
+    nodes: [
+      { tag: "path", d: "M21 12a9 9 0 1 1-6.219-8.56" },
+    ],
   },
 
-  /* align-left (format_align_left) */
+  /* align-left */
   alignLeft: {
-    paths: ["M21 5H3", "M15 12H3", "M17 19H3"],
+    nodes: [
+      { tag: "path", d: "M21 5H3" },
+      { tag: "path", d: "M15 12H3" },
+      { tag: "path", d: "M17 19H3" },
+    ],
   },
 
-  /* align-center (format_align_center) */
+  /* align-center */
   alignCenter: {
-    paths: ["M21 5H3", "M17 12H7", "M19 19H5"],
+    nodes: [
+      { tag: "path", d: "M21 5H3" },
+      { tag: "path", d: "M17 12H7" },
+      { tag: "path", d: "M19 19H5" },
+    ],
   },
 
-  /* align-right (format_align_right) */
+  /* align-right */
   alignRight: {
-    paths: ["M21 5H3", "M21 12H9", "M21 19H7"],
+    nodes: [
+      { tag: "path", d: "M21 5H3" },
+      { tag: "path", d: "M21 12H9" },
+      { tag: "path", d: "M21 19H7" },
+    ],
   },
 };
