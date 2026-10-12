@@ -11,6 +11,20 @@ afterEach(() => {
 })
 
 describe("MediaButton", () => {
+  it("uses the singular Lucide image icon", () => {
+    const { container } = render(() => (
+      <MediaButton
+        onFiles={vi.fn()}
+        label="Add media"
+      />
+    ))
+
+    const svg = container.querySelector(".blip-editor-media-button svg")
+    expect(svg?.querySelector("circle")?.getAttribute("cx")).toBe("9")
+    expect(svg?.querySelector("circle")?.getAttribute("cy")).toBe("9")
+    expect(svg?.querySelector("rect")).toBeTruthy()
+  })
+
   it("opens the native picker when the trigger is clicked", () => {
     const clickSpy = vi
       .spyOn(HTMLInputElement.prototype, "click")
