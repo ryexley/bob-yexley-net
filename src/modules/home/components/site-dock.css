@@ -35,7 +35,7 @@
     -webkit-tap-highlight-color: transparent;
     align-items: center;
     background: transparent;
-    border: 0;
+    border: 0.0625rem solid transparent;
     border-radius: 50%;
     box-sizing: border-box;
     color: var(--colors-text-primary);
@@ -92,8 +92,11 @@
         var(--colors-resonant-blue) 7%,
         transparent
       );
-      box-shadow: 0 0 0 0.0625rem
-        color-mix(in srgb, var(--colors-resonant-blue) 35%, transparent);
+      border-color: color-mix(
+        in srgb,
+        var(--colors-resonant-blue) 35%,
+        transparent
+      );
       color: var(--colors-resonant-blue);
       opacity: 1;
 
@@ -115,6 +118,7 @@
   }
 
   .item.user {
+    border: 0;
     overflow: visible;
 
     .user-menu {
