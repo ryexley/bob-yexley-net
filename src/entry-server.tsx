@@ -1,5 +1,24 @@
 // @refresh reload
 import { createHandler, StartServer } from "@solidjs/start/server"
+import { getSupabaseAuthStorageKey } from "@/lib/vendor/supabase/browser-url"
+import {
+  applyAuthSessionCacheControl,
+  requestHasAuthSessionCookie,
+} from "@/lib/vendor/supabase/server-session"
+import { getEnv } from "@/util/env"
+
+const applyHtmlAuthCacheHeaders = (context: {
+  request: Request
+  response?: { headers: Headers }
+}) => {
+  applyAuthSessionCacheControl(
+    context.response?.headers,
+    requestHasAuthSessionCookie(
+      context.request.headers.get("Cookie"),
+      getSupabaseAuthStorageKey(getEnv().SUPABASE_URL),
+    ),
+  )
+}
 
 export default createHandler(() => (
   <StartServer
@@ -21,6 +40,7 @@ export default createHandler(() => (
     )}
   />
 ), context => {
+  applyHtmlAuthCacheHeaders(context)
   const pathname = new URL(context.request.url).pathname
   // Keep /blips/:id and /blips/:id/:slug on async SSR so link unfurlers
   // receive fully resolved metadata (og:title/og:description) in the first

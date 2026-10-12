@@ -1,9 +1,7 @@
-import { hydrate } from "solid-js/web"
+import { hydrate, renderToString } from "solid-js/web"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { BlipActions } from "@/modules/blips/components/blip-actions"
 
-// Signed in as superuser on the client. The server always renders signed out
-// (auth is applied in an effect), which is what made the home page crash.
 vi.mock("@/context/auth-context", () => ({
   useAuth: () => ({
     isAuthenticated: () => true,
@@ -19,14 +17,12 @@ vi.mock("@/modules/blips/data", () => ({ blipStore: () => ({}) }))
 
 const blip = { id: "b1", user_id: "user-1", published: true } as any
 
-describe("BlipActions hydration", () => {
+describe("BlipActions SSR", () => {
   let container: HTMLDivElement
 
   beforeEach(() => {
     ;(globalThis as any)._$HY = { events: [], completed: new WeakSet(), r: {} }
     container = document.createElement("div")
-    // What the server sent: no toolbar.
-    container.innerHTML = ""
     document.body.appendChild(container)
   })
 
@@ -35,13 +31,21 @@ describe("BlipActions hydration", () => {
     delete (globalThis as any)._$HY
   })
 
-  it("hydrates the server's signed-out markup, then shows the toolbar once mounted", async () => {
+  it("renders the toolbar on the server for an admin", () => {
+    const html = renderToString(() => <BlipActions blip={blip} />)
+    expect(html).toContain("blip-actions")
+    expect(html).toContain('role="toolbar"')
+  })
+
+  it("hydrates the server's signed-in toolbar without replacing it", () => {
+    const html = renderToString(() => <BlipActions blip={blip} />)
+    container.innerHTML = html
+
     let dispose: (() => void) | undefined
     expect(() => {
       dispose = hydrate(() => <BlipActions blip={blip} />, container)
     }).not.toThrow()
 
-    await Promise.resolve()
     expect(container.querySelector(".blip-actions")).toBeTruthy()
     dispose?.()
   })

@@ -48,11 +48,28 @@ if (import.meta.hot?.data) {
 const AUTH_RESUME_EVENTS = ["SIGNED_IN", "INITIAL_SESSION", "TOKEN_REFRESHED"] as const
 
 export function AuthProvider(props: { children: any }) {
-  const [profile, setProfile] = createSignal<UserProfile | null>(null)
-  const [loading, setLoading] = createSignal(true)
+  const ssrProfile = createAsync(() => getUserProfile(), { deferStream: true })
+  const [liveProfile, setLiveProfile] = createSignal<UserProfile | null | undefined>(
+    undefined,
+  )
+  const [liveLoading, setLiveLoading] = createSignal<boolean | undefined>(undefined)
   const [busy, setBusy] = createSignal(true)
-  const [initialSnapshotApplied, setInitialSnapshotApplied] = createSignal(false)
-  const initialProfile = createAsync(() => getUserProfile())
+  const profile = createMemo(() => {
+    const live = liveProfile()
+    if (live !== undefined) {
+      return live
+    }
+
+    return ssrProfile() ?? null
+  })
+  const loading = createMemo(() => {
+    const live = liveLoading()
+    if (live !== undefined) {
+      return live
+    }
+
+    return ssrProfile() === undefined
+  })
   const user = createMemo(() => profile()?.user ?? null)
   const userProfile = createMemo(() => profile()?.profile ?? null)
   const userSystem = createMemo(() => profile()?.system ?? null)
@@ -60,16 +77,16 @@ export function AuthProvider(props: { children: any }) {
   let authTransition: Promise<void> = Promise.resolve()
 
   const clearAuthState = () => {
-    setProfile(null)
+    setLiveProfile(null)
   }
 
-  const applyAuthProfile = (profile: UserProfile | null) => {
-    if (isEmpty(profile)) {
+  const applyAuthProfile = (nextProfile: UserProfile | null) => {
+    if (isEmpty(nextProfile)) {
       clearAuthState()
       return
     }
 
-    setProfile(profile)
+    setLiveProfile(nextProfile)
   }
 
   const runAuthTransition = (work: () => Promise<void>) => {
@@ -114,21 +131,6 @@ export function AuthProvider(props: { children: any }) {
       loadUserProfile: loadSessionProfile,
     })
 
-  createEffect(() => {
-    if (initialSnapshotApplied()) {
-      return
-    }
-
-    const snapshot = initialProfile()
-    if (snapshot === undefined) {
-      return
-    }
-
-    applyAuthProfile(snapshot ?? null)
-    setLoading(false)
-    setInitialSnapshotApplied(true)
-  })
-
   onMount(async () => {
     setVisitorAuthenticateHandler(async credentials => {
       if (credentials.mode === "signup") {
@@ -153,7 +155,7 @@ export function AuthProvider(props: { children: any }) {
     await runAuthTransition(async () => {
       const result = await healCurrentSession()
       applySessionResult(result)
-      setLoading(false)
+      setLiveLoading(false)
     })
   })
 
@@ -170,7 +172,7 @@ export function AuthProvider(props: { children: any }) {
         if (event === "SIGNED_OUT") {
           supabase.clearSessionStart()
           clearAuthState()
-          setLoading(false)
+          setLiveLoading(false)
           return
         }
 
@@ -180,18 +182,18 @@ export function AuthProvider(props: { children: any }) {
 
         if (isEmpty(session?.user)) {
           clearAuthState()
-          setLoading(false)
+          setLiveLoading(false)
           return
         }
 
         if (event === "TOKEN_REFRESHED") {
           applySessionResult(await healCurrentSession())
-          setLoading(false)
+          setLiveLoading(false)
           return
         }
 
         if (isEmpty(userProfile()?.id)) {
-          setLoading(true)
+          setLiveLoading(true)
         }
 
         const result = await resolveSignedInAuth({
@@ -207,7 +209,7 @@ export function AuthProvider(props: { children: any }) {
         })
 
         applySessionResult(result)
-        setLoading(false)
+        setLiveLoading(false)
       })
     })
 

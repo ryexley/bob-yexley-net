@@ -4,6 +4,9 @@
  * Trust boundary:
  * - Server-only usage.
  * - Uses anon credentials but binds auth/session via request cookies.
+ * - Validates the session with `getUser` (not just JWT decode). An expired
+ *   access token with a valid refresh token is rotated and written back to
+ *   the response. A missing or garbage session renders as signed out.
  *
  * Usage:
  * - Use in server queries/loaders/actions that must run as the current user.
@@ -12,10 +15,22 @@
  * crashes the browser if this module ends up in a client chunk.
  */
 import { createServerClient } from "@supabase/ssr"
+import { createClient, type User } from "@supabase/supabase-js"
 import { getRequestEvent } from "solid-js/web"
 import { getSupabaseAuthStorageKey } from "@/lib/vendor/supabase/browser-url"
+import {
+  applyAuthSessionCacheControl,
+  requestHasAuthSessionCookie,
+} from "@/lib/vendor/supabase/server-session"
 import type { AppSupabaseClient, Database } from "@/lib/vendor/supabase/types"
 import { getEnv } from "@/util/env"
+
+export type ServerAuth = {
+  client: AppSupabaseClient
+  user: User | null
+}
+
+const authByRequest = new WeakMap<Request, Promise<ServerAuth>>()
 
 const getSupabasePublicConfig = () => {
   // Call-time read. A top-level `import.meta.env` check throws while the
@@ -120,9 +135,38 @@ const writeResponseCookie = (
   response.headers.append("Set-Cookie", serializeCookie(name, value, options))
 }
 
-export async function getServerClient(): Promise<AppSupabaseClient> {
-  const { url, anonKey, authStorageKey } = getSupabasePublicConfig()
-  const client = createServerClient<Database>(url, anonKey, {
+const applyRequestAuthCacheHeaders = (authStorageKey: string) => {
+  const event = getRequestEvent()
+  if (!event) {
+    return
+  }
+
+  applyAuthSessionCacheControl(
+    event.response?.headers,
+    requestHasAuthSessionCookie(
+      event.request.headers.get("Cookie"),
+      authStorageKey,
+    ),
+  )
+}
+
+const createAnonymousServerClient = (
+  url: string,
+  anonKey: string,
+): AppSupabaseClient =>
+  createClient<Database>(url, anonKey, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+    },
+  })
+
+const createCookieServerClient = (
+  url: string,
+  anonKey: string,
+  authStorageKey: string,
+): AppSupabaseClient =>
+  createServerClient<Database>(url, anonKey, {
     cookieOptions: {
       name: authStorageKey,
     },
@@ -150,7 +194,75 @@ export async function getServerClient(): Promise<AppSupabaseClient> {
     },
   })
 
-  // Ensure cookie-backed session is initialized before query execution.
-  await client.auth.getSession()
+const resolveValidatedUser = async (
+  client: AppSupabaseClient,
+): Promise<User | null> => {
+  try {
+    const {
+      data: { user },
+      error,
+    } = await client.auth.getUser()
+    if (error || !user?.id) {
+      return null
+    }
+    return user
+  } catch {
+    return null
+  }
+}
+
+const initializeServerAuth = async (): Promise<ServerAuth> => {
+  const { url, anonKey, authStorageKey } = getSupabasePublicConfig()
+  applyRequestAuthCacheHeaders(authStorageKey)
+
+  try {
+    const cookieClient = createCookieServerClient(url, anonKey, authStorageKey)
+    const user = await resolveValidatedUser(cookieClient)
+
+    if (!user) {
+      try {
+        await cookieClient.auth.signOut({ scope: "local" })
+      } catch {
+        // Clearing a garbage session must not fail the request.
+      }
+      return {
+        client: createAnonymousServerClient(url, anonKey),
+        user: null,
+      }
+    }
+
+    return { client: cookieClient, user }
+  } catch (error) {
+    console.warn("Failed to initialize server auth session:", error)
+    return {
+      client: createAnonymousServerClient(url, anonKey),
+      user: null,
+    }
+  }
+}
+
+/**
+ * Validated request-scoped auth. `getUser` runs once per request: expired
+ * access tokens refresh through `@supabase/ssr` cookie helpers; invalid
+ * cookies become a signed-out anonymous client.
+ */
+export async function getServerAuth(): Promise<ServerAuth> {
+  const request = getRequestEvent()?.request
+  if (!request) {
+    return initializeServerAuth()
+  }
+
+  const existing = authByRequest.get(request)
+  if (existing) {
+    return existing
+  }
+
+  const created = initializeServerAuth()
+  authByRequest.set(request, created)
+  return created
+}
+
+export async function getServerClient(): Promise<AppSupabaseClient> {
+  const { client } = await getServerAuth()
   return client
 }
