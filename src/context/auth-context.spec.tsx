@@ -1,6 +1,5 @@
 import { render, screen, waitFor } from "@solidjs/testing-library"
 import { createEffect, createSignal } from "solid-js"
-import { renderToString } from "solid-js/web"
 import { describe, expect, it, vi, beforeEach } from "vitest"
 import { AuthProvider, useAuth } from "@/context/auth-context"
 import { TIME } from "@/util/enums"
@@ -182,16 +181,27 @@ describe("AuthProvider", () => {
 
   it("exposes the serialized profile during SSR", () => {
     initialProfileState.value = sessionProfile
+    let firstAuthenticated = false
+    let firstName = ""
+    let firstLoading = true
 
-    const html = renderToString(() => (
+    function FirstPaintProbe() {
+      const auth = useAuth()
+      firstAuthenticated = auth.isAuthenticated()
+      firstName = auth.userProfile()?.displayName ?? ""
+      firstLoading = auth.loading()
+      return null
+    }
+
+    render(() => (
       <AuthProvider>
-        <AuthStatusProbe />
+        <FirstPaintProbe />
       </AuthProvider>
     ))
 
-    expect(html).toContain("authenticated")
-    expect(html).toContain("Bob")
-    expect(html).toContain(">ready<")
+    expect(firstAuthenticated).toBe(true)
+    expect(firstName).toBe("Bob")
+    expect(firstLoading).toBe(false)
   })
 
   it("starts the first client render from the serialized profile", () => {

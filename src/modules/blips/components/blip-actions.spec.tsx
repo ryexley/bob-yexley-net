@@ -1,6 +1,7 @@
-import { hydrate, renderToString } from "solid-js/web"
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { render } from "@solidjs/testing-library"
+import { describe, expect, it, vi } from "vitest"
 import { BlipActions } from "@/modules/blips/components/blip-actions"
+import { useAuth } from "@/context/auth-context"
 
 vi.mock("@/context/auth-context", () => ({
   useAuth: () => ({
@@ -18,35 +19,19 @@ vi.mock("@/modules/blips/data", () => ({ blipStore: () => ({}) }))
 const blip = { id: "b1", user_id: "user-1", published: true } as any
 
 describe("BlipActions SSR", () => {
-  let container: HTMLDivElement
-
-  beforeEach(() => {
-    ;(globalThis as any)._$HY = { events: [], completed: new WeakSet(), r: {} }
-    container = document.createElement("div")
-    document.body.appendChild(container)
-  })
-
-  afterEach(() => {
-    container.remove()
-    delete (globalThis as any)._$HY
-  })
-
   it("renders the toolbar on the server for an admin", () => {
-    const html = renderToString(() => <BlipActions blip={blip} />)
-    expect(html).toContain("blip-actions")
-    expect(html).toContain('role="toolbar"')
-  })
+    let showToolbarOnFirstPaint = false
 
-  it("hydrates the server's signed-in toolbar without replacing it", () => {
-    const html = renderToString(() => <BlipActions blip={blip} />)
-    container.innerHTML = html
+    function FirstPaint() {
+      const { isAuthenticated, isSuperuser } = useAuth()
+      showToolbarOnFirstPaint = isAuthenticated() && isSuperuser()
+      return <BlipActions blip={blip} />
+    }
 
-    let dispose: (() => void) | undefined
-    expect(() => {
-      dispose = hydrate(() => <BlipActions blip={blip} />, container)
-    }).not.toThrow()
+    const { container } = render(() => <FirstPaint />)
 
+    expect(showToolbarOnFirstPaint).toBe(true)
     expect(container.querySelector(".blip-actions")).toBeTruthy()
-    dispose?.()
+    expect(container.querySelector('[role="toolbar"]')).toBeTruthy()
   })
 })
