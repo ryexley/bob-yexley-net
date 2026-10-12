@@ -1,9 +1,54 @@
 import { splitProps, type JSX } from "solid-js"
 import { cx } from "~/util"
-import { iconGlyphs, type IconName } from "./icon-registry"
+import {
+  iconGlyphs,
+  type IconGlyph,
+  type IconName,
+  type IconSvgNode,
+} from "./icon-registry"
 import "./icon.css"
 
 export type { IconName }
+
+const renderIconNode = (node: IconSvgNode) => {
+  switch (node.tag) {
+    case "path":
+      return <path d={node.d} />
+    case "circle":
+      return (
+        <circle
+          cx={node.cx}
+          cy={node.cy}
+          r={node.r}
+          fill={node.fill}
+        />
+      )
+    case "rect":
+      return (
+        <rect
+          x={node.x}
+          y={node.y}
+          width={node.width}
+          height={node.height}
+          rx={node.rx}
+          ry={node.ry}
+        />
+      )
+    case "line":
+      return (
+        <line
+          x1={node.x1}
+          y1={node.y1}
+          x2={node.x2}
+          y2={node.y2}
+        />
+      )
+  }
+}
+
+const renderIconNodes = (glyph: IconGlyph | undefined) =>
+  // oxlint-disable-next-line solid/prefer-for -- For-inside-svg minifies to `t is not a function`
+  (glyph?.nodes ?? []).map(node => renderIconNode(node))
 
 export type IconProps = {
   name: IconName
@@ -23,9 +68,7 @@ export function Icon(props: IconProps) {
   // one-letter call that becomes the intermittent `t is not a function` crash.
   const glyph = () => (local.name ? iconGlyphs[local.name] : undefined)
   const filled = () => glyph()?.filled === true
-  const pathNodes = () =>
-    // oxlint-disable-next-line solid/prefer-for -- For-inside-svg minifies to `t is not a function`
-    (glyph()?.paths ?? []).map(pathD => <path d={pathD} />)
+  const nodes = () => renderIconNodes(glyph())
 
   return (
     <svg
@@ -42,7 +85,7 @@ export function Icon(props: IconProps) {
       role={local.title ? "img" : undefined}
       {...rest}>
       {local.title ? <title>{local.title}</title> : null}
-      {pathNodes()}
+      {nodes()}
     </svg>
   )
 }
@@ -50,9 +93,7 @@ export function Icon(props: IconProps) {
 export function ImagePlaceholder(props: JSX.SvgSVGAttributes<SVGSVGElement>) {
   const [local, rest] = splitProps(props, ["class"])
   const glyph = iconGlyphs.image
-  const pathNodes = () =>
-    // oxlint-disable-next-line solid/prefer-for -- For-inside-svg minifies to `t is not a function`
-    glyph.paths.map(pathD => <path d={pathD} />)
+  const nodes = () => renderIconNodes(glyph)
 
   // Keep this off `.icon`: callers size it with layout classes (h-1/2, 45%,
   // etc.). The shared icon rule locks width/height to 1em and would shrink
@@ -70,7 +111,7 @@ export function ImagePlaceholder(props: JSX.SvgSVGAttributes<SVGSVGElement>) {
       stroke-linejoin="round"
       class={local.class}
       {...rest}>
-      {pathNodes()}
+      {nodes()}
     </svg>
   )
 }

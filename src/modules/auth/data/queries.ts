@@ -1,55 +1,45 @@
 import { query } from "@solidjs/router"
+import { rememberRequestAuthProfile } from "@/lib/vendor/supabase/request-auth-profile"
 import {
   buildUserProfile,
   selectUserProfileRecord,
   type UserProfile,
 } from "@/lib/vendor/supabase/user-profile"
 
-const isMissingAuthSessionError = (error: { name?: string; message?: string } | null) =>
-  error?.name === "AuthSessionMissingError" ||
-  /auth session missing/i.test(error?.message ?? "")
-
 export const getUserProfile = query(async (): Promise<UserProfile | null> => {
   "use server"
 
   try {
-    const { getServerClient } = await import("@/lib/vendor/supabase/server")
-    const supabase = await getServerClient()
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser()
-
-    if (userError) {
-      if (isMissingAuthSessionError(userError)) {
-        return null
-      }
-
-      console.error("Failed to authenticate current user profile request:", userError)
-      return null
-    }
+    const { getServerAuth } = await import("@/lib/vendor/supabase/server")
+    const { client, user } = await getServerAuth()
 
     if (!user?.id) {
+      rememberRequestAuthProfile(null)
       return null
     }
 
     const { data, error } = await selectUserProfileRecord(
-      supabase,
+      client,
       user.id,
     )
 
     if (error) {
       console.error("Failed to load current user profile:", error)
+      rememberRequestAuthProfile(null)
       return null
     }
 
     if (!data) {
+      rememberRequestAuthProfile(null)
       return null
     }
 
-    return buildUserProfile(data, user)
+    const profile = buildUserProfile(data, user)
+    rememberRequestAuthProfile(profile)
+    return profile
   } catch (error) {
     console.error("getUserProfile query failed:", error)
+    rememberRequestAuthProfile(null)
     return null
   }
 }, "user-profile")

@@ -9,7 +9,6 @@ import { formatBlipTimestampFull, isBlipScheduled } from "@/modules/blips/util"
 import { ptr } from "@/i18n"
 import { blipStore } from "@/modules/blips/data"
 import { isEmpty } from "@/util"
-import { createMounted } from "@/util/mounted"
 import "./blip-actions.css"
 
 interface BlipActionsProps {
@@ -34,8 +33,6 @@ export function BlipActions(props: BlipActionsProps) {
   const [isTogglingPublish, setIsTogglingPublish] = createSignal(false)
 
   const { isAuthenticated, isSuperuser, user } = useAuth()
-  // The server always renders signed out; match it until hydrated.
-  const mounted = createMounted()
   const supabase = useSupabase()
   const store = blipStore(supabase.client, { subscribe: false })
   const isScheduled = createMemo(() =>
@@ -51,7 +48,7 @@ export function BlipActions(props: BlipActionsProps) {
       return false
     }
 
-    if (!mounted() || !isAuthenticated()) {
+    if (!isAuthenticated()) {
       return false
     }
 
