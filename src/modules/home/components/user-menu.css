@@ -99,6 +99,7 @@
 }
 
 .user-menu-drawer-item {
+  --menu-item-icon-size: 1.375rem;
   align-items: center;
   appearance: none;
   -webkit-tap-highlight-color: transparent;
@@ -120,19 +121,21 @@
   width: 100%;
 
   .icon,
+  .blip-icon.icon,
   .menu-blip-icon {
     color: var(--colors-mono-08);
-    flex: 0 0 1.375rem;
-    height: 1.375rem;
-    width: 1.375rem;
-  }
-
-  .icon {
-    font-size: 1.375rem;
+    flex: 0 0 var(--menu-item-icon-size);
+    font-size: var(--menu-item-icon-size);
+    height: var(--menu-item-icon-size);
+    width: var(--menu-item-icon-size);
   }
 
   .menu-blip-icon {
     display: block;
+  }
+
+  .blip-icon-accent {
+    stroke: var(--colors-success);
   }
 
   span {
@@ -157,6 +160,12 @@
     border-color: rgb(from var(--colors-info) r g b / 0.32);
     box-shadow: none;
     outline: none;
+
+    .icon,
+    .blip-icon.icon,
+    .menu-blip-icon {
+      color: var(--colors-text-primary);
+    }
   }
 }
 

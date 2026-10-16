@@ -47,9 +47,9 @@ export function UserMenu() {
   const [hasMounted, setHasMounted] = createSignal(false)
   const [mobileMenuContentElement, setMobileMenuContentElement] =
     createSignal<HTMLElement | null>(null)
-  let mobileMenuTextInputCleanupHandle:
-    | ReturnType<typeof clearActiveTextInputSession>
-    | null = null
+  let mobileMenuTextInputCleanupHandle: ReturnType<
+    typeof clearActiveTextInputSession
+  > | null = null
   const useDrawerMenu = createMemo(
     () => hasMounted() && viewport.width() <= MOBILE_MENU_MAX_WIDTH,
   )
@@ -87,7 +87,10 @@ export function UserMenu() {
 
       const blurFocusedDrawerElement = () => {
         const activeElement = window.document.activeElement
-        if (activeElement instanceof HTMLElement && content.contains(activeElement)) {
+        if (
+          activeElement instanceof HTMLElement &&
+          content.contains(activeElement)
+        ) {
           activeElement.blur()
         }
       }
@@ -175,13 +178,7 @@ export function UserMenu() {
 
     if (isAdmin()) {
       items.push({
-        iconNode: (
-          <BlipIcon
-            size="1.125rem"
-            class="menu-blip-icon"
-            blipColor="var(--menu-blip-accent)"
-          />
-        ),
+        iconNode: <BlipIcon class="menu-blip-icon" />,
         label: tr("blip"),
         onClick: openBlipEditor,
       })
@@ -259,7 +256,8 @@ export function UserMenu() {
                       onClick={() => {
                         void item.onClick()
                       }}>
-                      {item.iconNode || (item.icon ? <Icon name={item.icon} /> : null)}
+                      {item.iconNode ||
+                        (item.icon ? <Icon name={item.icon} /> : null)}
                       <span>{item.label}</span>
                     </button>
                   )}

@@ -24,21 +24,21 @@ const {
         role: "visitor",
         roleCreatedAt: "2026-03-01T10:00:00.000Z",
         roleUpdatedAt: "2026-03-01T10:00:00.000Z",
-      profile: {
-        id: "profile-1",
+        profile: {
+          id: "profile-1",
           displayName: "Bob",
-        avatarSeed: null,
-        avatarVersion: 1,
-        createdAt: "2026-03-01T10:00:00.000Z",
-        updatedAt: "2026-03-01T10:00:00.000Z",
-      },
-      system: {
-        status: "active",
+          avatarSeed: null,
+          avatarVersion: 1,
+          createdAt: "2026-03-01T10:00:00.000Z",
+          updatedAt: "2026-03-01T10:00:00.000Z",
+        },
+        system: {
+          status: "active",
           failedLoginAttempts: 0,
           notes: null,
-        trusted: false,
+          trusted: false,
           createdAt: "2026-03-01T10:00:00.000Z",
-        updatedAt: "2026-03-01T10:00:00.000Z",
+          updatedAt: "2026-03-01T10:00:00.000Z",
         },
       } as any,
     },
@@ -69,7 +69,8 @@ vi.mock("@/context/auth-context", () => ({
     role: () => authState.profile?.role ?? null,
     isAuthenticated: () => Boolean(authState.profile?.user),
     isAdmin: () =>
-      authState.profile?.role === "admin" || authState.profile?.role === "superuser",
+      authState.profile?.role === "admin" ||
+      authState.profile?.role === "superuser",
     isSuperuser: () => authState.profile?.role === "superuser",
     replaceProfile,
     logout,
@@ -102,14 +103,18 @@ vi.mock("@/components/notification", () => ({
 vi.mock("@/components/menu", () => ({
   Menu: (props: any) => (
     <div>
-      <button type="button" aria-label="User menu">
+      <button
+        type="button"
+        aria-label="User menu">
         trigger
       </button>
       <div>{props.Header ? props.Header() : null}</div>
       <div>
         <For each={props.items}>
           {(item: any) => (
-            <button type="button" onClick={() => item.onClick()}>
+            <button
+              type="button"
+              onClick={() => item.onClick()}>
               {item.label}
             </button>
           )}
@@ -120,19 +125,23 @@ vi.mock("@/components/menu", () => ({
 }))
 
 vi.mock("@/components/drawer", () => ({
-  Drawer: (props: any) =>
+  Drawer: (props: any) => (
     <>
       {props.open && (
-        <section data-testid="mobile-user-menu" data-side={props.side}>
+        <section
+          data-testid="mobile-user-menu"
+          data-side={props.side}>
           {props.children}
         </section>
       )}
-    </>,
+    </>
+  ),
 }))
 
 vi.mock("@/modules/home/components/profile-drawer", () => ({
-  ProfileDrawer: (props: any) =>
-    <>{props.open && <div data-testid="profile-drawer">Profile drawer</div>}</>,
+  ProfileDrawer: (props: any) => (
+    <>{props.open && <div data-testid="profile-drawer">Profile drawer</div>}</>
+  ),
 }))
 
 vi.mock("@/i18n", () => ({
@@ -290,5 +299,24 @@ describe("UserMenu", () => {
     await waitFor(() => {
       expect(openNewRoot).toHaveBeenCalledTimes(1)
     })
+  })
+
+  it("lets the shared drawer styles size the mobile blip icon", async () => {
+    viewportWidth.mockReturnValue(375)
+    authState.profile = {
+      ...authState.profile,
+      role: "admin",
+    } as any
+
+    render(() => <UserMenu />)
+
+    await fireEvent.click(screen.getByRole("button", { name: "User menu" }))
+
+    const icon = screen
+      .getByRole("button", { name: "Blip" })
+      .querySelector(".menu-blip-icon")
+
+    expect(icon).toBeTruthy()
+    expect(icon?.getAttribute("style") ?? "").not.toContain("--size")
   })
 })

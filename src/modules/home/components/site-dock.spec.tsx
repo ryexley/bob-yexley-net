@@ -3,12 +3,7 @@ import { describe, expect, it, vi } from "vitest"
 import { SiteDock } from "@/modules/home/components/site-dock"
 import { pages } from "@/urls"
 
-const {
-  pathname,
-  isAuthenticated,
-  visitorOpen,
-  navigate,
-} = vi.hoisted(() => ({
+const { pathname, isAuthenticated, visitorOpen, navigate } = vi.hoisted(() => ({
   pathname: { value: "/" },
   isAuthenticated: { value: true },
   visitorOpen: vi.fn(),
@@ -87,9 +82,9 @@ describe("SiteDock", () => {
 
     expect(screen.getByRole("navigation", { name: "Primary" })).toBeTruthy()
     expect(screen.getByRole("button", { name: "User menu" })).toBeTruthy()
-    expect(screen.getByRole("link", { name: "Home" }).getAttribute("aria-current")).toBe(
-      "page",
-    )
+    expect(
+      screen.getByRole("link", { name: "Home" }).getAttribute("aria-current"),
+    ).toBe("page")
     expect(screen.getByRole("link", { name: "Blips" })).toBeTruthy()
     expect(screen.getByRole("button", { name: "Open menu" })).toBeTruthy()
   })
@@ -100,9 +95,9 @@ describe("SiteDock", () => {
 
     render(() => <SiteDock />)
 
-    expect(screen.getByRole("link", { name: "Home" }).getAttribute("aria-current")).toBe(
-      "page",
-    )
+    expect(
+      screen.getByRole("link", { name: "Home" }).getAttribute("aria-current"),
+    ).toBe("page")
     expect(
       screen.getByRole("link", { name: "Blips" }).getAttribute("aria-current"),
     ).toBeNull()
@@ -114,9 +109,9 @@ describe("SiteDock", () => {
 
     render(() => <SiteDock />)
 
-    expect(screen.getByRole("link", { name: "Blips" }).getAttribute("aria-current")).toBe(
-      "page",
-    )
+    expect(
+      screen.getByRole("link", { name: "Blips" }).getAttribute("aria-current"),
+    ).toBe("page")
   })
 
   it("opens the main nav drawer from the menu button", async () => {
@@ -130,6 +125,26 @@ describe("SiteDock", () => {
     expect(screen.getByTestId("site-dock-drawer")).toBeTruthy()
     expect(screen.getByRole("button", { name: "Blips" })).toBeTruthy()
     expect(screen.getByRole("button", { name: "Resume" })).toBeTruthy()
+  })
+
+  it("lets the shared drawer styles size the nav blip icon and mark the active link", async () => {
+    pathname.value = "/"
+    isAuthenticated.value = true
+
+    render(() => <SiteDock />)
+
+    await fireEvent.click(screen.getByRole("button", { name: "Open menu" }))
+
+    expect(
+      screen.getByRole("button", { name: "Home" }).classList.contains("active"),
+    ).toBe(true)
+
+    const icon = screen
+      .getByRole("button", { name: "Blips" })
+      .querySelector(".menu-blip-icon")
+
+    expect(icon).toBeTruthy()
+    expect(icon?.getAttribute("style") ?? "").not.toContain("--size")
   })
 
   it("routes blips from the drawer through the client router", async () => {
