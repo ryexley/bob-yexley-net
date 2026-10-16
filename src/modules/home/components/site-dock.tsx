@@ -101,12 +101,9 @@ export function SiteDock() {
         href={pages.blips}
         aria-label={tr("blips")}
         aria-current={blipsCurrent()}>
-        <BlipIcon
-          size="1.375rem"
-          class="site-dock-blip-icon"
-        />
+        <BlipIcon size="1.375rem" />
       </A>
-      <span class="site-dock-menu-wrap">
+      <span class="menu-wrap">
         <Drawer
           side="bottom"
           open={menuOpen()}
@@ -114,30 +111,29 @@ export function SiteDock() {
           class="user-menu-drawer site-dock-drawer"
           triggerClass="item menu"
           triggerIcon="menu"
-          triggerIconClass="site-dock-menu-icon"
           triggerAriaLabel={tr("menu")}
           showClose={false}
           contentProps={{
             onOpenAutoFocus: event => event.preventDefault(),
           }}>
           <Stack
-            class="user-menu-drawer-shell"
+            class="shell"
             style={menuBackground()}
             gap="0.75rem">
             <div class="handle" />
             <Stack
-              class="user-menu-drawer-items"
+              class="items"
               gap="0.5rem">
               <For each={navLinks()}>
                 {link => (
                   <button
                     type="button"
                     onClick={() => handleDrawerLinkClick(link)}
-                    class={cx("user-menu-drawer-item", {
+                    class={cx("item", {
                       active: link.isActive,
                     })}>
                     {link.path === pages.blips ? (
-                      <BlipIcon class="menu-blip-icon" />
+                      <BlipIcon />
                     ) : (
                       <Icon name={navIconByPath[link.path] ?? "chevronRight"} />
                     )}

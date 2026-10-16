@@ -55,9 +55,7 @@
     user-select: none;
     width: var(--site-dock-item);
 
-    .icon,
-    .site-dock-blip-icon,
-    .site-dock-menu-icon {
+    .icon {
       color: currentColor;
       font-size: 1.5rem;
       pointer-events: none;
@@ -100,14 +98,13 @@
       color: var(--colors-resonant-blue);
       opacity: 1;
 
-      .icon,
-      .site-dock-blip-icon {
+      .icon {
         color: var(--colors-resonant-blue);
       }
     }
   }
 
-  .site-dock-menu-wrap {
+  .menu-wrap {
     align-items: center;
     display: flex;
     flex: 0 0 var(--site-dock-item);
@@ -150,7 +147,7 @@
   }
 }
 
-[data-corvu-drawer-content].site-dock-drawer.user-menu-drawer {
+.site-dock-drawer {
   max-height: min(32rem, 80dvh);
   min-height: 0;
 }
@@ -174,7 +171,7 @@
     width: auto;
 
     .item:not(.user),
-    .site-dock-menu-wrap {
+    .menu-wrap {
       display: none;
     }
 

@@ -314,7 +314,7 @@ describe("UserMenu", () => {
 
     const icon = screen
       .getByRole("button", { name: "Blip" })
-      .querySelector(".menu-blip-icon")
+      .querySelector(".blip-icon")
 
     expect(icon).toBeTruthy()
     expect(icon?.getAttribute("style") ?? "").not.toContain("--size")

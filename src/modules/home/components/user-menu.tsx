@@ -178,7 +178,7 @@ export function UserMenu() {
 
     if (isAdmin()) {
       items.push({
-        iconNode: <BlipIcon class="menu-blip-icon" />,
+        iconNode: <BlipIcon />,
         label: tr("blip"),
         onClick: openBlipEditor,
       })
@@ -240,19 +240,19 @@ export function UserMenu() {
             }}
             showClose={false}>
             <Stack
-              class="user-menu-drawer-shell"
+              class="shell"
               style={mobileMenuBackground()}
               gap="0.75rem">
               <div class="handle" />
-              <div class="user-menu-drawer-summary">{renderMenuHeader()}</div>
+              <div class="summary">{renderMenuHeader()}</div>
               <Stack
-                class="user-menu-drawer-items"
+                class="items"
                 gap="0.5rem">
                 <For each={menuItems()}>
                   {item => (
                     <button
                       type="button"
-                      class="user-menu-drawer-item"
+                      class="item"
                       onClick={() => {
                         void item.onClick()
                       }}>

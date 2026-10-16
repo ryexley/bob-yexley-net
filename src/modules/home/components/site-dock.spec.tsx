@@ -141,7 +141,7 @@ describe("SiteDock", () => {
 
     const icon = screen
       .getByRole("button", { name: "Blips" })
-      .querySelector(".menu-blip-icon")
+      .querySelector(".blip-icon")
 
     expect(icon).toBeTruthy()
     expect(icon?.getAttribute("style") ?? "").not.toContain("--size")
