@@ -6,12 +6,14 @@ import {
   formatBlipTimestampTooltip,
   getBlipDateGroupKey,
   getBlipPublishTimestamp,
+  classifyBlipAvailability,
   groupBlipsByDate,
   isBlipPubliclyVisible,
   isBlipScheduled,
   isComposerFkStubUpdate,
   isUpdateActivityVisible,
 } from "@/modules/blips/util"
+import { BLIP_TYPES } from "@/modules/blips/data/schema"
 
 describe("blip scheduling helpers", () => {
   beforeEach(() => {
@@ -41,6 +43,46 @@ describe("blip scheduling helpers", () => {
 
     expect(isBlipScheduled(blip)).toBe(true)
     expect(isBlipPubliclyVisible(blip)).toBe(false)
+  })
+
+  it("classifies only published future root blips as scheduled availability", () => {
+    expect(classifyBlipAvailability(null)).toBe("missing")
+    expect(
+      classifyBlipAvailability({
+        parent_id: null,
+        blip_type: BLIP_TYPES.ROOT,
+        published: true,
+        publish_at: "2026-04-23T12:00:00.000Z",
+        created_at: "2026-04-21T12:00:00.000Z",
+      } as any),
+    ).toBe("scheduled")
+    expect(
+      classifyBlipAvailability({
+        parent_id: null,
+        blip_type: BLIP_TYPES.ROOT,
+        published: false,
+        publish_at: "2026-04-23T12:00:00.000Z",
+        created_at: "2026-04-21T12:00:00.000Z",
+      } as any),
+    ).toBe("missing")
+    expect(
+      classifyBlipAvailability({
+        parent_id: "root-1",
+        blip_type: BLIP_TYPES.UPDATE,
+        published: true,
+        publish_at: "2026-04-23T12:00:00.000Z",
+        created_at: "2026-04-21T12:00:00.000Z",
+      } as any),
+    ).toBe("missing")
+    expect(
+      classifyBlipAvailability({
+        parent_id: null,
+        blip_type: BLIP_TYPES.ROOT,
+        published: true,
+        publish_at: "2026-04-21T12:00:00.000Z",
+        created_at: "2026-04-21T12:00:00.000Z",
+      } as any),
+    ).toBe("missing")
   })
 
   it("treats published blips without a future publish_at as publicly visible", () => {

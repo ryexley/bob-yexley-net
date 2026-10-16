@@ -47,9 +47,9 @@ export function UserMenu() {
   const [hasMounted, setHasMounted] = createSignal(false)
   const [mobileMenuContentElement, setMobileMenuContentElement] =
     createSignal<HTMLElement | null>(null)
-  let mobileMenuTextInputCleanupHandle:
-    | ReturnType<typeof clearActiveTextInputSession>
-    | null = null
+  let mobileMenuTextInputCleanupHandle: ReturnType<
+    typeof clearActiveTextInputSession
+  > | null = null
   const useDrawerMenu = createMemo(
     () => hasMounted() && viewport.width() <= MOBILE_MENU_MAX_WIDTH,
   )
@@ -87,7 +87,10 @@ export function UserMenu() {
 
       const blurFocusedDrawerElement = () => {
         const activeElement = window.document.activeElement
-        if (activeElement instanceof HTMLElement && content.contains(activeElement)) {
+        if (
+          activeElement instanceof HTMLElement &&
+          content.contains(activeElement)
+        ) {
           activeElement.blur()
         }
       }
@@ -167,7 +170,7 @@ export function UserMenu() {
 
     if (isSuperuser()) {
       items.push({
-        icon: "shieldUser",
+        icon: "shield",
         label: tr("admin"),
         onClick: openAdminHome,
       })
@@ -175,13 +178,7 @@ export function UserMenu() {
 
     if (isAdmin()) {
       items.push({
-        iconNode: (
-          <BlipIcon
-            size="1.125rem"
-            class="menu-blip-icon"
-            blipColor="var(--menu-blip-accent)"
-          />
-        ),
+        iconNode: <BlipIcon />,
         label: tr("blip"),
         onClick: openBlipEditor,
       })
@@ -243,23 +240,24 @@ export function UserMenu() {
             }}
             showClose={false}>
             <Stack
-              class="user-menu-drawer-shell"
+              class="shell"
               style={mobileMenuBackground()}
               gap="0.75rem">
               <div class="handle" />
-              <div class="user-menu-drawer-summary">{renderMenuHeader()}</div>
+              <div class="summary">{renderMenuHeader()}</div>
               <Stack
-                class="user-menu-drawer-items"
+                class="items"
                 gap="0.5rem">
                 <For each={menuItems()}>
                   {item => (
                     <button
                       type="button"
-                      class="user-menu-drawer-item"
+                      class="item"
                       onClick={() => {
                         void item.onClick()
                       }}>
-                      {item.iconNode || (item.icon ? <Icon name={item.icon} /> : null)}
+                      {item.iconNode ||
+                        (item.icon ? <Icon name={item.icon} /> : null)}
                       <span>{item.label}</span>
                     </button>
                   )}

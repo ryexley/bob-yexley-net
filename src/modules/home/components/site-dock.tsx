@@ -41,7 +41,8 @@ export function SiteDock() {
   const homeCurrent = (): "page" | undefined =>
     isHomePath(location.pathname) ? "page" : undefined
   const blipsCurrent = (): "page" | undefined =>
-    location.pathname === pages.blips || location.pathname.startsWith(`${pages.blips}/`)
+    location.pathname === pages.blips ||
+    location.pathname.startsWith(`${pages.blips}/`)
       ? "page"
       : undefined
   const composerOpen = () => Boolean(composer?.activeKind())
@@ -100,54 +101,49 @@ export function SiteDock() {
         href={pages.blips}
         aria-label={tr("blips")}
         aria-current={blipsCurrent()}>
-        <BlipIcon
-          size="1.375rem"
-          class="site-dock-blip-icon"
-        />
+        <BlipIcon size="1.375rem" />
       </A>
-      <span class="site-dock-menu-wrap">
-      <Drawer
-        side="bottom"
-        open={menuOpen()}
-        onOpenChange={setMenuOpen}
-        class="user-menu-drawer site-dock-drawer"
-        triggerClass="item menu"
-        triggerIcon="menu"
-        triggerIconClass="site-dock-menu-icon"
-        triggerAriaLabel={tr("menu")}
-        showClose={false}
-        contentProps={{
-          onOpenAutoFocus: event => event.preventDefault(),
-        }}>
-        <Stack
-          class="user-menu-drawer-shell"
-          style={menuBackground()}
-          gap="0.75rem">
-          <div class="handle" />
+      <span class="menu-wrap">
+        <Drawer
+          side="bottom"
+          open={menuOpen()}
+          onOpenChange={setMenuOpen}
+          class="user-menu-drawer site-dock-drawer"
+          triggerClass="item menu"
+          triggerIcon="menu"
+          triggerAriaLabel={tr("menu")}
+          showClose={false}
+          contentProps={{
+            onOpenAutoFocus: event => event.preventDefault(),
+          }}>
           <Stack
-            class="user-menu-drawer-items"
-            gap="0.5rem">
-            <For each={navLinks()}>
-              {link => (
-                <button
-                  type="button"
-                  onClick={() => handleDrawerLinkClick(link)}
-                  class={cx("user-menu-drawer-item", { active: link.isActive })}>
-                  {link.path === pages.blips ? (
-                    <BlipIcon
-                      size="1.375rem"
-                      class="menu-blip-icon"
-                    />
-                  ) : (
-                    <Icon name={navIconByPath[link.path] ?? "chevronRight"} />
-                  )}
-                  <span>{link.label}</span>
-                </button>
-              )}
-            </For>
+            class="shell"
+            style={menuBackground()}
+            gap="0.75rem">
+            <div class="handle" />
+            <Stack
+              class="items"
+              gap="0.5rem">
+              <For each={navLinks()}>
+                {link => (
+                  <button
+                    type="button"
+                    onClick={() => handleDrawerLinkClick(link)}
+                    class={cx("item", {
+                      active: link.isActive,
+                    })}>
+                    {link.path === pages.blips ? (
+                      <BlipIcon />
+                    ) : (
+                      <Icon name={navIconByPath[link.path] ?? "chevronRight"} />
+                    )}
+                    <span>{link.label}</span>
+                  </button>
+                )}
+              </For>
+            </Stack>
           </Stack>
-        </Stack>
-      </Drawer>
+        </Drawer>
       </span>
     </nav>
   )

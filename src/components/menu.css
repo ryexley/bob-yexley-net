@@ -114,11 +114,6 @@
         .icon {
           color: var(--colors-mono-00);
         }
-
-        .menu-blip-icon {
-          --menu-blip-accent: var(--colors-scarlett);
-          color: var(--colors-mono-00);
-        }
       }
 
       .icon {
@@ -126,16 +121,16 @@
         flex: 0 0 1.25rem;
         width: 1.25rem;
         height: 1.25rem;
-      }
 
-      .menu-blip-icon {
-        --menu-blip-accent: var(--colors-success);
-        color: var(--colors-mono-07);
-        display: block;
-        flex: 0 0 1.25rem;
-        width: 1.25rem;
-        height: 1.25rem;
-        transform: translateX(0.0625rem);
+        &.blip-icon {
+          color: var(--colors-mono-07);
+          display: block;
+          transform: translateX(0.0625rem);
+
+          .blip-icon-accent {
+            stroke: var(--colors-success);
+          }
+        }
       }
 
       .indicator {
