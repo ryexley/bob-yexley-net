@@ -1,4 +1,11 @@
-import { createEffect, createMemo, onCleanup, splitProps } from "solid-js"
+import {
+  createEffect,
+  createMemo,
+  createSignal,
+  onCleanup,
+  onMount,
+  splitProps,
+} from "solid-js"
 import { render } from "solid-js/web"
 import { AudioPlayer } from "@/components/audio-player"
 import { clsx as cx } from "@/util"
@@ -36,6 +43,7 @@ export function MarkdownRenderer(props: MarkdownRendererProps) {
   ])
   let containerRef: HTMLDivElement | undefined
   let mountGeneration = 0
+  const [canMount, setCanMount] = createSignal(false)
 
   const html = createMemo(() => {
     return parseBlipMarkdown(local.content || "")
@@ -50,7 +58,18 @@ export function MarkdownRenderer(props: MarkdownRendererProps) {
     unmountMarkdownScriptureReferences(containerRef)
   }
 
+  // `render()` into a mount point while Solid is still hydrating the route
+  // steals hydration keys. On iPhone that shows up as `t is not a function`
+  // on /blips, where every card mounts inline media after a streamed fetch.
+  onMount(() => {
+    setCanMount(true)
+  })
+
   createEffect(() => {
+    if (!canMount()) {
+      return
+    }
+
     const generation = ++mountGeneration
     html()
     const media = local.media
