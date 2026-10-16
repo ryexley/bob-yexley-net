@@ -168,7 +168,11 @@ describe("media embed layout commands", () => {
       .filter(option => option.isActive?.(ctx))
       .map(option => option.key)
 
-    expect(active).toEqual(["media-size-50", "media-align-center"])
+    expect(active).toEqual([
+      "media-size-50",
+      "media-align-center",
+      "media-lightbox",
+    ])
   })
 
   it("active size follows the selection override", () => {
@@ -189,7 +193,11 @@ describe("media embed layout commands", () => {
       .filter(option => option.isActive?.(resolved))
       .map(option => option.key)
 
-    expect(active).toEqual(["media-size-25", "media-align-right"])
+    expect(active).toEqual([
+      "media-size-25",
+      "media-align-right",
+      "media-lightbox",
+    ])
   })
 
   it("toggles lightbox on the selected embed", () => {

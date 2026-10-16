@@ -296,6 +296,27 @@
       width: 100%;
     }
 
+    /* Reader stills size the frame from the image aspect ratio and paint the
+       bitmap once inside it. `height: auto` on `.media` would otherwise fight
+       the absolute fill and Safari lays the same image out a second time. */
+    .personal-cloud-image {
+      display: block;
+      height: auto;
+      min-height: 0;
+      min-width: 0;
+      width: 100%;
+    }
+
+    .personal-cloud-image-img.media {
+      height: 100%;
+      inset: 0;
+      margin: 0;
+      max-height: none;
+      object-fit: contain;
+      position: absolute;
+      width: 100%;
+    }
+
     .overlay {
       align-items: center;
       background: rgb(0 0 0 / 0.45);
