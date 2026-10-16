@@ -7,6 +7,10 @@ import {
 } from "@/modules/blips/data/schema"
 import type { BlipReactionSummary } from "@/modules/blips/data/reactions-schema"
 import type { TagWithCount } from "@/modules/blips/data/tags-schema"
+import {
+  classifyBlipAvailability,
+  type BlipAvailability,
+} from "@/modules/blips/util"
 
 type ViewTagRow = {
   id: string
@@ -817,6 +821,59 @@ export const getBlipGraph = query(async (
     }),
   )
 }, "blip-graph")
+
+const BLIP_AVAILABILITY_SELECT =
+  "parent_id, blip_type, published, publish_at, created_at"
+
+export const peekBlipAvailability = async (
+  supabase: SupabaseClient,
+  id: string,
+): Promise<BlipAvailability> => {
+  const { data, error } = await supabase
+    .from("blips")
+    .select(BLIP_AVAILABILITY_SELECT)
+    .eq("id", id)
+    .maybeSingle()
+
+  if (error || !data) {
+    return "missing"
+  }
+
+  return classifyBlipAvailability(
+    data as Pick<
+      Blip,
+      "parent_id" | "blip_type" | "published" | "publish_at" | "created_at"
+    >,
+  )
+}
+
+/**
+ * Privileged peek used when RLS hides a row from the visitor. Only reports
+ * whether a published root blip is scheduled; drafts and missing ids stay
+ * "missing" so we do not leak unpublished content.
+ */
+export const getBlipAvailability = query(
+  async (id: string): Promise<BlipAvailability> => {
+    "use server"
+
+    return withQueryMetrics(
+      "getBlipAvailability",
+      { id },
+      async () => {
+        try {
+          const { getAdminClient } = await import("@/lib/vendor/supabase/admin")
+          return peekBlipAvailability(getAdminClient(), id)
+        } catch {
+          return "missing"
+        }
+      },
+      result => ({
+        availability: result,
+      }),
+    )
+  },
+  "blip-availability",
+)
 
 const PUBLIC_TAG_COUNT_PAGE_SIZE = 1000
 

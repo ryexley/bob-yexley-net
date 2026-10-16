@@ -56,6 +56,28 @@
       font-size: 1rem;
     }
   }
+
+  .unavailable {
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 3rem 1rem 2rem;
+    text-align: center;
+
+    .icon {
+      color: var(--colors-info);
+      font-size: 2.5rem;
+    }
+
+    p {
+      color: var(--colors-mono-09);
+      font-size: 1.05rem;
+      line-height: 1.4;
+      margin: 0;
+      max-width: 22rem;
+    }
+  }
 }
 
 .blip-detail-container {

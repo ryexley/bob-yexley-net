@@ -37,6 +37,7 @@ import { REACTION_ERROR_I18N_KEY } from "@/modules/blips/data/errors"
 import {
   BLIP_TYPES,
   blipStore,
+  getBlipAvailability,
   getBlipGraph,
   getTagCovers,
   tagStore,
@@ -166,6 +167,9 @@ export function BlipView() {
   const blipGraphQuery = createAsync(() =>
     getBlipGraph(params.id, commentVisibilityViewerKey()),
   )
+  const blipAvailabilityQuery = createAsync(() =>
+    getBlipAvailability(params.id),
+  )
   // `.latest` rather than calling the accessor. Both read identically until the
   // query first resolves — on the server and on a cold load they still suspend,
   // which async SSR for this route depends on — but afterwards `.latest` keeps
@@ -186,12 +190,39 @@ export function BlipView() {
     const fromStore = store.getById(params.id)
     return fromStore ?? blipQuery() ?? null
   })
+  const isScheduledUnavailable = createMemo(() => {
+    if (blip()) {
+      return false
+    }
 
-  // Set 404 status during SSR when blip is definitively not found
-  // Only set 404 if query has resolved (not undefined) AND result is null
-  // blipGraphQuery.latest returns undefined while loading, then the result or null
+    return (
+      blipGraphQuery.latest === null &&
+      blipAvailabilityQuery.latest === "scheduled"
+    )
+  })
+  const isDetailPending = createMemo(() => {
+    if (blip()) {
+      return false
+    }
+
+    return (
+      blipGraphQuery.latest === undefined ||
+      (blipGraphQuery.latest === null &&
+        blipAvailabilityQuery.latest === undefined)
+    )
+  })
+
+  // Set 404 status during SSR when blip is definitively not found.
+  // Scheduled-but-not-live roots stay 200 so a shared link can render a
+  // friendly unavailable page instead of a hard not-found.
   const query = blipGraphQuery.latest
-  if (query !== undefined && query === null) {
+  const availability = blipAvailabilityQuery.latest
+  if (
+    query !== undefined &&
+    query === null &&
+    availability !== undefined &&
+    availability !== "scheduled"
+  ) {
     const event = getRequestEvent()
     if (event && event.response) {
       event.response.status = 404
@@ -1100,12 +1131,13 @@ export function BlipView() {
 
   // Set 404 status when blip is not found
   createEffect(() => {
-    const query = blipQuery()
-    if (query === null) {
-      const event = getRequestEvent()
-      if (event && event.response) {
-        event.response.status = 404
-      }
+    if (blip() || isScheduledUnavailable() || isDetailPending()) {
+      return
+    }
+
+    const event = getRequestEvent()
+    if (event && event.response) {
+      event.response.status = 404
     }
   })
 
@@ -1177,6 +1209,15 @@ export function BlipView() {
           modifiedTime={modifiedTime()}
         />
       </Show>
+      <Show when={isScheduledUnavailable()}>
+        <Seo
+          title={formatPageTitle(tr("unavailable.pageTitle"))}
+          description={tr("unavailable.scheduled")}
+          path={location.pathname}
+          type="website"
+          noindex={true}
+        />
+      </Show>
       {/* BlogPosting JSON-LD renders client-side due to SolidJS SSR limitations with
           script tags in routes with async data dependencies. Google reads client-side 
           JSON-LD, so this is acceptable for SEO. Homepage JSON-LD renders in SSR. */}
@@ -1205,9 +1246,21 @@ export function BlipView() {
             <Show
               when={blip()}
               fallback={
-                <p class="blip-detail-status">
-                  {blipQuery() === undefined ? tr("loading") : tr("notFound")}
-                </p>
+                <Show
+                  when={isScheduledUnavailable()}
+                  fallback={
+                    <p class="blip-detail-status">
+                      {isDetailPending() ? tr("loading") : tr("notFound")}
+                    </p>
+                  }>
+                  <div class="unavailable">
+                    <Icon
+                      name="clock"
+                      title={tr("labels.scheduled")}
+                    />
+                    <p>{tr("unavailable.scheduled")}</p>
+                  </div>
+                </Show>
               }>
               {data => (
                 <>
