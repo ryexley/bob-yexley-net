@@ -6,6 +6,12 @@ peerDependencyRules:
 # pnpm v11 defaults to 1440 (24h); disable for local/solo dev
 minimumReleaseAge: 0
 
+# Solid's <Dynamic component="tag"> calls getNextElement() with no template
+# while hydrating, so a hydration-key miss throws `template is not a function`
+# (minified: `t is not a function`). See src/test/dynamic-hydration.spec.tsx.
+patchedDependencies:
+  solid-js@1.9.15: patches/solid-js@1.9.15.patch
+
 allowBuilds:
   "@parcel/watcher": true
   supabase: true
