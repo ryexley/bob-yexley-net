@@ -78,6 +78,23 @@ describe("InlineBlipMedia layout", () => {
     expect(embed?.getAttribute("data-media-size")).toBe("100")
     expect(embed?.getAttribute("data-media-align")).toBe("left")
   })
+
+  it("shows a still immediately instead of fading it in", () => {
+    render(() => (
+      <InlineBlipMedia
+        embed={{
+          key: "media/u/b/shot",
+          type: "image",
+          mime: "image/jpeg",
+        }}
+      />
+    ))
+
+    const image = document.querySelector(".media") as HTMLImageElement
+    expect(image).toBeTruthy()
+    expect(image.classList.contains("opacity-0")).toBe(false)
+    expect(image.getAttribute("loading")).toBe("eager")
+  })
 })
 
 describe("InlineBlipMedia lightbox", () => {

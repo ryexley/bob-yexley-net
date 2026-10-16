@@ -72,8 +72,6 @@ export function MarkdownRenderer(props: MarkdownRendererProps) {
 
     const generation = ++mountGeneration
     html()
-    const media = local.media
-    const onOpenMedia = local.onOpenMedia
 
     queueMicrotask(() => {
       if (generation !== mountGeneration || !containerRef) {
@@ -84,13 +82,16 @@ export function MarkdownRenderer(props: MarkdownRendererProps) {
         render(() => <AudioPlayer {...playerProps} />, target),
       )
 
+      // Read `media` / `onOpenMedia` inside the live tree so a later media
+      // fetch updates the embed in place. Tracking them in this effect would
+      // unmount and remount the image (list cards load rows after first paint).
       mountMarkdownMediaEmbeds(containerRef, (embed, target) =>
         render(
           () => (
             <InlineBlipMedia
               embed={embed}
-              record={media?.find(row => row.storage_key === embed.key)}
-              onOpen={onOpenMedia}
+              record={local.media?.find(row => row.storage_key === embed.key)}
+              onOpen={local.onOpenMedia}
             />
           ),
           target,
