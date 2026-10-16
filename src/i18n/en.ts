@@ -485,6 +485,10 @@ export const en = {
         metaDescription: "Blip",
         loading: "Loading blip...",
         notFound: "Blip not found.",
+        unavailable: {
+          pageTitle: "Not available yet",
+          scheduled: "This post isn't available yet. Check back later.",
+        },
         labels: {
           scheduled: "Scheduled",
           scheduledTooltip: "Scheduled to be published on {timestamp}",

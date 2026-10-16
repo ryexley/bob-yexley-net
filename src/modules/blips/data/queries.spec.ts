@@ -1,9 +1,10 @@
-import { describe, expect, it } from "vitest"
+import { describe, expect, it, vi } from "vitest"
 import { BLIP_TYPES } from "@/modules/blips/data/schema"
 import {
   buildBlipReactionStates,
   isMissingSlugColumnError,
   mapViewUpdateRows,
+  peekBlipAvailability,
   selectWithSlugFallback,
 } from "@/modules/blips/data/queries"
 
@@ -124,6 +125,69 @@ describe("blip queries", () => {
         },
       ],
     })
+  })
+})
+
+describe("peekBlipAvailability", () => {
+  const createClient = (result: { data: unknown; error: unknown }) =>
+    ({
+      from: () => ({
+        select: () => ({
+          eq: () => ({
+            maybeSingle: async () => result,
+          }),
+        }),
+      }),
+    }) as any
+
+  it("returns scheduled for a published future root blip", async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date("2026-04-22T12:00:00.000Z"))
+
+    await expect(
+      peekBlipAvailability(
+        createClient({
+          data: {
+            parent_id: null,
+            blip_type: BLIP_TYPES.ROOT,
+            published: true,
+            publish_at: "2026-04-23T12:00:00.000Z",
+            created_at: "2026-04-21T12:00:00.000Z",
+          },
+          error: null,
+        }),
+        "blip-1",
+      ),
+    ).resolves.toBe("scheduled")
+
+    vi.useRealTimers()
+  })
+
+  it("returns missing when the row is absent, unpublished, or errored", async () => {
+    await expect(
+      peekBlipAvailability(createClient({ data: null, error: null }), "blip-1"),
+    ).resolves.toBe("missing")
+    await expect(
+      peekBlipAvailability(
+        createClient({ data: null, error: { message: "denied" } }),
+        "blip-1",
+      ),
+    ).resolves.toBe("missing")
+    await expect(
+      peekBlipAvailability(
+        createClient({
+          data: {
+            parent_id: null,
+            blip_type: BLIP_TYPES.ROOT,
+            published: false,
+            publish_at: "2026-04-23T12:00:00.000Z",
+            created_at: "2026-04-21T12:00:00.000Z",
+          },
+          error: null,
+        }),
+        "blip-1",
+      ),
+    ).resolves.toBe("missing")
   })
 })
 

@@ -101,6 +101,27 @@ export function isBlipPubliclyVisible(
   return !isBlipScheduled(blip)
 }
 
+export type BlipAvailability = "scheduled" | "missing"
+
+type BlipAvailabilityRow = Pick<
+  Blip,
+  "parent_id" | "blip_type" | "published" | "publish_at" | "created_at"
+>
+
+export function classifyBlipAvailability(
+  row: BlipAvailabilityRow | null | undefined,
+): BlipAvailability {
+  if (!row) {
+    return "missing"
+  }
+
+  if (row.parent_id !== null || row.blip_type !== BLIP_TYPES.ROOT) {
+    return "missing"
+  }
+
+  return isBlipScheduled(row) ? "scheduled" : "missing"
+}
+
 /** Hide unpublished textless updates (e.g. media FK stubs before the author saves). */
 export function isUpdateActivityVisible(
   update: Pick<Blip, "published" | "content">,
