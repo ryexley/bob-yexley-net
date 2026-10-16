@@ -1,0 +1,26 @@
+diff --git a/web/dist/dev.js b/web/dist/dev.js
+index f0c31f4747180be4797e84a6f7c4d61cafdd2531..49df77ef9aa3052b4f2a5aee1834f74dfa91fb4e 100644
+--- a/web/dist/dev.js
++++ b/web/dist/dev.js
+@@ -769,7 +769,7 @@ function createDynamic(component, props) {
+         return untrack(() => component(props));
+       case "string":
+         const isSvg = SVGElements.has(component);
+-        const el = sharedConfig.context ? getNextElement() : createElement(component, isSvg, untrack(() => props.is));
++        const el = sharedConfig.context ? getNextElement(() => createElement(component, isSvg, untrack(() => props.is))) : createElement(component, isSvg, untrack(() => props.is));
+         spread(el, props, isSvg);
+         return el;
+     }
+diff --git a/web/dist/web.js b/web/dist/web.js
+index 92e54bdd17e5b502e7eb20477f00b50452281dbf..fce46bf1fe0b7fa1f69354308c7b8d0757dcf21a 100644
+--- a/web/dist/web.js
++++ b/web/dist/web.js
+@@ -758,7 +758,7 @@ function createDynamic(component, props) {
+         return untrack(() => component(props));
+       case "string":
+         const isSvg = SVGElements.has(component);
+-        const el = sharedConfig.context ? getNextElement() : createElement(component, isSvg, untrack(() => props.is));
++        const el = sharedConfig.context ? getNextElement(() => createElement(component, isSvg, untrack(() => props.is))) : createElement(component, isSvg, untrack(() => props.is));
+         spread(el, props, isSvg);
+         return el;
+     }
