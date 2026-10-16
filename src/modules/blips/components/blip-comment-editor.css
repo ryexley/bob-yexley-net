@@ -265,16 +265,16 @@
     }
 
     .blip-editor-control-pill {
-      .blip-editor-control-pill-content {
-        padding: 0.625rem 0.9375rem 0.625rem 0.75rem;
-      }
-
       .icon-button.xs {
         --size: 2.875rem;
 
         .icon {
           font-size: 1.5rem;
         }
+      }
+
+      .blip-editor-control-pill-right {
+        gap: 0.5rem;
       }
     }
 
@@ -291,10 +291,6 @@
       .icon {
         font-size: 1.125rem;
       }
-    }
-
-    .blip-editor-control-pill-right {
-      gap: 0.5rem;
     }
 
     .blip-editor-status-slot {
