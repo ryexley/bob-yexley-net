@@ -146,6 +146,8 @@ function InlineImage(props: {
       intrinsicWidth={props.width}
       intrinsicHeight={props.height}
       objectFit="contain"
+      eager
+      fadeIn={false}
       alt=""
       class={props.interactive ? undefined : "frame"}
       imageClass="media"
