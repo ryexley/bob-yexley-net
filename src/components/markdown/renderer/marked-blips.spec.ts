@@ -174,6 +174,16 @@ ${audio}
     expect(props).toContain('"lightbox":true')
   })
 
+  it("turns lightbox on for an image embed that omits the flag", () => {
+    const html = parseBlipMarkdown(
+      '{media:{ key: "media/u/b/sc-1", type: "image" }}',
+    )
+    const props = decodeURIComponent(
+      html.match(/data-media-embed-props="([^"]+)"/)?.[1] ?? "",
+    )
+    expect(props).toContain('"lightbox":true')
+  })
+
   it("renders media embeds when followed by more markdown content", () => {
     const html = parseBlipMarkdown(`A screenshot:
 

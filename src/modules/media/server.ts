@@ -373,9 +373,8 @@ export async function deleteObject(
  */
 /**
  * Read an `-original.<ext>` object from R2, generate the WebP variants with
- * sharp and write them back beside it. Shared by `processMedia` (fresh
- * uploads) and `reprocessFailedMedia` (backfilling rows whose variants never
- * got generated). Throws on any R2 or decode failure, including `NoSuchKey`.
+ * sharp and write them back beside it. Used by `processMedia` for fresh
+ * uploads. Throws on any R2 or decode failure, including `NoSuchKey`.
  * Callers own auth and key-ownership checks.
  */
 export async function generateVariants(

@@ -39,6 +39,9 @@ export function mountMarkdownMediaEmbeds(
     if (!props) {
       continue
     }
+    if (node instanceof HTMLElement) {
+      node.replaceChildren()
+    }
     disposers.push(renderEmbed(props, node))
   }
 

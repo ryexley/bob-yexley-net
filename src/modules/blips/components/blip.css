@@ -77,9 +77,8 @@
         padding-bottom: 0.75rem;
       }
 
-      .media-embed .media {
-        max-height: 6rem;
-      }
+      /* Inline stills use the card width, same as the detail page. The card
+         clips the rest. A 6rem cap letterboxed them into a small thumbnail. */
 
       /* GIFs keep their aspect ratio in the clipped card — width:100% plus
          max-height squashes the frame. Shrink to the 6rem cap instead. */

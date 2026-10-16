@@ -97,6 +97,23 @@ describe("InlineBlipMedia lightbox", () => {
     created_at: "2026-06-20T00:00:00.000Z",
   }
 
+  it("opens the lightbox when the flag is omitted", () => {
+    const onOpen = vi.fn()
+    render(() => (
+      <InlineBlipMedia
+        embed={{
+          key: "media/u/b/shot",
+          type: "image",
+        }}
+        record={record as never}
+        onOpen={onOpen}
+      />
+    ))
+
+    fireEvent.click(screen.getByRole("button", { name: "View full image" }))
+    expect(onOpen).toHaveBeenCalledWith(record)
+  })
+
   it("does not open a lightbox when the toggle is off", () => {
     const onOpen = vi.fn()
     render(() => (
@@ -104,6 +121,7 @@ describe("InlineBlipMedia lightbox", () => {
         embed={{
           key: "media/u/b/shot",
           type: "image",
+          lightbox: false,
         }}
         record={record as never}
         onOpen={onOpen}

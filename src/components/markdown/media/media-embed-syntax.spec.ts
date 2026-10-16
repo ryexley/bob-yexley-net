@@ -95,6 +95,7 @@ After`
         key: "media/u/b/sc-1",
         type: "image",
         mime: "image/png",
+        lightbox: true,
       }),
     )
     expect(normalized).not.toContain("{\nmedia:")
@@ -115,6 +116,7 @@ describe("coerceMediaEmbedProps", () => {
     expect(coerceMediaEmbedProps({ key: "a", type: "image" })).toEqual({
       key: "a",
       type: "image",
+      lightbox: true,
     })
     expect(coerceMediaEmbedProps({ key: "a", type: "gif" })?.type).toBe("gif")
     expect(coerceMediaEmbedProps({ key: "a", type: "video" })?.type).toBe(
@@ -135,6 +137,7 @@ describe("coerceMediaEmbedProps", () => {
       type: "image",
       size: "50",
       align: "center",
+      lightbox: true,
     })
     expect(
       coerceMediaEmbedProps({
@@ -149,7 +152,7 @@ describe("coerceMediaEmbedProps", () => {
     })
   })
 
-  it("persists lightbox only when enabled", () => {
+  it("turns lightbox on when the flag is missing and keeps an explicit off", () => {
     expect(
       coerceMediaEmbedProps({
         key: "a",
@@ -165,11 +168,22 @@ describe("coerceMediaEmbedProps", () => {
       coerceMediaEmbedProps({
         key: "a",
         type: "image",
+      }),
+    ).toEqual({
+      key: "a",
+      type: "image",
+      lightbox: true,
+    })
+    expect(
+      coerceMediaEmbedProps({
+        key: "a",
+        type: "image",
         lightbox: false,
       }),
     ).toEqual({
       key: "a",
       type: "image",
+      lightbox: false,
     })
     expect(
       coerceMediaEmbedProps({
@@ -212,6 +226,13 @@ describe("canonicalizeMediaEmbed", () => {
         lightbox: true,
       }),
     ).toBe('{media:{key:"media/u/b/a",type:"image",lightbox:true}}')
+    expect(
+      canonicalizeMediaEmbed({
+        key: "media/u/b/a",
+        type: "image",
+        lightbox: false,
+      }),
+    ).toBe('{media:{key:"media/u/b/a",type:"image",lightbox:false}}')
   })
 })
 
@@ -322,7 +343,7 @@ describe("canonicalizeMediaEmbedBlock", () => {
         raw: `{media:{ key : "k" , type : "image" }}`,
         objectLiteral: `{ key : "k" , type : "image" }`,
       }),
-    ).toBe(`{media:{key:"k",type:"image"}}`)
+    ).toBe(`{media:{key:"k",type:"image",lightbox:true}}`)
   })
 
   it("preserves an unrecognized block by minifying it instead of dropping it", () => {
@@ -389,7 +410,7 @@ describe("media embed editor attributes", () => {
       mimeType: "",
       size: "100",
       align: "left",
-      lightbox: false,
+      lightbox: true,
     })
   })
 
@@ -458,10 +479,11 @@ describe("media embed editor attributes", () => {
       "data-media-mime": "image/jpeg",
       "data-media-size": "50",
       "data-media-align": "right",
+      "data-media-lightbox": "false",
     })
   })
 
-  it("emits the lightbox attribute only when enabled", () => {
+  it("emits the lightbox attribute for both on and off", () => {
     const data = mediaEmbedDataAttributes({
       key: "k",
       mediaType: "image",
@@ -472,6 +494,16 @@ describe("media embed editor attributes", () => {
     })
 
     expect(data["data-media-lightbox"]).toBe("true")
+
+    const off = mediaEmbedDataAttributes({
+      key: "k",
+      mediaType: "image",
+      mimeType: "",
+      size: "100",
+      align: "left",
+      lightbox: false,
+    })
+    expect(off["data-media-lightbox"]).toBe("false")
   })
 
   it("round-trips attributes back off a rendered element", () => {
