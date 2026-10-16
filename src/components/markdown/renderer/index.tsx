@@ -35,22 +35,29 @@ export function MarkdownRenderer(props: MarkdownRendererProps) {
     "onOpenMedia",
   ])
   let containerRef: HTMLDivElement | undefined
+  let mountGeneration = 0
 
   const html = createMemo(() => {
     return parseBlipMarkdown(local.content || "")
   })
 
+  const unmountInteractive = () => {
+    if (!containerRef) {
+      return
+    }
+    unmountMarkdownAudioPlayers(containerRef)
+    unmountMarkdownMediaEmbeds(containerRef)
+    unmountMarkdownScriptureReferences(containerRef)
+  }
+
   createEffect(() => {
+    const generation = ++mountGeneration
     html()
     const media = local.media
     const onOpenMedia = local.onOpenMedia
 
-    if (!containerRef) {
-      return
-    }
-
     queueMicrotask(() => {
-      if (!containerRef) {
+      if (generation !== mountGeneration || !containerRef) {
         return
       }
 
@@ -89,20 +96,14 @@ export function MarkdownRenderer(props: MarkdownRendererProps) {
     })
 
     onCleanup(() => {
-      if (containerRef) {
-        unmountMarkdownAudioPlayers(containerRef)
-        unmountMarkdownMediaEmbeds(containerRef)
-        unmountMarkdownScriptureReferences(containerRef)
-      }
+      mountGeneration += 1
+      unmountInteractive()
     })
   })
 
   onCleanup(() => {
-    if (containerRef) {
-      unmountMarkdownAudioPlayers(containerRef)
-      unmountMarkdownMediaEmbeds(containerRef)
-      unmountMarkdownScriptureReferences(containerRef)
-    }
+    mountGeneration += 1
+    unmountInteractive()
   })
 
   return (

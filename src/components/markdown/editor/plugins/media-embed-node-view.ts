@@ -84,9 +84,6 @@ const applyEmbedDom = (
   for (const [name, value] of Object.entries(data)) {
     root.setAttribute(name, value)
   }
-  if (!attrs.lightbox) {
-    root.removeAttribute("data-media-lightbox")
-  }
   if (preview.status) {
     root.setAttribute("data-status", preview.status)
   } else {

@@ -11,7 +11,11 @@ export type MediaEmbedAlign = "left" | "center" | "right"
 export const MEDIA_EMBED_SIZE_DEFAULT: MediaEmbedSize = "100"
 export const MEDIA_EMBED_ALIGN_DEFAULT: MediaEmbedAlign = "left"
 
-export const MEDIA_EMBED_LIGHTBOX_DEFAULT = false
+/**
+ * Inline images open in the lightbox unless the author turns that off.
+ * Omitted `lightbox` on existing posts means on; `lightbox:false` is the opt-out.
+ */
+export const MEDIA_EMBED_LIGHTBOX_DEFAULT = true
 export const MEDIA_EMBED_NODE = "media_embed"
 
 export type MediaEmbedProps = {
@@ -197,7 +201,12 @@ export function canonicalizeMediaEmbed(embed: MediaEmbedProps): string {
     embed.align && embed.align !== MEDIA_EMBED_ALIGN_DEFAULT
       ? `,align:${JSON.stringify(embed.align)}`
       : ""
-  const lightbox = embed.lightbox ? ",lightbox:true" : ""
+  const lightbox =
+    embed.lightbox === false
+      ? ",lightbox:false"
+      : embed.lightbox
+        ? ",lightbox:true"
+        : ""
   return `{media:{key:${JSON.stringify(embed.key)},type:${JSON.stringify(embed.type)}${mime}${size}${align}${lightbox}}}`
 }
 
@@ -305,9 +314,17 @@ export function parseMediaEmbedLightbox(value: unknown): boolean {
   if (value === true || value === 1) {
     return true
   }
+  if (value === false || value === 0) {
+    return false
+  }
   if (typeof value === "string") {
     const trimmed = value.trim().toLowerCase()
-    return trimmed === "true" || trimmed === "1"
+    if (trimmed === "true" || trimmed === "1") {
+      return true
+    }
+    if (trimmed === "false" || trimmed === "0") {
+      return false
+    }
   }
   return MEDIA_EMBED_LIGHTBOX_DEFAULT
 }
@@ -335,8 +352,14 @@ export function coerceMediaEmbedProps(
   if (align !== MEDIA_EMBED_ALIGN_DEFAULT) {
     props.align = align
   }
-  if (lightbox) {
-    props.lightbox = true
+  // Only stills use the flag. A missing value means on, so posts that never
+  // wrote it still open. An explicit false is kept so the opt-out round-trips.
+  if (type === "image") {
+    if (lightbox) {
+      props.lightbox = true
+    } else if (raw.lightbox != null && raw.lightbox !== "") {
+      props.lightbox = false
+    }
   }
   return props
 }
@@ -400,9 +423,7 @@ export function mediaEmbedDataAttributes(
     "data-media-size": attrs.size,
     "data-media-align": attrs.align,
   }
-  if (attrs.lightbox) {
-    data["data-media-lightbox"] = "true"
-  }
+  data["data-media-lightbox"] = attrs.lightbox ? "true" : "false"
   return data
 }
 
