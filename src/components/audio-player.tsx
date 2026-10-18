@@ -1624,26 +1624,22 @@ export const AudioPlayer: Component<AudioPlayerProps> = rawProps => {
     if (!(root instanceof HTMLElement)) {
       return
     }
-    const icon = root.querySelector(".icon")
-    // Lucide icons are <svg class="icon"> — SVGElement, not HTMLElement.
-    if (!icon) {
+    const glyph = root.querySelector(".glyph")
+    if (!glyph) {
       return
     }
 
     const spinClass = direction === "back" ? "spin-back" : "spin-forward"
     const onEnd = () => {
-      icon.classList.remove(spinClass)
-      icon.style.transform = ""
-      icon.style.willChange = ""
-      icon.removeEventListener("animationend", onEnd)
+      glyph.classList.remove(spinClass)
+      glyph.removeEventListener("animationend", onEnd)
     }
 
-    icon.removeEventListener("animationend", onEnd)
-    icon.classList.remove(spinClass)
-    icon.style.transform = ""
+    glyph.removeEventListener("animationend", onEnd)
+    glyph.classList.remove(spinClass)
     requestAnimationFrame(() => {
-      icon.classList.add(spinClass)
-      icon.addEventListener("animationend", onEnd)
+      glyph.classList.add(spinClass)
+      glyph.addEventListener("animationend", onEnd)
     })
   }
 
