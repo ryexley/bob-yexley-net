@@ -19,7 +19,7 @@ import {
 import { getRequestEvent, isServer } from "solid-js/web"
 import { Seo } from "@/components/seo"
 import { JsonLd, createBlogPostingSchema } from "@/components/json-ld"
-import { deriveBlipTitle, deriveBlipDescription, formatPageTitle } from "@/modules/blips/seo"
+import { deriveBlipDescription, formatPageTitle, resolveBlipTitle } from "@/modules/blips/seo"
 import { Hashtag, Icon } from "@/components/icon"
 import { Button } from "@/components/button"
 import { MarkdownRenderer as Markdown } from "@/components/markdown/renderer"
@@ -312,8 +312,7 @@ export function BlipView() {
   }
   const updates = createMemo(() => getUpdatesForRoot(blip()?.id))
   const blipTitle = createMemo(() => {
-    const content = blip()?.content ?? ""
-    return content ? deriveBlipTitle(content) : "Blip"
+    return resolveBlipTitle(blip()) || "Blip"
   })
   const blipDescription = createMemo(() => {
     const content = blip()?.content ?? ""
