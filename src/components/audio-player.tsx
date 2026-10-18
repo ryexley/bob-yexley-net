@@ -1816,9 +1816,9 @@ export const AudioPlayer: Component<AudioPlayerProps> = rawProps => {
             <Icon name={playing() ? "pause" : "play"} />
           </KobalteButton>
           <IconButton
-            class="seek-action"
+            class="seek-action seek-forward"
             size="sm"
-            icon="skipForward"
+            icon="rotateCcw"
             aria-label={`Forward ${local.scrubSeconds} seconds`}
             onClick={seekForward}
             onMouseDown={e => replaySeekIconSpin(e, "forward")}
