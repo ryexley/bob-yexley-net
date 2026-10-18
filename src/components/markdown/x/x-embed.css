@@ -1,13 +1,14 @@
 .x-embed {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin: 1rem auto;
-  max-width: min(100%, 34.375rem);
+  background: transparent;
+  color-scheme: dark;
+  display: block;
+  margin: 1rem 0;
+  max-width: 100%;
   width: 100%;
 
   .fallback {
     color: var(--colors-links);
+    display: block;
     font-size: 0.875rem;
     text-align: center;
     text-decoration: underline;
@@ -15,22 +16,41 @@
   }
 
   .widget {
-    display: flex;
-    justify-content: center;
+    background: transparent;
+    border-radius: var(--radius-lg);
+    display: block;
     max-width: 100%;
     min-width: 0;
+    overflow: hidden;
     width: 100%;
+
+    iframe {
+      background: transparent !important;
+      border: 0;
+      color-scheme: dark;
+      display: block;
+      max-width: 100% !important;
+      width: 100% !important;
+    }
   }
 
   .twitter-tweet {
-    margin-left: auto;
-    margin-right: auto;
+    background: transparent !important;
+    margin: 0 !important;
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+}
+
+@media (min-width: 48rem) {
+  .x-embed {
+    max-width: 34.375rem;
   }
 }
 
 .x-embed.is-selected,
 .x-embed.ProseMirror-selectednode {
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-lg);
   outline: 0.125rem solid var(--colors-cool-blue);
   outline-offset: 0.25rem;
 }
