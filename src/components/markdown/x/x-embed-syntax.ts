@@ -309,21 +309,6 @@ export function parseXEmbedEditorAttrs(value: string): XEmbedProps | null {
   return parseXEmbedBlock(value) ?? parseXStatusUrl(value.trim())
 }
 
-/**
- * Same job as `normalizeMediaEmbedsInMarkdown`: stored embed markdown can
- * start with a leftover `<br />` or blank line from an older save. Drop
- * that prefix so the published page matches what the editor now writes.
- */
-export function normalizeXEmbedsInMarkdown(content: string): string {
-  return content
-    .replace(/^(?:<br\s*\/?>\s*)+/i, "")
-    .replace(/^(?:\r?\n)+(?=\{\s*x\s*:)/, "")
-    .replace(
-      /^(?:\r?\n)+(?=https?:\/\/(?:www\.)?(?:mobile\.)?(?:twitter|x)\.com\/)/i,
-      "",
-    )
-}
-
 export function xEmbedDataAttributes(embed: XEmbedProps) {
   const attrs: Record<string, string> = {
     "data-x-embed": "",
