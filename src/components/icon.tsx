@@ -85,7 +85,7 @@ export function Icon(props: IconProps) {
       role={local.title ? "img" : undefined}
       {...rest}>
       {local.title ? <title>{local.title}</title> : null}
-      {nodes()}
+      <g>{nodes()}</g>
     </svg>
   )
 }

@@ -243,42 +243,39 @@
       min-width: 0;
 
       .seek-action {
-        position: relative;
-
         .icon {
           color: var(--colors-info);
           display: block;
-          height: 1.5rem;
-          inset: 0;
-          line-height: 0;
-          margin: auto;
           overflow: visible;
-          position: absolute;
-          rotate: 0deg;
-          scale: 1 1;
-          transform: none;
-          transform-origin: 50% 50%;
           transition:
             color 250ms ease-in-out,
             opacity 250ms ease-in-out;
-          width: 1.5rem;
 
-          &.spin-back,
-          &.spin-forward {
+          /* Spin the shapes in SVG space, not the <svg> CSS box.
+             Safari shifts the replaced SVG when its own transform/rotate runs. */
+          > g {
+            rotate: 0deg;
+            scale: 1 1;
+            transform-box: view-box;
+            transform-origin: 50% 50%;
+          }
+
+          &.spin-back > g,
+          &.spin-forward > g {
             animation-duration: 420ms;
             animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
           }
 
-          &.spin-back {
+          &.spin-back > g {
             animation-name: audio-player-seek-spin-back;
           }
 
-          &.spin-forward {
+          &.spin-forward > g {
             animation-name: audio-player-seek-spin-forward;
           }
         }
 
-        &.seek-forward .icon {
+        &.seek-forward .icon > g {
           scale: -1 1;
         }
 
@@ -581,8 +578,8 @@
       }
     }
 
-    .transport .seek-action .icon.spin-back,
-    .transport .seek-action .icon.spin-forward {
+    .transport .seek-action .icon.spin-back > g,
+    .transport .seek-action .icon.spin-forward > g {
       animation: none;
     }
   }
