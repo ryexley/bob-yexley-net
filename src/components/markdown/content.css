@@ -419,7 +419,11 @@
     }
   }
 
-  .x-embed-mount {
+  /* Root blips keep the same breathing room as the audio player. Updates
+     override this to 0 so an embed-only update matches a text update. */
+  .x-embed-mount,
+  > .x-embed {
+    margin: 1rem 0;
     max-width: 100%;
     width: 100%;
   }
