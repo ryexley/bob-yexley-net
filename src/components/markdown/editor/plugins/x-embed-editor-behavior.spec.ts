@@ -1,9 +1,12 @@
 import { describe, expect, it } from "vitest"
-import { Schema } from "@milkdown/prose/model"
+import { Schema, type Node } from "@milkdown/prose/model"
 import { EditorState, TextSelection } from "@milkdown/prose/state"
 import {
+  deleteEmptyParagraphBeforeXEmbed,
   insertXEmbedFromText,
   insertXEmbedNodes,
+  leadingEmptyParagraphsBeforeXEmbedEnd,
+  xEmbedHygieneTransaction,
 } from "./x-embed-editor-behavior"
 import { X_EMBED_NODE } from "@/components/markdown/x/x-embed-syntax"
 
@@ -14,6 +17,12 @@ const schema = new Schema({
       group: "block",
       content: "inline*",
       toDOM: () => ["p", 0],
+    },
+    hard_break: {
+      inline: true,
+      group: "inline",
+      selectable: false,
+      toDOM: () => ["br"],
     },
     text: { group: "inline" },
     [X_EMBED_NODE]: {
@@ -74,14 +83,27 @@ describe("insertXEmbedFromText", () => {
   })
 })
 
+const paragraph = () => schema.nodes.paragraph.create()
+const embed = () =>
+  schema.nodes[X_EMBED_NODE].create({
+    url: "https://x.com/a/status/1",
+    id: "1",
+    handle: "a",
+  })
+
+const stateFrom = (nodes: Node[], cursor = 1): EditorState => {
+  const doc = schema.node("doc", null, nodes)
+  return EditorState.create({
+    schema,
+    doc,
+    selection: TextSelection.create(doc, cursor),
+  })
+}
+
 describe("insertXEmbedNodes", () => {
   it("replaces an empty paragraph", () => {
     let state = emptyDoc()
-    const node = schema.nodes[X_EMBED_NODE].create({
-      url: "https://x.com/a/status/1",
-      id: "1",
-      handle: "a",
-    })
+    const node = embed()
 
     insertXEmbedNodes(
       state,
@@ -92,5 +114,62 @@ describe("insertXEmbedNodes", () => {
     )
 
     expect(state.doc.child(0).type.name).toBe(X_EMBED_NODE)
+  })
+})
+
+describe("leadingEmptyParagraphsBeforeXEmbedEnd", () => {
+  it("reports the empty paragraphs sitting above an X embed", () => {
+    const doc = schema.node("doc", null, [paragraph(), paragraph(), embed()])
+    expect(leadingEmptyParagraphsBeforeXEmbedEnd(doc)).toBe(
+      paragraph().nodeSize * 2,
+    )
+  })
+
+  it("treats a hard-break-only line as empty", () => {
+    const brLine = schema.node("paragraph", null, [
+      schema.nodes.hard_break.create(),
+    ])
+    const doc = schema.node("doc", null, [brLine, embed()])
+    expect(leadingEmptyParagraphsBeforeXEmbedEnd(doc)).toBe(brLine.nodeSize)
+  })
+
+  it("leaves a leading empty paragraph that is not followed by an embed", () => {
+    const doc = schema.node("doc", null, [
+      paragraph(),
+      schema.node("paragraph", null, schema.text("hello")),
+      embed(),
+    ])
+    expect(leadingEmptyParagraphsBeforeXEmbedEnd(doc)).toBe(0)
+  })
+})
+
+describe("xEmbedHygieneTransaction", () => {
+  it("strips leading empty paragraphs and keeps a trailing one after the embed", () => {
+    const state = stateFrom([paragraph(), embed()])
+    const transaction = xEmbedHygieneTransaction(state)
+    expect(transaction).toBeTruthy()
+    const next = state.apply(transaction!)
+    expect(next.doc.childCount).toBe(2)
+    expect(next.doc.firstChild?.type.name).toBe(X_EMBED_NODE)
+    expect(next.doc.lastChild?.type.name).toBe("paragraph")
+    expect(next.doc.lastChild?.content.size).toBe(0)
+  })
+})
+
+describe("deleteEmptyParagraphBeforeXEmbed", () => {
+  it("deletes an empty paragraph immediately before an embed", () => {
+    let state = stateFrom([paragraph(), embed(), paragraph()], 1)
+    expect(
+      deleteEmptyParagraphBeforeXEmbed(state, tr => {
+        state = state.apply(tr)
+      }),
+    ).toBe(true)
+    expect(state.doc.firstChild?.type.name).toBe(X_EMBED_NODE)
+  })
+
+  it("does not delete the trailing paragraph after an embed", () => {
+    const node = embed()
+    const state = stateFrom([node, paragraph()], node.nodeSize + 1)
+    expect(deleteEmptyParagraphBeforeXEmbed(state)).toBe(false)
   })
 })
