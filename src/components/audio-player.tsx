@@ -1624,22 +1624,22 @@ export const AudioPlayer: Component<AudioPlayerProps> = rawProps => {
     if (!(root instanceof HTMLElement)) {
       return
     }
-    const glyph = root.querySelector(".glyph")
-    if (!glyph) {
+    const icon = root.querySelector(".icon")
+    if (!icon) {
       return
     }
 
     const spinClass = direction === "back" ? "spin-back" : "spin-forward"
     const onEnd = () => {
-      glyph.classList.remove(spinClass)
-      glyph.removeEventListener("animationend", onEnd)
+      icon.classList.remove(spinClass)
+      icon.removeEventListener("animationend", onEnd)
     }
 
-    glyph.removeEventListener("animationend", onEnd)
-    glyph.classList.remove(spinClass)
+    icon.removeEventListener("animationend", onEnd)
+    icon.classList.remove(spinClass)
     requestAnimationFrame(() => {
-      glyph.classList.add(spinClass)
-      glyph.addEventListener("animationend", onEnd)
+      icon.classList.add(spinClass)
+      icon.addEventListener("animationend", onEnd)
     })
   }
 

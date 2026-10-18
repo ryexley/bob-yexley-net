@@ -8,11 +8,6 @@
   touch-action: manipulation;
   transition: var(--transitions-primary);
 
-  .glyph {
-    display: flex;
-    line-height: 0;
-  }
-
   &:hover {
     background: rgba(var(--colors-mono-01-rgb), 0.9);
   }

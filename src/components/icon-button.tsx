@@ -43,9 +43,10 @@ export function IconButton(props: IconButtonProps) {
       onPointerUp={local.onPointerUp}
       disabled={local.disabled}
       {...attrs}>
-      <span class={cx("glyph", local.iconClass)}>
-        <Icon name={local.icon} />
-      </span>
+      <Icon
+        name={local.icon}
+        class={local.iconClass}
+      />
     </KobalteButton>
   )
 }

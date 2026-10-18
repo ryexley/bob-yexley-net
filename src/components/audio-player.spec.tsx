@@ -69,13 +69,13 @@ describe("AudioPlayer seek icons", () => {
     const forward = screen.getByRole("button", { name: "Forward 10 seconds" })
 
     fireEvent.mouseDown(rewind)
-    expect(rewind.querySelector(".glyph")?.classList.contains("spin-back")).toBe(
+    expect(rewind.querySelector(".icon")?.classList.contains("spin-back")).toBe(
       true,
     )
 
     fireEvent.mouseDown(forward)
     expect(
-      forward.querySelector(".glyph")?.classList.contains("spin-forward"),
+      forward.querySelector(".icon")?.classList.contains("spin-forward"),
     ).toBe(true)
   })
 })
