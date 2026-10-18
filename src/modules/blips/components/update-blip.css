@@ -129,11 +129,6 @@
       var(--colors-mono-11) 35%
     );
     font-size: 0.9rem;
-
-    .rendered-markdown > .x-embed-mount,
-    .rendered-markdown .x-embed {
-      margin: 0;
-    }
   }
 
   .blip-media-gallery {

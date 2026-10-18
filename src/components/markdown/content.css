@@ -419,13 +419,17 @@
     }
   }
 
-  /* Root blips keep the same breathing room as the audio player. Updates
-     override this to 0 so an embed-only update matches a text update. */
+  /* Root blips keep the same breathing room as the audio player. */
   .x-embed-mount,
   > .x-embed {
     margin: 1rem 0;
     max-width: 100%;
     width: 100%;
+  }
+
+  .x-embed-mount {
+    display: block;
+    line-height: 0;
   }
 
   .blip-audio-player {
@@ -461,4 +465,12 @@
 
 .rendered-markdown > p:empty {
   display: none;
+}
+
+/* Same file, later, higher specificity than the root 1rem. The published
+   update wraps the widget in `.x-embed-mount`; the editor does not. */
+.update-blip :is(.milkdown .ProseMirror, .rendered-markdown) .x-embed-mount,
+.update-blip :is(.milkdown .ProseMirror, .rendered-markdown) .x-embed,
+.blip-update-editor-form :is(.milkdown .ProseMirror, .rendered-markdown) .x-embed {
+  margin: 0;
 }
