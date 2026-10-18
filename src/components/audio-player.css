@@ -269,6 +269,10 @@
           }
         }
 
+        &.seek-forward .icon {
+          transform: scaleX(-1);
+        }
+
         &:hover:not(:disabled) .icon,
         &:focus-visible:not(:disabled) .icon {
           color: var(--colors-cool-blue);
@@ -587,10 +591,10 @@
 
 @keyframes audio-player-seek-spin-forward {
   from {
-    transform: rotate(0deg);
+    transform: rotate(0deg) scaleX(-1);
   }
 
   to {
-    transform: rotate(360deg);
+    transform: rotate(360deg) scaleX(-1);
   }
 }
