@@ -253,3 +253,7 @@
     }
   }
 }
+
+.blip-update-editor-form .milkdown .ProseMirror > .x-embed {
+  margin: 0;
+}

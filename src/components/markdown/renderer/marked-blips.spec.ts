@@ -203,9 +203,9 @@ More text.`)
       '{x:{url:"https://x.com/stephenthompson/status/123"}}',
     )
 
-    expect(html).toContain("x-embed-mount")
+    expect(html.trim()).toMatch(/^<div class="x-embed-mount"/)
     expect(html).toContain("data-x-embed-props=")
-    expect(html).not.toMatch(/<p>\{x:/)
+    expect(html).not.toContain("<p>")
     expect(
       decodeURIComponent(html.match(/data-x-embed-props="([^"]+)"/)?.[1] ?? ""),
     ).toContain('"id":"123"')
