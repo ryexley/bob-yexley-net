@@ -18,6 +18,14 @@ import {
 const trailingParagraphKey = new PluginKey("xEmbedTrailingParagraph")
 const clipboardKey = new PluginKey("xEmbedClipboard")
 
+function isBreakLikeHtml(node: Node): boolean {
+  if (node.type.name !== "html") {
+    return false
+  }
+  const value = String(node.attrs.value ?? "").trim()
+  return /^<br\s*\/?>$/i.test(value)
+}
+
 function isEmptyParagraph(node: Node | null | undefined): boolean {
   if (node?.type.name !== "paragraph") {
     return false
@@ -30,7 +38,11 @@ function isEmptyParagraph(node: Node | null | undefined): boolean {
     if (!empty) {
       return
     }
-    if (child.type.name === "hard_break") {
+    if (
+      child.type.name === "hard_break" ||
+      child.type.name === "hardbreak" ||
+      isBreakLikeHtml(child)
+    ) {
       return
     }
     if (child.isText && !child.text?.trim()) {

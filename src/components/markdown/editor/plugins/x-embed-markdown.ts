@@ -47,6 +47,42 @@ export const xEmbedToMarkdown = {
   handlers: { xEmbed: handleXEmbed },
 }
 
+function isBreakLikeHtmlValue(value: string | undefined): boolean {
+  return /^<br\s*\/?>$/i.test((value ?? "").trim())
+}
+
+function isAstBreakParagraph(node: MarkdownNode | undefined): boolean {
+  if (node?.type !== "paragraph" || !Array.isArray(node.children)) {
+    return false
+  }
+  if (node.children.length === 0) {
+    return true
+  }
+  return node.children.every(child => {
+    if (child.type === "break") {
+      return true
+    }
+    if (child.type === "html" && isBreakLikeHtmlValue(child.value)) {
+      return true
+    }
+    return child.type === "text" && !String(child.value ?? "").trim()
+  })
+}
+
+function stripLeadingBreaksBeforeXEmbed(root: MarkdownNode) {
+  const children = root.children
+  if (!children || children.length === 0) {
+    return
+  }
+  let index = 0
+  while (index < children.length && isAstBreakParagraph(children[index])) {
+    index += 1
+  }
+  if (index > 0 && children[index]?.type === "xEmbed") {
+    children.splice(0, index)
+  }
+}
+
 export function transformXEmbedParagraphs(root: MarkdownNode) {
   const visit = (parent: MarkdownParent | undefined) => {
     if (!parent?.children) {
@@ -77,6 +113,7 @@ export function transformXEmbedParagraphs(root: MarkdownNode) {
     }
   }
   visit(root)
+  stripLeadingBreaksBeforeXEmbed(root)
 }
 
 function tryMergeParagraphSequence(

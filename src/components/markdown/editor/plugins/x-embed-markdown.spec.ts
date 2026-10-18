@@ -47,6 +47,31 @@ describe("transformXEmbedParagraphs", () => {
     expect(tree.children[0]?.type).toBe("xEmbed")
   })
 
+  it("drops a leading break paragraph before an embed", () => {
+    const tree = {
+      type: "root",
+      children: [
+        {
+          type: "paragraph",
+          children: [{ type: "html", value: "<br />" }],
+        },
+        {
+          type: "xEmbed",
+          value: '{x:{url:"https://x.com/a/status/1"}}',
+        },
+      ],
+    }
+
+    transformXEmbedParagraphs(tree)
+
+    expect(tree.children).toEqual([
+      {
+        type: "xEmbed",
+        value: '{x:{url:"https://x.com/a/status/1"}}',
+      },
+    ])
+  })
+
   it("leaves mixed paragraphs unchanged", () => {
     const tree = {
       type: "root",

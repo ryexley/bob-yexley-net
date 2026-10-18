@@ -310,9 +310,9 @@ export function parseXEmbedEditorAttrs(value: string): XEmbedProps | null {
 }
 
 /**
- * Milkdown can serialize an empty line above an X embed as a literal
- * `<br />`. That becomes a dead gap in published updates that the
- * composer hygiene cannot see.
+ * Same job as `normalizeMediaEmbedsInMarkdown`: stored embed markdown can
+ * start with a leftover `<br />` or blank line from an older save. Drop
+ * that prefix so the published page matches what the editor now writes.
  */
 export function normalizeXEmbedsInMarkdown(content: string): string {
   return content
@@ -322,10 +322,6 @@ export function normalizeXEmbedsInMarkdown(content: string): string {
       /^(?:\r?\n)+(?=https?:\/\/(?:www\.)?(?:mobile\.)?(?:twitter|x)\.com\/)/i,
       "",
     )
-}
-
-export function stripLeadingRenderedBreaks(html: string): string {
-  return html.replace(/^(?:<br\s*\/?>\s*)+/i, "")
 }
 
 export function xEmbedDataAttributes(embed: XEmbedProps) {

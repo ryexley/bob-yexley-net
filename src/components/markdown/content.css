@@ -467,10 +467,6 @@
   display: none;
 }
 
-.rendered-markdown > br:first-child {
-  display: none;
-}
-
 /* Same file, later, higher specificity than the root 1rem. The published
    update wraps the widget in `.x-embed-mount`; the editor does not. */
 .update-blip :is(.milkdown .ProseMirror, .rendered-markdown) .x-embed-mount,

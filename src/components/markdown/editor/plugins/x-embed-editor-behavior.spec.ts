@@ -24,6 +24,15 @@ const schema = new Schema({
       selectable: false,
       toDOM: () => ["br"],
     },
+    html: {
+      inline: true,
+      group: "inline",
+      atom: true,
+      attrs: {
+        value: { default: "" },
+      },
+      toDOM: node => ["span", { "data-html": node.attrs.value }],
+    },
     text: { group: "inline" },
     [X_EMBED_NODE]: {
       group: "block",
@@ -133,6 +142,14 @@ describe("leadingEmptyParagraphsBeforeXEmbedEnd", () => {
     expect(leadingEmptyParagraphsBeforeXEmbedEnd(doc)).toBe(brLine.nodeSize)
   })
 
+  it("treats a paragraph that only holds an HTML <br> as empty", () => {
+    const htmlBr = schema.node("paragraph", null, [
+      schema.nodes.html.create({ value: "<br />" }),
+    ])
+    const doc = schema.node("doc", null, [htmlBr, embed()])
+    expect(leadingEmptyParagraphsBeforeXEmbedEnd(doc)).toBe(htmlBr.nodeSize)
+  })
+
   it("leaves a leading empty paragraph that is not followed by an embed", () => {
     const doc = schema.node("doc", null, [
       paragraph(),
@@ -153,6 +170,17 @@ describe("xEmbedHygieneTransaction", () => {
     expect(next.doc.firstChild?.type.name).toBe(X_EMBED_NODE)
     expect(next.doc.lastChild?.type.name).toBe("paragraph")
     expect(next.doc.lastChild?.content.size).toBe(0)
+  })
+
+  it("strips a leading HTML <br> paragraph so it is not serialized", () => {
+    const htmlBr = schema.node("paragraph", null, [
+      schema.nodes.html.create({ value: "<br />" }),
+    ])
+    const state = stateFrom([htmlBr, embed()])
+    const transaction = xEmbedHygieneTransaction(state)
+    expect(transaction).toBeTruthy()
+    const next = state.apply(transaction!)
+    expect(next.doc.firstChild?.type.name).toBe(X_EMBED_NODE)
   })
 })
 
