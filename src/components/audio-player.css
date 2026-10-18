@@ -245,8 +245,12 @@
       .seek-action {
         .icon {
           color: var(--colors-info);
-          display: inline-block;
-          transform-origin: center;
+          /* Block + no line-height so the global `* { line-height }` strut
+             cannot shift this SVG when a transform animation starts. */
+          display: block;
+          line-height: 0;
+          transform-box: border-box;
+          transform-origin: 50% 50%;
           transition:
             color 250ms ease-in-out,
             opacity 250ms ease-in-out;
