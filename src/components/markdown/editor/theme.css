@@ -32,5 +32,9 @@
     .media-embed .frame {
       cursor: pointer;
     }
+
+    .x-embed {
+      cursor: pointer;
+    }
   }
 }

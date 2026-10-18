@@ -34,6 +34,10 @@ export const en = {
           cancel: "Cancel",
         },
       },
+      xEmbed: {
+        loading: "Loading post from X",
+        viewPost: "View post on X",
+      },
       globalLoadingIndicator: {
         ariaLabel: "Loading",
       },
@@ -386,7 +390,8 @@ export const en = {
           },
           coverImage: {
             label: "Cover Image",
-            placeholder: "https://example.com/image.jpg or media/... storage key",
+            placeholder:
+              "https://example.com/image.jpg or media/... storage key",
             hint: "Upload an image (or paste an image URL / media storage key). Used as the og:image for blips with this tag when they have no media of their own.",
           },
         },
