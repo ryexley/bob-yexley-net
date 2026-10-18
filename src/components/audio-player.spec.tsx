@@ -1,0 +1,52 @@
+import { render, screen } from "@solidjs/testing-library"
+import { afterEach, describe, expect, it, vi } from "vitest"
+import { AudioPlayer } from "@/components/audio-player"
+import { iconGlyphs } from "@/components/icon-registry"
+
+afterEach(() => {
+  vi.unstubAllGlobals()
+})
+
+describe("AudioPlayer seek icons", () => {
+  it("uses rotateCcw for rewind and the same glyph, flipped, for forward", () => {
+    vi.stubGlobal(
+      "matchMedia",
+      vi.fn().mockImplementation((query: string) => ({
+        matches: false,
+        media: query,
+        onchange: null,
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        dispatchEvent: vi.fn(),
+      })),
+    )
+    render(() => (
+      <AudioPlayer
+        src="https://example.com/ep.mp3"
+        title="Episode"
+      />
+    ))
+
+    const rewind = screen.getByRole("button", { name: "Rewind 10 seconds" })
+    const forward = screen.getByRole("button", { name: "Forward 10 seconds" })
+
+    expect(rewind.className).toContain("seek-action")
+    expect(forward.className).toContain("seek-action")
+    expect(forward.className).toContain("seek-forward")
+    expect(rewind.className).not.toContain("seek-forward")
+
+    const rotateCcwPath = iconGlyphs.rotateCcw.nodes.find(
+      node => node.tag === "path",
+    )
+    expect(rotateCcwPath && "d" in rotateCcwPath).toBe(true)
+
+    expect(rewind.querySelector("path")?.getAttribute("d")).toBe(
+      rotateCcwPath && "d" in rotateCcwPath ? rotateCcwPath.d : undefined,
+    )
+    expect(forward.querySelector("path")?.getAttribute("d")).toBe(
+      rotateCcwPath && "d" in rotateCcwPath ? rotateCcwPath.d : undefined,
+    )
+  })
+})
