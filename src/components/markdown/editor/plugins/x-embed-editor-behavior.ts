@@ -10,6 +10,7 @@ import {
 } from "@milkdown/prose/state"
 import type { EditorView } from "@milkdown/prose/view"
 import {
+  parseXEmbedBlock,
   parseXStatusUrl,
   X_EMBED_NODE,
   type XEmbedProps,
@@ -18,12 +19,24 @@ import {
 const trailingParagraphKey = new PluginKey("xEmbedTrailingParagraph")
 const clipboardKey = new PluginKey("xEmbedClipboard")
 
+function stripInvisibleText(value: string): string {
+  return value
+    .replaceAll("\u200b", "")
+    .replaceAll("\u200c", "")
+    .replaceAll("\u200d", "")
+    .replaceAll("\ufeff", "")
+}
+
 function isBreakLikeHtml(node: Node): boolean {
   if (node.type.name !== "html") {
     return false
   }
   const value = String(node.attrs.value ?? "").trim()
-  return /^<br\s*\/?>$/i.test(value)
+  return /^<br\b[^>]*>$/i.test(value)
+}
+
+function isBlankText(value: string | undefined): boolean {
+  return !value || !stripInvisibleText(value).trim()
 }
 
 function isEmptyParagraph(node: Node | null | undefined): boolean {
@@ -45,12 +58,69 @@ function isEmptyParagraph(node: Node | null | undefined): boolean {
     ) {
       return
     }
-    if (child.isText && !child.text?.trim()) {
+    if (child.isText && isBlankText(child.text)) {
       return
     }
     empty = false
   })
   return empty
+}
+
+function xEmbedPropsFromParagraph(node: Node): XEmbedProps | null {
+  if (node.type.name !== "paragraph") {
+    return null
+  }
+  const text = stripInvisibleText(node.textContent).trim()
+  return parseXStatusUrl(text) ?? parseXEmbedBlock(text)
+}
+
+/** Prefer text/plain; iOS often only puts the status URL in text/html. */
+export function xStatusUrlFromClipboard(
+  data: DataTransfer | null | undefined,
+): string | null {
+  if (!data) {
+    return null
+  }
+  const plain = data.getData("text/plain")
+  if (parseXStatusUrl(plain)) {
+    return plain
+  }
+  const html = data.getData("text/html")
+  if (!html) {
+    return null
+  }
+  const matches =
+    html.match(
+      /https?:\/\/(?:www\.)?(?:mobile\.)?(?:twitter|x)\.com\/[^\s"'<>]+/gi,
+    ) ?? []
+  return matches.find(candidate => parseXStatusUrl(candidate)) ?? null
+}
+
+function promoteXEmbedParagraphs(
+  state: EditorState,
+  transaction: Transaction,
+): Transaction {
+  const type = state.schema.nodes[X_EMBED_NODE]
+  if (!type) {
+    return transaction
+  }
+  const replacements: Array<{ from: number; to: number; node: Node }> = []
+  transaction.doc.forEach((child, offset) => {
+    const props = xEmbedPropsFromParagraph(child)
+    if (!props) {
+      return
+    }
+    replacements.push({
+      from: offset,
+      to: offset + child.nodeSize,
+      node: type.create(props),
+    })
+  })
+  return replacements.reduceRight(
+    (next, replacement) =>
+      next.replaceWith(replacement.from, replacement.to, replacement.node),
+    transaction,
+  )
 }
 
 /**
@@ -79,8 +149,8 @@ export function leadingEmptyParagraphsBeforeXEmbedEnd(doc: Node): number {
 export function xEmbedHygieneTransaction(
   state: EditorState,
 ): Transaction | null {
-  let transaction = state.tr
-  let changed = false
+  let transaction = promoteXEmbedParagraphs(state, state.tr)
+  let changed = !transaction.doc.eq(state.doc)
 
   const leadingEnd = leadingEmptyParagraphsBeforeXEmbedEnd(transaction.doc)
   if (leadingEnd > 0) {
@@ -283,8 +353,8 @@ export const xEmbedClipboardPlugin = $prose(() => {
     key: clipboardKey,
     props: {
       handlePaste(view, event) {
-        const text = event.clipboardData?.getData("text/plain") ?? ""
-        if (!parseXStatusUrl(text)) {
+        const text = xStatusUrlFromClipboard(event.clipboardData)
+        if (!text) {
           return false
         }
         event.preventDefault()
