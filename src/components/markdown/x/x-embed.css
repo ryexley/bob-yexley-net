@@ -1,0 +1,36 @@
+.x-embed {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 1rem auto;
+  max-width: min(100%, 34.375rem);
+  width: 100%;
+
+  .fallback {
+    color: var(--colors-links);
+    font-size: 0.875rem;
+    text-align: center;
+    text-decoration: underline;
+    text-underline-offset: 0.125rem;
+  }
+
+  .widget {
+    display: flex;
+    justify-content: center;
+    max-width: 100%;
+    min-width: 0;
+    width: 100%;
+  }
+
+  .twitter-tweet {
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
+.x-embed.is-selected,
+.x-embed.ProseMirror-selectednode {
+  border-radius: var(--radius-sm);
+  outline: 0.125rem solid var(--colors-cool-blue);
+  outline-offset: 0.25rem;
+}

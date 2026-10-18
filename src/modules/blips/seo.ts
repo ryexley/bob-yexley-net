@@ -2,18 +2,37 @@
  * SEO utilities for deriving titles and descriptions from blip content.
  */
 
+import { findXEmbedRegions } from "@/components/markdown/x/x-embed-syntax"
+
+function withoutXEmbeds(content: string): string {
+  const regions = findXEmbedRegions(content)
+  if (regions.length === 0) {
+    return content
+  }
+
+  let result = ""
+  let lastEnd = 0
+  for (const region of regions) {
+    result += content.slice(lastEnd, region.start)
+    lastEnd = region.end
+  }
+  result += content.slice(lastEnd)
+  return result
+}
+
 /**
  * Derive a title from blip content.
- * 
+ *
  * Priority:
  * 1. First markdown heading (h1-h6)
  * 2. First sentence of plain text, truncated to maxLength at word boundary
- * 
+ *
  * @param content - Raw markdown content
  * @param maxLength - Maximum length for truncated title (default 60)
  * @returns Derived title string
  */
 export function deriveBlipTitle(content: string, maxLength = 60): string {
+  content = withoutXEmbeds(content)
   const headingMatch = content.match(/^#{1,6}\s+(.+)$/m)
   if (headingMatch && headingMatch[1]) {
     return headingMatch[1].trim()
@@ -44,17 +63,21 @@ export function deriveBlipTitle(content: string, maxLength = 60): string {
 
 /**
  * Derive a description from blip content.
- * 
+ *
  * Extracts body text excluding the first heading, strips markdown,
  * and truncates to maxLength at a word boundary.
- * 
+ *
  * @param content - Raw markdown content
  * @param maxLength - Maximum length for description (default 155)
  * @returns Derived description with ellipsis if truncated
  */
-export function deriveBlipDescription(content: string, maxLength = 155): string {
+export function deriveBlipDescription(
+  content: string,
+  maxLength = 155,
+): string {
+  content = withoutXEmbeds(content)
   const withoutHeading = content.replace(/^#{1,6}\s+.+$/m, "").trim()
-  
+
   const plainText = withoutHeading
     .replace(/```[\s\S]*?```/g, " ")
     .replace(/`([^`]+)`/g, "$1")
@@ -79,7 +102,8 @@ export function deriveBlipDescription(content: string, maxLength = 155): string 
 
 export const SITE_TITLE = "bob.yexley.net"
 export const HOMEPAGE_TITLE = "Bob Yexley · Software engineer"
-export const HOMEPAGE_DESCRIPTION = "The personal website of Bob Yexley, software engineer, with blips: short posts, notes and updates."
+export const HOMEPAGE_DESCRIPTION =
+  "The personal website of Bob Yexley, software engineer, with blips: short posts, notes and updates."
 export const BLIPS_TITLE = "Blips · Bob Yexley"
 export const BLIPS_DESCRIPTION = "Moments, thoughts and updates from Bob Yexley"
 

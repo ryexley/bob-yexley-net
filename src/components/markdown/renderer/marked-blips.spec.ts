@@ -197,4 +197,38 @@ More text.`)
     expect(html).toContain("<hr>")
     expect(html).not.toMatch(/<p>\{media:/)
   })
+
+  it("renders an X embed shorthand as a mount point", () => {
+    const html = parseBlipMarkdown(
+      '{x:{url:"https://x.com/stephenthompson/status/123"}}',
+    )
+
+    expect(html).toContain("x-embed-mount")
+    expect(html).toContain("data-x-embed-props=")
+    expect(html).not.toMatch(/<p>\{x:/)
+    expect(
+      decodeURIComponent(html.match(/data-x-embed-props="([^"]+)"/)?.[1] ?? ""),
+    ).toContain('"id":"123"')
+  })
+
+  it("renders a standalone X status URL as an embed", () => {
+    const html = parseBlipMarkdown(
+      "https://twitter.com/stephenthompson/status/123?s=20",
+    )
+
+    expect(html).toContain("x-embed-mount")
+    expect(html).not.toContain("<a href")
+    expect(
+      decodeURIComponent(html.match(/data-x-embed-props="([^"]+)"/)?.[1] ?? ""),
+    ).toContain('"handle":"stephenthompson"')
+  })
+
+  it("leaves an inline X URL as a regular link", () => {
+    const html = parseBlipMarkdown(
+      "See https://x.com/stephenthompson/status/123 for the take.",
+    )
+
+    expect(html).not.toContain("x-embed-mount")
+    expect(html).toContain("https://x.com/stephenthompson/status/123")
+  })
 })

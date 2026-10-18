@@ -419,6 +419,11 @@
     }
   }
 
+  .x-embed-mount {
+    max-width: 100%;
+    width: 100%;
+  }
+
   .blip-audio-player {
     display: flex;
     justify-content: center;

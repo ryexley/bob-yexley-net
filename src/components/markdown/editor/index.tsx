@@ -32,6 +32,8 @@ import { Stack } from "@/components/stack"
 import { highlight } from "./plugins/highlight"
 import { audioEmbed } from "./plugins/audio-embed"
 import { mediaEmbed } from "./plugins/media-embed"
+import { xEmbed } from "./plugins/x-embed"
+import { insertXEmbedFromText } from "./plugins/x-embed-editor-behavior"
 import {
   insertMediaEmbedCommand,
   type MediaEmbedInsert,
@@ -280,7 +282,12 @@ export function MarkdownEditor(props: MarkdownEditorProps) {
       return
     }
     editorInstance.action(ctx => {
-      insertClipboardText(ctx.get(editorViewCtx), text)
+      const view = ctx.get(editorViewCtx)
+      if (insertXEmbedFromText(view, text)) {
+        view.focus()
+        return
+      }
+      insertClipboardText(view, text)
     })
     syncToolbarState()
   }
@@ -427,6 +434,7 @@ export function MarkdownEditor(props: MarkdownEditorProps) {
       .use(highlight)
       .use(audioEmbed)
       .use(mediaEmbed)
+      .use(xEmbed)
       .use(placeholder(local.placeholder))
       .use(emoji)
       .use(listener)
