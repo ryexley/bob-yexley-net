@@ -11,6 +11,7 @@ import { AudioPlayer } from "@/components/audio-player"
 import { clsx as cx } from "@/util"
 import { ScriptureReference } from "@/modules/blips/components/scripture-reference"
 import { InlineBlipMedia } from "@/modules/media/inline-blip-media"
+import { XEmbed } from "@/components/markdown/x/x-embed"
 import type { BlipMediaRow } from "@/modules/media/data/queries"
 import {
   mountMarkdownAudioPlayers,
@@ -24,6 +25,7 @@ import {
   mountMarkdownScriptureReferences,
   unmountMarkdownScriptureReferences,
 } from "./mount-scripture-references"
+import { mountMarkdownXEmbeds, unmountMarkdownXEmbeds } from "./mount-x-embeds"
 import { parseBlipMarkdown } from "./marked-blips"
 import "./styles.css"
 
@@ -56,6 +58,7 @@ export function MarkdownRenderer(props: MarkdownRendererProps) {
     unmountMarkdownAudioPlayers(containerRef)
     unmountMarkdownMediaEmbeds(containerRef)
     unmountMarkdownScriptureReferences(containerRef)
+    unmountMarkdownXEmbeds(containerRef)
   }
 
   // `render()` into a mount point while Solid is still hydrating the route
@@ -112,6 +115,10 @@ export function MarkdownRenderer(props: MarkdownRendererProps) {
           ),
           target,
         ),
+      )
+
+      mountMarkdownXEmbeds(containerRef, (embed, target) =>
+        render(() => <XEmbed {...embed} />, target),
       )
     })
 

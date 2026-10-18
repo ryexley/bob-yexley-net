@@ -4,6 +4,7 @@ import { normalizeMediaEmbedsInMarkdown } from "@/components/markdown/media/medi
 import { rendererExtensions } from "./extensions"
 import { audioEmbedExtension } from "./extensions/audio-embed"
 import { mediaEmbedExtension } from "./extensions/media-embed"
+import { xEmbedExtension } from "./extensions/x-embed"
 import { highlightExtension } from "./extensions/highlight"
 import { scriptureReferenceExtension } from "./extensions/scripture-reference"
 
@@ -20,6 +21,7 @@ const createBlipMarked = () => {
       highlightExtension,
       audioEmbedExtension,
       mediaEmbedExtension,
+      xEmbedExtension,
       scriptureReferenceExtension,
     ],
   })

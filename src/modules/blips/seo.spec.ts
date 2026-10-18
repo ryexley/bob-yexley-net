@@ -25,7 +25,8 @@ describe("deriveBlipTitle", () => {
   })
 
   it("strips markdown formatting from fallback text", () => {
-    const content = "This has **bold** and *italic* and `code` and [a link](url) and ![an image](img.jpg)."
+    const content =
+      "This has **bold** and *italic* and `code` and [a link](url) and ![an image](img.jpg)."
     const result = deriveBlipTitle(content)
     expect(result).not.toContain("**")
     expect(result).not.toContain("*")
@@ -35,7 +36,8 @@ describe("deriveBlipTitle", () => {
   })
 
   it("truncates long titles at word boundary", () => {
-    const content = "This is a very long sentence that exceeds the maximum length and should be truncated at a word boundary."
+    const content =
+      "This is a very long sentence that exceeds the maximum length and should be truncated at a word boundary."
     const result = deriveBlipTitle(content, 60)
     expect(result.length).toBeLessThanOrEqual(60)
     expect(result).not.toMatch(/\s$/)
@@ -48,13 +50,20 @@ describe("deriveBlipTitle", () => {
   })
 
   it("handles code blocks", () => {
-    const content = "```javascript\nconst x = 1;\n```\n\nThis is the actual text."
+    const content =
+      "```javascript\nconst x = 1;\n```\n\nThis is the actual text."
     expect(deriveBlipTitle(content)).toBe("This is the actual text")
   })
 
   it("never joins heading and body", () => {
     const content = "# Heading\n\nBody text here."
     expect(deriveBlipTitle(content)).toBe("Heading")
+  })
+
+  it("skips an X embed when deriving a title", () => {
+    const content =
+      '{x:{url:"https://x.com/stephenthompson/status/123"}}\n\n# College gameday\n\nWhat a mess.'
+    expect(deriveBlipTitle(content)).toBe("College gameday")
   })
 })
 
@@ -65,7 +74,8 @@ describe("deriveBlipDescription", () => {
   })
 
   it("strips markdown formatting", () => {
-    const content = "Body with **bold** and *italic* and `code` and [link](url)."
+    const content =
+      "Body with **bold** and *italic* and `code` and [link](url)."
     const result = deriveBlipDescription(content)
     expect(result).not.toContain("**")
     expect(result).not.toContain("*")
@@ -92,7 +102,8 @@ describe("deriveBlipDescription", () => {
   })
 
   it("removes images and links properly", () => {
-    const content = "Check out ![this image](img.jpg) and [this link](url) for more info."
+    const content =
+      "Check out ![this image](img.jpg) and [this link](url) for more info."
     const result = deriveBlipDescription(content)
     expect(result).toContain("Check out")
     expect(result).toContain("and")
@@ -116,12 +127,16 @@ describe("formatPageTitle", () => {
 
 describe("formatTagTitle", () => {
   it("formats tag title correctly", () => {
-    expect(formatTagTitle("football")).toBe('Blips tagged "football" · Bob Yexley')
+    expect(formatTagTitle("football")).toBe(
+      'Blips tagged "football" · Bob Yexley',
+    )
   })
 })
 
 describe("formatTagDescription", () => {
   it("formats tag description correctly", () => {
-    expect(formatTagDescription("football")).toBe('View all blips tagged with "football"')
+    expect(formatTagDescription("football")).toBe(
+      'View all blips tagged with "football"',
+    )
   })
 })
