@@ -206,9 +206,19 @@ More text.`)
     expect(html.trim()).toMatch(/^<div class="x-embed-mount"/)
     expect(html).toContain("data-x-embed-props=")
     expect(html).not.toContain("<p>")
+    expect(html).not.toMatch(/^<br/)
     expect(
       decodeURIComponent(html.match(/data-x-embed-props="([^"]+)"/)?.[1] ?? ""),
     ).toContain('"id":"123"')
+  })
+
+  it("does not keep a serialized <br> above an X embed", () => {
+    const html = parseBlipMarkdown(
+      '<br />\n\n{x:{url:"https://x.com/stephenthompson/status/123"}}',
+    )
+
+    expect(html.trim()).toMatch(/^<div class="x-embed-mount"/)
+    expect(html).not.toMatch(/<br/)
   })
 
   it("renders a standalone X status URL as an embed", () => {

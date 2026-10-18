@@ -3,6 +3,7 @@ import {
   canonicalizeXEmbed,
   coerceXEmbedProps,
   findXEmbedRegions,
+  normalizeXEmbedsInMarkdown,
   parseLeadingXEmbed,
   parseLeadingXStatusUrl,
   parseXEmbedBlock,
@@ -103,5 +104,20 @@ describe("x embed shorthand", () => {
     const regions = findXEmbedRegions(content)
     expect(regions).toHaveLength(2)
     expect(regions[0]?.start).toBe(content.indexOf("{x:"))
+  })
+})
+
+describe("normalizeXEmbedsInMarkdown", () => {
+  it("drops a leading HTML break before an embed shorthand", () => {
+    expect(
+      normalizeXEmbedsInMarkdown(
+        '<br />\n\n{x:{url:"https://x.com/a/status/1"}}',
+      ),
+    ).toBe('{x:{url:"https://x.com/a/status/1"}}')
+  })
+
+  it("leaves prose before an embed alone", () => {
+    const markdown = 'See this.\n\n{x:{url:"https://x.com/a/status/1"}}'
+    expect(normalizeXEmbedsInMarkdown(markdown)).toBe(markdown)
   })
 })

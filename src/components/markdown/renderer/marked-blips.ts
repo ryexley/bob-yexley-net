@@ -1,6 +1,10 @@
 import { Marked } from "marked"
 import { normalizeAudioEmbedsInMarkdown } from "@/components/markdown/audio/audio-embed-syntax"
 import { normalizeMediaEmbedsInMarkdown } from "@/components/markdown/media/media-embed-syntax"
+import {
+  normalizeXEmbedsInMarkdown,
+  stripLeadingRenderedBreaks,
+} from "@/components/markdown/x/x-embed-syntax"
 import { rendererExtensions } from "./extensions"
 import { audioEmbedExtension } from "./extensions/audio-embed"
 import { mediaEmbedExtension } from "./extensions/media-embed"
@@ -32,7 +36,11 @@ const createBlipMarked = () => {
 const blipMarked = createBlipMarked()
 
 export const parseBlipMarkdown = (content: string) => {
-  return blipMarked.parse(
-    normalizeMediaEmbedsInMarkdown(normalizeAudioEmbedsInMarkdown(content)),
-  ) as string
+  return stripLeadingRenderedBreaks(
+    blipMarked.parse(
+      normalizeXEmbedsInMarkdown(
+        normalizeMediaEmbedsInMarkdown(normalizeAudioEmbedsInMarkdown(content)),
+      ),
+    ) as string,
+  )
 }

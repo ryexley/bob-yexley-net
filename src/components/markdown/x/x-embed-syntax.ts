@@ -309,6 +309,25 @@ export function parseXEmbedEditorAttrs(value: string): XEmbedProps | null {
   return parseXEmbedBlock(value) ?? parseXStatusUrl(value.trim())
 }
 
+/**
+ * Milkdown can serialize an empty line above an X embed as a literal
+ * `<br />`. That becomes a dead gap in published updates that the
+ * composer hygiene cannot see.
+ */
+export function normalizeXEmbedsInMarkdown(content: string): string {
+  return content
+    .replace(/^(?:<br\s*\/?>\s*)+/i, "")
+    .replace(/^(?:\r?\n)+(?=\{\s*x\s*:)/, "")
+    .replace(
+      /^(?:\r?\n)+(?=https?:\/\/(?:www\.)?(?:mobile\.)?(?:twitter|x)\.com\/)/i,
+      "",
+    )
+}
+
+export function stripLeadingRenderedBreaks(html: string): string {
+  return html.replace(/^(?:<br\s*\/?>\s*)+/i, "")
+}
+
 export function xEmbedDataAttributes(embed: XEmbedProps) {
   const attrs: Record<string, string> = {
     "data-x-embed": "",
