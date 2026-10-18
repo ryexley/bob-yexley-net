@@ -88,7 +88,6 @@ export type IconName =
   | "hash"
   | "settings2"
   | "upload"
-  | "skipForward"
   | "arrowUpDown"
   | "faceSlightlySmilingPlus"
   | "badgeMinus"
@@ -829,14 +828,6 @@ export const iconGlyphs: Record<IconName, IconGlyph> = {
       { tag: "path", d: "M12 3v12" },
       { tag: "path", d: "m17 8-5-5-5 5" },
       { tag: "path", d: "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" },
-    ],
-  },
-
-  /* skip-forward */
-  skipForward: {
-    nodes: [
-      { tag: "path", d: "M21 4v16" },
-      { tag: "path", d: "M6.029 4.285A2 2 0 0 0 3 6v12a2 2 0 0 0 3.029 1.715l9.997-5.998a2 2 0 0 0 .003-3.432z" },
     ],
   },
 
