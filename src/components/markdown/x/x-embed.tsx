@@ -1,10 +1,18 @@
 import { Show, createEffect, createSignal, onCleanup } from "solid-js"
 import { ptr } from "@/i18n"
 import type { XEmbedProps } from "./x-embed-syntax"
-import { X_TWEET_WIDGET_OPTIONS, loadTwitterWidgets } from "./x-widgets"
+import { loadTwitterWidgets, tweetWidgetOptions } from "./x-widgets"
 import "./x-embed.css"
 
 const tr = ptr("shared.components.xEmbed")
+
+function readHostWidth(host: HTMLElement): number {
+  try {
+    return Math.floor(host.getBoundingClientRect().width)
+  } catch {
+    return 0
+  }
+}
 
 export function XEmbed(props: XEmbedProps) {
   return (
@@ -21,22 +29,39 @@ export function XEmbedWidget(props: XEmbedProps) {
   const [status, setStatus] = createSignal<"loading" | "ready" | "fallback">(
     "loading",
   )
-  let host: HTMLDivElement | undefined
+  const [host, setHost] = createSignal<HTMLDivElement>()
 
   createEffect(() => {
     const statusId = props.id
+    const hostEl = host()
+    if (!hostEl) {
+      return
+    }
+
     const target = document.createElement("div")
-    host?.replaceChildren(target)
+    target.style.width = "100%"
+    hostEl.replaceChildren(target)
     let cancelled = false
     setStatus("loading")
 
     void loadTwitterWidgets()
-      .then(twttr =>
-        twttr.widgets.createTweet(statusId, target, X_TWEET_WIDGET_OPTIONS),
-      )
+      .then(twttr => {
+        if (cancelled) {
+          return undefined
+        }
+        return twttr.widgets.createTweet(
+          statusId,
+          target,
+          tweetWidgetOptions(readHostWidth(hostEl)),
+        )
+      })
       .then(element => {
         if (cancelled) {
           return
+        }
+        if (element instanceof HTMLElement) {
+          element.style.backgroundColor = "transparent"
+          element.style.colorScheme = "dark"
         }
         setStatus(element ? "ready" : "fallback")
       })
@@ -64,7 +89,7 @@ export function XEmbedWidget(props: XEmbedProps) {
         </a>
       </Show>
       <div
-        ref={host}
+        ref={setHost}
         class="widget"
         data-x-widget=""
       />

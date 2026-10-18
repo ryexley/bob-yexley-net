@@ -5,12 +5,12 @@ import { XEmbed } from "./x-embed"
 const createTweet = vi.fn()
 
 vi.mock("./x-widgets", () => ({
-  X_TWEET_WIDGET_OPTIONS: {
+  tweetWidgetOptions: (width: number) => ({
     theme: "dark",
     dnt: true,
     conversation: "none",
-    align: "center",
-  },
+    width,
+  }),
   loadTwitterWidgets: () =>
     Promise.resolve({
       widgets: { createTweet },
@@ -43,7 +43,11 @@ describe("XEmbed", () => {
       expect(createTweet).toHaveBeenCalledWith(
         "123",
         expect.any(HTMLElement),
-        expect.objectContaining({ theme: "dark", dnt: true }),
+        expect.objectContaining({
+          theme: "dark",
+          dnt: true,
+          width: expect.any(Number),
+        }),
       )
     })
 
