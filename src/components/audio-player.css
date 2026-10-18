@@ -245,14 +245,14 @@
       .seek-action {
         .icon {
           color: var(--colors-info);
+          display: block;
+          line-height: 0;
+          transform: translate3d(0, 0, 0);
+          transform-box: view-box;
+          transform-origin: 50% 50%;
           transition:
             color 250ms ease-in-out,
             opacity 250ms ease-in-out;
-        }
-
-        .glyph {
-          transform: translate3d(0, 0, 0);
-          transform-origin: 50% 50%;
 
           &.spin-back,
           &.spin-forward {
@@ -270,7 +270,7 @@
           }
         }
 
-        &.seek-forward .glyph {
+        &.seek-forward .icon {
           transform: translate3d(0, 0, 0) scaleX(-1);
         }
 
@@ -573,8 +573,8 @@
       }
     }
 
-    .transport .seek-action .glyph.spin-back,
-    .transport .seek-action .glyph.spin-forward {
+    .transport .seek-action .icon.spin-back,
+    .transport .seek-action .icon.spin-forward {
       animation: none;
     }
   }
