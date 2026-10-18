@@ -7,6 +7,7 @@ import {
   insertXEmbedNodes,
   leadingEmptyParagraphsBeforeXEmbedEnd,
   xEmbedHygieneTransaction,
+  xStatusUrlFromClipboard,
 } from "./x-embed-editor-behavior"
 import { X_EMBED_NODE } from "@/components/markdown/x/x-embed-syntax"
 
@@ -150,6 +151,16 @@ describe("leadingEmptyParagraphsBeforeXEmbedEnd", () => {
     expect(leadingEmptyParagraphsBeforeXEmbedEnd(doc)).toBe(htmlBr.nodeSize)
   })
 
+  it("treats an iOS Apple-interchange <br> as empty", () => {
+    const htmlBr = schema.node("paragraph", null, [
+      schema.nodes.html.create({
+        value: '<br class="Apple-interchange-newline">',
+      }),
+    ])
+    const doc = schema.node("doc", null, [htmlBr, embed()])
+    expect(leadingEmptyParagraphsBeforeXEmbedEnd(doc)).toBe(htmlBr.nodeSize)
+  })
+
   it("leaves a leading empty paragraph that is not followed by an embed", () => {
     const doc = schema.node("doc", null, [
       paragraph(),
@@ -181,6 +192,58 @@ describe("xEmbedHygieneTransaction", () => {
     expect(transaction).toBeTruthy()
     const next = state.apply(transaction!)
     expect(next.doc.firstChild?.type.name).toBe(X_EMBED_NODE)
+  })
+
+  it("turns a pasted status URL paragraph into an embed and drops the blank line above it", () => {
+    const urlLine = schema.node("paragraph", null, [
+      schema.text("https://x.com/Vol_Football/status/2111605291062034697"),
+    ])
+    const state = stateFrom([paragraph(), urlLine])
+    const transaction = xEmbedHygieneTransaction(state)
+    expect(transaction).toBeTruthy()
+    const next = state.apply(transaction!)
+    expect(next.doc.firstChild?.type.name).toBe(X_EMBED_NODE)
+    expect(next.doc.firstChild?.attrs.id).toBe("2111605291062034697")
+    expect(next.doc.lastChild?.type.name).toBe("paragraph")
+  })
+})
+
+describe("xStatusUrlFromClipboard", () => {
+  const clipboard = (data: Record<string, string>): DataTransfer =>
+    ({
+      getData: (type: string) => data[type] ?? "",
+    }) as DataTransfer
+
+  it("reads a status URL from text/plain", () => {
+    expect(
+      xStatusUrlFromClipboard(
+        clipboard({
+          "text/plain": "https://x.com/Vol_Football/status/2111605291062034697",
+        }),
+      ),
+    ).toBe("https://x.com/Vol_Football/status/2111605291062034697")
+  })
+
+  it("reads a status URL from iOS text/html when plain text is empty", () => {
+    expect(
+      xStatusUrlFromClipboard(
+        clipboard({
+          "text/plain": "",
+          "text/html":
+            '<meta charset="utf-8"><a href="https://x.com/Vol_Football/status/2111605291062034697">https://x.com/Vol_Football/status/2111605291062034697</a>',
+        }),
+      ),
+    ).toBe("https://x.com/Vol_Football/status/2111605291062034697")
+  })
+
+  it("ignores non-status clipboard HTML", () => {
+    expect(
+      xStatusUrlFromClipboard(
+        clipboard({
+          "text/html": '<a href="https://x.com/Vol_Football">profile</a>',
+        }),
+      ),
+    ).toBeNull()
   })
 })
 
