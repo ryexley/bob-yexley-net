@@ -1625,7 +1625,8 @@ export const AudioPlayer: Component<AudioPlayerProps> = rawProps => {
       return
     }
     const icon = root.querySelector(".icon")
-    if (!(icon instanceof HTMLElement)) {
+    // Lucide icons are <svg class="icon"> — SVGElement, not HTMLElement.
+    if (!icon) {
       return
     }
 
