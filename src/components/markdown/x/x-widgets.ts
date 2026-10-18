@@ -82,9 +82,25 @@ export function loadTwitterWidgets(): Promise<TwitterWidgets> {
   })
 }
 
-export const X_TWEET_WIDGET_OPTIONS = {
-  theme: "dark",
-  dnt: true,
-  conversation: "none",
-  align: "center",
-} as const
+export const X_TWEET_WIDTH_MIN = 250
+export const X_TWEET_WIDTH_MAX = 550
+
+/** widgets.js only accepts a whole-pixel width in this inclusive range. */
+export function tweetWidgetWidth(containerWidthPx: number): number {
+  if (!Number.isFinite(containerWidthPx) || containerWidthPx <= 0) {
+    return X_TWEET_WIDTH_MAX
+  }
+  return Math.min(
+    X_TWEET_WIDTH_MAX,
+    Math.max(X_TWEET_WIDTH_MIN, Math.floor(containerWidthPx)),
+  )
+}
+
+export function tweetWidgetOptions(containerWidthPx: number) {
+  return {
+    theme: "dark" as const,
+    dnt: true,
+    conversation: "none" as const,
+    width: tweetWidgetWidth(containerWidthPx),
+  }
+}
