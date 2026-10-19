@@ -1,4 +1,4 @@
-import { createEffect, createMemo, createSignal, onMount } from "solid-js"
+import { createMemo, onMount } from "solid-js"
 import { createAsync } from "@solidjs/router"
 import { UnsplashImage, CloudinaryImage } from "@/components/image"
 import { PageSection } from "@/modules/home/components/page-section"
@@ -18,16 +18,18 @@ export function Hero(props) {
       ? loaded
       : [...DEFAULT_HOME_HERO_IMAGE_IDS]
   })
-  const [imageId, setImageId] = createSignal(
-    DEFAULT_HOME_HERO_IMAGE_IDS[randomIndex([...DEFAULT_HOME_HERO_IMAGE_IDS])],
-  )
 
-  createEffect(() => {
+  // Reading the query in this memo suspends until site settings resolve, so
+  // the first pick is from the saved list. Seeding from
+  // DEFAULT_HOME_HERO_IMAGE_IDS and only replacing when the current id was
+  // missing hid every newly added image while the original defaults remained.
+  let pickedImageId: string | undefined
+  const imageId = createMemo(() => {
     const ids = heroImageIds()
-    const current = imageId()
-    if (!current || !ids.includes(current)) {
-      setImageId(ids[randomIndex(ids)])
+    if (!pickedImageId || !ids.includes(pickedImageId)) {
+      pickedImageId = ids[randomIndex(ids)]
     }
+    return pickedImageId
   })
 
   // Start background pre-loading of all hero images (non-blocking)
