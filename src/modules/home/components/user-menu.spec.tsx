@@ -114,6 +114,7 @@ vi.mock("@/components/menu", () => ({
           {(item: any) => (
             <button
               type="button"
+              data-icon={item.icon}
               onClick={() => item.onClick()}>
               {item.label}
             </button>
@@ -149,6 +150,7 @@ vi.mock("@/i18n", () => ({
     const values: Record<string, string> = {
       "home.components.userMenu.header.label": "Signed in as",
       "home.components.userMenu.profile": "Profile",
+      "home.components.userMenu.admin": "Admin",
       "home.components.userMenu.blip": "Blip",
       "home.components.userMenu.logout": "Sign Out",
     }
@@ -209,6 +211,19 @@ describe("UserMenu", () => {
 
     expect(screen.getByRole("button", { name: "Profile" })).toBeTruthy()
     expect(screen.queryByRole("button", { name: "Blip" })).toBeNull()
+  })
+
+  it("uses the shield-half icon for the superuser admin link", () => {
+    authState.profile = {
+      ...authState.profile,
+      role: "superuser",
+    } as any
+
+    render(() => <UserMenu />)
+
+    expect(
+      screen.getByRole("button", { name: "Admin" }).getAttribute("data-icon"),
+    ).toBe("shieldHalf")
   })
 
   it("shows the blip action for admins", () => {

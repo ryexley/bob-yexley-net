@@ -170,7 +170,7 @@ export function UserMenu() {
 
     if (isSuperuser()) {
       items.push({
-        icon: "shield",
+        icon: "shieldHalf",
         label: tr("admin"),
         onClick: openAdminHome,
       })
