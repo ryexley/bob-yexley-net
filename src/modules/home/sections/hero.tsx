@@ -1,26 +1,40 @@
-import { onMount } from "solid-js"
+import { createEffect, createMemo, createSignal, onMount } from "solid-js"
+import { createAsync } from "@solidjs/router"
 import { UnsplashImage, CloudinaryImage } from "@/components/image"
 import { PageSection } from "@/modules/home/components/page-section"
 // import { Stack } from "@/components/stack"
 import { preloadUnsplashImages } from "@/lib/vendor/unsplash"
+import { getHomeHeroImageIds } from "@/modules/site-settings/data/queries"
+import { DEFAULT_HOME_HERO_IMAGE_IDS } from "@/modules/site-settings/home-hero-images"
 import { randomIndex } from "@/util/random"
 import { tr } from "@/i18n"
 import "./hero.css"
 
-const heroImageIds = [
-  "green-trees-with-mountain-on-the-horizon-high-angle-photography-dtxihV-sX8k",
-  "green-forest-near-mountain-2z2CGEB7FIk",
-  "a-mountain-with-lots-of-trees-in-the-foreground-TIQZu0mm4NQ",
-]
-
 export function Hero(props) {
-  const imageId = heroImageIds[randomIndex(heroImageIds)]
+  const heroImagesQuery = createAsync(() => getHomeHeroImageIds())
+  const heroImageIds = createMemo(() => {
+    const loaded = heroImagesQuery()
+    return loaded && loaded.length > 0
+      ? loaded
+      : [...DEFAULT_HOME_HERO_IMAGE_IDS]
+  })
+  const [imageId, setImageId] = createSignal(
+    DEFAULT_HOME_HERO_IMAGE_IDS[randomIndex([...DEFAULT_HOME_HERO_IMAGE_IDS])],
+  )
+
+  createEffect(() => {
+    const ids = heroImageIds()
+    const current = imageId()
+    if (!current || !ids.includes(current)) {
+      setImageId(ids[randomIndex(ids)])
+    }
+  })
 
   // Start background pre-loading of all hero images (non-blocking)
   onMount(() => {
     // Use setTimeout to make it truly non-blocking
     setTimeout(() => {
-      preloadUnsplashImages(heroImageIds).catch(() => {
+      preloadUnsplashImages(heroImageIds()).catch(() => {
         // Silently fail - pre-loading is not critical
       })
     }, 100)
@@ -31,7 +45,7 @@ export function Hero(props) {
       ref={props.ref}
       {...props}>
       <UnsplashImage
-        imageId={imageId}
+        imageId={imageId()}
         height="100svh"
         width="100%"
         alt="East Tennessee moutains/woods"

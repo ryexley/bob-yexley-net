@@ -1,0 +1,80 @@
+.home-hero-images-drawer {
+  .form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+
+  .hint {
+    color: var(--colors-mono-09);
+    font-size: 0.9375rem;
+    margin: 0;
+  }
+
+  .list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .row {
+    background: var(--colors-mono-03);
+    border: 0.0625rem solid var(--colors-mono-04);
+    border-radius: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 0.75rem;
+  }
+
+  .preview {
+    aspect-ratio: 16 / 9;
+    border-radius: 0.5rem;
+    overflow: hidden;
+    width: 100%;
+
+    .cdn-image-container {
+      height: 100%;
+      width: 100%;
+    }
+  }
+
+  .meta {
+    align-items: center;
+    display: flex;
+    gap: 0.75rem;
+    justify-content: space-between;
+  }
+
+  .id {
+    color: var(--colors-mono-10);
+    font-size: 0.75rem;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+  }
+
+  .row-actions {
+    display: flex;
+    flex-shrink: 0;
+    gap: 0.25rem;
+  }
+
+  .add {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+
+    .button {
+      align-self: flex-end;
+    }
+  }
+
+  .add-error {
+    color: var(--colors-error);
+    font-size: 0.875rem;
+    margin: 0;
+  }
+}
