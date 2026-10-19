@@ -17,8 +17,10 @@ export const blipPath = (blip: BlipLinkTarget | string): string => {
 }
 
 /** Absolute canonical URL for a root blip. */
-export const blipUrl = (siteUrl: string, blip: BlipLinkTarget | string): string =>
-  `${siteUrl.trim().replace(/\/+$/, "")}${blipPath(blip)}`
+export const blipUrl = (
+  siteUrl: string,
+  blip: BlipLinkTarget | string,
+): string => `${siteUrl.trim().replace(/\/+$/, "")}${blipPath(blip)}`
 
 export const pages = {
   home: "/",
@@ -34,10 +36,13 @@ export const pages = {
   adminTags: "/a/tags",
   scripture: "/a/scripture",
   scriptureCollections: "/a/scripture/collections",
-  scriptureCollection: (slug: string) => `/a/scripture/collections/${encodeURIComponent(slug)}`,
-  scriptureCollectionById: (id: number | string) => `/a/scripture/collections/${id}`,
+  scriptureCollection: (slug: string) =>
+    `/a/scripture/collections/${encodeURIComponent(slug)}`,
+  scriptureCollectionById: (id: number | string) =>
+    `/a/scripture/collections/${id}`,
   scriptureReferences: "/a/scripture/references",
   analytics: "/a/analytics",
+  siteSettings: "/a/settings",
   visitors: "/a/visitors",
   logout: "/a/lo",
 }

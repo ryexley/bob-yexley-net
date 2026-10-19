@@ -1179,6 +1179,60 @@ export const en = {
       },
     },
   },
+  siteSettings: {
+    components: {
+      homeHeroImagesDrawer: {
+        title: "Home page images",
+        hint: "These Unsplash photos rotate on the home page hero. Add a photo slug or paste an Unsplash URL, then save.",
+        actions: {
+          close: "Close",
+          cancel: "Cancel",
+          save: "Save",
+          saving: "Saving...",
+          add: "Add image",
+          moveUp: "Move image up",
+          moveDown: "Move image down",
+          remove: "Remove image",
+        },
+        fields: {
+          add: {
+            label: "Add an Unsplash photo",
+            placeholder: "photo-slug or https://unsplash.com/photos/...",
+            hint: "Paste an Unsplash photo URL or the slug from the end of it.",
+          },
+        },
+        errors: {
+          invalid: "That doesn't look like an Unsplash photo slug or URL.",
+          duplicate: "That photo is already in the list.",
+          max: "You can keep up to {count} home page images.",
+        },
+        notifications: {
+          saveSuccess: "Home page images updated.",
+          saveError: "Unable to save home page images right now.",
+        },
+      },
+    },
+    views: {
+      index: {
+        pageTitle: "Site Settings",
+        metaDescription: "Manage site-wide settings.",
+        title: "Site Settings",
+        subtitle: "Site-wide content and configuration maintained from admin.",
+        loading: "Loading site settings...",
+        actions: {
+          backToAdmin: "admin",
+        },
+        cards: {
+          homeHeroImages: {
+            title: "Home page images",
+            description:
+              "Choose the Unsplash photos rotated on the home page hero.",
+            total: "{count, plural, one {# image} other {# images}}",
+          },
+        },
+      },
+    },
+  },
   admin: {
     layout: {
       subtitle: "admin",
@@ -1226,6 +1280,12 @@ export const en = {
             description:
               "Manage blip tags, set cover images for og:image previews, and merge duplicate tags.",
             total: "{count, plural, one {# tag} other {# tags}}",
+          },
+          settings: {
+            title: "Site Settings",
+            description:
+              "Manage site-wide content, starting with the home page hero images.",
+            images: "{count, plural, one {# home image} other {# home images}}",
           },
         },
       },

@@ -10,6 +10,7 @@ import { getAdminCollections } from "@/modules/scripture-collections/data/querie
 import { getAdminReferences } from "@/modules/scripture-references/data/queries"
 import { getAdminUsers } from "@/modules/users/data/queries"
 import { getAdminTags } from "@/modules/tags/data/queries"
+import { getAdminSiteSettings } from "@/modules/site-settings/data/queries"
 import { ANALYTICS_SITE_ID } from "@/lib/analytics/constants"
 import { ptr } from "@/i18n"
 import { pages } from "@/urls"
@@ -25,6 +26,7 @@ export function AdminHomeView() {
   const adminCollectionsQuery = createAsync(() => getAdminCollections())
   const adminReferencesQuery = createAsync(() => getAdminReferences())
   const adminTagsQuery = createAsync(() => getAdminTags())
+  const adminSiteSettingsQuery = createAsync(() => getAdminSiteSettings())
   const analyticsHubStatsQuery = createAsync(() => {
     const to = new Date()
     const from = subDays(to, 30)
@@ -91,6 +93,7 @@ export function AdminHomeView() {
       adminCollectionsQuery() !== undefined &&
       adminReferencesQuery() !== undefined &&
       adminTagsQuery() !== undefined &&
+      adminSiteSettingsQuery() !== undefined &&
       analyticsHubStatsQuery() !== undefined &&
       auth.isSuperuser(),
   )
@@ -100,8 +103,9 @@ export function AdminHomeView() {
   const referenceCount = createMemo(
     () => adminReferencesQuery()?.references.length ?? 0,
   )
-  const tagCount = createMemo(
-    () => adminTagsQuery()?.tags.length ?? 0,
+  const tagCount = createMemo(() => adminTagsQuery()?.tags.length ?? 0)
+  const homeHeroImageCount = createMemo(
+    () => adminSiteSettingsQuery()?.settings?.homeHeroImageIds.length ?? 0,
   )
   const analyticsPageviews30d = createMemo(
     () => analyticsHubStatsQuery()?.totalPageviews30d ?? 0,
@@ -143,9 +147,7 @@ export function AdminHomeView() {
                     <h2 class="card-title">{tr("cards.users.title")}</h2>
                   </div>
                   <div class="copy">
-                    <p class="description">
-                      {tr("cards.users.description")}
-                    </p>
+                    <p class="description">{tr("cards.users.description")}</p>
                   </div>
                   <div class="bubbles">
                     <For each={statusBubbles()}>
@@ -209,9 +211,7 @@ export function AdminHomeView() {
                     <h2 class="card-title">{tr("cards.tags.title")}</h2>
                   </div>
                   <div class="copy">
-                    <p class="description">
-                      {tr("cards.tags.description")}
-                    </p>
+                    <p class="description">{tr("cards.tags.description")}</p>
                   </div>
                   <div class="bubbles">
                     <span
@@ -219,6 +219,31 @@ export function AdminHomeView() {
                       data-status="info">
                       {tr("cards.tags.total", {
                         count: tagCount(),
+                      })}
+                    </span>
+                  </div>
+                </a>
+                <a
+                  href={pages.siteSettings}
+                  class="card">
+                  <div class="card-header">
+                    <Icon
+                      name="settings2"
+                      class="icon"
+                    />
+                    <h2 class="card-title">{tr("cards.settings.title")}</h2>
+                  </div>
+                  <div class="copy">
+                    <p class="description">
+                      {tr("cards.settings.description")}
+                    </p>
+                  </div>
+                  <div class="bubbles">
+                    <span
+                      class="bubble"
+                      data-status="info">
+                      {tr("cards.settings.images", {
+                        count: homeHeroImageCount(),
                       })}
                     </span>
                   </div>
