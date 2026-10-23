@@ -50,7 +50,9 @@ const toValidDate = (value?: string | null) => {
   return Number.isNaN(date.getTime()) ? null : date
 }
 
-export function getBlipPublishTimestamp(blip: Pick<Blip, "publish_at" | "created_at">): string {
+export function getBlipPublishTimestamp(
+  blip: Pick<Blip, "publish_at" | "created_at">,
+): string {
   return blip.publish_at ?? blip.created_at
 }
 
@@ -211,7 +213,45 @@ export function formatBlipTimestampTooltip(
   return fullTimestamp
 }
 
-export type BlipDateGroup<T extends Pick<Blip, "id" | "publish_at" | "created_at">> = {
+type BlipTimestampBlip = Pick<Blip, "published" | "publish_at" | "created_at">
+
+/**
+ * Absolute wall-clock strings (`10/23/2026 6:30 PM`) follow the runtime
+ * timezone. The server is UTC; the browser is the viewer's zone. Solid
+ * hydration keeps the SSR text when the client memo already resolved to
+ * the local string, so a hard refresh would stay on the UTC time until
+ * remount. Only format those labels once the client timezone is available.
+ * Relative labels (`3 hours ago`) are timezone-safe and can render on SSR.
+ */
+export function formatBlipDisplayLabel(
+  blip: BlipTimestampBlip,
+  options: { clientTimeZoneReady: boolean },
+): string {
+  const publishAt = getBlipPublishTimestamp(blip)
+  if (isBlipScheduled(blip)) {
+    return options.clientTimeZoneReady
+      ? formatBlipScheduledTimestamp(publishAt)
+      : ""
+  }
+
+  return formatBlipTimestamp(publishAt)
+}
+
+export function formatBlipDisplayTooltip(
+  blip: BlipTimestampBlip,
+  formatScheduledTooltip: (fullTimestamp: string) => string,
+  options: { clientTimeZoneReady: boolean },
+): string {
+  if (!options.clientTimeZoneReady) {
+    return ""
+  }
+
+  return formatBlipTimestampTooltip(blip, formatScheduledTooltip)
+}
+
+export type BlipDateGroup<
+  T extends Pick<Blip, "id" | "publish_at" | "created_at">,
+> = {
   key: string
   label: string
   blips: T[]
