@@ -1,10 +1,11 @@
-import { render } from "@solidjs/testing-library"
+import { render, screen } from "@solidjs/testing-library"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import {
   Blip as BlipCard,
   splitBlipCardTags,
 } from "@/modules/blips/components/blip"
 import { BLIP_TYPES, type Blip } from "@/modules/blips/data/schema"
+import { formatBlipScheduledTimestamp } from "@/modules/blips/util"
 
 vi.mock("@solidjs/router", () => ({
   A: (props: { href: string; children: any }) => (
@@ -247,5 +248,26 @@ describe("Blip card comments", () => {
     expect(
       document.querySelector('[aria-label="actions.addComment"]'),
     ).toBeNull()
+  })
+})
+
+describe("Blip card scheduled timestamp", () => {
+  const publishAt = "2028-10-23T22:30:00.000Z"
+  const scheduledBlip = () =>
+    makeBlip({
+      published: true,
+      publish_at: publishAt,
+      created_at: "2026-10-22T23:15:07.000Z",
+    })
+
+  it("renders the local scheduled time after mount", () => {
+    render(() => <BlipCard blip={scheduledBlip()} />)
+
+    expect(
+      screen.getByText(formatBlipScheduledTimestamp(publishAt)),
+    ).toBeTruthy()
+    expect(document.querySelector("time.timestamp")?.getAttribute("datetime")).toBe(
+      publishAt,
+    )
   })
 })

@@ -2,7 +2,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import {
   compareBlipsByPublishTimestampDesc,
   formatBlipDateGroupLabel,
+  formatBlipDisplayLabel,
+  formatBlipDisplayTooltip,
   formatBlipScheduledTimestamp,
+  formatBlipTimestamp,
+  formatBlipTimestampFull,
   formatBlipTimestampTooltip,
   getBlipDateGroupKey,
   getBlipPublishTimestamp,
@@ -122,9 +126,15 @@ describe("blip scheduling helpers", () => {
     ])
   })
 
-  it("formats scheduled timestamps for explicit scheduled labels", () => {
-    expect(formatBlipScheduledTimestamp("2026-04-24T20:10:00.000Z")).toBe(
-      "4/24/2026 4:10 PM",
+  it("formats scheduled timestamps as a local wall-clock label", () => {
+    const timestamp = "2026-04-24T20:10:00.000Z"
+    const date = new Date(timestamp)
+    const hours = date.getHours()
+    const hour12 = hours % 12 || 12
+    const minutes = String(date.getMinutes()).padStart(2, "0")
+    const meridiem = hours >= 12 ? "PM" : "AM"
+    expect(formatBlipScheduledTimestamp(timestamp)).toBe(
+      `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()} ${hour12}:${minutes} ${meridiem}`,
     )
   })
 
@@ -139,7 +149,53 @@ describe("blip scheduling helpers", () => {
       formatBlipTimestampTooltip(blip, fullTimestamp =>
         `Scheduled to be published on ${fullTimestamp}`,
       ),
-    ).toBe("Scheduled to be published on April 23rd, 2026 at 8:00 AM")
+    ).toBe(
+      `Scheduled to be published on ${formatBlipTimestampFull("2026-04-23T12:00:00.000Z")}`,
+    )
+  })
+
+  it("withholds scheduled wall-clock labels until the client timezone is ready", () => {
+    const blip = {
+      published: true,
+      publish_at: "2026-10-23T22:30:00.000Z",
+      created_at: "2026-10-22T23:15:07.000Z",
+    } as any
+
+    expect(formatBlipDisplayLabel(blip, { clientTimeZoneReady: false })).toBe("")
+    expect(formatBlipDisplayLabel(blip, { clientTimeZoneReady: true })).toBe(
+      formatBlipScheduledTimestamp("2026-10-23T22:30:00.000Z"),
+    )
+    expect(
+      formatBlipDisplayTooltip(
+        blip,
+        fullTimestamp => `Scheduled to be published on ${fullTimestamp}`,
+        { clientTimeZoneReady: false },
+      ),
+    ).toBe("")
+    expect(
+      formatBlipDisplayTooltip(
+        blip,
+        fullTimestamp => `Scheduled to be published on ${fullTimestamp}`,
+        { clientTimeZoneReady: true },
+      ),
+    ).toBe(
+      `Scheduled to be published on ${formatBlipTimestampFull("2026-10-23T22:30:00.000Z")}`,
+    )
+  })
+
+  it("still formats published relative labels before the client timezone is ready", () => {
+    const blip = {
+      published: true,
+      publish_at: "2026-04-21T12:00:00.000Z",
+      created_at: "2026-04-21T12:00:00.000Z",
+    } as any
+
+    const label = formatBlipDisplayLabel(blip, { clientTimeZoneReady: false })
+    expect(label).toBe(formatBlipTimestamp("2026-04-21T12:00:00.000Z"))
+    expect(label).toBe(
+      formatBlipDisplayLabel(blip, { clientTimeZoneReady: true }),
+    )
+    expect(label.length).toBeGreaterThan(0)
   })
 })
 

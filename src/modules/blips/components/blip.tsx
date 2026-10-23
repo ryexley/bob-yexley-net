@@ -5,7 +5,6 @@ import {
   createSignal,
   createEffect,
   For,
-  onCleanup,
   onMount,
   splitProps,
   Show,
@@ -35,13 +34,8 @@ import { REACTION_ERROR_I18N_KEY } from "@/modules/blips/data/errors"
 import { reactionStore } from "@/modules/blips/data/reactions-store"
 import { BlipCardMediaStrip, galleryMedia } from "@/modules/media"
 import type { BlipMediaRow } from "@/modules/media/data/queries"
-import {
-  formatBlipScheduledTimestamp,
-  formatBlipTimestamp,
-  formatBlipTimestampTooltip,
-  getBlipPublishTimestamp,
-  isBlipScheduled,
-} from "@/modules/blips/util"
+import { useBlipTimestampDisplay } from "@/modules/blips/components/use-blip-timestamp-display"
+import { isBlipScheduled } from "@/modules/blips/util"
 import { ptr } from "@/i18n"
 import { pages, type BlipLinkTarget } from "@/urls"
 import { clsx as cx } from "@/util"
@@ -88,7 +82,6 @@ export function Blip(props: {
   const blips = blipStore(supabase.client, { subscribe: false })
   const reactions = reactionStore(supabase.client, { subscribe: false })
   let contentRef: HTMLDivElement | undefined
-  const [timeTick, setTimeTick] = createSignal(Date.now())
   const [isClipped, setIsClipped] = createSignal(false)
   const [isReactionBusy, setIsReactionBusy] = createSignal(false)
   const [reactionStateOverride, setReactionStateOverride] =
@@ -110,18 +103,10 @@ export function Blip(props: {
     }
   })
   const isScheduled = createMemo(() => isBlipScheduled(local.blip))
-  const timestampLabel = createMemo(() => {
-    timeTick()
-    const publishAt = getBlipPublishTimestamp(local.blip)
-    if (isScheduled()) {
-      return formatBlipScheduledTimestamp(publishAt)
-    }
-    return formatBlipTimestamp(publishAt)
-  })
-  const timestampTooltip = createMemo(() =>
-    formatBlipTimestampTooltip(local.blip, fullTimestamp =>
+  const timestampDisplay = useBlipTimestampDisplay(
+    () => local.blip,
+    fullTimestamp =>
       tr("labels.scheduledTooltip", { timestamp: fullTimestamp }),
-    ),
   )
   const canOpenDetails = () => isClipped() || typeof local.onView === "function"
   const hasUpdates = () => (local.blip.updates_count ?? 0) > 0
@@ -193,14 +178,6 @@ export function Blip(props: {
     if (contentRef) {
       setIsClipped(contentRef.scrollHeight > contentRef.clientHeight)
     }
-
-    const intervalId = setInterval(() => {
-      setTimeTick(Date.now())
-    }, 60_000)
-
-    onCleanup(() => {
-      clearInterval(intervalId)
-    })
   })
 
   const handleToggleReaction = async (emoji: string) => {
@@ -289,17 +266,21 @@ export function Blip(props: {
             </Show>
             <header>
               <Tooltip
-                content={timestampTooltip()}
+                content={() => timestampDisplay()?.tooltip ?? ""}
                 touchMode="popover">
-                <span class="timestamp">
-                  <span class="timestamp-label">{timestampLabel()}</span>
+                <time
+                  class="timestamp"
+                  dateTime={timestampDisplay()?.datetime}>
+                  <span class="timestamp-label">
+                    {timestampDisplay()?.label}
+                  </span>
                   <Show when={isScheduled()}>
                     <Icon
                       name="clock"
                       class="timestamp-icon"
                     />
                   </Show>
-                </span>
+                </time>
               </Tooltip>
             </header>
             <div
