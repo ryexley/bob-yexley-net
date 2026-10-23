@@ -64,15 +64,12 @@ import { findAudioEmbedRegions, parseAudioEmbedObjectLiteral, coerceAudioPlayerP
 import type { BlipMediaRow } from "@/modules/media/data/queries"
 import { MediaVariant, variantUrl, originalUrl } from "@/modules/media/media-utils"
 import { useBlipComposer } from "@/modules/blips/context/blip-composer-context"
+import { useBlipTimestampDisplay } from "@/modules/blips/components/use-blip-timestamp-display"
 import {
-  formatBlipScheduledTimestamp,
-  formatBlipTimestamp,
-  formatBlipTimestampTooltip,
   getBlipPublishTimestamp,
   isBlipPubliclyVisible,
   isComposerFkStubUpdate,
   isUpdateActivityVisible,
-  isBlipScheduled,
 } from "@/modules/blips/util"
 import {
   buildTopLevelActivity,
@@ -555,25 +552,10 @@ export function BlipView() {
     }
     return allUpdates.filter(update => isBlipPubliclyVisible(update))
   })
-  const rootTimestampDisplay = createMemo(() => {
-    const currentBlip = blip()
-    if (!currentBlip) {
-      return null
-    }
-
-    const publishAt = getBlipPublishTimestamp(currentBlip)
-    const scheduled = isBlipScheduled(currentBlip)
-
-    return {
-      scheduled,
-      label: scheduled
-        ? formatBlipScheduledTimestamp(publishAt)
-        : formatBlipTimestamp(publishAt),
-      tooltip: formatBlipTimestampTooltip(currentBlip, fullTimestamp =>
-        tr("labels.scheduledTooltip", { timestamp: fullTimestamp }),
-      ),
-    }
-  })
+  const rootTimestampDisplay = useBlipTimestampDisplay(
+    () => blip(),
+    fullTimestamp => tr("labels.scheduledTooltip", { timestamp: fullTimestamp }),
+  )
   const initialCommentsByParentId = createMemo(() => {
     const next = new Map<string, Blip[]>()
     for (const comment of [
@@ -1274,7 +1256,9 @@ export function BlipView() {
                         <Tooltip
                           content={() => rootTimestampDisplay()?.tooltip ?? ""}
                           touchMode="popover">
-                          <span class="timestamp">
+                          <time
+                            class="timestamp"
+                            dateTime={rootTimestampDisplay()?.datetime}>
                             {rootTimestampDisplay()?.label ?? ""}
                             <Show when={rootTimestampDisplay()?.scheduled}>
                               <Icon
@@ -1282,7 +1266,7 @@ export function BlipView() {
                                 class="icon"
                               />
                             </Show>
-                          </span>
+                          </time>
                         </Tooltip>
                       </header>
                       <div class="blip-detail-content">
