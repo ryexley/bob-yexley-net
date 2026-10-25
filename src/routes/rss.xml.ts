@@ -1,7 +1,7 @@
 import type { APIEvent } from "@solidjs/start/server"
 import { getServerClient } from "@/lib/vendor/supabase/server"
 import { marked } from "marked"
-import { deriveBlipTitle, deriveBlipDescription } from "@/modules/blips/seo"
+import { deriveBlipDescription, resolveBlipTitle } from "@/modules/blips/seo"
 import { selectWithSlugFallback } from "@/modules/blips/data/queries"
 import { blipUrl } from "@/urls"
 
@@ -24,7 +24,7 @@ export async function GET({ request }: APIEvent) {
     
     // Fetch latest blips (view_blips already filters for roots, RLS handles visibility)
     const { data, error } = await selectWithSlugFallback(
-      "id, slug, content, publish_at, updated_at",
+      "id, slug, title, content, publish_at, updated_at",
       select =>
         supabase
           .from("view_blips")
@@ -36,6 +36,7 @@ export async function GET({ request }: APIEvent) {
     const blips = (data ?? null) as unknown as Array<{
       id: string
       slug?: string | null
+      title?: string | null
       content: string | null
       publish_at: string | null
       updated_at: string
@@ -46,7 +47,7 @@ export async function GET({ request }: APIEvent) {
     }
 
     const items = (blips || []).map(blip => {
-      const title = escapeXml(deriveBlipTitle(blip.content || ""))
+      const title = escapeXml(resolveBlipTitle(blip) || "Blip")
       const description = escapeXml(deriveBlipDescription(blip.content || ""))
       const link = escapeXml(blipUrl(SITE_URL, blip))
       const pubDate = new Date(blip.publish_at || blip.updated_at).toUTCString()

@@ -2,10 +2,27 @@
  * SEO utilities for deriving titles and descriptions from blip content.
  */
 
+import { findAudioEmbedRegions } from "@/components/markdown/audio/audio-embed-syntax"
+import { findMediaEmbedRegions } from "@/components/markdown/media/media-embed-syntax"
 import { findXEmbedRegions } from "@/components/markdown/x/x-embed-syntax"
 
-function withoutXEmbeds(content: string): string {
-  const regions = findXEmbedRegions(content)
+type EmbedRegion = { start: number; end: number }
+
+/**
+ * Known embed finders only return well-formed `{media:}`, `{audio:}`, and
+ * `{x:}` blocks. The leftover regex is a belt-and-suspenders so a future
+ * `{something:{…}}` embed type cannot leak into share-link text if someone
+ * forgets to register it here.
+ */
+const LEFTOVER_CUSTOM_EMBED = /\{[a-z]+:\{[\s\S]*?\}\}/gi
+
+function stripKnownEmbedRegions(content: string): string {
+  const regions: EmbedRegion[] = [
+    ...findMediaEmbedRegions(content),
+    ...findAudioEmbedRegions(content),
+    ...findXEmbedRegions(content),
+  ].sort((a, b) => a.start - b.start)
+
   if (regions.length === 0) {
     return content
   }
@@ -13,6 +30,9 @@ function withoutXEmbeds(content: string): string {
   let result = ""
   let lastEnd = 0
   for (const region of regions) {
+    if (region.start < lastEnd) {
+      continue
+    }
     result += content.slice(lastEnd, region.start)
     lastEnd = region.end
   }
@@ -20,25 +40,15 @@ function withoutXEmbeds(content: string): string {
   return result
 }
 
-/**
- * Derive a title from blip content.
- *
- * Priority:
- * 1. First markdown heading (h1-h6)
- * 2. First sentence of plain text, truncated to maxLength at word boundary
- *
- * @param content - Raw markdown content
- * @param maxLength - Maximum length for truncated title (default 60)
- * @returns Derived title string
- */
-export function deriveBlipTitle(content: string, maxLength = 60): string {
-  content = withoutXEmbeds(content)
-  const headingMatch = content.match(/^#{1,6}\s+(.+)$/m)
-  if (headingMatch && headingMatch[1]) {
-    return headingMatch[1].trim()
-  }
+function stripCustomEmbeds(content: string): string {
+  return stripKnownEmbedRegions(content)
+    .replace(LEFTOVER_CUSTOM_EMBED, " ")
+    .replace(/[ \t]+\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+}
 
-  const plainText = content
+function stripMarkdown(content: string): string {
+  return content
     .replace(/```[\s\S]*?```/g, " ")
     .replace(/`([^`]+)`/g, "$1")
     .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, "$1")
@@ -50,15 +60,65 @@ export function deriveBlipTitle(content: string, maxLength = 60): string {
     .replace(/[*_=~]+/g, "")
     .replace(/\s+/g, " ")
     .trim()
+}
 
-  const firstSentence = plainText.split(/[.!?]/)[0]?.trim() || plainText
-  if (firstSentence.length <= maxLength) {
-    return firstSentence
+function truncateAtWord(
+  text: string,
+  maxLength: number,
+  minBoundary: number,
+  ellipsis = "",
+): string {
+  if (text.length <= maxLength) {
+    return text
   }
 
-  const truncated = firstSentence.slice(0, maxLength).trimEnd()
+  const truncated = text.slice(0, maxLength).trimEnd()
   const lastSpace = truncated.lastIndexOf(" ")
-  return lastSpace > 30 ? truncated.slice(0, lastSpace) : truncated
+  const clipped =
+    lastSpace > minBoundary ? truncated.slice(0, lastSpace) : truncated
+  return clipped + ellipsis
+}
+
+/**
+ * Derive a title from blip content.
+ *
+ * Priority:
+ * 1. First markdown heading (h1-h6)
+ * 2. First sentence of plain text, truncated to maxLength at word boundary
+ *
+ * Custom `{media:{…}}` / `{audio:{…}}` / `{x:{…}}` embeds are ignored so a
+ * leading image or pasted post does not become the share-link / Open Graph
+ * title. That leak showed up as `{media:{key:"media/…` in RCS/iMessage cards.
+ *
+ * @param content - Raw markdown content
+ * @param maxLength - Maximum length for truncated title (default 60)
+ * @returns Derived title string
+ */
+export function deriveBlipTitle(content: string, maxLength = 60): string {
+  const withoutEmbeds = stripCustomEmbeds(content)
+  const headingMatch = withoutEmbeds.match(/^#{1,6}\s+(.+)$/m)
+  if (headingMatch && headingMatch[1]) {
+    return headingMatch[1].trim()
+  }
+
+  const plainText = stripMarkdown(withoutEmbeds)
+  const firstSentence = plainText.split(/[.!?]/)[0]?.trim() || plainText
+  return truncateAtWord(firstSentence, maxLength, 30)
+}
+
+/**
+ * Resolve the public title for a blip: the stored title when set, otherwise
+ * the title derived from content. Used for share-link / Open Graph text.
+ */
+export function resolveBlipTitle(
+  blip: { title?: string | null; content?: string | null } | null | undefined,
+  maxLength = 60,
+): string {
+  const stored = blip?.title?.trim()
+  if (stored) {
+    return stored
+  }
+  return deriveBlipTitle(blip?.content ?? "", maxLength)
 }
 
 /**
@@ -75,29 +135,10 @@ export function deriveBlipDescription(
   content: string,
   maxLength = 155,
 ): string {
-  content = withoutXEmbeds(content)
-  const withoutHeading = content.replace(/^#{1,6}\s+.+$/m, "").trim()
-
-  const plainText = withoutHeading
-    .replace(/```[\s\S]*?```/g, " ")
-    .replace(/`([^`]+)`/g, "$1")
-    .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, "$1")
-    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, "$1")
-    .replace(/^#{1,6}\s+/gm, "")
-    .replace(/^>\s?/gm, "")
-    .replace(/^[*-+]\s+/gm, "")
-    .replace(/^\d+\.\s+/gm, "")
-    .replace(/[*_=~]+/g, "")
-    .replace(/\s+/g, " ")
-    .trim()
-
-  if (plainText.length <= maxLength) {
-    return plainText
-  }
-
-  const truncated = plainText.slice(0, maxLength).trimEnd()
-  const lastSpace = truncated.lastIndexOf(" ")
-  return (lastSpace > 40 ? truncated.slice(0, lastSpace) : truncated) + "..."
+  const withoutEmbeds = stripCustomEmbeds(content)
+  const withoutHeading = withoutEmbeds.replace(/^#{1,6}\s+.+$/m, "").trim()
+  const plainText = stripMarkdown(withoutHeading)
+  return truncateAtWord(plainText, maxLength, 40, "...")
 }
 
 export const SITE_TITLE = "bob.yexley.net"
